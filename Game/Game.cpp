@@ -14,7 +14,8 @@ struct Velocity : Component<Velocity> {
 	Velocity(float vx, float vy) : vx(vx), vy(vy) {}
 };
 
-class MovementSystem : public System {
+class MovementSystem : public System
+{
 public:
 	void addEntity(Entity entity, World& manager) {
 		Position& pos = manager.editComponent<Position>(entity);

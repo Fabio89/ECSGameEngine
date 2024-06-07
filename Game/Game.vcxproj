@@ -158,7 +158,7 @@
     <ClCompile Include="Game.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\GameEngine.vcxproj">
+    <ProjectReference Include="..\GameEngine\GameEngine.vcxproj">
       <Project>{3357f57c-37c6-4721-8cfc-f0016b27f423}</Project>
     </ProjectReference>
   </ItemGroup>
