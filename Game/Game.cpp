@@ -33,7 +33,7 @@ EngineSettings settings
 .targetFps = 144.f
 };
 
-int main()
+int main2()
 {
 	World world{ settings };
 

@@ -4,5 +4,18 @@
     <ClCompile Include="Engine.ixx" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="Job.ixx" />
+    <ClCompile Include="Render\VulkanMain.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Render">
+      <UniqueIdentifier>{aae3d3bc-bd76-4212-a171-483dd0c08e7e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Render\VulkanMain.h">
+      <Filter>Render</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
