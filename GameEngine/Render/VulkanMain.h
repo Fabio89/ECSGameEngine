@@ -2,9 +2,9 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-#include <glm/ext/vector_int2.hpp>
 
 import std.core;
+import <glm/ext/vector_int2.hpp>;
 
 const std::vector<const char*> ValidationLayers
 {
@@ -37,6 +37,22 @@ struct QueueFamilyIndices
 bool areAllIndicesSet(const QueueFamilyIndices&);
 QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
 
+struct SwapChainSupportDetails
+{
+	VkSurfaceCapabilitiesKHR capabilities;
+	std::vector<VkSurfaceFormatKHR> formats;
+	std::vector<VkPresentModeKHR> presentModes;
+};
+SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
+
+VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+
+VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
+VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, GLFWwindow* window);
+
+std::vector<char> readFile(const std::string& filename);
+VkShaderModule createShaderModule(const std::vector<char>& code, VkDevice device);
+
 class HelloTriangleApplication
 {
 public:
@@ -49,9 +65,17 @@ private:
 	VkPhysicalDevice m_physicalDevice{ nullptr };
 	VkDevice m_device{ nullptr };
 	VkSurfaceKHR m_surface{ nullptr };
+	VkSwapchainKHR m_swapChain{ nullptr };
 	VkQueue m_graphicsQueue{ nullptr };
 	VkQueue m_presentQueue{ nullptr };
+	VkRenderPass m_renderPass{ nullptr };
+	VkPipelineLayout m_pipelineLayout{ nullptr };
+	VkPipeline m_graphicsPipeline{ nullptr };
 	VkDebugUtilsMessengerEXT m_debugMessenger{ nullptr };
+	std::vector<VkImage> m_swapChainImages;
+	std::vector<VkImageView> m_swapChainImageViews;
+	VkFormat m_swapChainImageFormat{ VK_FORMAT_UNDEFINED };
+	VkExtent2D m_swapChainExtent{ 0, 0 };
 
 	static VkDebugUtilsMessengerCreateInfoEXT newDebugUtilsMessengerCreateInfo();
 
@@ -68,6 +92,10 @@ private:
 	void createInstance();
 	void createSurface();
 	void createLogicalDevice();
+	void createSwapChain();
+	void createImageViews();
+	void createRenderPass();
+	void createGraphicsPipeline();
 	void setupDebugMessenger();
 	void pickPhysicalDevice();
 	bool checkValidationLayerSupport() const;

@@ -7,15 +7,30 @@
     <ClCompile Include="Render\VulkanMain.cpp">
       <Filter>Render</Filter>
     </ClCompile>
+    <ClCompile Include="Render\TestModule.ixx">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="Render\TestModule.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Render">
       <UniqueIdentifier>{aae3d3bc-bd76-4212-a171-483dd0c08e7e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Render\Shaders">
+      <UniqueIdentifier>{f83ee537-bfb4-4684-b267-cbb5b5ee30bf}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Render\VulkanMain.h">
       <Filter>Render</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Render\Shaders\Shader.vert">
+      <Filter>Render\Shaders</Filter>
+    </None>
+    <None Include="Render\Shaders\Shader.frag">
+      <Filter>Render\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
