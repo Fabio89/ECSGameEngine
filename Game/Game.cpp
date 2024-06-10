@@ -1,6 +1,8 @@
 import Engine.Core;
+import Engine.Render;
 
-#include <chrono>
+import <chrono>;
+import <mutex>;
 
 struct Position : Component<Position> {
 	float x{ 0.f }, y{ 0.f };
@@ -29,14 +31,12 @@ public:
 
 EngineSettings settings
 {
-.numThreads = 6,
-.targetFps = 144.f
+	.numThreads = 6,
+	.targetFps = 144.f
 };
 
-int main2()
+void gameInit(World& world)
 {
-	World world{ settings };
-
 	// Create entities
 	Entity entity1 = world.createEntity();
 	world.addComponent<Position>(entity1, 0.0f, 0.0f);
@@ -46,28 +46,35 @@ int main2()
 	auto movementSystem = std::make_unique<MovementSystem>();
 	movementSystem->addEntity(entity1, world);
 	world.addSystem(std::move(movementSystem));
+}
 
-	const auto targetFrameDuration = std::chrono::milliseconds{ static_cast<int>(1000 / settings.targetFps) };
+void gameShutdown()
+{
+	std::cout << "[Game] Shutdown complete.\n";
+}
 
-	// Game loop
-	for (int i = 0; i < 1000; ++i)
+int main()
+{
+	ApplicationState appState;
+	const LoopSettings loopSettings{ .targetFps = settings.targetFps };
+
+	std::thread renderThread = runRenderThread(loopSettings, appState);
+
+	World world{ settings };
+
+	gameInit(world);
+
+	auto gameTick = [&world](float deltaTime)
 	{
-		const auto frameStart = std::chrono::high_resolution_clock::now();
+		world.updateSystems(deltaTime);
+	};
 
-		world.updateSystems(1.f / settings.targetFps);
+	auto shouldRun = [&appState] { return !appState.closing; };
 
-		// Print the position of the entity
-		const Position& pos = world.readComponent<Position>(entity1);
-		std::cout << "Entity1 Position: (" << pos.x << ", " << pos.y << ")\n";
+	PerformLoop(loopSettings, gameTick, shouldRun);
 
-		const auto frameEnd = std::chrono::high_resolution_clock::now();
-		const auto frameDuration = std::chrono::duration_cast<std::chrono::milliseconds>(frameEnd - frameStart);
-
-		if (frameDuration < targetFrameDuration)
-		{
-			std::this_thread::sleep_for(targetFrameDuration - frameDuration);
-		}
-	}
+	gameShutdown();
+	renderThread.join();
 
 	return 0;
 }

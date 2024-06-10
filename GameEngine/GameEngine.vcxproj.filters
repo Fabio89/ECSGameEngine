@@ -7,10 +7,10 @@
     <ClCompile Include="Render\VulkanMain.cpp">
       <Filter>Render</Filter>
     </ClCompile>
-    <ClCompile Include="Render\TestModule.ixx">
+    <ClCompile Include="Render\Render.ixx">
       <Filter>Render</Filter>
     </ClCompile>
-    <ClCompile Include="Render\TestModule.cpp" />
+    <ClCompile Include="Render\Render.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Render">

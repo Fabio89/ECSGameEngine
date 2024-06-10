@@ -194,7 +194,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL HelloTriangleApplication::debugCallback
 	return VK_FALSE;
 }
 
-void HelloTriangleApplication::run()
+void HelloTriangleApplication::init()
 {
 	// Init window
 	{
@@ -220,46 +220,51 @@ void HelloTriangleApplication::run()
 		createCommandBuffer();
 		createSyncObjects();
 	}
+}
 
-	// Main loop
-	while (!glfwWindowShouldClose(m_window))
-	{
-		glfwPollEvents();
-		drawFrame();
-	}
+void HelloTriangleApplication::update()
+{
+	glfwPollEvents();
+	drawFrame();
+}
+
+void HelloTriangleApplication::shutdown()
+{
 	vkDeviceWaitIdle(m_device);
 
-	// Cleanup
+	if (EnableValidationLayers)
 	{
-		if (EnableValidationLayers)
-		{
-			DestroyDebugUtilsMessengerEXT(m_instance, m_debugMessenger, nullptr);
-		}
-
-		for (VkFramebuffer framebuffer : m_swapChainFramebuffers)
-		{
-			vkDestroyFramebuffer(m_device, framebuffer, nullptr);
-		}
-
-		for (VkImageView imageView : m_swapChainImageViews)
-		{
-			vkDestroyImageView(m_device, imageView, nullptr);
-		}
-
-		vkDestroyCommandPool(m_device, m_commandPool, nullptr);
-		vkDestroyPipeline(m_device, m_graphicsPipeline, nullptr);
-		vkDestroyPipelineLayout(m_device, m_pipelineLayout, nullptr);
-		vkDestroyRenderPass(m_device, m_renderPass, nullptr);
-		vkDestroySwapchainKHR(m_device, m_swapChain, nullptr);
-		vkDestroySemaphore(m_device, m_imageAvailableSemaphore, nullptr);
-		vkDestroySemaphore(m_device, m_renderFinishedSemaphore, nullptr);
-		vkDestroyFence(m_device, m_inFlightFence, nullptr);
-		vkDestroyDevice(m_device, nullptr);
-		vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
-		vkDestroyInstance(m_instance, nullptr);
-		glfwDestroyWindow(m_window);
-		glfwTerminate();
+		DestroyDebugUtilsMessengerEXT(m_instance, m_debugMessenger, nullptr);
 	}
+
+	for (VkFramebuffer framebuffer : m_swapChainFramebuffers)
+	{
+		vkDestroyFramebuffer(m_device, framebuffer, nullptr);
+	}
+
+	for (VkImageView imageView : m_swapChainImageViews)
+	{
+		vkDestroyImageView(m_device, imageView, nullptr);
+	}
+
+	vkDestroyCommandPool(m_device, m_commandPool, nullptr);
+	vkDestroyPipeline(m_device, m_graphicsPipeline, nullptr);
+	vkDestroyPipelineLayout(m_device, m_pipelineLayout, nullptr);
+	vkDestroyRenderPass(m_device, m_renderPass, nullptr);
+	vkDestroySwapchainKHR(m_device, m_swapChain, nullptr);
+	vkDestroySemaphore(m_device, m_imageAvailableSemaphore, nullptr);
+	vkDestroySemaphore(m_device, m_renderFinishedSemaphore, nullptr);
+	vkDestroyFence(m_device, m_inFlightFence, nullptr);
+	vkDestroyDevice(m_device, nullptr);
+	vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
+	vkDestroyInstance(m_instance, nullptr);
+	glfwDestroyWindow(m_window);
+	glfwTerminate();
+}
+
+bool HelloTriangleApplication::shouldWindowClose() const
+{
+	return glfwWindowShouldClose(m_window);
 }
 
 VkDebugUtilsMessengerCreateInfoEXT HelloTriangleApplication::newDebugUtilsMessengerCreateInfo()
@@ -517,8 +522,8 @@ void HelloTriangleApplication::createRenderPass()
 
 void HelloTriangleApplication::createGraphicsPipeline()
 {
-	auto vertShaderCode = readFile("Render/Shaders/vert.spv");
-	auto fragShaderCode = readFile("Render/Shaders/frag.spv");
+	auto vertShaderCode = readFile("D:/Dev/EcsGameEngine/GameEngine/Render/Shaders/vert.spv");
+	auto fragShaderCode = readFile("D:/Dev/EcsGameEngine/GameEngine/Render/Shaders/frag.spv");
 
 	VkShaderModule vertShaderModule = createShaderModule(vertShaderCode, m_device);
 	VkShaderModule fragShaderModule = createShaderModule(fragShaderCode, m_device);
@@ -949,21 +954,4 @@ std::vector<const char*> HelloTriangleApplication::getRequiredExtensions()
 	}
 
 	return extensions;
-}
-
-int main()
-{
-	HelloTriangleApplication app;
-
-	try
-	{
-		app.run();
-	}
-	catch (const std::exception& e)
-	{
-		std::cerr << e.what() << std::endl;
-		return 1;
-	}
-
-	return 0;
 }

@@ -18,7 +18,7 @@ const std::vector<const char*> DeviceExtensions
 
 bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 
-constexpr bool EnableValidationLayers =
+static constexpr bool EnableValidationLayers =
 #if NDEBUG
 false;
 #else
@@ -56,7 +56,10 @@ VkShaderModule createShaderModule(const std::vector<char>& code, VkDevice device
 class HelloTriangleApplication
 {
 public:
-	void run();
+	void init();
+	void update();
+	void shutdown();
+	bool shouldWindowClose() const;
 
 private:
 	glm::ivec2 m_windowSize{ 1600, 900 };
@@ -71,9 +74,10 @@ private:
 	VkRenderPass m_renderPass{ nullptr };
 	VkPipelineLayout m_pipelineLayout{ nullptr };
 	VkPipeline m_graphicsPipeline{ nullptr };
+
 	VkCommandPool m_commandPool{ nullptr };
 	VkCommandBuffer m_commandBuffer{ nullptr };
-	VkDebugUtilsMessengerEXT m_debugMessenger{ nullptr };
+
 	std::vector<VkImage> m_swapChainImages;
 	std::vector<VkImageView> m_swapChainImageViews;
 	std::vector<VkFramebuffer> m_swapChainFramebuffers;
@@ -83,6 +87,8 @@ private:
 	VkSemaphore m_imageAvailableSemaphore{ nullptr };
 	VkSemaphore m_renderFinishedSemaphore{ nullptr };
 	VkFence m_inFlightFence{ nullptr };
+
+	VkDebugUtilsMessengerEXT m_debugMessenger{ nullptr };
 
 	static VkDebugUtilsMessengerCreateInfoEXT newDebugUtilsMessengerCreateInfo();
 
