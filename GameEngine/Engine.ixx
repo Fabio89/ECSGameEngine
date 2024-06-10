@@ -47,9 +47,6 @@ public:
 	template<typename T>
 	const T& readComponent(Entity entity) const;
 
-	template<typename T>
-	T& editComponent(Entity entity);
-
 	void removeEntity(Entity entity);
 
 private:
@@ -190,12 +187,6 @@ const T& Archetype::readComponent(Entity entity) const
 	}
 	static const T invalid;
 	return invalid;
-}
-
-template<typename T>
-T& Archetype::editComponent(Entity entity)
-{
-	return const_cast<T&>(std::as_const(*this).readComponent(entity));
 }
 
 template<typename T, typename... Args>

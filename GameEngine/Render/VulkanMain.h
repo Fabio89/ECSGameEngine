@@ -59,7 +59,7 @@ public:
 	void run();
 
 private:
-	glm::ivec2 m_windowSize{ 900, 600 };
+	glm::ivec2 m_windowSize{ 1600, 900 };
 	GLFWwindow* m_window{ nullptr };
 	VkInstance m_instance{ nullptr };
 	VkPhysicalDevice m_physicalDevice{ nullptr };
@@ -71,11 +71,18 @@ private:
 	VkRenderPass m_renderPass{ nullptr };
 	VkPipelineLayout m_pipelineLayout{ nullptr };
 	VkPipeline m_graphicsPipeline{ nullptr };
+	VkCommandPool m_commandPool{ nullptr };
+	VkCommandBuffer m_commandBuffer{ nullptr };
 	VkDebugUtilsMessengerEXT m_debugMessenger{ nullptr };
 	std::vector<VkImage> m_swapChainImages;
 	std::vector<VkImageView> m_swapChainImageViews;
+	std::vector<VkFramebuffer> m_swapChainFramebuffers;
 	VkFormat m_swapChainImageFormat{ VK_FORMAT_UNDEFINED };
 	VkExtent2D m_swapChainExtent{ 0, 0 };
+
+	VkSemaphore m_imageAvailableSemaphore{ nullptr };
+	VkSemaphore m_renderFinishedSemaphore{ nullptr };
+	VkFence m_inFlightFence{ nullptr };
 
 	static VkDebugUtilsMessengerCreateInfoEXT newDebugUtilsMessengerCreateInfo();
 
@@ -96,7 +103,14 @@ private:
 	void createImageViews();
 	void createRenderPass();
 	void createGraphicsPipeline();
+	void createFramebuffers();
+	void createCommandPool();
+	void createCommandBuffer();
+	void createSyncObjects();
+
 	void setupDebugMessenger();
 	void pickPhysicalDevice();
 	bool checkValidationLayerSupport() const;
+	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+	void drawFrame();
 };
