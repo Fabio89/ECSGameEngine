@@ -16,7 +16,7 @@ export struct ApplicationState
 export std::thread runRenderThread(LoopSettings settings, ApplicationState& state);
 
 export template<typename T_Body, typename T_Condition>
-void PerformLoop(const LoopSettings& settings, T_Body&& body, T_Condition&& condition)
+void performLoop(const LoopSettings& settings, T_Body&& body, T_Condition&& condition)
 {
 	const auto targetFrameDuration = std::chrono::milliseconds{ static_cast<int>(1000 / settings.targetFps) };
 

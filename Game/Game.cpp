@@ -71,7 +71,7 @@ int main()
 
 	auto shouldRun = [&appState] { return !appState.closing; };
 
-	PerformLoop(loopSettings, gameTick, shouldRun);
+	performLoop(loopSettings, gameTick, shouldRun);
 
 	gameShutdown();
 	renderThread.join();

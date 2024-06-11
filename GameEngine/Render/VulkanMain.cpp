@@ -1,5 +1,9 @@
 #include "VulkanMain.h"
 
+import <imgui.h>;
+import <imgui_impl_glfw.h>;
+import <imgui_impl_vulkan.h>;
+
 bool checkDeviceExtensionSupport(VkPhysicalDevice device)
 {
 	uint32_t extensionCount;
@@ -19,15 +23,49 @@ bool checkDeviceExtensionSupport(VkPhysicalDevice device)
 	return std::ranges::all_of(DeviceExtensions, available);
 }
 
-VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger)
+VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback
+(
+	VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+	VkDebugUtilsMessageTypeFlagsEXT messageType,
+	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+	void* pUserData
+)
 {
-	if (auto func = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT")))
-		return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
-	else
-		return VK_ERROR_EXTENSION_NOT_PRESENT;
+	std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+	return VK_FALSE;
 }
 
-void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator)
+VkDebugUtilsMessengerCreateInfoEXT newDebugUtilsMessengerCreateInfo()
+{
+	return
+	{
+		.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+		.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
+		.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
+		.pfnUserCallback = debugCallback,
+		.pUserData = nullptr, // Optional
+	};
+}
+
+void createDebugUtilsMessenger(VkInstance instance, VkDebugUtilsMessengerEXT* pDebugMessenger, const VkAllocationCallbacks* pAllocator)
+{
+	if (!EnableValidationLayers)
+		return;
+
+	VkResult result;
+	const VkDebugUtilsMessengerCreateInfoEXT createInfo = newDebugUtilsMessengerCreateInfo();
+	if (auto func = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT")))
+		result = func(instance, &createInfo, pAllocator, pDebugMessenger);
+	else
+		result = VK_ERROR_EXTENSION_NOT_PRESENT;
+
+	if (result != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to set up debug messenger!");
+	}
+}
+
+void destroyDebugUtilsMessenger(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator)
 {
 	if (auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"))
 	{
@@ -182,18 +220,6 @@ VkShaderModule createShaderModule(const std::vector<char>& code, VkDevice device
 	return shaderModule;
 }
 
-VKAPI_ATTR VkBool32 VKAPI_CALL HelloTriangleApplication::debugCallback
-(
-	VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-	VkDebugUtilsMessageTypeFlagsEXT messageType,
-	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-	void* pUserData
-)
-{
-	std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
-	return VK_FALSE;
-}
-
 void HelloTriangleApplication::init()
 {
 	// Init window
@@ -207,7 +233,7 @@ void HelloTriangleApplication::init()
 	// Init Vulkan
 	{
 		createInstance();
-		setupDebugMessenger();
+		createDebugUtilsMessenger(m_instance, &m_debugMessenger, nullptr);
 		createSurface();
 		pickPhysicalDevice();
 		createLogicalDevice();
@@ -219,7 +245,10 @@ void HelloTriangleApplication::init()
 		createCommandPool();
 		createCommandBuffer();
 		createSyncObjects();
+		createDescriptorPool();
 	}
+	
+	initImguiHelper();
 }
 
 void HelloTriangleApplication::update()
@@ -232,9 +261,11 @@ void HelloTriangleApplication::shutdown()
 {
 	vkDeviceWaitIdle(m_device);
 
+	imguiHelper.shutdown();
+	
 	if (EnableValidationLayers)
 	{
-		DestroyDebugUtilsMessengerEXT(m_instance, m_debugMessenger, nullptr);
+		destroyDebugUtilsMessenger(m_instance, m_debugMessenger, nullptr);
 	}
 
 	for (VkFramebuffer framebuffer : m_swapChainFramebuffers)
@@ -247,6 +278,7 @@ void HelloTriangleApplication::shutdown()
 		vkDestroyImageView(m_device, imageView, nullptr);
 	}
 
+	vkDestroyDescriptorPool(m_device, m_descriptorPool, nullptr);
 	vkDestroyCommandPool(m_device, m_commandPool, nullptr);
 	vkDestroyPipeline(m_device, m_graphicsPipeline, nullptr);
 	vkDestroyPipelineLayout(m_device, m_pipelineLayout, nullptr);
@@ -265,18 +297,6 @@ void HelloTriangleApplication::shutdown()
 bool HelloTriangleApplication::shouldWindowClose() const
 {
 	return glfwWindowShouldClose(m_window);
-}
-
-VkDebugUtilsMessengerCreateInfoEXT HelloTriangleApplication::newDebugUtilsMessengerCreateInfo()
-{
-	return
-	{
-		.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
-		.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
-		.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
-		.pfnUserCallback = debugCallback,
-		.pUserData = nullptr, // Optional
-	};
 }
 
 void HelloTriangleApplication::createInstance()
@@ -775,17 +795,45 @@ void HelloTriangleApplication::createSyncObjects()
 	}
 }
 
-void HelloTriangleApplication::setupDebugMessenger()
+void HelloTriangleApplication::createDescriptorPool()
 {
-	if (!EnableValidationLayers)
-		return;
-
-	const auto createInfo = newDebugUtilsMessengerCreateInfo();
-
-	if (CreateDebugUtilsMessengerEXT(m_instance, &createInfo, nullptr, &m_debugMessenger) != VK_SUCCESS)
+	const VkDescriptorPoolSize poolSizes[]
 	{
-		throw std::runtime_error("failed to set up debug messenger!");
-	}
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
+	};
+
+	const VkDescriptorPoolCreateInfo poolInfo
+	{
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+		.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+		.maxSets = 1,
+		.poolSizeCount = (uint32_t)IM_ARRAYSIZE(poolSizes),
+		.pPoolSizes = poolSizes,
+	};
+
+	vkCreateDescriptorPool(m_device, &poolInfo, nullptr, &m_descriptorPool);
+}
+
+void HelloTriangleApplication::initImguiHelper()
+{
+	ImGui_ImplVulkan_InitInfo imguiInitInfo
+	{
+		.Instance = m_instance,
+		.PhysicalDevice = m_physicalDevice,
+		.Device = m_device,
+		.QueueFamily = *findQueueFamilies(m_physicalDevice, m_surface).graphicsFamily,
+		.Queue = m_graphicsQueue,
+		.DescriptorPool = m_descriptorPool,
+		.RenderPass = m_renderPass,
+		.MinImageCount = 2,
+		.ImageCount = static_cast<uint32_t>(m_swapChainImageViews.size()),
+		.MSAASamples = VK_SAMPLE_COUNT_1_BIT,
+		.PipelineCache = m_pipelineCache,
+		.Subpass = 0,
+		.Allocator = nullptr,
+		.CheckVkResultFn = nullptr,
+	};
+	imguiHelper.init(m_window, imguiInitInfo);
 }
 
 void HelloTriangleApplication::pickPhysicalDevice()
@@ -885,6 +933,9 @@ void HelloTriangleApplication::recordCommandBuffer(VkCommandBuffer commandBuffer
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
 	vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+
+	imguiHelper.renderFrame(commandBuffer);
+
 	vkCmdEndRenderPass(commandBuffer);
 
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) 
@@ -897,6 +948,8 @@ void HelloTriangleApplication::drawFrame()
 {
 	vkWaitForFences(m_device, 1, &m_inFlightFence, VK_TRUE, UINT64_MAX);
 	vkResetFences(m_device, 1, &m_inFlightFence);
+
+	imguiHelper.drawFrame();
 
 	uint32_t imageIndex;
 	vkAcquireNextImageKHR(m_device, m_swapChain, UINT64_MAX, m_imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
@@ -954,4 +1007,45 @@ std::vector<const char*> HelloTriangleApplication::getRequiredExtensions()
 	}
 
 	return extensions;
+}
+
+void ImGuiHelper::init(GLFWwindow* window, ImGui_ImplVulkan_InitInfo& initInfo)
+{
+	// Setup Dear ImGui context
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+	// Setup Dear ImGui style
+	ImGui::StyleColorsDark();
+
+	// Init ImGui
+	ImGui_ImplGlfw_InitForVulkan(window, true);
+	ImGui_ImplVulkan_Init(&initInfo);
+}
+
+void ImGuiHelper::drawFrame()
+{
+	ImGui_ImplVulkan_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+
+	// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+	if (m_showDemoWindow)
+		ImGui::ShowDemoWindow(&m_showDemoWindow);
+}
+
+void ImGuiHelper::renderFrame(VkCommandBuffer commandBuffer)
+{
+	ImGui::Render();
+	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+}
+
+void ImGuiHelper::shutdown()
+{
+	ImGui_ImplVulkan_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 }

@@ -25,9 +25,9 @@ false;
 true;
 #endif
 
-VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger);
-
-void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
+VkDebugUtilsMessengerCreateInfoEXT newDebugUtilsMessengerCreateInfo();
+void createDebugUtilsMessenger(VkInstance instance, VkDebugUtilsMessengerEXT* pDebugMessenger, const VkAllocationCallbacks* pAllocator);
+void destroyDebugUtilsMessenger(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
 
 struct QueueFamilyIndices
 {
@@ -52,6 +52,19 @@ VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, GLFWwi
 
 std::vector<char> readFile(const std::string& filename);
 VkShaderModule createShaderModule(const std::vector<char>& code, VkDevice device);
+
+struct ImGui_ImplVulkan_InitInfo;
+class ImGuiHelper
+{
+public:
+	void init(GLFWwindow* window, ImGui_ImplVulkan_InitInfo& initInfo);
+	void drawFrame();
+	void renderFrame(VkCommandBuffer commandBuffer);
+	void shutdown();
+
+private:
+	bool m_showDemoWindow{ true };
+};
 
 class HelloTriangleApplication
 {
@@ -78,6 +91,9 @@ private:
 	VkCommandPool m_commandPool{ nullptr };
 	VkCommandBuffer m_commandBuffer{ nullptr };
 
+	VkPipelineCache m_pipelineCache{ nullptr };
+	VkDescriptorPool m_descriptorPool{ nullptr };
+
 	std::vector<VkImage> m_swapChainImages;
 	std::vector<VkImageView> m_swapChainImageViews;
 	std::vector<VkFramebuffer> m_swapChainFramebuffers;
@@ -90,17 +106,9 @@ private:
 
 	VkDebugUtilsMessengerEXT m_debugMessenger{ nullptr };
 
-	static VkDebugUtilsMessengerCreateInfoEXT newDebugUtilsMessengerCreateInfo();
+	ImGuiHelper imguiHelper;
 
 	static std::vector<const char*> getRequiredExtensions();
-
-	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback
-	(
-		VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-		VkDebugUtilsMessageTypeFlagsEXT messageType,
-		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-		void* pUserData
-	);
 
 	void createInstance();
 	void createSurface();
@@ -113,8 +121,8 @@ private:
 	void createCommandPool();
 	void createCommandBuffer();
 	void createSyncObjects();
-
-	void setupDebugMessenger();
+	void createDescriptorPool();
+	void initImguiHelper();
 	void pickPhysicalDevice();
 	bool checkValidationLayerSupport() const;
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);

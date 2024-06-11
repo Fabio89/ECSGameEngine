@@ -6,7 +6,7 @@ void renderThreadFunc(LoopSettings settings, ApplicationState& state)
 	HelloTriangleApplication application;
 	application.init();
 
-	PerformLoop(settings, [&](float deltaTime) { application.update(); }, [&] {	return !application.shouldWindowClose(); });
+	performLoop(settings, [&](float deltaTime) { application.update(); }, [&] {	return !application.shouldWindowClose(); });
 
 	{
 		std::lock_guard<std::mutex> lock(state.mutex);

@@ -12,20 +12,21 @@ public:
 		for (int i = 0; i < numThreads; ++i)
 		{
 			m_workers.emplace_back([this]
+			{
+				while (true)
 				{
-					while (true)
+					Job job;
 					{
-						Job job;
-						{
-							std::unique_lock<std::mutex> lock{ m_queueMutex };
-							m_condition.wait(lock, [this] { return m_stopFlag || !m_jobs.empty(); });
-							if (m_stopFlag && m_jobs.empty()) return;
-							job = std::move(m_jobs.front());
-							m_jobs.pop();
-						}
-						job();
+						std::unique_lock<std::mutex> lock{ m_queueMutex };
+						m_condition.wait(lock, [this] { return m_stopFlag || !m_jobs.empty(); });
+						if (m_stopFlag && m_jobs.empty())
+							return;
+						job = std::move(m_jobs.front());
+						m_jobs.pop();
 					}
-				});
+					job();
+				}
+			});
 		}
 	}
 
