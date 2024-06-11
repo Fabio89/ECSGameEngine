@@ -5,6 +5,7 @@
 
 import std.core;
 import <glm/ext/vector_int2.hpp>;
+import <glm/glm.hpp>;
 
 const std::vector<const char*> ValidationLayers
 {
@@ -55,6 +56,22 @@ VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, GLFWwi
 std::vector<char> readFile(const std::string& filename);
 VkShaderModule createShaderModule(const std::vector<char>& code, VkDevice device);
 
+struct Vertex
+{
+	glm::vec2 pos;
+	glm::vec3 color;
+
+	static VkVertexInputBindingDescription getBindingDescription();
+	static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions();
+};
+
+const std::vector<Vertex> vertices
+{
+	{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+	{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+	{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
+};
+
 struct ImGui_ImplVulkan_InitInfo;
 class ImGuiHelper
 {
@@ -89,7 +106,8 @@ private:
 	VkRenderPass m_renderPass{ nullptr };
 	VkPipelineLayout m_pipelineLayout{ nullptr };
 	VkPipeline m_graphicsPipeline{ nullptr };
-
+	VkBuffer m_vertexBuffer{ nullptr };
+	VkDeviceMemory m_vertexBufferMemory{ nullptr };
 	VkCommandPool m_commandPool{ nullptr };
 	std::vector<VkCommandBuffer> m_commandBuffers;
 
@@ -130,12 +148,14 @@ private:
 	void createRenderPass();
 	void createGraphicsPipeline();
 	void createCommandPool();
+	void createVertexBuffer();
 	void createCommandBuffers();
 	void createSyncObjects();
 	void createDescriptorPool();
 	void initImguiHelper();
 	void pickPhysicalDevice();
 	bool checkValidationLayerSupport() const;
+	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 	void drawFrame();
 };

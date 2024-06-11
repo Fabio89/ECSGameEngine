@@ -20,5 +20,5 @@ void renderThreadFunc(LoopSettings settings, ApplicationState& state)
 
 std::thread runRenderThread(LoopSettings settings, ApplicationState& state)
 {
-	return std::thread{ renderThreadFunc, LoopSettings{.targetFps = 144 }, std::ref(state) };
+	return std::thread{ renderThreadFunc, settings, std::ref(state) };
 }
