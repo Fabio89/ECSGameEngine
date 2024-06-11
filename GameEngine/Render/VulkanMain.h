@@ -16,6 +16,8 @@ const std::vector<const char*> DeviceExtensions
 	VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
+static constexpr std::size_t MaxFramesInFlight{ 2 };
+
 bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 
 static constexpr bool EnableValidationLayers =
@@ -89,7 +91,7 @@ private:
 	VkPipeline m_graphicsPipeline{ nullptr };
 
 	VkCommandPool m_commandPool{ nullptr };
-	VkCommandBuffer m_commandBuffer{ nullptr };
+	std::vector<VkCommandBuffer> m_commandBuffers;
 
 	VkPipelineCache m_pipelineCache{ nullptr };
 	VkDescriptorPool m_descriptorPool{ nullptr };
@@ -100,26 +102,35 @@ private:
 	VkFormat m_swapChainImageFormat{ VK_FORMAT_UNDEFINED };
 	VkExtent2D m_swapChainExtent{ 0, 0 };
 
-	VkSemaphore m_imageAvailableSemaphore{ nullptr };
-	VkSemaphore m_renderFinishedSemaphore{ nullptr };
-	VkFence m_inFlightFence{ nullptr };
+	std::vector<VkSemaphore> m_imageAvailableSemaphores;
+	std::vector<VkSemaphore> m_renderFinishedSemaphores;
+	std::vector<VkFence> m_inFlightFences;
 
 	VkDebugUtilsMessengerEXT m_debugMessenger{ nullptr };
 
 	ImGuiHelper imguiHelper;
 
+	uint32_t currentFrame{ 0 };
+	bool m_framebufferResized{ false };
+
 	static std::vector<const char*> getRequiredExtensions();
+	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
 	void createInstance();
 	void createSurface();
 	void createLogicalDevice();
-	void createSwapChain();
+
+	void recreateSwapchain();
+	void createSwapchain();
 	void createImageViews();
+	void createFramebuffers();
+
+	void cleanupSwapchain();
+
 	void createRenderPass();
 	void createGraphicsPipeline();
-	void createFramebuffers();
 	void createCommandPool();
-	void createCommandBuffer();
+	void createCommandBuffers();
 	void createSyncObjects();
 	void createDescriptorPool();
 	void initImguiHelper();
