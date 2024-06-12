@@ -29,7 +29,7 @@ void performLoop(const LoopSettings& settings, T_Body&& body, T_Condition&& cond
 		const auto frameEnd = std::chrono::high_resolution_clock::now();
 		const auto frameDuration = std::chrono::duration_cast<std::chrono::milliseconds>(frameEnd - frameStart);
 
-		if (frameDuration < targetFrameDuration)
+		if (frameDuration < targetFrameDuration && settings.targetFps > 0.f)
 		{
 			std::this_thread::sleep_for(targetFrameDuration - frameDuration);
 		}

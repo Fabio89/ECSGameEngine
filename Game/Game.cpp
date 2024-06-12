@@ -32,7 +32,7 @@ public:
 EngineSettings settings
 {
 	.numThreads = 6,
-	.targetFps = 144.f
+	.targetFps = 0.f
 };
 
 void gameInit(World& world)

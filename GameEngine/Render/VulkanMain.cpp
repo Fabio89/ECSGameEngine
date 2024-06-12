@@ -73,13 +73,12 @@ void destroyDebugUtilsMessenger(VkInstance instance, VkDebugUtilsMessengerEXT de
 	}
 }
 
-bool areAllIndicesSet(const QueueFamilyIndices& indices)
+bool QueueFamilyUtils::areAllIndicesSet(const QueueFamilyIndices& indices)
 {
-	return indices.graphicsFamily.has_value()
-		&& indices.presentFamily.has_value();
+	return std::ranges::all_of(indices, [](auto&& index) { return index.has_value(); });
 }
 
-QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface)
+QueueFamilyIndices QueueFamilyUtils::findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface)
 {
 	QueueFamilyIndices indices;
 
@@ -93,21 +92,25 @@ QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surfa
 	{
 		const VkQueueFamilyProperties& family = queueFamilies[i];
 		if ((family.queueFlags & VK_QUEUE_GRAPHICS_BIT))
-			indices.graphicsFamily = i;
+			indices.get(QueueFamilyType::Graphics) = i;
+		else if ((family.queueFlags & VK_QUEUE_TRANSFER_BIT))
+			indices.get(QueueFamilyType::Transfer) = i;
 
-		VkBool32 presentSupport = false;
-		vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
-		if (presentSupport)
-			indices.presentFamily = i;
+		{
+			VkBool32 presentSupport = false;
+			vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+			if (presentSupport)
+				indices.get(QueueFamilyType::Present) = i;
+		}
 
-		if (areAllIndicesSet(indices))
+		if (QueueFamilyUtils::areAllIndicesSet(indices))
 			break;
 	}
 
 	auto isGraphicsFamily = [](const VkQueueFamilyProperties& family) { return (family.queueFlags & VK_QUEUE_GRAPHICS_BIT); };
 	if (auto it = std::ranges::find_if(queueFamilies, isGraphicsFamily); it != queueFamilies.end())
 	{
-		indices.graphicsFamily = static_cast<uint32_t>(it - queueFamilies.begin());
+		indices.get(QueueFamilyType::Graphics) = static_cast<uint32_t>(it - queueFamilies.begin());
 	}
 
 	return indices;
@@ -272,6 +275,7 @@ void HelloTriangleApplication::shutdown()
 	vkDestroyBuffer(m_device, m_vertexBuffer, nullptr);
 	vkFreeMemory(m_device, m_vertexBufferMemory, nullptr);
 	vkDestroyCommandPool(m_device, m_commandPool, nullptr);
+	vkDestroyCommandPool(m_device, m_transferCommandPool, nullptr);
 	vkDestroyPipeline(m_device, m_graphicsPipeline, nullptr);
 	vkDestroyPipelineLayout(m_device, m_pipelineLayout, nullptr);
 	vkDestroyRenderPass(m_device, m_renderPass, nullptr);
@@ -350,23 +354,29 @@ void HelloTriangleApplication::createSurface()
 
 void HelloTriangleApplication::createLogicalDevice()
 {
-	QueueFamilyIndices indices = findQueueFamilies(m_physicalDevice, m_surface);
+	const QueueFamilyIndices indices = QueueFamilyUtils::findQueueFamilies(m_physicalDevice, m_surface);
 
-	std::set<uint32_t> uniqueQueueFamilies{ indices.graphicsFamily.value(), indices.presentFamily.value() };
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 	float queuePriority = 1.0f;
 
-	queueCreateInfos.reserve(uniqueQueueFamilies.size());
+	queueCreateInfos.reserve(indices.size());
 
-	for (uint32_t queueFamily : uniqueQueueFamilies)
+	auto indexRange = indices | std::views::transform([&](auto&& index) { return *index; });
+	std::set<uint32_t> uniqueQueueFamilies(indexRange.begin(), indexRange.end());
+	
+	for (std::optional<uint32_t> queueFamily : uniqueQueueFamilies)
 	{
+		assert(queueFamily.has_value());
+		if (!queueFamily.has_value())
+			continue;
+
 		queueCreateInfos.emplace_back(VkDeviceQueueCreateInfo
-			{
-				.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-				.queueFamilyIndex = queueFamily,
-				.queueCount = 1,
-				.pQueuePriorities = &queuePriority,
-			});
+		{
+			.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+			.queueFamilyIndex = *queueFamily,
+			.queueCount = 1,
+			.pQueuePriorities = &queuePriority,
+		});
 	}
 
 	const VkPhysicalDeviceFeatures deviceFeatures{};
@@ -386,8 +396,9 @@ void HelloTriangleApplication::createLogicalDevice()
 	if (vkCreateDevice(m_physicalDevice, &createInfo, nullptr, &m_device) != VK_SUCCESS)
 		throw std::runtime_error("failed to create logical device!");
 
-	vkGetDeviceQueue(m_device, indices.graphicsFamily.value(), 0, &m_graphicsQueue);
-	vkGetDeviceQueue(m_device, indices.presentFamily.value(), 0, &m_presentQueue);
+	vkGetDeviceQueue(m_device, *indices.get(QueueFamilyType::Graphics), 0, &m_graphicsQueue);
+	vkGetDeviceQueue(m_device, *indices.get(QueueFamilyType::Present), 0, &m_presentQueue);
+	vkGetDeviceQueue(m_device, *indices.get(QueueFamilyType::Transfer), 0, &m_transferQueue);
 }
 
 void HelloTriangleApplication::recreateSwapchain()
@@ -440,14 +451,15 @@ void HelloTriangleApplication::createSwapchain()
 		.oldSwapchain = VK_NULL_HANDLE,
 	};
 
-	const QueueFamilyIndices indices = findQueueFamilies(m_physicalDevice, m_surface);
-	const uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
+	const QueueFamilyIndices indices = QueueFamilyUtils::findQueueFamilies(m_physicalDevice, m_surface);
+	auto indicesRange = indices | std::views::transform([](std::optional<uint32_t> value) { return *value; });
+	const std::vector<uint32_t> queueFamilyIndices(indicesRange.begin(), indicesRange.end());
 
-	if (indices.graphicsFamily != indices.presentFamily)
+	if (indices.get(QueueFamilyType::Graphics) != indices.get(QueueFamilyType::Present))
 	{
 		createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
 		createInfo.queueFamilyIndexCount = 2;
-		createInfo.pQueueFamilyIndices = queueFamilyIndices;
+		createInfo.pQueueFamilyIndices = queueFamilyIndices.data();
 	}
 	else
 	{
@@ -782,57 +794,68 @@ void HelloTriangleApplication::cleanupSwapchain()
 
 void HelloTriangleApplication::createCommandPool()
 {
-	const QueueFamilyIndices queueFamilyIndices = findQueueFamilies(m_physicalDevice, m_surface);
+	const QueueFamilyIndices queueFamilyIndices = QueueFamilyUtils::findQueueFamilies(m_physicalDevice, m_surface);
 
 	const VkCommandPoolCreateInfo poolInfo
 	{
 		.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
 		.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-		.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value(),
+		.queueFamilyIndex = *queueFamilyIndices.get(QueueFamilyType::Graphics),
 	};
 
 	if (vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_commandPool) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to create command pool!");
 	}
+
+	const VkCommandPoolCreateInfo transferPoolInfo
+	{
+		.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+		.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+		.queueFamilyIndex = *queueFamilyIndices.get(QueueFamilyType::Transfer),
+	};
+
+	if (vkCreateCommandPool(m_device, &transferPoolInfo, nullptr, &m_transferCommandPool) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create transfer command pool!");
+	}
 }
 
 void HelloTriangleApplication::createVertexBuffer()
 {
-	const VkBufferCreateInfo bufferInfo
+	auto indices = QueueFamilyUtils::findQueueFamilies(m_physicalDevice, m_surface);
+
+	const CreateBufferInfo stagingBufferInfo
 	{
-		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+		.device = m_device,
+		.physicalDevice = m_physicalDevice,
 		.size = sizeof(decltype(vertices)::value_type) * vertices.size(),
-		.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+		.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		.properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		//.queueFamilyIndices = { *indices.get(QueueFamilyType::Graphics), *indices.get(QueueFamilyType::Transfer) },
 	};
 
-	if (vkCreateBuffer(m_device, &bufferInfo, nullptr, &m_vertexBuffer) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to create vertex buffer!");
-	}
-
-	VkMemoryRequirements memRequirements;
-	vkGetBufferMemoryRequirements(m_device, m_vertexBuffer, &memRequirements);
-
-	const VkMemoryAllocateInfo allocInfo
-	{
-		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-		.allocationSize = memRequirements.size,
-		.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT),
-	};
-
-	if (vkAllocateMemory(m_device, &allocInfo, nullptr, &m_vertexBufferMemory) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to allocate vertex buffer memory!");
-	}
-
-	vkBindBufferMemory(m_device, m_vertexBuffer, m_vertexBufferMemory, 0);
+	auto [stagingBuffer, stagingBufferMemory] = createBuffer(stagingBufferInfo);
 
 	void* data;
-	vkMapMemory(m_device, m_vertexBufferMemory, 0, bufferInfo.size, 0, &data);
-	memcpy(data, vertices.data(), static_cast<size_t>(bufferInfo.size));
-	vkUnmapMemory(m_device, m_vertexBufferMemory);
+	vkMapMemory(m_device, stagingBufferMemory, 0, stagingBufferInfo.size, 0, &data);
+	memcpy(data, vertices.data(), static_cast<size_t>(stagingBufferInfo.size));
+	vkUnmapMemory(m_device, stagingBufferMemory);
+
+	const CreateBufferInfo bufferInfo
+	{
+		.device = m_device,
+		.physicalDevice = m_physicalDevice,
+		.size = sizeof(decltype(vertices)::value_type) * vertices.size(),
+		.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		.properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		//.queueFamilyIndices = { *indices.get(QueueFamilyType::Graphics), *indices.get(QueueFamilyType::Transfer) },
+	};
+	std::tie(m_vertexBuffer, m_vertexBufferMemory) = createBuffer(bufferInfo);
+
+	copyBuffer(m_device, m_transferCommandPool, m_transferQueue, bufferInfo.size, stagingBuffer, m_vertexBuffer);
+	vkDestroyBuffer(m_device, stagingBuffer, nullptr);
+	vkFreeMemory(m_device, stagingBufferMemory, nullptr);
 }
 
 void HelloTriangleApplication::createCommandBuffers()
@@ -906,7 +929,7 @@ void HelloTriangleApplication::initImguiHelper()
 		.Instance = m_instance,
 		.PhysicalDevice = m_physicalDevice,
 		.Device = m_device,
-		.QueueFamily = *findQueueFamilies(m_physicalDevice, m_surface).graphicsFamily,
+		.QueueFamily = *QueueFamilyUtils::findQueueFamilies(m_physicalDevice, m_surface).get(QueueFamilyType::Graphics),
 		.Queue = m_graphicsQueue,
 		.DescriptorPool = m_descriptorPool,
 		.RenderPass = m_renderPass,
@@ -934,7 +957,7 @@ void HelloTriangleApplication::pickPhysicalDevice()
 
 	auto isDeviceSuitable = [&](VkPhysicalDevice device)
 	{
-		if (!areAllIndicesSet(findQueueFamilies(device, m_surface))
+		if (!QueueFamilyUtils::areAllIndicesSet(QueueFamilyUtils::findQueueFamilies(device, m_surface))
 			|| !checkDeviceExtensionSupport(device))
 			return false;
 
@@ -974,10 +997,10 @@ bool HelloTriangleApplication::checkValidationLayerSupport() const
 	return std::ranges::all_of(ValidationLayers, isLayerAvailable);
 }
 
-uint32_t HelloTriangleApplication::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const
+uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties)
 {
 	VkPhysicalDeviceMemoryProperties memProperties;
-	vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &memProperties);
+	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
 
 	for (uint32_t i = 0; i < memProperties.memoryTypeCount; ++i)
 	{
@@ -989,6 +1012,87 @@ uint32_t HelloTriangleApplication::findMemoryType(uint32_t typeFilter, VkMemoryP
 	}
 
 	throw std::runtime_error("failed to find suitable memory type!");
+}
+
+std::tuple<VkBuffer, VkDeviceMemory> createBuffer(const CreateBufferInfo& info)
+{
+	std::tuple<VkBuffer, VkDeviceMemory> result;
+	auto& [buffer, memory] = result;
+
+	const VkBufferCreateInfo bufferInfo
+	{
+		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+		.size = info.size,
+		.usage = info.usage,
+		.sharingMode = info.queueFamilyIndices.size() > 1u ? VK_SHARING_MODE_CONCURRENT : VK_SHARING_MODE_EXCLUSIVE,
+		.queueFamilyIndexCount = static_cast<uint32_t>(info.queueFamilyIndices.size()),
+		.pQueueFamilyIndices = info.queueFamilyIndices.begin()
+	};
+
+	if (vkCreateBuffer(info.device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create vertex buffer!");
+	}
+
+	VkMemoryRequirements memRequirements;
+	vkGetBufferMemoryRequirements(info.device, buffer, &memRequirements);
+
+	const VkMemoryAllocateInfo allocInfo
+	{
+		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+		.allocationSize = memRequirements.size,
+		.memoryTypeIndex = findMemoryType(info.physicalDevice, memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT),
+	};
+
+	if (vkAllocateMemory(info.device, &allocInfo, nullptr, &memory) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to allocate vertex buffer memory!");
+	}
+
+	vkBindBufferMemory(info.device, buffer, memory, 0);
+
+	return result;
+}
+
+void copyBuffer(VkDevice device, VkCommandPool commandPool, VkQueue queue, VkDeviceSize size, VkBuffer srcBuffer, VkBuffer dstBuffer)
+{
+	const VkCommandBufferAllocateInfo allocInfo
+	{
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+		.commandPool = commandPool,
+		.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+		.commandBufferCount = 1,
+	};
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+
+	const VkCommandBufferBeginInfo beginInfo
+	{
+		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+		.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+	};
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+	const VkBufferCopy copyRegion
+	{
+		.srcOffset = 0, // Optional
+		.dstOffset = 0, // Optional
+		.size = size,
+	};
+	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+	vkEndCommandBuffer(commandBuffer);
+
+	const VkSubmitInfo submitInfo
+	{
+		.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+		.commandBufferCount = 1,
+		.pCommandBuffers = &commandBuffer,
+	};
+
+	vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(queue);
+	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
 
 void HelloTriangleApplication::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
@@ -1234,4 +1338,23 @@ std::array<VkVertexInputAttributeDescription, 2> Vertex::getAttributeDescription
 			.offset = offsetof(Vertex, color),
 		},
 	};
+}
+
+QueueFamilyIndices::QueueFamilyIndices()
+	: m_families(static_cast<size_t>(QueueFamilyType::INDEX_TYPE_COUNT))
+{}
+
+int QueueFamilyIndices::size() const
+{
+	return static_cast<int>(m_families.size());
+}
+
+const std::optional<uint32_t>& QueueFamilyIndices::get(QueueFamilyType type) const
+{
+	return m_families.at(static_cast<size_t>(type));
+}
+
+std::optional<uint32_t>& QueueFamilyIndices::get(QueueFamilyType type)
+{
+	return m_families.at(static_cast<size_t>(type));
 }

@@ -17,7 +17,7 @@ const std::vector<const char*> DeviceExtensions
 	VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
-static constexpr std::size_t MaxFramesInFlight{ 2 };
+static constexpr size_t MaxFramesInFlight{ 2 };
 
 bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 
@@ -32,13 +32,40 @@ VkDebugUtilsMessengerCreateInfoEXT newDebugUtilsMessengerCreateInfo();
 void createDebugUtilsMessenger(VkInstance instance, VkDebugUtilsMessengerEXT* pDebugMessenger, const VkAllocationCallbacks* pAllocator);
 void destroyDebugUtilsMessenger(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator);
 
-struct QueueFamilyIndices
+enum class QueueFamilyType : size_t
 {
-	std::optional<uint32_t> graphicsFamily;
-	std::optional<uint32_t> presentFamily;
+	Graphics,
+	Present,
+	Transfer,
+	INDEX_TYPE_COUNT
 };
-bool areAllIndicesSet(const QueueFamilyIndices&);
-QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
+
+class QueueFamilyIndices
+{
+	std::vector<std::optional<uint32_t>> m_families;
+
+public:
+	QueueFamilyIndices();
+
+	int size() const;
+
+	const std::optional<uint32_t>& get(QueueFamilyType type) const;
+	std::optional<uint32_t>& get(QueueFamilyType type);
+
+	using Iterator = decltype(m_families)::iterator;
+	Iterator begin() { return m_families.begin(); }
+	Iterator end() { return m_families.end(); }
+
+	using ConstIterator = decltype(m_families)::const_iterator;
+	ConstIterator begin() const { return m_families.cbegin(); }
+	ConstIterator end() const { return m_families.cend(); }
+};
+
+namespace QueueFamilyUtils
+{
+	bool areAllIndicesSet(const QueueFamilyIndices&);
+	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
+}
 
 struct SwapChainSupportDetails
 {
@@ -55,6 +82,20 @@ VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, GLFWwi
 
 std::vector<char> readFile(const std::string& filename);
 VkShaderModule createShaderModule(const std::vector<char>& code, VkDevice device);
+
+uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties);
+struct CreateBufferInfo
+{
+	VkDevice device;
+	VkPhysicalDevice physicalDevice;
+	VkDeviceSize size;
+	VkBufferUsageFlags usage;
+	VkMemoryPropertyFlags properties;
+	std::initializer_list<uint32_t> queueFamilyIndices;
+};
+[[nodiscard]] std::tuple<VkBuffer, VkDeviceMemory> createBuffer(const CreateBufferInfo& info);
+
+void copyBuffer(VkDevice device, VkCommandPool commandPool, VkQueue queue, VkDeviceSize size, VkBuffer srcBuffer, VkBuffer dstBuffer);
 
 struct Vertex
 {
@@ -103,12 +144,14 @@ private:
 	VkSwapchainKHR m_swapChain{ nullptr };
 	VkQueue m_graphicsQueue{ nullptr };
 	VkQueue m_presentQueue{ nullptr };
+	VkQueue m_transferQueue{ nullptr };
 	VkRenderPass m_renderPass{ nullptr };
 	VkPipelineLayout m_pipelineLayout{ nullptr };
 	VkPipeline m_graphicsPipeline{ nullptr };
 	VkBuffer m_vertexBuffer{ nullptr };
 	VkDeviceMemory m_vertexBufferMemory{ nullptr };
 	VkCommandPool m_commandPool{ nullptr };
+	VkCommandPool m_transferCommandPool{ nullptr };
 	std::vector<VkCommandBuffer> m_commandBuffers;
 
 	VkPipelineCache m_pipelineCache{ nullptr };
@@ -155,7 +198,6 @@ private:
 	void initImguiHelper();
 	void pickPhysicalDevice();
 	bool checkValidationLayerSupport() const;
-	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 	void drawFrame();
 };
