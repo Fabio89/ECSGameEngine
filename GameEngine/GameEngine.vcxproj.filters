@@ -25,6 +25,9 @@
     <ClCompile Include="..\ExternalModules\vulkan.ixx">
       <Filter>External Modules</Filter>
     </ClCompile>
+    <ClCompile Include="Render\VulkanMain.ixx">
+      <Filter>Render</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Render">
@@ -36,11 +39,6 @@
     <Filter Include="External Modules">
       <UniqueIdentifier>{ec807586-01de-4625-bbf2-9c070a7eeb64}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Render\VulkanMain.h">
-      <Filter>Render</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Render\Shaders\Shader.vert">

@@ -1,8 +1,7 @@
-#pragma once
+export module Engine.Render.Application;
 
 import Engine.Render.Core;
 import std;
-import <glm/ext/vector_int2.hpp>;
 import <glm/glm.hpp>;
 
 const std::vector ValidationLayers
@@ -15,7 +14,7 @@ const std::vector DeviceExtensions
 	vk::KHRSwapchainExtensionName
 };
 
-static constexpr size_t MaxFramesInFlight{ 2 };
+constexpr size_t MaxFramesInFlight{ 2 };
 
 bool checkDeviceExtensionSupport(vk::PhysicalDevice device);
 
@@ -95,7 +94,7 @@ struct Mesh
 		0, 1, 2, 2, 3, 0
 	};
 };
-static const Mesh mesh;
+const Mesh mesh;
 
 struct UniformBufferObject
 {
@@ -104,20 +103,34 @@ struct UniformBufferObject
 	glm::mat4 proj;
 };
 
-struct ImGui_ImplVulkan_InitInfo;
+struct ImGuiInitInfo
+{
+	vk::Instance instance;
+	vk::PhysicalDevice physicalDevice;
+	vk::Device device;
+	vk::SurfaceKHR surface;
+	vk::Queue queue;
+	vk::RenderPass renderPass;
+	size_t imageCount;
+	vk::PipelineCache pipelineCache;
+};
+
 class ImGuiHelper
 {
 public:
-	static void init(GLFWwindow* window, ImGui_ImplVulkan_InitInfo& initInfo);
+	static constexpr bool enabled = true;
+	void init(GLFWwindow* window, const ImGuiInitInfo& initInfo);
 	void drawFrame();
-	static void renderFrame(vk::CommandBuffer commandBuffer);
-	static void shutdown();
+	void renderFrame(vk::CommandBuffer commandBuffer);
+	void shutdown();
 
 private:
 	bool m_showDemoWindow{ true };
+	vk::Device m_device{ nullptr };
+	vk::DescriptorPool m_descriptorPool{ nullptr };
 };
 
-class HelloTriangleApplication
+export class HelloTriangleApplication
 {
 public:
 	void init();
@@ -155,7 +168,8 @@ private:
 
 	vk::PipelineCache m_pipelineCache{ nullptr };
 	vk::DescriptorPool m_descriptorPool{ nullptr };
-
+	std::vector<vk::DescriptorSet> m_descriptorSets;
+	
 	std::vector<vk::Image> m_swapChainImages;
 	std::vector<vk::ImageView> m_swapChainImageViews;
 	std::vector<vk::Framebuffer> m_swapChainFramebuffers;
@@ -168,9 +182,9 @@ private:
 
 	vk::DebugUtilsMessengerEXT m_debugMessenger{ nullptr };
 
-	ImGuiHelper imguiHelper;
+	ImGuiHelper m_imguiHelper;
 
-	uint32_t currentFrame{ 0 };
+	uint32_t m_currentFrame{ 0 };
 	bool m_framebufferResized{ false };
 
 	static std::vector<const char*> getRequiredExtensions();
@@ -197,17 +211,17 @@ private:
 	void createCommandBuffers();
 	void createSyncObjects();
 	void createDescriptorPool();
-	void initImguiHelper() const;
+	void createDescriptorSets();
 	void pickPhysicalDevice();
 	[[nodiscard]] static bool checkValidationLayerSupport();
-	void recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex) const;
+	void recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex);
 	void updateUniformBuffer(uint32_t currentImage, float deltaTime) const;
 	void drawFrame(float deltaTime);
 };
 
 template<bufferable_data T>
 [[nodiscard]]
-inline std::tuple<vk::Buffer, vk::DeviceMemory> createDataBuffer(const T& range, const CreateDataBufferInfo& info)
+std::tuple<vk::Buffer, vk::DeviceMemory> createDataBuffer(const T& range, const CreateDataBufferInfo& info)
 {
 	return createDataBuffer(range.data(), sizeof(std::remove_reference<decltype(range)>::type::value_type) * range.size(), info);
 }

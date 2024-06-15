@@ -254,7 +254,7 @@
     <ClCompile Include="QueueFamily\QueueFamily.ixx">
       <FileType>Document</FileType>
     </ClCompile>
-    <ClInclude Include="Render\VulkanMain.h" />
+    <ClCompile Include="Render\VulkanMain.ixx" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Render\Shaders\Shader.frag" />

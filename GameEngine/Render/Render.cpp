@@ -1,5 +1,5 @@
 module Engine.Render;
-import "VulkanMain.h";
+import Engine.Render.Application;
 
 void renderThreadFunc(LoopSettings settings, ApplicationState& state)
 {
