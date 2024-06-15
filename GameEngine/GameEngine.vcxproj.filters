@@ -10,7 +10,21 @@
     <ClCompile Include="Render\Render.ixx">
       <Filter>Render</Filter>
     </ClCompile>
-    <ClCompile Include="Render\Render.cpp" />
+    <ClCompile Include="Render\VulkanIntegration.ixx">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="Render\RenderCore.ixx">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="Render\Render.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="QueueFamily\QueueFamily.ixx">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ExternalModules\vulkan.ixx">
+      <Filter>External Modules</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Render">
@@ -18,6 +32,9 @@
     </Filter>
     <Filter Include="Render\Shaders">
       <UniqueIdentifier>{f83ee537-bfb4-4684-b267-cbb5b5ee30bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="External Modules">
+      <UniqueIdentifier>{ec807586-01de-4625-bbf2-9c070a7eeb64}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

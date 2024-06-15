@@ -1,8 +1,7 @@
 import Engine.Core;
 import Engine.Render;
 
-import <chrono>;
-import <mutex>;
+import std;
 
 struct Position : Component<Position> {
 	float x{ 0.f }, y{ 0.f };
@@ -32,7 +31,7 @@ public:
 EngineSettings settings
 {
 	.numThreads = 6,
-	.targetFps = 0.f
+	.targetFps = 120.f
 };
 
 void gameInit(World& world)

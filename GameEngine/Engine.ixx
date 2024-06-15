@@ -1,6 +1,6 @@
 export module Engine.Core;
 
-import std.core;
+import std;
 import Engine.Job;
 
 export struct EngineSettings
@@ -12,7 +12,7 @@ export struct EngineSettings
 	float targetFps{ 120.f };
 };
 
-export using Entity = uint32_t;
+export using Entity = size_t;
 
 export template<typename T>
 struct Component
@@ -122,7 +122,7 @@ private:
 template<typename T>
 void Archetype::ComponentArray<T>::insert(Entity entity, T component)
 {
-	if (m_entityToIndex.find(entity) != m_entityToIndex.end())
+	if (m_entityToIndex.contains(entity))
 	{
 		size_t index = m_entityToIndex[entity];
 		m_components[index] = component;

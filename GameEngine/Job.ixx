@@ -1,6 +1,6 @@
 export module Engine.Job;
 
-import std.core;
+import std;
 
 export class JobSystem
 {

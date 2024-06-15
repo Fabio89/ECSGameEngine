@@ -10,7 +10,7 @@ void System::update(float deltaTime)
 
 void System::addUpdateFunction(std::function<void(float)> func)
 {
-	m_updateFunctions.push_back(func);
+	m_updateFunctions.push_back(std::move(func));
 }
 
 void Archetype::removeEntity(Entity entity)
@@ -65,7 +65,7 @@ Archetype& World::editArchetype(const EntitySignature& signature)
 
 Archetype& World::editOrCreateArchetype(const EntitySignature& signature)
 {
-	if (m_archetypes.find(signature) == m_archetypes.end()) {
+	if (!m_archetypes.contains(signature)) {
 		m_archetypes[signature] = Archetype();
 	}
 	return m_archetypes[signature];
