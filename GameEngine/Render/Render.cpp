@@ -3,19 +3,26 @@ import Engine.Render.Application;
 
 void renderThreadFunc(LoopSettings settings, ApplicationState& state)
 {
-	HelloTriangleApplication application;
-	application.init();
-
-	performLoop(settings, [&](float deltaTime) { application.update(deltaTime); }, [&] {	return !application.shouldWindowClose(); });
-
+	try
 	{
-		std::lock_guard<std::mutex> lock(state.mutex);
-		state.closing = true;
-		std::cout << "[Application] Closing...\n";
-	}
+		HelloTriangleApplication application;
+		application.init();
 
-	application.shutdown();
-	std::cout << "[Render] Shutdown complete.\n";
+		performLoop(settings, [&](float deltaTime) { application.update(deltaTime); }, [&] {	return !application.shouldWindowClose(); });
+
+		{
+			std::lock_guard lock(state.mutex);
+			state.closing = true;
+			std::cout << "[Application] Closing...\n";
+		}
+
+		application.shutdown();
+		std::cout << "[Render] Shutdown complete.\n";
+	}
+	catch (const std::exception& ex)
+	{
+		std::cerr << "Error: " << ex.what() << std::endl;
+	}
 }
 
 std::thread runRenderThread(LoopSettings settings, ApplicationState& state)

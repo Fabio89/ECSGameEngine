@@ -7,153 +7,12 @@ import <imgui_impl_vulkan.h>;
 import <glm/gtc/matrix_transform.hpp>;
 import <glm/ext/vector_int2.hpp>;
 
-bool checkDeviceExtensionSupport(vk::PhysicalDevice device)
+HelloTriangleApplication::~HelloTriangleApplication() noexcept
 {
-    const std::vector<vk::ExtensionProperties> availableExtensions = device.enumerateDeviceExtensionProperties(nullptr);
-    const std::set<std::string> requiredExtensions(DeviceExtensions.begin(), DeviceExtensions.end());
-
-    auto available = [&](const char* requiredExtName)
+    if (!m_terminated)
     {
-        auto matchesRequiredName = [&](vk::ExtensionProperties availableExt)
-        {
-            return strcmp(availableExt.extensionName, requiredExtName) == 0;
-        };
-        return std::ranges::any_of(availableExtensions, matchesRequiredName);
-    };
-
-    return std::ranges::all_of(DeviceExtensions, available);
-}
-
-VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback
-(
-    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT messageType,
-    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-    void* pUserData
-)
-{
-    std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
-    return vk::False;
-}
-
-vk::DebugUtilsMessengerCreateInfoEXT newDebugUtilsMessengerCreateInfo()
-{
-    return
-    {
-        .messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
-        vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError,
-        .messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
-        vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
-        .pfnUserCallback = debugCallback,
-        .pUserData = nullptr, // Optional
-    };
-}
-
-void createDebugUtilsMessenger(vk::Instance instance, vk::DebugUtilsMessengerEXT* pDebugMessenger,
-                               const vk::AllocationCallbacks* pAllocator)
-{
-    if constexpr (!vk::EnableValidationLayers)
-        return;
-
-    const vk::DebugUtilsMessengerCreateInfoEXT createInfo = newDebugUtilsMessengerCreateInfo();
-    *pDebugMessenger = instance.createDebugUtilsMessengerEXT(createInfo, pAllocator);
-}
-
-void destroyDebugUtilsMessenger(vk::Instance instance, vk::DebugUtilsMessengerEXT debugMessenger,
-                                const vk::AllocationCallbacks* pAllocator)
-{
-    instance.destroyDebugUtilsMessengerEXT(debugMessenger, pAllocator);
-}
-
-SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice device, vk::SurfaceKHR surface)
-{
-    return
-    {
-        .capabilities = device.getSurfaceCapabilitiesKHR(surface),
-        .formats = device.getSurfaceFormatsKHR(surface),
-        .presentModes = device.getSurfacePresentModesKHR(surface),
-    };
-}
-
-vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats)
-{
-    assert(!availableFormats.empty());
-
-    auto isDesirableFormat = [](auto&& fmt)
-    {
-        return fmt.format == vk::Format::eB8G8R8A8Srgb && fmt.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear;
-    };
-    if (auto it = std::ranges::find_if(availableFormats, isDesirableFormat); it != availableFormats.end())
-        return *it;
-
-    return *availableFormats.begin();
-}
-
-vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes)
-{
-    assert(!availablePresentModes.empty());
-
-    if (auto it = std::ranges::find(availablePresentModes, vk::PresentModeKHR::eMailbox); it != availablePresentModes.
-        end())
-        return *it;
-
-    assert(std::ranges::contains(availablePresentModes, vk::PresentModeKHR::eFifo));
-    return vk::PresentModeKHR::eFifo;
-}
-
-vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities, GLFWwindow* window)
-{
-    if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
-    {
-        return capabilities.currentExtent;
+        shutdown();
     }
-    else
-    {
-        int width, height;
-        glfwGetFramebufferSize(window, &width, &height);
-
-        vk::Extent2D actualExtent
-        {
-            static_cast<uint32_t>(width),
-            static_cast<uint32_t>(height)
-        };
-
-        actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width,
-                                        capabilities.maxImageExtent.width);
-        actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height,
-                                         capabilities.maxImageExtent.height);
-
-        return actualExtent;
-    }
-}
-
-std::vector<char> readFile(const std::string& filename)
-{
-    std::ifstream file{filename, std::ios::ate | std::ios::binary};
-    if (!file.is_open())
-    {
-        throw std::runtime_error("failed to open file!");
-    }
-
-    const int fileSize = static_cast<int>(file.tellg());
-    std::vector<char> buffer(fileSize);
-    file.seekg(0);
-    file.read(buffer.data(), fileSize);
-    file.close();
-
-    return buffer;
-}
-
-vk::ShaderModule createShaderModule(const std::vector<char>& code, vk::Device device)
-{
-    const vk::ShaderModuleCreateInfo createInfo
-    {
-
-        .codeSize = code.size(),
-        .pCode = reinterpret_cast<const uint32_t*>(code.data()),
-    };
-
-    return device.createShaderModule(createInfo, nullptr);
 }
 
 void HelloTriangleApplication::init()
@@ -179,7 +38,7 @@ void HelloTriangleApplication::init()
 
         createInstance();
 
-        createDebugUtilsMessenger(m_instance, &m_debugMessenger, nullptr);
+        RenderUtils::createDebugUtilsMessenger(m_instance, &m_debugMessenger, nullptr);
         createSurface();
         pickPhysicalDevice();
         createLogicalDevice();
@@ -199,7 +58,7 @@ void HelloTriangleApplication::init()
         createDescriptorSets();
     }
 
-    ImGuiInitInfo imguiInfo
+    const ImGuiInitInfo imguiInfo
     {
         .instance = m_instance,
         .physicalDevice = m_physicalDevice,
@@ -221,6 +80,7 @@ void HelloTriangleApplication::update(float deltaTime)
 
 void HelloTriangleApplication::shutdown()
 {
+    m_terminated = true;
     m_device.waitIdle();
 
     m_imguiHelper.shutdown();
@@ -257,7 +117,7 @@ void HelloTriangleApplication::shutdown()
 
     if (vk::EnableValidationLayers)
     {
-        destroyDebugUtilsMessenger(m_instance, m_debugMessenger, nullptr);
+        RenderUtils::destroyDebugUtilsMessenger(m_instance, m_debugMessenger, nullptr);
     }
 
     m_instance.destroy();
@@ -296,12 +156,12 @@ void HelloTriangleApplication::createInstance()
         .ppEnabledExtensionNames = extensions.data(),
     };
 
-    const auto debugCreateInfo = newDebugUtilsMessengerCreateInfo();
+    const auto debugCreateInfo = RenderUtils::newDebugUtilsMessengerCreateInfo();
 
     if (vk::EnableValidationLayers)
     {
-        createInfo.enabledLayerCount = static_cast<uint32_t>(ValidationLayers.size());
-        createInfo.ppEnabledLayerNames = ValidationLayers.data();
+        createInfo.enabledLayerCount = static_cast<uint32_t>(RenderUtils::ValidationLayers.size());
+        createInfo.ppEnabledLayerNames = RenderUtils::ValidationLayers.data();
         createInfo.pNext = &debugCreateInfo;
     }
 
@@ -350,16 +210,16 @@ void HelloTriangleApplication::createLogicalDevice()
         .pQueueCreateInfos = queueCreateInfos.data(),
         .enabledLayerCount = [&]
         {
-            if constexpr (vk::EnableValidationLayers) return static_cast<uint32_t>(ValidationLayers.size());
+            if constexpr (vk::EnableValidationLayers) return static_cast<uint32_t>(RenderUtils::ValidationLayers.size());
             else return 0;
         }(),
         .ppEnabledLayerNames = [&]
         {
-            if constexpr (vk::EnableValidationLayers) return ValidationLayers.data();
+            if constexpr (vk::EnableValidationLayers) return RenderUtils::ValidationLayers.data();
             else return nullptr;
         }(),
-        .enabledExtensionCount = static_cast<uint32_t>(DeviceExtensions.size()),
-        .ppEnabledExtensionNames = DeviceExtensions.data(),
+        .enabledExtensionCount = static_cast<uint32_t>(RenderUtils::DeviceExtensions.size()),
+        .ppEnabledExtensionNames = RenderUtils::DeviceExtensions.data(),
         .pEnabledFeatures = &deviceFeatures,
     };
 
@@ -393,11 +253,12 @@ void HelloTriangleApplication::recreateSwapchain()
 
 void HelloTriangleApplication::createSwapchain()
 {
-    const SwapChainSupportDetails swapChainSupport = querySwapChainSupport(m_physicalDevice, m_surface);
+    const RenderUtils::SwapChainSupportDetails swapChainSupport = RenderUtils::querySwapChainSupport(
+        m_physicalDevice, m_surface);
 
-    const vk::SurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
-    const vk::PresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
-    const vk::Extent2D extent = chooseSwapExtent(swapChainSupport.capabilities, m_window);
+    const vk::SurfaceFormatKHR surfaceFormat = RenderUtils::chooseSwapSurfaceFormat(swapChainSupport.formats);
+    const vk::PresentModeKHR presentMode = RenderUtils::chooseSwapPresentMode(swapChainSupport.presentModes);
+    const vk::Extent2D extent = RenderUtils::chooseSwapExtent(swapChainSupport.capabilities, m_window);
 
     uint32_t minImageCount = swapChainSupport.capabilities.minImageCount + 1;
 
@@ -566,11 +427,11 @@ void HelloTriangleApplication::createDescriptorSetLayout()
 
 void HelloTriangleApplication::createGraphicsPipeline()
 {
-    auto vertShaderCode = readFile("D:/Dev/EcsGameEngine/GameEngine/Render/Shaders/vert.spv");
-    auto fragShaderCode = readFile("D:/Dev/EcsGameEngine/GameEngine/Render/Shaders/frag.spv");
+    auto vertShaderCode = RenderUtils::readFile("D:/Dev/EcsGameEngine/GameEngine/Render/Shaders/vert.spv");
+    auto fragShaderCode = RenderUtils::readFile("D:/Dev/EcsGameEngine/GameEngine/Render/Shaders/frag.spv");
 
-    vk::ShaderModule vertShaderModule = createShaderModule(vertShaderCode, m_device);
-    vk::ShaderModule fragShaderModule = createShaderModule(fragShaderCode, m_device);
+    vk::ShaderModule vertShaderModule = RenderUtils::createShaderModule(vertShaderCode, m_device);
+    vk::ShaderModule fragShaderModule = RenderUtils::createShaderModule(fragShaderCode, m_device);
 
     const vk::PipelineShaderStageCreateInfo vertShaderStageInfo
     {
@@ -807,7 +668,7 @@ void HelloTriangleApplication::createCommandPool()
 
 void HelloTriangleApplication::createVertexBuffer()
 {
-    const CreateDataBufferInfo info
+    const RenderUtils::CreateDataBufferInfo info
     {
         .device = m_device,
         .physicalDevice = m_physicalDevice,
@@ -816,12 +677,12 @@ void HelloTriangleApplication::createVertexBuffer()
         .transferQueue = m_transferQueue,
         .transferCommandPool = m_transferCommandPool,
     };
-    std::tie(m_vertexBuffer, m_vertexBufferMemory) = createDataBuffer(mesh.vertices, info);
+    std::tie(m_vertexBuffer, m_vertexBufferMemory) = RenderUtils::createDataBuffer(mesh.vertices, info);
 }
 
 void HelloTriangleApplication::createIndexBuffer()
 {
-    const CreateDataBufferInfo info
+    const RenderUtils::CreateDataBufferInfo info
     {
         .device = m_device,
         .physicalDevice = m_physicalDevice,
@@ -830,7 +691,7 @@ void HelloTriangleApplication::createIndexBuffer()
         .transferQueue = m_transferQueue,
         .transferCommandPool = m_transferCommandPool,
     };
-    std::tie(m_indexBuffer, m_indexBufferMemory) = createDataBuffer(mesh.indices, info);
+    std::tie(m_indexBuffer, m_indexBufferMemory) = RenderUtils::createDataBuffer(mesh.indices, info);
 }
 
 void HelloTriangleApplication::createUniformBuffers()
@@ -841,7 +702,7 @@ void HelloTriangleApplication::createUniformBuffers()
     m_uniformBuffersMemory.resize(MaxFramesInFlight);
     m_uniformBuffersMapped.resize(MaxFramesInFlight);
 
-    const CreateBufferInfo bufferInfo
+    const RenderUtils::CreateBufferInfo bufferInfo
     {
         .device = m_device,
         .physicalDevice = m_physicalDevice,
@@ -854,7 +715,7 @@ void HelloTriangleApplication::createUniformBuffers()
 
     for (auto&& [buffer, memory, mapped] : bufferRange)
     {
-        std::tie(buffer, memory) = createBuffer(bufferInfo);
+        std::tie(buffer, memory) = RenderUtils::createBuffer(bufferInfo);
 
         vkMapMemory(m_device, memory, 0, bufferSize, 0, &mapped);
     }
@@ -971,10 +832,10 @@ void HelloTriangleApplication::pickPhysicalDevice()
     auto isDeviceSuitable = [&](vk::PhysicalDevice device)
     {
         if (!QueueFamilyUtils::areAllIndicesSet(QueueFamilyUtils::findQueueFamilies(device, m_surface))
-            || !checkDeviceExtensionSupport(device))
+            || !RenderUtils::checkDeviceExtensionSupport(device))
             return false;
 
-        const SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device, m_surface);
+        const RenderUtils::SwapChainSupportDetails swapChainSupport = RenderUtils::querySwapChainSupport(device, m_surface);
         return !swapChainSupport.formats.empty()
             && !swapChainSupport.presentModes.empty();
     };
@@ -1003,147 +864,7 @@ bool HelloTriangleApplication::checkValidationLayerSupport()
         return std::ranges::any_of(availableLayers, matchesName);
     };
 
-    return std::ranges::all_of(ValidationLayers, isLayerAvailable);
-}
-
-uint32_t findMemoryType(vk::PhysicalDevice physicalDevice, uint32_t typeFilter, vk::MemoryPropertyFlags properties)
-{
-    vk::PhysicalDeviceMemoryProperties memProperties = physicalDevice.getMemoryProperties();
-
-    for (uint32_t i = 0; i < memProperties.memoryTypeCount; ++i)
-    {
-        if ((typeFilter & (1 << i))
-            && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
-        {
-            return i;
-        }
-    }
-
-    throw std::runtime_error("failed to find suitable memory type!");
-}
-
-std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(const CreateBufferInfo& info)
-{
-    std::tuple<vk::Buffer, vk::DeviceMemory> result;
-    auto& [buffer, memory] = result;
-
-    const vk::BufferCreateInfo bufferInfo
-    {
-        .size = info.size,
-        .usage = info.usage,
-        .sharingMode = info.queueFamilyIndices.size() > 1u ? vk::SharingMode::eConcurrent : vk::SharingMode::eExclusive,
-        .queueFamilyIndexCount = static_cast<uint32_t>(info.queueFamilyIndices.size()),
-        .pQueueFamilyIndices = info.queueFamilyIndices.begin()
-    };
-
-    buffer = info.device.createBuffer(bufferInfo, nullptr);
-    if (!buffer)
-    {
-        throw std::runtime_error("failed to create vertex buffer!");
-    }
-
-    const vk::MemoryRequirements memRequirements = info.device.getBufferMemoryRequirements(buffer);
-
-    const vk::MemoryAllocateInfo allocInfo
-    {
-        .allocationSize = memRequirements.size,
-        .memoryTypeIndex = findMemoryType(info.physicalDevice, memRequirements.memoryTypeBits,
-                                          vk::MemoryPropertyFlagBits::eHostVisible |
-                                          vk::MemoryPropertyFlagBits::eHostCoherent),
-    };
-
-    memory = info.device.allocateMemory(allocInfo, nullptr);
-    if (!memory)
-    {
-        throw std::runtime_error("failed to allocate vertex buffer memory!");
-    }
-
-    info.device.bindBufferMemory(buffer, memory, 0);
-
-    return result;
-}
-
-std::tuple<vk::Buffer, vk::DeviceMemory> createDataBuffer(const void* data, vk::DeviceSize size,
-                                                          const CreateDataBufferInfo& info)
-{
-    auto allFamilyIndices = QueueFamilyUtils::findQueueFamilies(info.physicalDevice, info.surface);
-    auto familyIndicesToUse = {
-        *allFamilyIndices.get(QueueFamilyType::Graphics), *allFamilyIndices.get(QueueFamilyType::Transfer)
-    };
-
-    const CreateBufferInfo stagingBufferInfo
-    {
-        .device = info.device,
-        .physicalDevice = info.physicalDevice,
-        .size = size,
-        .usage = vk::BufferUsageFlagBits::eTransferSrc,
-        .properties = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-        .queueFamilyIndices = familyIndicesToUse,
-    };
-
-    auto [stagingBuffer, stagingBufferMemory] = createBuffer(stagingBufferInfo);
-
-    void* mapData;
-    vkMapMemory(info.device, stagingBufferMemory, 0, size, 0, &mapData);
-    memcpy(mapData, data, static_cast<size_t>(size));
-    vkUnmapMemory(info.device, stagingBufferMemory);
-
-    const CreateBufferInfo bufferInfo
-    {
-        .device = info.device,
-        .physicalDevice = info.physicalDevice,
-        .size = size,
-        .usage = vk::BufferUsageFlagBits::eTransferDst | static_cast<vk::BufferUsageFlags>(info.usageType),
-        .properties = vk::MemoryPropertyFlagBits::eDeviceLocal,
-        .queueFamilyIndices = familyIndicesToUse,
-    };
-
-    auto result = createBuffer(bufferInfo);
-
-    copyBuffer(info.device, info.transferCommandPool, info.transferQueue, size, stagingBuffer,
-               std::get<vk::Buffer>(result));
-    vkDestroyBuffer(info.device, stagingBuffer, nullptr);
-    vkFreeMemory(info.device, stagingBufferMemory, nullptr);
-
-    return result;
-}
-
-void copyBuffer(vk::Device device, vk::CommandPool commandPool, vk::Queue queue, vk::DeviceSize size,
-                vk::Buffer srcBuffer, vk::Buffer dstBuffer)
-{
-    const vk::CommandBufferAllocateInfo allocInfo
-    {
-        .commandPool = commandPool,
-        .level = vk::CommandBufferLevel::ePrimary,
-        .commandBufferCount = 1,
-    };
-    const vk::CommandBuffer commandBuffer = *device.allocateCommandBuffers(allocInfo).begin();
-
-    constexpr vk::CommandBufferBeginInfo beginInfo
-    {
-        .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit,
-    };
-    commandBuffer.begin(beginInfo);
-
-    const vk::BufferCopy copyRegion
-    {
-        .srcOffset = 0, // Optional
-        .dstOffset = 0, // Optional
-        .size = size,
-    };
-    commandBuffer.copyBuffer(srcBuffer, dstBuffer, 1, &copyRegion);
-    commandBuffer.end();
-
-    const vk::SubmitInfo submitInfo
-    {
-
-        .commandBufferCount = 1,
-        .pCommandBuffers = &commandBuffer,
-    };
-
-    queue.submit(submitInfo, nullptr);
-    queue.waitIdle();
-    device.freeCommandBuffers(commandPool, 1, &commandBuffer);
+    return std::ranges::all_of(RenderUtils::ValidationLayers, isLayerAvailable);
 }
 
 void HelloTriangleApplication::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex)
@@ -1208,9 +929,10 @@ void HelloTriangleApplication::recordCommandBuffer(vk::CommandBuffer commandBuff
 
 void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage, float deltaTime) const
 {
+    static float timeElapsed = 0.f;
     UniformBufferObject uniformBufferObject
     {
-        .model = glm::rotate(glm::mat4(1.0f), deltaTime * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
+        .model = glm::rotate(glm::mat4(1.0f), timeElapsed * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
         .view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
         .proj = glm::perspective(glm::radians(45.0f),
                                  m_swapChainExtent.width / static_cast<float>(m_swapChainExtent.height), 0.1f, 10.0f),
@@ -1218,6 +940,7 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage, float 
     uniformBufferObject.proj[1][1] *= -1;
 
     memcpy(m_uniformBuffersMapped[currentImage], &uniformBufferObject, sizeof(uniformBufferObject));
+    timeElapsed += deltaTime;
 }
 
 void HelloTriangleApplication::drawFrame(float deltaTime)
@@ -1232,17 +955,15 @@ void HelloTriangleApplication::drawFrame(float deltaTime)
         throw std::runtime_error("failed to wait for fences!");
     }
 
-    m_imguiHelper.drawFrame();
+    const auto imageResult = m_device.acquireNextImageKHR(m_swapChain, UINT64_MAX, imageAvailableSemaphore,
+                                                          nullptr);
 
-    auto&& [imageResult, imageIndex] = m_device.acquireNextImageKHR(m_swapChain, UINT64_MAX, imageAvailableSemaphore,
-                                                                    nullptr);
-
-    if (imageResult == vk::Result::eErrorOutOfDateKHR)
+    if (imageResult.result == vk::Result::eErrorOutOfDateKHR)
     {
         recreateSwapchain();
         return;
     }
-    else if (imageResult != vk::Result::eSuccess && imageResult != vk::Result::eSuboptimalKHR)
+    else if (imageResult.result != vk::Result::eSuccess && imageResult.result != vk::Result::eSuboptimalKHR)
     {
         throw std::runtime_error("failed to acquire swap chain image!");
     }
@@ -1252,8 +973,10 @@ void HelloTriangleApplication::drawFrame(float deltaTime)
         throw std::runtime_error("failed to reset fences!");
     }
 
+    m_imguiHelper.drawFrame();
+
     commandBuffer.reset();
-    recordCommandBuffer(commandBuffer, imageIndex);
+    recordCommandBuffer(commandBuffer, imageResult.value);
 
     updateUniformBuffer(m_currentFrame, deltaTime);
 
@@ -1285,20 +1008,26 @@ void HelloTriangleApplication::drawFrame(float deltaTime)
         .pWaitSemaphores = signalSemaphores,
         .swapchainCount = 1,
         .pSwapchains = swapChains,
-        .pImageIndices = &imageIndex,
+        .pImageIndices = &imageResult.value,
         .pResults = nullptr, // Optional
     };
 
-    if (const vk::Result result = m_presentQueue.presentKHR(presentInfo);
-        result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR || m_framebufferResized)
+    bool shouldRecreateSwapchain;
+    try
+    {
+        const vk::Result result = m_presentQueue.presentKHR(presentInfo);
+        shouldRecreateSwapchain = result == vk::Result::eSuboptimalKHR || m_framebufferResized;
+    }
+    catch (const vk::OutOfDateKHRError&)
+    {
+        shouldRecreateSwapchain = true;
+    }
+
+    if (shouldRecreateSwapchain)
     {
         m_framebufferResized = false;
         recreateSwapchain();
         return;
-    }
-    else if (result != vk::Result::eSuccess)
-    {
-        throw std::runtime_error("failed to acquire swap chain image!");
     }
 
     m_currentFrame = (m_currentFrame + 1) % MaxFramesInFlight;
@@ -1331,7 +1060,7 @@ void ImGuiHelper::init(GLFWwindow* window, const ImGuiInitInfo& initInfo)
         return;
 
     m_device = initInfo.device;
-    
+
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -1345,7 +1074,7 @@ void ImGuiHelper::init(GLFWwindow* window, const ImGuiInitInfo& initInfo)
 
     // Init ImGui
     ImGui_ImplGlfw_InitForVulkan(window, true);
-    
+
     constexpr vk::DescriptorPoolSize imguiPoolSizes[]
     {
         {vk::DescriptorType::eCombinedImageSampler, 1},
@@ -1362,7 +1091,7 @@ void ImGuiHelper::init(GLFWwindow* window, const ImGuiInitInfo& initInfo)
     m_descriptorPool = initInfo.device.createDescriptorPool(imguiPoolInfo, nullptr);
     if (!m_descriptorPool)
         throw std::runtime_error("failed to create descriptor pool!");
-    
+
     ImGui_ImplVulkan_InitInfo imguiInitInfo
     {
         .Instance = initInfo.instance,
@@ -1398,6 +1127,7 @@ void ImGuiHelper::drawFrame()
         ImGui::ShowDemoWindow(&m_showDemoWindow);
 }
 
+// ReSharper disable once CppMemberFunctionMayBeStatic
 void ImGuiHelper::renderFrame(vk::CommandBuffer commandBuffer)
 {
     if constexpr (!enabled)

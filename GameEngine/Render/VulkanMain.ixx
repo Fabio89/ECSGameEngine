@@ -4,224 +4,154 @@ import Engine.Render.Core;
 import std;
 import <glm/glm.hpp>;
 
-const std::vector ValidationLayers
-{
-	"VK_LAYER_KHRONOS_validation"
-};
-
-const std::vector DeviceExtensions
-{
-	vk::KHRSwapchainExtensionName
-};
-
-constexpr size_t MaxFramesInFlight{ 2 };
-
-bool checkDeviceExtensionSupport(vk::PhysicalDevice device);
-
-vk::DebugUtilsMessengerCreateInfoEXT newDebugUtilsMessengerCreateInfo();
-void createDebugUtilsMessenger(vk::Instance instance, vk::DebugUtilsMessengerEXT* pDebugMessenger, const vk::AllocationCallbacks* pAllocator);
-void destroyDebugUtilsMessenger(vk::Instance instance, vk::DebugUtilsMessengerEXT debugMessenger, const vk::AllocationCallbacks* pAllocator);
-
-struct SwapChainSupportDetails
-{
-	vk::SurfaceCapabilitiesKHR capabilities;
-	std::vector<vk::SurfaceFormatKHR> formats;
-	std::vector<vk::PresentModeKHR> presentModes;
-};
-SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice device, vk::SurfaceKHR surface);
-
-vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
-
-vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
-vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities, GLFWwindow* window);
-
-std::vector<char> readFile(const std::string& filename);
-vk::ShaderModule createShaderModule(const std::vector<char>& code, vk::Device device);
-
-uint32_t findMemoryType(vk::PhysicalDevice physicalDevice, uint32_t typeFilter, vk::MemoryPropertyFlags properties);
-struct CreateBufferInfo
-{
-	vk::Device device;
-	vk::PhysicalDevice physicalDevice;
-	vk::DeviceSize size;
-	vk::BufferUsageFlags usage;
-	vk::MemoryPropertyFlags properties;
-	std::initializer_list<uint32_t> queueFamilyIndices;
-};
-[[nodiscard]] std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(const CreateBufferInfo& info);
-
-struct CreateDataBufferInfo
-{
-	vk::Device device;
-	vk::PhysicalDevice physicalDevice;
-	vk::SurfaceKHR surface;
-	vk::BufferUsageFlagBits usageType;
-	vk::Queue transferQueue;
-	vk::CommandPool transferCommandPool;
-};
-
-template<typename T>
-concept bufferable_data = requires { typename T::value_type; }
-						&& requires(const T& t) { { t.data() } -> std::convertible_to<const void*>; }
-						&& requires(const T& t) { { t.size() } -> std::integral; };
-
-template <bufferable_data T>
-std::tuple<vk::Buffer, vk::DeviceMemory> createDataBuffer(const T& range, const CreateDataBufferInfo& info);
-std::tuple<vk::Buffer, vk::DeviceMemory> createDataBuffer(const void* data, vk::DeviceSize size, const CreateDataBufferInfo& info);
-
-void copyBuffer(vk::Device device, vk::CommandPool commandPool, vk::Queue queue, vk::DeviceSize size, vk::Buffer srcBuffer, vk::Buffer dstBuffer);
+constexpr size_t MaxFramesInFlight{2};
 
 struct Vertex
 {
-	glm::vec2 pos;
-	glm::vec3 color;
+    glm::vec2 pos;
+    glm::vec3 color;
 
-	static vk::VertexInputBindingDescription getBindingDescription();
-	static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions();
+    static vk::VertexInputBindingDescription getBindingDescription();
+    static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions();
 };
 
 struct Mesh
 {
-	std::vector<Vertex> vertices
-	{
-		{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-		{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-		{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-		{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
-	};
-	std::vector<uint16_t> indices
-	{
-		0, 1, 2, 2, 3, 0
-	};
+    std::vector<Vertex> vertices
+    {
+        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+    };
+    std::vector<uint16_t> indices
+    {
+        0, 1, 2, 2, 3, 0
+    };
 };
+
 const Mesh mesh;
 
 struct UniformBufferObject
 {
-	glm::mat4 model;
-	glm::mat4 view;
-	glm::mat4 proj;
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
 };
 
 struct ImGuiInitInfo
 {
-	vk::Instance instance;
-	vk::PhysicalDevice physicalDevice;
-	vk::Device device;
-	vk::SurfaceKHR surface;
-	vk::Queue queue;
-	vk::RenderPass renderPass;
-	size_t imageCount;
-	vk::PipelineCache pipelineCache;
+    vk::Instance instance;
+    vk::PhysicalDevice physicalDevice;
+    vk::Device device;
+    vk::SurfaceKHR surface;
+    vk::Queue queue;
+    vk::RenderPass renderPass;
+    size_t imageCount;
+    vk::PipelineCache pipelineCache;
 };
 
 class ImGuiHelper
 {
 public:
-	static constexpr bool enabled = true;
-	void init(GLFWwindow* window, const ImGuiInitInfo& initInfo);
-	void drawFrame();
-	void renderFrame(vk::CommandBuffer commandBuffer);
-	void shutdown();
+    static constexpr bool enabled = true;
+    void init(GLFWwindow* window, const ImGuiInitInfo& initInfo);
+    void drawFrame();
+    void renderFrame(vk::CommandBuffer commandBuffer);
+    void shutdown();
 
 private:
-	bool m_showDemoWindow{ true };
-	vk::Device m_device{ nullptr };
-	vk::DescriptorPool m_descriptorPool{ nullptr };
+    bool m_showDemoWindow{true};
+    vk::Device m_device{nullptr};
+    vk::DescriptorPool m_descriptorPool{nullptr};
 };
 
 export class HelloTriangleApplication
 {
 public:
-	void init();
-	void update(float deltaTime);
-	void shutdown();
-	bool shouldWindowClose() const;
+    ~HelloTriangleApplication() noexcept;
+    void init();
+    void update(float deltaTime);
+    void shutdown();
+    bool shouldWindowClose() const;
 
 private:
-	glm::ivec2 m_windowSize{ 1600, 900 };
-	GLFWwindow* m_window{ nullptr };
-	vk::Instance m_instance{ nullptr };
-	vk::PhysicalDevice m_physicalDevice{ nullptr };
-	vk::Device m_device{ nullptr };
-	vk::SurfaceKHR m_surface{ nullptr };
-	vk::SwapchainKHR m_swapChain{ nullptr };
-	vk::Queue m_graphicsQueue{ nullptr };
-	vk::Queue m_presentQueue{ nullptr };
-	vk::Queue m_transferQueue{ nullptr };
-	vk::RenderPass m_renderPass{ nullptr };
-	vk::DescriptorSetLayout m_descriptorSetLayout{ nullptr };
-	vk::PipelineLayout m_pipelineLayout{ nullptr };
-	vk::Pipeline m_graphicsPipeline{ nullptr };
+    glm::ivec2 m_windowSize{1600, 900};
+    GLFWwindow* m_window{nullptr};
+    vk::Instance m_instance{nullptr};
+    vk::PhysicalDevice m_physicalDevice{nullptr};
+    vk::Device m_device{nullptr};
+    vk::SurfaceKHR m_surface{nullptr};
+    vk::SwapchainKHR m_swapChain{nullptr};
+    vk::Queue m_graphicsQueue{nullptr};
+    vk::Queue m_presentQueue{nullptr};
+    vk::Queue m_transferQueue{nullptr};
+    vk::RenderPass m_renderPass{nullptr};
+    vk::DescriptorSetLayout m_descriptorSetLayout{nullptr};
+    vk::PipelineLayout m_pipelineLayout{nullptr};
+    vk::Pipeline m_graphicsPipeline{nullptr};
 
-	vk::Buffer m_vertexBuffer{ nullptr };
-	vk::DeviceMemory m_vertexBufferMemory{ nullptr };
-	vk::Buffer m_indexBuffer{ nullptr };
-	vk::DeviceMemory m_indexBufferMemory{ nullptr };
-	std::vector<vk::Buffer> m_uniformBuffers;
-	std::vector<vk::DeviceMemory> m_uniformBuffersMemory;
-	std::vector<void*> m_uniformBuffersMapped;
+    vk::Buffer m_vertexBuffer{nullptr};
+    vk::DeviceMemory m_vertexBufferMemory{nullptr};
+    vk::Buffer m_indexBuffer{nullptr};
+    vk::DeviceMemory m_indexBufferMemory{nullptr};
+    std::vector<vk::Buffer> m_uniformBuffers;
+    std::vector<vk::DeviceMemory> m_uniformBuffersMemory;
+    std::vector<void*> m_uniformBuffersMapped;
 
-	vk::CommandPool m_commandPool{ nullptr };
-	vk::CommandPool m_transferCommandPool{ nullptr };
-	std::vector<vk::CommandBuffer> m_commandBuffers;
+    vk::CommandPool m_commandPool{nullptr};
+    vk::CommandPool m_transferCommandPool{nullptr};
+    std::vector<vk::CommandBuffer> m_commandBuffers;
 
-	vk::PipelineCache m_pipelineCache{ nullptr };
-	vk::DescriptorPool m_descriptorPool{ nullptr };
-	std::vector<vk::DescriptorSet> m_descriptorSets;
-	
-	std::vector<vk::Image> m_swapChainImages;
-	std::vector<vk::ImageView> m_swapChainImageViews;
-	std::vector<vk::Framebuffer> m_swapChainFramebuffers;
-	vk::Format m_swapChainImageFormat{ vk::Format::eUndefined };
-	vk::Extent2D m_swapChainExtent{ 0, 0 };
+    vk::PipelineCache m_pipelineCache{nullptr};
+    vk::DescriptorPool m_descriptorPool{nullptr};
+    std::vector<vk::DescriptorSet> m_descriptorSets;
 
-	std::vector<vk::Semaphore> m_imageAvailableSemaphores;
-	std::vector<vk::Semaphore> m_renderFinishedSemaphores;
-	std::vector<vk::Fence> m_inFlightFences;
+    std::vector<vk::Image> m_swapChainImages;
+    std::vector<vk::ImageView> m_swapChainImageViews;
+    std::vector<vk::Framebuffer> m_swapChainFramebuffers;
+    vk::Format m_swapChainImageFormat{vk::Format::eUndefined};
+    vk::Extent2D m_swapChainExtent{0, 0};
 
-	vk::DebugUtilsMessengerEXT m_debugMessenger{ nullptr };
+    std::vector<vk::Semaphore> m_imageAvailableSemaphores;
+    std::vector<vk::Semaphore> m_renderFinishedSemaphores;
+    std::vector<vk::Fence> m_inFlightFences;
 
-	ImGuiHelper m_imguiHelper;
+    vk::DebugUtilsMessengerEXT m_debugMessenger{nullptr};
 
-	uint32_t m_currentFrame{ 0 };
-	bool m_framebufferResized{ false };
+    ImGuiHelper m_imguiHelper;
 
-	static std::vector<const char*> getRequiredExtensions();
-	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
+    uint32_t m_currentFrame{0};
+    bool m_framebufferResized{false};
+    bool m_terminated{false};
+    static std::vector<const char*> getRequiredExtensions();
+    static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
-	void createInstance();
-	void createSurface();
-	void createLogicalDevice();
+    void createInstance();
+    void createSurface();
+    void createLogicalDevice();
 
-	void recreateSwapchain();
-	void createSwapchain();
-	void createImageViews();
-	void createFramebuffers();
+    void recreateSwapchain();
+    void createSwapchain();
+    void createImageViews();
+    void createFramebuffers();
 
-	void cleanupSwapchain() const;
+    void cleanupSwapchain() const;
 
-	void createRenderPass();
-	void createDescriptorSetLayout();
-	void createGraphicsPipeline();
-	void createCommandPool();
-	void createVertexBuffer();
-	void createIndexBuffer();
-	void createUniformBuffers();
-	void createCommandBuffers();
-	void createSyncObjects();
-	void createDescriptorPool();
-	void createDescriptorSets();
-	void pickPhysicalDevice();
-	[[nodiscard]] static bool checkValidationLayerSupport();
-	void recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex);
-	void updateUniformBuffer(uint32_t currentImage, float deltaTime) const;
-	void drawFrame(float deltaTime);
+    void createRenderPass();
+    void createDescriptorSetLayout();
+    void createGraphicsPipeline();
+    void createCommandPool();
+    void createVertexBuffer();
+    void createIndexBuffer();
+    void createUniformBuffers();
+    void createCommandBuffers();
+    void createSyncObjects();
+    void createDescriptorPool();
+    void createDescriptorSets();
+    void pickPhysicalDevice();
+    [[nodiscard]] static bool checkValidationLayerSupport();
+    void recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex);
+    void updateUniformBuffer(uint32_t currentImage, float deltaTime) const;
+    void drawFrame(float deltaTime);
 };
-
-template<bufferable_data T>
-[[nodiscard]]
-std::tuple<vk::Buffer, vk::DeviceMemory> createDataBuffer(const T& range, const CreateDataBufferInfo& info)
-{
-	return createDataBuffer(range.data(), sizeof(std::remove_reference<decltype(range)>::type::value_type) * range.size(), info);
-}
