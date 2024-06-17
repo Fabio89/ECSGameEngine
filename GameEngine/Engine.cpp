@@ -15,7 +15,7 @@ void System::addUpdateFunction(std::function<void(float)> func)
 
 void Archetype::removeEntity(Entity entity)
 {
-	std::vector<std::type_index> toRemove;
+	std::vector<ComponentTypeId> toRemove;
 	for (auto& pair : m_componentArrays)
 	{
 		pair.second->remove(entity);
@@ -25,7 +25,7 @@ void Archetype::removeEntity(Entity entity)
 		}
 	}
 
-	for (std::type_index index : toRemove)
+	for (ComponentTypeId index : toRemove)
 	{
 		m_componentArrays.erase(index);
 	}

@@ -4,8 +4,9 @@ import Engine.Core;
 
 export struct TextureComponent : Component<TextureComponent>
 {
-    vk::Image m_image;
-    vk::DeviceMemory m_memory;
+    std::string m_path;
+    vk::Image m_image{nullptr};
+    vk::DeviceMemory m_memory{nullptr};
 };
 
 class TextureSystem : public System
@@ -14,13 +15,13 @@ public:
     void addEntity(Entity entity, World& manager)
     {
         TextureComponent& texture = manager.editComponent<TextureComponent>(entity);
-        manager.observeOnComponentAdded([this](Entity entity, std::type_index componentType) { onComponentAdded(entity, componentType); });
+        manager.observeOnComponentAdded([this](Entity entity, ComponentTypeId componentType) { onComponentAdded(entity, componentType); });
     }
 
 private:
-    void onComponentAdded(Entity entity, std::type_index componentType)
+    void onComponentAdded(Entity entity, ComponentTypeId componentType)
     {
-        if (componentType == TextureComponent::TypeID)
+        if (componentType == TextureComponent::typeId)
         {
         
         }

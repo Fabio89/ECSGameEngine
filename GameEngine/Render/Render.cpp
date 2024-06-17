@@ -5,7 +5,7 @@ void renderThreadFunc(LoopSettings settings, ApplicationState& state)
 {
 	try
 	{
-		HelloTriangleApplication application;
+		VulkanApplication application;
 		application.init();
 
 		performLoop(settings, [&](float deltaTime) { application.update(deltaTime); }, [&] {	return !application.shouldWindowClose(); });

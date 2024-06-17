@@ -34,15 +34,15 @@ export struct EngineSettings
 };
 
 export using Entity = size_t;
-
+export using ComponentTypeId = std::type_index;
 export template <typename T>
 struct Component
 {
-    static const std::type_index TypeID;
+    static const ComponentTypeId typeId;
 };
 
 template <typename T>
-const std::type_index Component<T>::TypeID(typeid(T));
+const ComponentTypeId Component<T>::typeId(typeid(T));
 
 export class System
 {
@@ -99,10 +99,10 @@ private:
         std::unordered_map<size_t, Entity> indexToEntity;
     };
 
-    std::unordered_map<std::type_index, std::unique_ptr<ComponentArrayBase>> m_componentArrays;
+    std::unordered_map<ComponentTypeId, std::unique_ptr<ComponentArrayBase>> m_componentArrays;
 };
 
-export using ArchetypeChangedCallback = std::function<void(Entity, std::type_index)>;
+export using ArchetypeChangedCallback = std::function<void(Entity, ComponentTypeId)>;
 export using ArchetypeChangedObserverHandle = int;
 ArchetypeChangedObserverHandle generateArchetypeObserverHandle()
 {
@@ -204,7 +204,7 @@ T& Archetype::ComponentArray<T>::get(Entity entity)
 template <typename T>
 void Archetype::addComponent(Entity entity, T component)
 {
-    auto& arr = m_componentArrays[Component<T>::TypeID];
+    auto& arr = m_componentArrays[Component<T>::typeId];
     if (!arr)
         arr = std::make_unique<ComponentArray<T>>();
 
@@ -214,7 +214,7 @@ void Archetype::addComponent(Entity entity, T component)
 template <typename T>
 const T& Archetype::readComponent(Entity entity) const
 {
-    static const auto type = Component<T>::TypeID;
+    static const auto type = Component<T>::typeId;
     if (auto it = m_componentArrays.find(type); it != m_componentArrays.end())
     {
         return static_cast<const ComponentArray<T>*>(it->second.get())->get(entity);
@@ -234,12 +234,12 @@ void World::addComponent(Entity entity, Args&&... args)
         m_archetypes.erase(signature);
     }
 
-    signature.set(Component<T>::TypeID.hash_code() % EngineSettings::MaxComponentsPerEntity);
+    signature.set(Component<T>::typeId.hash_code() % EngineSettings::MaxComponentsPerEntity);
     editOrCreateArchetype(signature).addComponent<T>(entity, T(std::forward<Args>(args)...));
 
     for(auto& observer : m_archetypeChangeObservers)
     {
-        observer.second(entity, Component<T>::TypeID);
+        observer.second(entity, Component<T>::typeId);
     }
 }
 

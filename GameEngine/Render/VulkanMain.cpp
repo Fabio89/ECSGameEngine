@@ -7,7 +7,26 @@ import <imgui_impl_vulkan.h>;
 import <glm/gtc/matrix_transform.hpp>;
 import <glm/ext/vector_int2.hpp>;
 
-HelloTriangleApplication::~HelloTriangleApplication() noexcept
+Texture createTexture(const char* path, vk::Device device, vk::PhysicalDevice physicalDevice, vk::Queue queue,
+                      vk::CommandPool commandPool)
+{
+    Texture texture;
+    std::tie(texture.m_image, texture.m_memory) = TextureUtils::createTextureImage(path, device, physicalDevice,
+        queue, commandPool);
+    texture.m_view = TextureUtils::createTextureImageView(device, texture.m_image);
+    texture.m_sampler = TextureUtils::createTextureSampler(device, physicalDevice);
+    return texture;
+}
+
+void destroyTexture(vk::Device device, const Texture& texture)
+{
+    device.destroySampler(texture.m_sampler);
+    device.destroyImageView(texture.m_view);
+    device.destroyImage(texture.m_image);
+    device.freeMemory(texture.m_memory);
+}
+
+VulkanApplication::~VulkanApplication() noexcept
 {
     if (!m_terminated)
     {
@@ -15,7 +34,7 @@ HelloTriangleApplication::~HelloTriangleApplication() noexcept
     }
 }
 
-void HelloTriangleApplication::init()
+void VulkanApplication::init()
 {
     // Init window
     {
@@ -55,6 +74,15 @@ void HelloTriangleApplication::init()
         createCommandBuffers();
         createSyncObjects();
         createDescriptorPool();
+
+        {
+            std::filesystem::path imagePath{EngineUtils::getExePath()};
+            imagePath += "/../../GameEngine/Render/Textures/statue-1275469_1280.jpg";
+            std::cout << "Image path: " << imagePath.generic_string().data() << std::endl;
+            m_testTexture = createTexture(imagePath.generic_string().data(), m_device, m_physicalDevice, m_graphicsQueue,
+                                          m_commandPool);
+        }
+        
         createDescriptorSets();
     }
 
@@ -70,29 +98,23 @@ void HelloTriangleApplication::init()
         .pipelineCache = m_pipelineCache
     };
     m_imguiHelper.init(m_window, imguiInfo);
-
-    {
-        std::filesystem::path imagePath{EngineUtils::getExePath()};
-        imagePath += "/../../GameEngine/Render/Textures/statue-1275469_1280.jpg";
-        std::cout << "Image path: " << imagePath.generic_string().data() << std::endl;
-        m_testImage = TextureUtils::createTextureImage(imagePath.generic_string().data(), m_device, m_physicalDevice,
-                                                       m_graphicsQueue, m_commandPool);
-    }
 }
 
-void HelloTriangleApplication::update(float deltaTime)
+void VulkanApplication::update(float deltaTime)
 {
     glfwPollEvents();
     drawFrame(deltaTime);
 }
 
-void HelloTriangleApplication::shutdown()
+void VulkanApplication::shutdown()
 {
     m_terminated = true;
     m_device.waitIdle();
 
-    m_device.destroyImage(get<vk::Image>(m_testImage));
-    m_device.freeMemory(get<vk::DeviceMemory>(m_testImage));
+    // Destroy images
+    {
+        destroyTexture(m_device, m_testTexture);
+    }
 
     m_imguiHelper.shutdown();
 
@@ -136,12 +158,12 @@ void HelloTriangleApplication::shutdown()
     glfwTerminate();
 }
 
-bool HelloTriangleApplication::shouldWindowClose() const
+bool VulkanApplication::shouldWindowClose() const
 {
     return glfwWindowShouldClose(m_window);
 }
 
-void HelloTriangleApplication::createInstance()
+void VulkanApplication::createInstance()
 {
     if constexpr (vk::EnableValidationLayers)
         if (!checkValidationLayerSupport())
@@ -181,13 +203,13 @@ void HelloTriangleApplication::createInstance()
     vk::defaultDispatchLoaderDynamic.init(m_instance);
 }
 
-void HelloTriangleApplication::createSurface()
+void VulkanApplication::createSurface()
 {
     if (glfw::createWindowSurface(m_instance, m_window, nullptr, &m_surface) != vk::Result::eSuccess)
         throw std::runtime_error("failed to create window surface!");
 }
 
-void HelloTriangleApplication::createLogicalDevice()
+void VulkanApplication::createLogicalDevice()
 {
     const QueueFamilyIndices indices = QueueFamilyUtils::findQueueFamilies(m_physicalDevice, m_surface);
 
@@ -213,7 +235,10 @@ void HelloTriangleApplication::createLogicalDevice()
             });
     }
 
-    constexpr vk::PhysicalDeviceFeatures deviceFeatures{};
+    constexpr vk::PhysicalDeviceFeatures deviceFeatures
+    {
+        .samplerAnisotropy = vk::True
+    };
 
     const vk::DeviceCreateInfo createInfo
     {
@@ -245,7 +270,7 @@ void HelloTriangleApplication::createLogicalDevice()
     m_transferQueue = m_device.getQueue(*indices.get(QueueFamilyType::Transfer), 0);
 }
 
-void HelloTriangleApplication::recreateSwapchain()
+void VulkanApplication::recreateSwapchain()
 {
     int width = 0, height = 0;
     glfwGetFramebufferSize(m_window, &width, &height);
@@ -264,7 +289,7 @@ void HelloTriangleApplication::recreateSwapchain()
     createFramebuffers();
 }
 
-void HelloTriangleApplication::createSwapchain()
+void VulkanApplication::createSwapchain()
 {
     const RenderUtils::SwapChainSupportDetails swapChainSupport = RenderUtils::querySwapChainSupport(
         m_physicalDevice, m_surface);
@@ -324,43 +349,18 @@ void HelloTriangleApplication::createSwapchain()
     m_swapChainExtent = extent;
 }
 
-void HelloTriangleApplication::createImageViews()
+void VulkanApplication::createImageViews()
 {
     m_swapChainImageViews.resize(m_swapChainImages.size());
 
     for (size_t i = 0; i < m_swapChainImages.size(); ++i)
     {
-        const vk::ImageViewCreateInfo createInfo
-        {
-            .image = m_swapChainImages[i],
-            .viewType = vk::ImageViewType::e2D,
-            .format = m_swapChainImageFormat,
-            .components
-            {
-                .r = vk::ComponentSwizzle::eIdentity,
-                .g = vk::ComponentSwizzle::eIdentity,
-                .b = vk::ComponentSwizzle::eIdentity,
-                .a = vk::ComponentSwizzle::eIdentity
-            },
-            .subresourceRange
-            {
-                .aspectMask = vk::ImageAspectFlagBits::eColor,
-                .baseMipLevel = 0,
-                .levelCount = 1,
-                .baseArrayLayer = 0,
-                .layerCount = 1,
-            },
-        };
-
-        m_swapChainImageViews[i] = m_device.createImageView(createInfo, nullptr);
-        if (!m_swapChainImageViews[i])
-        {
-            throw std::runtime_error("failed to create image views!");
-        }
+        m_swapChainImageViews[i] =
+            TextureUtils::createImageView(m_device, m_swapChainImages[i], m_swapChainImageFormat);
     }
 }
 
-void HelloTriangleApplication::createRenderPass()
+void VulkanApplication::createRenderPass()
 {
     const vk::AttachmentDescription colorAttachment
     {
@@ -414,7 +414,7 @@ void HelloTriangleApplication::createRenderPass()
     }
 }
 
-void HelloTriangleApplication::createDescriptorSetLayout()
+void VulkanApplication::createDescriptorSetLayout()
 {
     constexpr vk::DescriptorSetLayoutBinding layoutBinding
     {
@@ -425,10 +425,20 @@ void HelloTriangleApplication::createDescriptorSetLayout()
         .pImmutableSamplers = nullptr, // Optional
     };
 
+    constexpr vk::DescriptorSetLayoutBinding samplerLayoutBinding
+    {
+        .binding = 1,
+        .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+        .descriptorCount = 1,
+        .stageFlags = vk::ShaderStageFlagBits::eFragment,
+        .pImmutableSamplers = nullptr, // Optional
+    };
+
+    constexpr std::array bindings{layoutBinding, samplerLayoutBinding};
     const vk::DescriptorSetLayoutCreateInfo layoutInfo
     {
-        .bindingCount = 1,
-        .pBindings = &layoutBinding,
+        .bindingCount = static_cast<uint32_t>(bindings.size()),
+        .pBindings = bindings.data(),
     };
 
     m_descriptorSetLayout = m_device.createDescriptorSetLayout(layoutInfo, nullptr);
@@ -438,7 +448,7 @@ void HelloTriangleApplication::createDescriptorSetLayout()
     }
 }
 
-void HelloTriangleApplication::createGraphicsPipeline()
+void VulkanApplication::createGraphicsPipeline()
 {
     auto vertShaderCode = RenderUtils::readFile(EngineUtils::getExePath().append("/Shaders/vert.spv"));
     auto fragShaderCode = RenderUtils::readFile(EngineUtils::getExePath().append("/Shaders/frag.spv"));
@@ -608,7 +618,7 @@ void HelloTriangleApplication::createGraphicsPipeline()
     m_device.destroyShaderModule(vertShaderModule, nullptr);
 }
 
-void HelloTriangleApplication::createFramebuffers()
+void VulkanApplication::createFramebuffers()
 {
     m_swapChainFramebuffers.resize(m_swapChainImageViews.size());
 
@@ -634,7 +644,7 @@ void HelloTriangleApplication::createFramebuffers()
     }
 }
 
-void HelloTriangleApplication::cleanupSwapchain() const
+void VulkanApplication::cleanupSwapchain() const
 {
     for (vk::Framebuffer framebuffer : m_swapChainFramebuffers)
     {
@@ -649,7 +659,7 @@ void HelloTriangleApplication::cleanupSwapchain() const
     vkDestroySwapchainKHR(m_device, m_swapChain, nullptr);
 }
 
-void HelloTriangleApplication::createCommandPool()
+void VulkanApplication::createCommandPool()
 {
     const QueueFamilyIndices queueFamilyIndices = QueueFamilyUtils::findQueueFamilies(m_physicalDevice, m_surface);
 
@@ -679,7 +689,7 @@ void HelloTriangleApplication::createCommandPool()
     }
 }
 
-void HelloTriangleApplication::createVertexBuffer()
+void VulkanApplication::createVertexBuffer()
 {
     const RenderUtils::CreateDataBufferInfo info
     {
@@ -690,10 +700,10 @@ void HelloTriangleApplication::createVertexBuffer()
         .transferQueue = m_transferQueue,
         .transferCommandPool = m_transferCommandPool,
     };
-    std::tie(m_vertexBuffer, m_vertexBufferMemory) = RenderUtils::createDataBuffer(mesh.vertices, info);
+    std::tie(m_vertexBuffer, m_vertexBufferMemory) = createDataBuffer(mesh.vertices, info);
 }
 
-void HelloTriangleApplication::createIndexBuffer()
+void VulkanApplication::createIndexBuffer()
 {
     const RenderUtils::CreateDataBufferInfo info
     {
@@ -707,7 +717,7 @@ void HelloTriangleApplication::createIndexBuffer()
     std::tie(m_indexBuffer, m_indexBufferMemory) = RenderUtils::createDataBuffer(mesh.indices, info);
 }
 
-void HelloTriangleApplication::createUniformBuffers()
+void VulkanApplication::createUniformBuffers()
 {
     static constexpr vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
 
@@ -734,7 +744,7 @@ void HelloTriangleApplication::createUniformBuffers()
     }
 }
 
-void HelloTriangleApplication::createCommandBuffers()
+void VulkanApplication::createCommandBuffers()
 {
     const vk::CommandBufferAllocateInfo allocInfo
     {
@@ -750,7 +760,7 @@ void HelloTriangleApplication::createCommandBuffers()
     }
 }
 
-void HelloTriangleApplication::createSyncObjects()
+void VulkanApplication::createSyncObjects()
 {
     constexpr vk::FenceCreateInfo fenceInfo
     {
@@ -776,20 +786,21 @@ void HelloTriangleApplication::createSyncObjects()
     }
 }
 
-void HelloTriangleApplication::createDescriptorPool()
+void VulkanApplication::createDescriptorPool()
 {
-    constexpr vk::DescriptorPoolSize poolSizes[]
+    constexpr uint32_t count = MaxFramesInFlight;
+    constexpr std::array poolSizes
     {
-        {vk::DescriptorType::eUniformBuffer, static_cast<uint32_t>(MaxFramesInFlight)},
-        {vk::DescriptorType::eCombinedImageSampler, 1},
+        vk::DescriptorPoolSize{vk::DescriptorType::eUniformBuffer, count},
+        vk::DescriptorPoolSize{vk::DescriptorType::eCombinedImageSampler, count},
     };
 
     const vk::DescriptorPoolCreateInfo poolInfo
     {
         .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-        .maxSets = static_cast<uint32_t>(MaxFramesInFlight),
-        .poolSizeCount = static_cast<uint32_t>(EngineUtils::getArraySize(poolSizes)),
-        .pPoolSizes = poolSizes,
+        .maxSets = count,
+        .poolSizeCount = static_cast<uint32_t>(poolSizes.size()),
+        .pPoolSizes = poolSizes.data(),
     };
 
     m_descriptorPool = m_device.createDescriptorPool(poolInfo, nullptr);
@@ -797,7 +808,7 @@ void HelloTriangleApplication::createDescriptorPool()
         throw std::runtime_error("failed to create descriptor pool!");
 }
 
-void HelloTriangleApplication::createDescriptorSets()
+void VulkanApplication::createDescriptorSets()
 {
     std::vector layouts(MaxFramesInFlight, m_descriptorSetLayout);
     const vk::DescriptorSetAllocateInfo allocInfo
@@ -808,8 +819,6 @@ void HelloTriangleApplication::createDescriptorSets()
     };
 
     m_descriptorSets = m_device.allocateDescriptorSets(allocInfo);
-    if (m_descriptorSets.size() < MaxFramesInFlight)
-        throw std::runtime_error("failed to allocate descriptor sets!");
 
     for (size_t i = 0; i < MaxFramesInFlight; i++)
     {
@@ -820,23 +829,46 @@ void HelloTriangleApplication::createDescriptorSets()
             .range = sizeof(UniformBufferObject)
         };
 
-        const vk::WriteDescriptorSet descriptorWrite
+        const vk::DescriptorImageInfo imageInfo
         {
-            .dstSet = m_descriptorSets[i],
-            .dstBinding = 0,
-            .dstArrayElement = 0,
-            .descriptorCount = 1,
-            .descriptorType = vk::DescriptorType::eUniformBuffer,
-            .pImageInfo = nullptr, // Optional
-            .pBufferInfo = &bufferInfo,
-            .pTexelBufferView = nullptr, // Optional
+            .sampler = m_testTexture.m_sampler,
+            .imageView = m_testTexture.m_view,
+            .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
         };
 
-        m_device.updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
+        const std::array descriptorWrites
+        {
+            vk::WriteDescriptorSet
+            {
+                .dstSet = m_descriptorSets[i],
+                .dstBinding = 0,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = vk::DescriptorType::eUniformBuffer,
+                .pBufferInfo = &bufferInfo,
+            },
+            vk::WriteDescriptorSet
+            {
+                .dstSet = m_descriptorSets[i],
+                .dstBinding = 1,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+                .pImageInfo = &imageInfo,
+            },
+        };
+
+        m_device.updateDescriptorSets
+        (
+            static_cast<uint32_t>(descriptorWrites.size()),
+            descriptorWrites.data(),
+            0,
+            nullptr
+        );
     }
 }
 
-void HelloTriangleApplication::pickPhysicalDevice()
+void VulkanApplication::pickPhysicalDevice()
 {
     const std::vector<vk::PhysicalDevice> devices = m_instance.enumeratePhysicalDevices();
     if (devices.empty())
@@ -850,8 +882,13 @@ void HelloTriangleApplication::pickPhysicalDevice()
 
         const RenderUtils::SwapChainSupportDetails swapChainSupport = RenderUtils::querySwapChainSupport(
             device, m_surface);
-        return !swapChainSupport.formats.empty()
-            && !swapChainSupport.presentModes.empty();
+        if (swapChainSupport.formats.empty() || swapChainSupport.presentModes.empty())
+            return false;
+
+        const vk::PhysicalDeviceFeatures features = device.getFeatures();
+        if (!features.samplerAnisotropy)
+            return false;
+        return true;
     };
 
     auto found = std::ranges::find_if(devices, isDeviceSuitable);
@@ -868,7 +905,7 @@ void HelloTriangleApplication::pickPhysicalDevice()
     }
 }
 
-bool HelloTriangleApplication::checkValidationLayerSupport()
+bool VulkanApplication::checkValidationLayerSupport()
 {
     const std::vector<vk::LayerProperties> availableLayers = vk::enumerateInstanceLayerProperties();
 
@@ -881,7 +918,7 @@ bool HelloTriangleApplication::checkValidationLayerSupport()
     return std::ranges::all_of(RenderUtils::ValidationLayers, isLayerAvailable);
 }
 
-void HelloTriangleApplication::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex)
+void VulkanApplication::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex)
 {
     constexpr vk::CommandBufferBeginInfo beginInfo
     {
@@ -941,7 +978,7 @@ void HelloTriangleApplication::recordCommandBuffer(vk::CommandBuffer commandBuff
     commandBuffer.end();
 }
 
-void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage, float deltaTime) const
+void VulkanApplication::updateUniformBuffer(uint32_t currentImage, float deltaTime) const
 {
     static float timeElapsed = 0.f;
     UniformBufferObject uniformBufferObject
@@ -957,7 +994,7 @@ void HelloTriangleApplication::updateUniformBuffer(uint32_t currentImage, float 
     timeElapsed += deltaTime;
 }
 
-void HelloTriangleApplication::drawFrame(float deltaTime)
+void VulkanApplication::drawFrame(float deltaTime)
 {
     const vk::Fence fence = m_inFlightFences[m_currentFrame];
     const vk::Semaphore imageAvailableSemaphore = m_imageAvailableSemaphores[m_currentFrame];
@@ -1047,7 +1084,7 @@ void HelloTriangleApplication::drawFrame(float deltaTime)
     m_currentFrame = (m_currentFrame + 1) % MaxFramesInFlight;
 }
 
-std::vector<const char*> HelloTriangleApplication::getRequiredExtensions()
+std::vector<const char*> VulkanApplication::getRequiredExtensions()
 {
     uint32_t glfwExtensionCount = 0;
     const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
@@ -1062,9 +1099,9 @@ std::vector<const char*> HelloTriangleApplication::getRequiredExtensions()
     return extensions;
 }
 
-void HelloTriangleApplication::framebufferResizeCallback(GLFWwindow* window, int width, int height)
+void VulkanApplication::framebufferResizeCallback(GLFWwindow* window, int width, int height)
 {
-    auto app = static_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
+    auto app = static_cast<VulkanApplication*>(glfwGetWindowUserPointer(window));
     app->m_framebufferResized = true;
 }
 
@@ -1176,7 +1213,7 @@ vk::VertexInputBindingDescription Vertex::getBindingDescription()
     return bindingDescription;
 }
 
-std::array<vk::VertexInputAttributeDescription, 2> Vertex::getAttributeDescriptions()
+std::array<vk::VertexInputAttributeDescription, 3> Vertex::getAttributeDescriptions()
 {
     return
     {
@@ -1193,6 +1230,13 @@ std::array<vk::VertexInputAttributeDescription, 2> Vertex::getAttributeDescripti
             .binding = 0,
             .format = vk::Format::eR32G32B32Sfloat,
             .offset = offsetof(Vertex, color),
+        },
+        vk::VertexInputAttributeDescription
+        {
+            .location = 2,
+            .binding = 0,
+            .format = vk::Format::eR32G32Sfloat,
+            .offset = offsetof(Vertex, texCoordinates),
         },
     };
 }

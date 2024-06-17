@@ -10,19 +10,20 @@ struct Vertex
 {
     glm::vec2 pos;
     glm::vec3 color;
-
+    glm::vec2 texCoordinates;
+    
     static vk::VertexInputBindingDescription getBindingDescription();
-    static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions();
+    static std::array<vk::VertexInputAttributeDescription, 3> getAttributeDescriptions();
 };
 
 struct Mesh
 {
-    std::vector<Vertex> vertices
+    const std::vector<Vertex> vertices
     {
-        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
+        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
     };
     std::vector<uint16_t> indices
     {
@@ -66,10 +67,20 @@ private:
     vk::DescriptorPool m_descriptorPool{nullptr};
 };
 
-export class HelloTriangleApplication
+struct Texture
+{
+    vk::Image m_image;
+    vk::DeviceMemory m_memory;
+    vk::ImageView m_view;
+    vk::Sampler m_sampler; // Should be shared between multiple textures
+};
+Texture createTexture(const char* path, vk::Device device, vk::PhysicalDevice physicalDevice, vk::Queue queue, vk::CommandPool commandPool);
+void destroyTexture(vk::Device device, const Texture& texture);
+
+export class VulkanApplication
 {
 public:
-    ~HelloTriangleApplication() noexcept;
+    ~VulkanApplication() noexcept;
     void init();
     void update(float deltaTime);
     void shutdown();
@@ -119,7 +130,7 @@ private:
 
     vk::DebugUtilsMessengerEXT m_debugMessenger{nullptr};
 
-    std::tuple<vk::Image, vk::DeviceMemory> m_testImage{};
+    Texture m_testTexture{};
     
     ImGuiHelper m_imguiHelper;
 

@@ -54,6 +54,25 @@ TextureUtils::createImage(vk::Device device,
     return std::make_pair(image, memory);
 }
 
+vk::ImageView TextureUtils::createImageView(vk::Device device, vk::Image image, vk::Format format)
+{
+    const vk::ImageViewCreateInfo viewInfo
+    {
+        .image = image,
+        .viewType = vk::ImageViewType::e2D,
+        .format = format,
+        .subresourceRange
+        {
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+        }
+    };
+    return device.createImageView(viewInfo);
+}
+
 // Create a Vulkan image from the specified file
 [[nodiscard]] std::tuple<vk::Image, vk::DeviceMemory>
 TextureUtils::createTextureImage(const char* path, vk::Device device, vk::PhysicalDevice physicalDevice,
@@ -114,4 +133,35 @@ TextureUtils::createTextureImage(const char* path, vk::Device device, vk::Physic
     device.freeMemory(stagingBufferMemory);
 
     return result;
+}
+
+vk::ImageView TextureUtils::createTextureImageView(vk::Device device, vk::Image image)
+{
+    return createImageView(device, image, vk::Format::eR8G8B8A8Srgb);
+}
+
+vk::Sampler TextureUtils::createTextureSampler(vk::Device device, vk::PhysicalDevice physicalDevice)
+{
+    const vk::PhysicalDeviceProperties properties = physicalDevice.getProperties();
+
+    const vk::SamplerCreateInfo samplerInfo
+    {
+        .magFilter = vk::Filter::eLinear,
+        .minFilter = vk::Filter::eLinear,
+        .mipmapMode = vk::SamplerMipmapMode::eLinear,
+        .addressModeU = vk::SamplerAddressMode::eRepeat,
+        .addressModeV = vk::SamplerAddressMode::eRepeat,
+        .addressModeW = vk::SamplerAddressMode::eRepeat,
+        .mipLodBias = 0.0f,
+        .anisotropyEnable = vk::True,
+        .maxAnisotropy = properties.limits.maxSamplerAnisotropy,
+        .compareEnable = vk::False,
+        .compareOp = vk::CompareOp::eAlways,
+        .minLod = 0.0f,
+        .maxLod = 0.0f,
+        .borderColor = vk::BorderColor::eIntOpaqueBlack,
+        .unnormalizedCoordinates = vk::False,
+    };
+
+    return device.createSampler(samplerInfo);
 }
