@@ -28,6 +28,18 @@
     <ClCompile Include="Render\VulkanMain.ixx">
       <Filter>Render</Filter>
     </ClCompile>
+    <ClCompile Include="Render\RenderCoreUtils.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="Render\RenderCoreUtils.ixx">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="Render\TextureLoading.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="Render\TextureLoading.ixx">
+      <Filter>Render</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Render">
@@ -47,5 +59,8 @@
     <None Include="Render\Shaders\Shader.frag">
       <Filter>Render\Shaders</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="External\TextureLoading\stb_image.h" />
   </ItemGroup>
 </Project>

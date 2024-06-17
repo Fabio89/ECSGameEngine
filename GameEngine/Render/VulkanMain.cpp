@@ -427,8 +427,8 @@ void HelloTriangleApplication::createDescriptorSetLayout()
 
 void HelloTriangleApplication::createGraphicsPipeline()
 {
-    auto vertShaderCode = RenderUtils::readFile("D:/Dev/EcsGameEngine/GameEngine/Render/Shaders/vert.spv");
-    auto fragShaderCode = RenderUtils::readFile("D:/Dev/EcsGameEngine/GameEngine/Render/Shaders/frag.spv");
+    auto vertShaderCode = RenderUtils::readFile("D:/repos/EcsGameEngine/GameEngine/Render/Shaders/vert.spv");
+    auto fragShaderCode = RenderUtils::readFile("D:/repos/EcsGameEngine/GameEngine/Render/Shaders/frag.spv");
 
     vk::ShaderModule vertShaderModule = RenderUtils::createShaderModule(vertShaderCode, m_device);
     vk::ShaderModule fragShaderModule = RenderUtils::createShaderModule(fragShaderCode, m_device);

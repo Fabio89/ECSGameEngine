@@ -1,0 +1,8 @@
+Package: vulkan-loader
+Version: 1.3.280.0
+Depends: vcpkg-cmake, vcpkg-cmake-config, vulkan-headers
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 67f65d03859f726c77bf33e8eb2ebe0a746bf3151c0d44158626f9e956088520
+Description: Vulkan Development Tools
+Status: purge ok half-installed

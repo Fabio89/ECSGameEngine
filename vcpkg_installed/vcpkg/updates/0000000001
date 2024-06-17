@@ -1,8 +1,7 @@
-Package: vulkan-hpp
-Version: deprecated
-Depends: vulkan-headers
+Package: imgui
+Feature: vulkan-binding
+Depends: vulkan
 Architecture: x64-windows
 Multi-Arch: same
-Abi: ca6520ad43426b7f9e7abff81f48c46739b8565228469a641761bf87193e4cd5
-Description: [deprecated] Header only C++ bindings for the Vulkan C API
-Status: purge ok not-installed
+Description: Make available Vulkan binding
+Status: purge ok half-installed

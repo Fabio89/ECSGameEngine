@@ -1,0 +1,13 @@
+D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/imgui_x64-windows/lib/imgui.lib
+D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/imgui_x64-windows/include/imgui.h
+D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/imgui_x64-windows/include/imconfig.h
+D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/imgui_x64-windows/include/imgui_internal.h
+D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/imgui_x64-windows/include/imstb_textedit.h
+D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/imgui_x64-windows/include/imstb_rectpack.h
+D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/imgui_x64-windows/include/imstb_truetype.h
+D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/imgui_x64-windows/include/imgui_stdlib.h
+D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/imgui_x64-windows/include/imgui_impl_glfw.h
+D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/imgui_x64-windows/include/imgui_impl_vulkan.h
+D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/imgui_x64-windows/share/imgui/imgui-config.cmake
+D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/imgui_x64-windows/share/imgui/imgui-targets.cmake
+D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/imgui_x64-windows/share/imgui/imgui-targets-release.cmake
