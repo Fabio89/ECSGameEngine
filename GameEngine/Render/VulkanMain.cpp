@@ -49,15 +49,6 @@ void HelloTriangleApplication::init()
         createGraphicsPipeline();
         createFramebuffers();
         createCommandPool();
-
-        {
-            std::filesystem::path imagePath{EngineUtils::getExePath()};
-            imagePath += "/../../GameEngine/Render/Textures/statue-1275469_1280.jpg";
-            std::cout << "Image path: " << imagePath.generic_string().data() << std::endl;
-            m_testImage = TextureUtils::createTextureImage(imagePath.generic_string().data(), m_device, m_physicalDevice,
-                                                           m_graphicsQueue, m_commandPool);
-        }
-
         createVertexBuffer();
         createIndexBuffer();
         createUniformBuffers();
@@ -79,6 +70,14 @@ void HelloTriangleApplication::init()
         .pipelineCache = m_pipelineCache
     };
     m_imguiHelper.init(m_window, imguiInfo);
+
+    {
+        std::filesystem::path imagePath{EngineUtils::getExePath()};
+        imagePath += "/../../GameEngine/Render/Textures/statue-1275469_1280.jpg";
+        std::cout << "Image path: " << imagePath.generic_string().data() << std::endl;
+        m_testImage = TextureUtils::createTextureImage(imagePath.generic_string().data(), m_device, m_physicalDevice,
+                                                       m_graphicsQueue, m_commandPool);
+    }
 }
 
 void HelloTriangleApplication::update(float deltaTime)
