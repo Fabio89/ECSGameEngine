@@ -6,6 +6,7 @@ import Engine.Job;
 export namespace EngineUtils
 {
     template <typename T>
+    // ReSharper disable once CppEntityUsedOnlyInUnevaluatedContext
     constexpr size_t getArraySize(const T& arr)
     {
         return sizeof(arr) / sizeof(*arr);

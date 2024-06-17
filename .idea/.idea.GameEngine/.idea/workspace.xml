@@ -8,23 +8,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fda103a3-737a-498d-a761-fb583535bfd9" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.GameEngine/.idea/indexLayout.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.GameEngine/.idea/projectSettingsUpdater.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.GameEngine/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/GameEngine/External/TextureLoading/stb_image.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/GameEngine/Render/RenderCoreUtils.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/GameEngine/Render/RenderCoreUtils.ixx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/GameEngine/Render/TextureLoading.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/GameEngine/Render/TextureLoading.ixx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/GameEngine/Render/Textures/statue-1275469_1280.jpg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.GameEngine/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.GameEngine/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Game/Game.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Game/Game.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Game/imgui.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Game/imgui.ini" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/GameEngine.vcxproj" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/GameEngine.vcxproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/Render/Render.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Render/Render.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/Render/RenderCore.ixx" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Render/RenderCore.ixx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/Render/VulkanMain.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Render/VulkanMain.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/Render/VulkanMain.ixx" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Render/VulkanMain.ixx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GameEngine/Engine.ixx" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Engine.ixx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,7 +46,7 @@
     <setting file="file://$PROJECT_DIR$/../../VulkanSDK/Include/vulkan/vulkan_structs.hpp" root0="SKIP_HIGHLIGHTING" />
   </component>
   <component name="ProblemsViewState">
-    <option name="selectedTabId" value="QODANA_PROBLEMS_VIEW_TAB" />
+    <option name="selectedTabId" value="CurrentFile" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 0
@@ -170,7 +155,7 @@
       <workItem from="1718512828785" duration="1076000" />
       <workItem from="1718528711418" duration="1126000" />
       <workItem from="1718529868625" duration="9728000" />
-      <workItem from="1718551772277" duration="4684000" />
+      <workItem from="1718551772277" duration="5292000" />
     </task>
     <servers />
   </component>
