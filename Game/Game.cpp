@@ -54,13 +54,12 @@ void gameShutdown()
 
 int main()
 {
-	ApplicationState appState;
+	World world{ settings };
+	ApplicationState appState{.world = world};
 	const LoopSettings loopSettings{ .targetFps = settings.targetFps };
 
 	std::thread renderThread = runRenderThread(loopSettings, appState);
-
-	World world{ settings };
-
+	
 	gameInit(world);
 
 	auto gameTick = [&world](float deltaTime)

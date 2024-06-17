@@ -1,0 +1,5 @@
+D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/vulkan-loader_x64-windows/lib/vulkan-1.lib
+D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/vulkan-loader_x64-windows/bin/vulkan-1.dll
+D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/vulkan-loader_x64-windows/lib/cmake/VulkanLoader/VulkanLoaderConfig.cmake
+D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/vulkan-loader_x64-windows/lib/cmake/VulkanLoader/VulkanLoaderConfig-release.cmake
+D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/vulkan-loader_x64-windows/lib/cmake/VulkanLoader/VulkanLoaderConfigVersion.cmake

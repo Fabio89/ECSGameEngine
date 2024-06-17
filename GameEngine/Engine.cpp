@@ -91,3 +91,15 @@ void World::updateSystems(float deltaTime)
 		system->update(deltaTime);
 	}
 }
+
+ArchetypeChangedObserverHandle World::observeOnComponentAdded(ArchetypeChangedCallback observer)
+{
+	ArchetypeChangedObserverHandle handle = generateArchetypeObserverHandle();
+	m_archetypeChangeObservers.insert_or_assign(handle, std::move(observer));
+	return handle;
+}
+
+void World::unobserveOnComponentAdded(ArchetypeChangedObserverHandle observerHandle)
+{
+	m_archetypeChangeObservers.erase(observerHandle);
+}

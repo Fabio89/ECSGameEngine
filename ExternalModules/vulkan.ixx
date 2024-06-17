@@ -15,8 +15,8 @@ module;
 #define VULKAN_HPP_NO_STRUCT_SETTERS
 #define VULKAN_HPP_NO_SMART_HANDLE
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
+#define _CRT_SECURE_NO_WARNINGS
 #include <vulkan/vulkan.hpp>
-VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 #include <vulkan/vulkan_extension_inspection.hpp>
 #include <vulkan/vulkan_format_traits.hpp>
 #include <vulkan/vulkan_hash.hpp>
@@ -25,9 +25,11 @@ VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 export module vulkan_hpp;
 
+export VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+
 export namespace VULKAN_HPP_NAMESPACE
 {
-	using VULKAN_HPP_NAMESPACE::defaultDispatchLoaderDynamic;
+	//using VULKAN_HPP_NAMESPACE::defaultDispatchLoaderDynamic;
 	//=====================================
 	//=== HARDCODED TYPEs AND FUNCTIONs ===
 	//=====================================

@@ -16,5 +16,6 @@ export namespace TextureUtils
 
     // Create a Vulkan image from the specified file
     [[nodiscard]] std::tuple<vk::Image, vk::DeviceMemory>
-    createTextureImage(const char* path, vk::Device device, vk::PhysicalDevice physicalDevice);
+    createTextureImage(const char* path, vk::Device device, vk::PhysicalDevice physicalDevice, vk::Queue commandQueue, vk::CommandPool
+                       commandPool);
 }

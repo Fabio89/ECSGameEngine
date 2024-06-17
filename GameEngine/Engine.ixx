@@ -1,3 +1,5 @@
+module;
+#include <windows.h>
 export module Engine.Core;
 
 import std;
@@ -10,6 +12,15 @@ export namespace EngineUtils
     constexpr size_t getArraySize(const T& arr)
     {
         return sizeof(arr) / sizeof(*arr);
+    }
+
+    std::string getExePath()
+    {
+        std::string buffer;
+        buffer.resize(MAX_PATH);
+        GetModuleFileName(nullptr, buffer.data(), MAX_PATH);
+        std::wstring::size_type pos = buffer.find_last_of("\\/");
+        return buffer.substr(0, pos);
     }
 }
 
@@ -91,6 +102,14 @@ private:
     std::unordered_map<std::type_index, std::unique_ptr<ComponentArrayBase>> m_componentArrays;
 };
 
+export using ArchetypeChangedCallback = std::function<void(Entity, std::type_index)>;
+export using ArchetypeChangedObserverHandle = int;
+ArchetypeChangedObserverHandle generateArchetypeObserverHandle()
+{
+    static ArchetypeChangedObserverHandle lastValue{-1};
+    return ++lastValue;
+}
+
 export class World
 {
 public:
@@ -115,7 +134,11 @@ public:
 
     void updateSystems(float deltaTime);
 
+    ArchetypeChangedObserverHandle observeOnComponentAdded(ArchetypeChangedCallback observer);
+    void unobserveOnComponentAdded(ArchetypeChangedObserverHandle observerHandle);
+
 private:
+    std::unordered_map<ArchetypeChangedObserverHandle, ArchetypeChangedCallback> m_archetypeChangeObservers;
     JobSystem m_jobSystem;
     Entity m_nextEntity = 0;
     std::unordered_map<Entity, EntitySignature> m_entities;
@@ -213,6 +236,11 @@ void World::addComponent(Entity entity, Args&&... args)
 
     signature.set(Component<T>::TypeID.hash_code() % EngineSettings::MaxComponentsPerEntity);
     editOrCreateArchetype(signature).addComponent<T>(entity, T(std::forward<Args>(args)...));
+
+    for(auto& observer : m_archetypeChangeObservers)
+    {
+        observer.second(entity, Component<T>::TypeID);
+    }
 }
 
 template <typename T>

@@ -70,6 +70,14 @@ void HelloTriangleApplication::init()
         .pipelineCache = m_pipelineCache
     };
     m_imguiHelper.init(m_window, imguiInfo);
+
+    {
+        std::filesystem::path imagePath{EngineUtils::getExePath()};
+        imagePath += "/../../GameEngine/Render/Textures/statue-1275469_1280.jpg";
+        std::cout << "Image path: " << imagePath.generic_string().data() << std::endl;
+        m_testImage = TextureUtils::createTextureImage(imagePath.generic_string().data(), m_device, m_physicalDevice,
+                                                       m_graphicsQueue, m_commandPool);
+    }
 }
 
 void HelloTriangleApplication::update(float deltaTime)
@@ -82,6 +90,9 @@ void HelloTriangleApplication::shutdown()
 {
     m_terminated = true;
     m_device.waitIdle();
+
+    m_device.destroyImage(get<vk::Image>(m_testImage));
+    m_device.freeMemory(get<vk::DeviceMemory>(m_testImage));
 
     m_imguiHelper.shutdown();
 
@@ -210,7 +221,9 @@ void HelloTriangleApplication::createLogicalDevice()
         .pQueueCreateInfos = queueCreateInfos.data(),
         .enabledLayerCount = [&]
         {
-            if constexpr (vk::EnableValidationLayers) return static_cast<uint32_t>(RenderUtils::ValidationLayers.size());
+            if constexpr (vk::EnableValidationLayers)
+                return static_cast<uint32_t>(RenderUtils::ValidationLayers.
+                    size());
             else return 0;
         }(),
         .ppEnabledLayerNames = [&]
@@ -427,8 +440,8 @@ void HelloTriangleApplication::createDescriptorSetLayout()
 
 void HelloTriangleApplication::createGraphicsPipeline()
 {
-    auto vertShaderCode = RenderUtils::readFile("D:/Dev/EcsGameEngine/GameEngine/Render/Shaders/vert.spv");
-    auto fragShaderCode = RenderUtils::readFile("D:/Dev/EcsGameEngine/GameEngine/Render/Shaders/frag.spv");
+    auto vertShaderCode = RenderUtils::readFile(EngineUtils::getExePath().append("/Shaders/vert.spv"));
+    auto fragShaderCode = RenderUtils::readFile(EngineUtils::getExePath().append("/Shaders/frag.spv"));
 
     vk::ShaderModule vertShaderModule = RenderUtils::createShaderModule(vertShaderCode, m_device);
     vk::ShaderModule fragShaderModule = RenderUtils::createShaderModule(fragShaderCode, m_device);
@@ -835,7 +848,8 @@ void HelloTriangleApplication::pickPhysicalDevice()
             || !RenderUtils::checkDeviceExtensionSupport(device))
             return false;
 
-        const RenderUtils::SwapChainSupportDetails swapChainSupport = RenderUtils::querySwapChainSupport(device, m_surface);
+        const RenderUtils::SwapChainSupportDetails swapChainSupport = RenderUtils::querySwapChainSupport(
+            device, m_surface);
         return !swapChainSupport.formats.empty()
             && !swapChainSupport.presentModes.empty();
     };

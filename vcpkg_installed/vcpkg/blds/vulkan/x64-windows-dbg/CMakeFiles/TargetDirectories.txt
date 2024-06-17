@@ -1,0 +1,2 @@
+D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan/x64-windows-dbg/CMakeFiles/edit_cache.dir
+D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan/x64-windows-dbg/CMakeFiles/rebuild_cache.dir

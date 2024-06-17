@@ -17,7 +17,7 @@ export namespace RenderUtils
     uint32_t findMemoryType(vk::PhysicalDevice physicalDevice, uint32_t typeFilter, vk::MemoryPropertyFlags properties);
 
     vk::CommandBuffer beginSingleTimeCommands(vk::Device device, vk::CommandPool commandPool);
-    void endSingleTimeCommands(vk::CommandBuffer commandBuffer, vk::Device device, vk::Queue queue, vk::CommandPool pool);
+    void endSingleTimeCommands(vk::Device device, vk::CommandBuffer buffer, vk::Queue queue, vk::CommandPool pool);
 
     struct CreateBufferInfo
     {
@@ -94,4 +94,10 @@ export namespace RenderUtils
 
     std::vector<char> readFile(const std::string& filename);
     vk::ShaderModule createShaderModule(const std::vector<char>& code, vk::Device device);
+
+    void transitionImageLayout(vk::Device device, vk::Queue commandQueue, vk::CommandPool commandPool, vk::Image image,
+                               vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
+
+    void copyBufferToImage(vk::Device device, vk::Queue commandQueue, vk::CommandPool commandPool, vk::Buffer buffer, vk::Image image,
+    vk::Extent2D extent);
 }

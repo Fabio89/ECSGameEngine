@@ -1,4 +1,5 @@
 export module Engine.Render;
+import Engine.Core;
 import std;
 import <windows.h>;
 
@@ -11,6 +12,7 @@ export struct ApplicationState
 {
 	std::mutex mutex;
 	bool closing = false;
+	World& world;
 };
 
 export std::thread runRenderThread(LoopSettings settings, ApplicationState& state);
