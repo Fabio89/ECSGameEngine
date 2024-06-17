@@ -68,21 +68,9 @@ void VulkanApplication::init()
         createGraphicsPipeline();
         createFramebuffers();
         createCommandPool();
-        createVertexBuffer();
-        createIndexBuffer();
-        createUniformBuffers();
         createCommandBuffers();
         createSyncObjects();
         createDescriptorPool();
-
-        {
-            std::filesystem::path imagePath{EngineUtils::getExePath()};
-            imagePath += "/../../GameEngine/Render/Textures/statue-1275469_1280.jpg";
-            std::cout << "Image path: " << imagePath.generic_string().data() << std::endl;
-            m_testTexture = createTexture(imagePath.generic_string().data(), m_device, m_physicalDevice, m_graphicsQueue,
-                                          m_commandPool);
-        }
-        
         createDescriptorSets();
     }
 
@@ -98,10 +86,46 @@ void VulkanApplication::init()
         .pipelineCache = m_pipelineCache
     };
     m_imguiHelper.init(m_window, imguiInfo);
+
+    // Create some objects
+    {
+        std::filesystem::path imagePath{EngineUtils::getExePath()};
+        imagePath += "/../../GameEngine/Render/Textures/statue-1275469_1280.jpg";
+        std::cout << "Image path: " << imagePath.generic_string().data() << std::endl;
+
+        Mesh::VertexData vertexData
+        {
+            .vertices
+            {
+                {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+                {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+                {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+                {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
+            },
+            .indices
+            {
+                0, 1, 2, 2, 3, 0
+            }
+        };
+        testObjects.push_back(
+            {
+                .m_mesh = createMesh(std::move(vertexData), m_device, m_physicalDevice, m_surface, m_graphicsQueue,
+                                     m_commandPool),
+                .m_texture = createTexture(imagePath.generic_string().data(), m_device, m_physicalDevice,
+                                           m_graphicsQueue,
+                                           m_commandPool)
+            });
+    }
 }
 
 void VulkanApplication::update(float deltaTime)
 {
+    m_graphicsQueue.waitIdle(); // TODO: Optimization target. Explore VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT.
+    for (const RenderObject& object : testObjects)
+    {
+        updateDescriptorSets(object);
+    }
+
     glfwPollEvents();
     drawFrame(deltaTime);
 }
@@ -111,27 +135,28 @@ void VulkanApplication::shutdown()
     m_terminated = true;
     m_device.waitIdle();
 
-    // Destroy images
+    // Destroy objects
+    for (const auto& [m_mesh, m_texture] : testObjects)
     {
-        destroyTexture(m_device, m_testTexture);
+        destroyTexture(m_device, m_texture);
+
+        m_device.destroyBuffer(m_mesh.vertexBuffer);
+        m_device.freeMemory(m_mesh.vertexBufferMemory);
+        m_device.destroyBuffer(m_mesh.indexBuffer);
+        m_device.freeMemory(m_mesh.indexBufferMemory);
+        for (auto&& [buffer, memory] : std::views::zip(m_mesh.uniformBuffers, m_mesh.uniformBuffersMemory))
+        {
+            m_device.destroyBuffer(buffer);
+            m_device.freeMemory(memory);
+        }
     }
 
     m_imguiHelper.shutdown();
 
     cleanupSwapchain();
 
-    for (auto&& [buffer, memory] : std::views::zip(m_uniformBuffers, m_uniformBuffersMemory))
-    {
-        m_device.destroyBuffer(buffer);
-        m_device.freeMemory(memory);
-    }
-
     m_device.destroyDescriptorPool(m_descriptorPool);
     m_device.destroyDescriptorSetLayout(m_descriptorSetLayout);
-    m_device.destroyBuffer(m_vertexBuffer);
-    m_device.freeMemory(m_vertexBufferMemory);
-    m_device.destroyBuffer(m_indexBuffer);
-    m_device.freeMemory(m_indexBufferMemory);
     m_device.destroyCommandPool(m_commandPool);
     m_device.destroyCommandPool(m_transferCommandPool);
     m_device.destroyPipeline(m_graphicsPipeline);
@@ -235,13 +260,24 @@ void VulkanApplication::createLogicalDevice()
             });
     }
 
-    constexpr vk::PhysicalDeviceFeatures deviceFeatures
+    const vk::PhysicalDeviceFeatures deviceFeatures
     {
-        .samplerAnisotropy = vk::True
+        .samplerAnisotropy = vk::True,
+    };
+
+    const vk::PhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures
+    {
+        .descriptorBindingUniformBufferUpdateAfterBind = true,
+        .descriptorBindingSampledImageUpdateAfterBind = true,
+        .descriptorBindingStorageImageUpdateAfterBind = true,
+        .descriptorBindingStorageBufferUpdateAfterBind = true,
+        .descriptorBindingUniformTexelBufferUpdateAfterBind = true,
+        .descriptorBindingStorageTexelBufferUpdateAfterBind = true,
     };
 
     const vk::DeviceCreateInfo createInfo
     {
+        .pNext = &descriptorIndexingFeatures,
         .queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size()),
         .pQueueCreateInfos = queueCreateInfos.data(),
         .enabledLayerCount = [&]
@@ -689,61 +725,6 @@ void VulkanApplication::createCommandPool()
     }
 }
 
-void VulkanApplication::createVertexBuffer()
-{
-    const RenderUtils::CreateDataBufferInfo info
-    {
-        .device = m_device,
-        .physicalDevice = m_physicalDevice,
-        .surface = m_surface,
-        .usageType = vk::BufferUsageFlagBits::eVertexBuffer,
-        .transferQueue = m_transferQueue,
-        .transferCommandPool = m_transferCommandPool,
-    };
-    std::tie(m_vertexBuffer, m_vertexBufferMemory) = createDataBuffer(mesh.vertices, info);
-}
-
-void VulkanApplication::createIndexBuffer()
-{
-    const RenderUtils::CreateDataBufferInfo info
-    {
-        .device = m_device,
-        .physicalDevice = m_physicalDevice,
-        .surface = m_surface,
-        .usageType = vk::BufferUsageFlagBits::eIndexBuffer,
-        .transferQueue = m_transferQueue,
-        .transferCommandPool = m_transferCommandPool,
-    };
-    std::tie(m_indexBuffer, m_indexBufferMemory) = RenderUtils::createDataBuffer(mesh.indices, info);
-}
-
-void VulkanApplication::createUniformBuffers()
-{
-    static constexpr vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
-
-    m_uniformBuffers.resize(MaxFramesInFlight);
-    m_uniformBuffersMemory.resize(MaxFramesInFlight);
-    m_uniformBuffersMapped.resize(MaxFramesInFlight);
-
-    const RenderUtils::CreateBufferInfo bufferInfo
-    {
-        .device = m_device,
-        .physicalDevice = m_physicalDevice,
-        .size = bufferSize,
-        .usage = vk::BufferUsageFlagBits::eUniformBuffer,
-        .properties = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-    };
-
-    auto bufferRange = std::views::zip(m_uniformBuffers, m_uniformBuffersMemory, m_uniformBuffersMapped);
-
-    for (auto&& [buffer, memory, mapped] : bufferRange)
-    {
-        std::tie(buffer, memory) = RenderUtils::createBuffer(bufferInfo);
-
-        vkMapMemory(m_device, memory, 0, bufferSize, 0, &mapped);
-    }
-}
-
 void VulkanApplication::createCommandBuffers()
 {
     const vk::CommandBufferAllocateInfo allocInfo
@@ -819,20 +800,23 @@ void VulkanApplication::createDescriptorSets()
     };
 
     m_descriptorSets = m_device.allocateDescriptorSets(allocInfo);
+}
 
+void VulkanApplication::updateDescriptorSets(const RenderObject& object) const
+{
     for (size_t i = 0; i < MaxFramesInFlight; i++)
     {
         const vk::DescriptorBufferInfo bufferInfo
         {
-            .buffer = m_uniformBuffers[i],
+            .buffer = object.m_mesh.uniformBuffers[i],
             .offset = 0,
-            .range = sizeof(UniformBufferObject)
+            .range = sizeof(UniformBufferObject),
         };
 
         const vk::DescriptorImageInfo imageInfo
         {
-            .sampler = m_testTexture.m_sampler,
-            .imageView = m_testTexture.m_view,
+            .sampler = object.m_texture.m_sampler,
+            .imageView = object.m_texture.m_view,
             .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
         };
 
@@ -963,14 +947,17 @@ void VulkanApplication::recordCommandBuffer(vk::CommandBuffer commandBuffer, uin
     };
     commandBuffer.setScissor(0, 1, &scissor);
 
-    const vk::Buffer vertexBuffers[] = {m_vertexBuffer};
-    constexpr vk::DeviceSize offsets[] = {0};
-    commandBuffer.bindVertexBuffers(0, vertexBuffers, offsets);
-    commandBuffer.bindIndexBuffer(m_indexBuffer, 0, vk::IndexType::eUint16);
-    commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pipelineLayout, 0, 1,
-                                     &m_descriptorSets[m_currentFrame], 0, nullptr);
+    for (const RenderObject& object : testObjects)
+    {
+        const vk::Buffer vertexBuffers[] = {object.m_mesh.vertexBuffer};
+        constexpr vk::DeviceSize offsets[] = {0};
+        commandBuffer.bindVertexBuffers(0, vertexBuffers, offsets);
+        commandBuffer.bindIndexBuffer(object.m_mesh.indexBuffer, 0, vk::IndexType::eUint16);
+        commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pipelineLayout, 0, 1,
+                                         &m_descriptorSets[m_currentFrame], 0, nullptr);
+        commandBuffer.drawIndexed(static_cast<uint32_t>(object.m_mesh.vertexData.indices.size()), 1, 0, 0, 0);
+    }
 
-    commandBuffer.drawIndexed(static_cast<uint32_t>(mesh.indices.size()), 1, 0, 0, 0);
 
     m_imguiHelper.renderFrame(commandBuffer);
 
@@ -978,7 +965,8 @@ void VulkanApplication::recordCommandBuffer(vk::CommandBuffer commandBuffer, uin
     commandBuffer.end();
 }
 
-void VulkanApplication::updateUniformBuffer(uint32_t currentImage, float deltaTime) const
+// ReSharper disable once CppParameterMayBeConstPtrOrRef
+void VulkanApplication::updateUniformBuffer(Mesh& mesh, uint32_t currentImage, float deltaTime) const
 {
     static float timeElapsed = 0.f;
     UniformBufferObject uniformBufferObject
@@ -990,7 +978,7 @@ void VulkanApplication::updateUniformBuffer(uint32_t currentImage, float deltaTi
     };
     uniformBufferObject.proj[1][1] *= -1;
 
-    memcpy(m_uniformBuffersMapped[currentImage], &uniformBufferObject, sizeof(uniformBufferObject));
+    memcpy(mesh.uniformBuffersMapped[currentImage], &uniformBufferObject, sizeof(uniformBufferObject));
     timeElapsed += deltaTime;
 }
 
@@ -1029,7 +1017,10 @@ void VulkanApplication::drawFrame(float deltaTime)
     commandBuffer.reset();
     recordCommandBuffer(commandBuffer, imageResult.value);
 
-    updateUniformBuffer(m_currentFrame, deltaTime);
+    for (RenderObject& object : testObjects)
+    {
+        updateUniformBuffer(object.m_mesh, m_currentFrame, deltaTime);
+    }
 
     const vk::Semaphore waitSemaphores[] = {imageAvailableSemaphore};
     const vk::Semaphore signalSemaphores[] = {renderFinishedSemaphore};
@@ -1238,5 +1229,68 @@ std::array<vk::VertexInputAttributeDescription, 3> Vertex::getAttributeDescripti
             .format = vk::Format::eR32G32Sfloat,
             .offset = offsetof(Vertex, texCoordinates),
         },
+    };
+}
+
+Mesh createMesh(Mesh::VertexData data, vk::Device device, vk::PhysicalDevice physicalDevice,
+                vk::SurfaceKHR surface, vk::Queue queue,
+                vk::CommandPool cmdPool)
+{
+    const RenderUtils::CreateDataBufferInfo vertexBufferInfo
+    {
+        .device = device,
+        .physicalDevice = physicalDevice,
+        .surface = surface,
+        .usageType = vk::BufferUsageFlagBits::eVertexBuffer,
+        .transferQueue = queue,
+        .transferCommandPool = cmdPool,
+    };
+    auto&& [vertexBuffer, vertexBufferMemory] = createDataBuffer(data.vertices, vertexBufferInfo);
+
+    const RenderUtils::CreateDataBufferInfo indexBufferInfo
+    {
+        .device = device,
+        .physicalDevice = physicalDevice,
+        .surface = surface,
+        .usageType = vk::BufferUsageFlagBits::eIndexBuffer,
+        .transferQueue = queue,
+        .transferCommandPool = cmdPool,
+    };
+    auto&& [indexBuffer, indexBufferMemory] = createDataBuffer(data.indices, indexBufferInfo);
+
+    static constexpr vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
+
+    auto uniformBuffers = std::vector<vk::Buffer>(MaxFramesInFlight);
+    auto uniformBuffersMemory = std::vector<vk::DeviceMemory>(MaxFramesInFlight);
+    auto uniformBuffersMapped = std::vector<void*>(MaxFramesInFlight);
+
+    const RenderUtils::CreateBufferInfo bufferInfo
+    {
+        .device = device,
+        .physicalDevice = physicalDevice,
+        .size = bufferSize,
+        .usage = vk::BufferUsageFlagBits::eUniformBuffer,
+        .properties = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+    };
+
+    auto bufferRange = std::views::zip(uniformBuffers, uniformBuffersMemory, uniformBuffersMapped);
+
+    for (auto&& [buffer, memory, mapped] : bufferRange)
+    {
+        std::tie(buffer, memory) = createBuffer(bufferInfo);
+        if (device.mapMemory(memory, 0, bufferSize, {}, &mapped) != vk::Result::eSuccess)
+            return {};
+    }
+
+    return
+    {
+        .vertexData = std::move(data),
+        .vertexBuffer = vertexBuffer,
+        .vertexBufferMemory = vertexBufferMemory,
+        .indexBuffer = indexBuffer,
+        .indexBufferMemory = indexBufferMemory,
+        .uniformBuffers = std::move(uniformBuffers),
+        .uniformBuffersMemory = std::move(uniformBuffersMemory),
+        .uniformBuffersMapped = std::move(uniformBuffersMapped)
     };
 }

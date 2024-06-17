@@ -11,27 +11,40 @@ struct Vertex
     glm::vec2 pos;
     glm::vec3 color;
     glm::vec2 texCoordinates;
-    
+
     static vk::VertexInputBindingDescription getBindingDescription();
     static std::array<vk::VertexInputAttributeDescription, 3> getAttributeDescriptions();
 };
 
 struct Mesh
 {
-    const std::vector<Vertex> vertices
+    struct VertexData
     {
-        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
-    };
-    std::vector<uint16_t> indices
-    {
-        0, 1, 2, 2, 3, 0
-    };
+        const std::vector<Vertex> vertices
+        {
+            {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+            {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+            {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+            {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
+        };
+        std::vector<uint16_t> indices
+        {
+            0, 1, 2, 2, 3, 0
+        };
+    } vertexData;
+    
+    vk::Buffer vertexBuffer{nullptr};
+    vk::DeviceMemory vertexBufferMemory{nullptr};
+    vk::Buffer indexBuffer{nullptr};
+    vk::DeviceMemory indexBufferMemory{nullptr};
+    std::vector<vk::Buffer> uniformBuffers;
+    std::vector<vk::DeviceMemory> uniformBuffersMemory;
+    std::vector<void*> uniformBuffersMapped;
 };
 
-const Mesh mesh;
+[[nodiscard]] Mesh createMesh(Mesh::VertexData data, vk::Device device, vk::PhysicalDevice physicalDevice,
+                vk::SurfaceKHR surface, vk::Queue queue,
+                vk::CommandPool cmdPool);
 
 struct UniformBufferObject
 {
@@ -72,10 +85,20 @@ struct Texture
     vk::Image m_image;
     vk::DeviceMemory m_memory;
     vk::ImageView m_view;
-    vk::Sampler m_sampler; // Should be shared between multiple textures
+    vk::Sampler m_sampler; // TODO: should be shared between textures??
 };
-Texture createTexture(const char* path, vk::Device device, vk::PhysicalDevice physicalDevice, vk::Queue queue, vk::CommandPool commandPool);
+
+Texture createTexture(const char* path, vk::Device device, vk::PhysicalDevice physicalDevice, vk::Queue queue,
+                      vk::CommandPool commandPool);
 void destroyTexture(vk::Device device, const Texture& texture);
+
+struct RenderObject
+{
+    Mesh m_mesh;
+    Texture m_texture;
+};
+
+std::vector<RenderObject> testObjects;
 
 export class VulkanApplication
 {
@@ -102,14 +125,6 @@ private:
     vk::PipelineLayout m_pipelineLayout{nullptr};
     vk::Pipeline m_graphicsPipeline{nullptr};
 
-    vk::Buffer m_vertexBuffer{nullptr};
-    vk::DeviceMemory m_vertexBufferMemory{nullptr};
-    vk::Buffer m_indexBuffer{nullptr};
-    vk::DeviceMemory m_indexBufferMemory{nullptr};
-    std::vector<vk::Buffer> m_uniformBuffers;
-    std::vector<vk::DeviceMemory> m_uniformBuffersMemory;
-    std::vector<void*> m_uniformBuffersMapped;
-
     vk::CommandPool m_commandPool{nullptr};
     vk::CommandPool m_transferCommandPool{nullptr};
     std::vector<vk::CommandBuffer> m_commandBuffers;
@@ -130,8 +145,6 @@ private:
 
     vk::DebugUtilsMessengerEXT m_debugMessenger{nullptr};
 
-    Texture m_testTexture{};
-    
     ImGuiHelper m_imguiHelper;
 
     uint32_t m_currentFrame{0};
@@ -155,16 +168,14 @@ private:
     void createDescriptorSetLayout();
     void createGraphicsPipeline();
     void createCommandPool();
-    void createVertexBuffer();
-    void createIndexBuffer();
-    void createUniformBuffers();
     void createCommandBuffers();
     void createSyncObjects();
     void createDescriptorPool();
     void createDescriptorSets();
+    void updateDescriptorSets(const RenderObject& object) const;
     void pickPhysicalDevice();
     [[nodiscard]] static bool checkValidationLayerSupport();
     void recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex);
-    void updateUniformBuffer(uint32_t currentImage, float deltaTime) const;
+    void updateUniformBuffer(Mesh& mesh, uint32_t currentImage, float deltaTime) const;
     void drawFrame(float deltaTime);
 };

@@ -9,18 +9,6 @@
   <component name="ChangeListManager">
     <list default="true" id="fda103a3-737a-498d-a761-fb583535bfd9" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.GameEngine/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.GameEngine/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Game/Game.vcxproj" beforeDir="false" afterPath="$PROJECT_DIR$/Game/Game.vcxproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/Component/TextureComponent.ixx" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Component/TextureComponent.ixx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/Engine.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Engine.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/Engine.ixx" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Engine.ixx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/GameEngine.vcxproj" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/GameEngine.vcxproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/Render/Render.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Render/Render.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/Render/Shaders/Shader.frag" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Render/Shaders/Shader.frag" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/Render/Shaders/Shader.vert" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Render/Shaders/Shader.vert" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/Render/Shaders/frag.spv" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Render/Shaders/frag.spv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/Render/Shaders/vert.spv" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Render/Shaders/vert.spv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/Render/TextureLoading.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Render/TextureLoading.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/Render/TextureLoading.ixx" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Render/TextureLoading.ixx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/GameEngine/Render/VulkanMain.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Render/VulkanMain.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/GameEngine/Render/VulkanMain.ixx" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Render/VulkanMain.ixx" afterDir="false" />
     </list>
@@ -35,10 +23,12 @@
   <component name="HighlightingSettingsPerFile">
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://18" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.40.33807/include/filesystem" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.40.33807/include/initializer_list" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.40.33807/include/stdexcept" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.40.33807/include/typeindex" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.40.33807/include/vector" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.40.33807/include/xtr1common" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/vcpkg_installed/x64-windows/include/glm/gtc/matrix_transform.hpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/vcpkg_installed/x64-windows/include/imgui.h" root0="SKIP_HIGHLIGHTING" />
@@ -164,7 +154,7 @@
       <workItem from="1718529868625" duration="9728000" />
       <workItem from="1718551772277" duration="5292000" />
       <workItem from="1718626962592" duration="6985000" />
-      <workItem from="1718634041691" duration="1070000" />
+      <workItem from="1718634041691" duration="10817000" />
     </task>
     <servers />
   </component>
