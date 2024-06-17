@@ -107,13 +107,25 @@ void VulkanApplication::init()
                 0, 1, 2, 2, 3, 0
             }
         };
+        testObjects.reserve(2);
+        testObjects.push_back(
+            {
+                .m_mesh = createMesh(vertexData, m_device, m_physicalDevice, m_surface, m_graphicsQueue,
+                                     m_commandPool),
+                .m_texture = createTexture(imagePath.generic_string().data(), m_device, m_physicalDevice,
+                                           m_graphicsQueue,
+                                           m_commandPool),
+                .m_location = {1, 0, 1}
+            });
+
         testObjects.push_back(
             {
                 .m_mesh = createMesh(std::move(vertexData), m_device, m_physicalDevice, m_surface, m_graphicsQueue,
                                      m_commandPool),
                 .m_texture = createTexture(imagePath.generic_string().data(), m_device, m_physicalDevice,
                                            m_graphicsQueue,
-                                           m_commandPool)
+                                           m_commandPool),
+                .m_location = {0, 1, 1}
             });
     }
 }
@@ -136,7 +148,7 @@ void VulkanApplication::shutdown()
     m_device.waitIdle();
 
     // Destroy objects
-    for (const auto& [m_mesh, m_texture] : testObjects)
+    for (const auto& [m_mesh, m_texture, _] : testObjects)
     {
         destroyTexture(m_device, m_texture);
 
@@ -966,19 +978,20 @@ void VulkanApplication::recordCommandBuffer(vk::CommandBuffer commandBuffer, uin
 }
 
 // ReSharper disable once CppParameterMayBeConstPtrOrRef
-void VulkanApplication::updateUniformBuffer(Mesh& mesh, uint32_t currentImage, float deltaTime) const
+void VulkanApplication::updateUniformBuffer(RenderObject& object, uint32_t currentImage, float deltaTime) const
 {
     static float timeElapsed = 0.f;
     UniformBufferObject uniformBufferObject
     {
-        .model = glm::rotate(glm::mat4(1.0f), timeElapsed * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
-        .view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
+        .model = translate(glm::mat4(1), object.m_location) * rotate(glm::mat4(1.0f), timeElapsed * glm::radians(90.0f),
+                                                                     glm::vec3(0.0f, 0.0f, 1.0f)),
+        .view = lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
         .proj = glm::perspective(glm::radians(45.0f),
                                  m_swapChainExtent.width / static_cast<float>(m_swapChainExtent.height), 0.1f, 10.0f),
     };
     uniformBufferObject.proj[1][1] *= -1;
 
-    memcpy(mesh.uniformBuffersMapped[currentImage], &uniformBufferObject, sizeof(uniformBufferObject));
+    memcpy(object.m_mesh.uniformBuffersMapped[currentImage], &uniformBufferObject, sizeof(uniformBufferObject));
     timeElapsed += deltaTime;
 }
 
@@ -1019,7 +1032,7 @@ void VulkanApplication::drawFrame(float deltaTime)
 
     for (RenderObject& object : testObjects)
     {
-        updateUniformBuffer(object.m_mesh, m_currentFrame, deltaTime);
+        updateUniformBuffer(object, m_currentFrame, deltaTime);
     }
 
     const vk::Semaphore waitSemaphores[] = {imageAvailableSemaphore};

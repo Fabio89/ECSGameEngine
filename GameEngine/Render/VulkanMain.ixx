@@ -96,6 +96,7 @@ struct RenderObject
 {
     Mesh m_mesh;
     Texture m_texture;
+    glm::vec3 m_location;
 };
 
 std::vector<RenderObject> testObjects;
@@ -176,6 +177,6 @@ private:
     void pickPhysicalDevice();
     [[nodiscard]] static bool checkValidationLayerSupport();
     void recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex);
-    void updateUniformBuffer(Mesh& mesh, uint32_t currentImage, float deltaTime) const;
+    void updateUniformBuffer(RenderObject& object, uint32_t currentImage, float deltaTime) const;
     void drawFrame(float deltaTime);
 };
