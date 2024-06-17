@@ -25,11 +25,11 @@ module;
 
 export module vulkan_hpp;
 
-VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+export VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 export namespace VULKAN_HPP_NAMESPACE
 {
-	using VULKAN_HPP_NAMESPACE::defaultDispatchLoaderDynamic;
+	//using VULKAN_HPP_NAMESPACE::defaultDispatchLoaderDynamic;
 	//=====================================
 	//=== HARDCODED TYPEs AND FUNCTIONs ===
 	//=====================================

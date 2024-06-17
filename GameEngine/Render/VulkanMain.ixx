@@ -119,6 +119,8 @@ private:
 
     vk::DebugUtilsMessengerEXT m_debugMessenger{nullptr};
 
+    std::tuple<vk::Image, vk::DeviceMemory> m_testImage{};
+    
     ImGuiHelper m_imguiHelper;
 
     uint32_t m_currentFrame{0};

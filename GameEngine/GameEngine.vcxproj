@@ -195,6 +195,9 @@
       <AdditionalLibraryDirectories>$(VK_SDK_PATH)\Lib;$(VcpkgInstalledDir)\x64-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>glfw3dll.lib; glm.lib; imgui.lib</AdditionalDependencies>
     </Lib>
+    <PostBuildEvent>
+      <Command>xcopy /s /y "$(ProjectDir)Render\Shaders\*.spv" "$(OutDir)Shaders\"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>

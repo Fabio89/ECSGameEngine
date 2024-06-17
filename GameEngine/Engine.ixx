@@ -1,3 +1,5 @@
+module;
+#include <windows.h>
 export module Engine.Core;
 
 import std;
@@ -9,6 +11,15 @@ export namespace EngineUtils
     constexpr size_t getArraySize(const T& arr)
     {
         return sizeof(arr) / sizeof(*arr);
+    }
+
+    std::string getExePath()
+    {
+        std::string buffer;
+        buffer.resize(MAX_PATH);
+        GetModuleFileName(nullptr, buffer.data(), MAX_PATH);
+        std::wstring::size_type pos = buffer.find_last_of("\\/");
+        return buffer.substr(0, pos);
     }
 }
 

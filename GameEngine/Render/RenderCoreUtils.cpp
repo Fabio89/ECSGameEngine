@@ -39,20 +39,20 @@ vk::CommandBuffer RenderUtils::beginSingleTimeCommands(vk::Device device, vk::Co
     return commandBuffer;
 }
 
-void RenderUtils::endSingleTimeCommands(vk::CommandBuffer commandBuffer, vk::Device device, vk::Queue queue,
+void RenderUtils::endSingleTimeCommands(vk::Device device, vk::CommandBuffer buffer, vk::Queue queue,
                                         vk::CommandPool pool)
 {
-    commandBuffer.end();
+    buffer.end();
     const vk::SubmitInfo submitInfo
     {
         . commandBufferCount = 1,
-        . pCommandBuffers = &commandBuffer,
+        . pCommandBuffers = &buffer,
     };
 
     // ReSharper disable once CppDeclaratorNeverUsed
     auto result = queue.submit(1, &submitInfo, nullptr);
     queue.waitIdle();
-    device.freeCommandBuffers(pool, 1, &commandBuffer);
+    device.freeCommandBuffers(pool, 1, &buffer);
 }
 
 std::tuple<vk::Buffer, vk::DeviceMemory> RenderUtils::createBuffer(const CreateBufferInfo& info)
@@ -150,7 +150,7 @@ void RenderUtils::copyBuffer(vk::Device device, vk::CommandPool commandPool, vk:
     vk::BufferCopy copyRegion{};
     copyRegion.size = size;
     commandBuffer.copyBuffer(srcBuffer, dstBuffer, 1, &copyRegion);
-    endSingleTimeCommands(commandBuffer, device, queue, commandPool);
+    endSingleTimeCommands(device, commandBuffer, queue, commandPool);
 }
 
 bool RenderUtils::checkDeviceExtensionSupport(vk::PhysicalDevice device)
@@ -212,6 +212,17 @@ void RenderUtils::destroyDebugUtilsMessenger(vk::Instance instance, vk::DebugUti
     instance.destroyDebugUtilsMessengerEXT(debugMessenger, pAllocator);
 }
 
+RenderUtils::SwapChainSupportDetails RenderUtils::querySwapChainSupport(vk::PhysicalDevice device,
+                                                                        vk::SurfaceKHR surface)
+{
+    return
+    {
+        .capabilities = device.getSurfaceCapabilitiesKHR(surface),
+        .formats = device.getSurfaceFormatsKHR(surface),
+        .presentModes = device.getSurfacePresentModesKHR(surface),
+    };
+}
+
 vk::SurfaceFormatKHR RenderUtils::chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats)
 {
     assert(!availableFormats.empty());
@@ -266,6 +277,7 @@ vk::Extent2D RenderUtils::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& cap
 
 std::vector<char> RenderUtils::readFile(const std::string& filename)
 {
+    std::cout << "Reading file at: " << filename << std::endl;
     std::ifstream file{filename, std::ios::ate | std::ios::binary};
     if (!file.is_open())
     {
@@ -292,13 +304,99 @@ vk::ShaderModule RenderUtils::createShaderModule(const std::vector<char>& code, 
     return device.createShaderModule(createInfo, nullptr);
 }
 
-RenderUtils::SwapChainSupportDetails RenderUtils::querySwapChainSupport(vk::PhysicalDevice device,
-                                                                        vk::SurfaceKHR surface)
+void RenderUtils::transitionImageLayout(vk::Device device, vk::Queue commandQueue, vk::CommandPool commandPool,
+                                        vk::Image image, vk::Format format, vk::ImageLayout oldLayout,
+                                        vk::ImageLayout newLayout)
 {
-    return
+    const vk::CommandBuffer commandBuffer = beginSingleTimeCommands(device, commandPool);
+
+    const struct Flags
     {
-        .capabilities = device.getSurfaceCapabilitiesKHR(surface),
-        .formats = device.getSurfaceFormatsKHR(surface),
-        .presentModes = device.getSurfacePresentModesKHR(surface),
+        vk::AccessFlags srcAccessMask;
+        vk::AccessFlags dstAccessMask;
+        vk::PipelineStageFlags srcStage;
+        vk::PipelineStageFlags dstStage;
+    } flags = [oldLayout, newLayout]() -> Flags
+        {
+            if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eTransferDstOptimal)
+                return
+                {
+                    .srcAccessMask = {},
+                    .dstAccessMask = vk::AccessFlagBits::eTransferWrite,
+                    .srcStage = vk::PipelineStageFlagBits::eTopOfPipe,
+                    .dstStage = vk::PipelineStageFlagBits::eTransfer,
+                };
+            if (oldLayout == vk::ImageLayout::eTransferDstOptimal && newLayout ==
+                vk::ImageLayout::eShaderReadOnlyOptimal)
+                return
+                {
+                    .srcAccessMask = vk::AccessFlagBits::eTransferWrite,
+                    .dstAccessMask = vk::AccessFlagBits::eShaderRead,
+                    .srcStage = vk::PipelineStageFlagBits::eTransfer,
+                    .dstStage = vk::PipelineStageFlagBits::eFragmentShader,
+                };
+            throw std::invalid_argument("unsupported layout transition!");
+        }();
+
+    const vk::ImageMemoryBarrier barrier
+    {
+        .srcAccessMask = flags.srcAccessMask,
+        .dstAccessMask = flags.dstAccessMask,
+        .oldLayout = oldLayout,
+        .newLayout = newLayout,
+        .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .image = image,
+        .subresourceRange
+        {
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+        },
     };
+
+    commandBuffer.pipelineBarrier
+    (
+        flags.srcStage,
+        flags.dstStage,
+        {},
+        0, nullptr,
+        0, nullptr,
+        1, &barrier
+    );
+
+    endSingleTimeCommands(device, commandBuffer, commandQueue, commandPool);
+}
+
+void RenderUtils::copyBufferToImage(vk::Device device, vk::Queue commandQueue, vk::CommandPool commandPool,
+                                    vk::Buffer buffer, vk::Image image,
+                                    vk::Extent2D extent)
+{
+    const vk::CommandBuffer commandBuffer = beginSingleTimeCommands(device, commandPool);
+
+    const vk::BufferImageCopy region
+    {
+        .bufferOffset = 0,
+        .bufferRowLength = 0,
+        .bufferImageHeight = 0,
+        .imageSubresource
+        {
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .mipLevel = 0,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+        },
+        .imageOffset = {0, 0, 0},
+        .imageExtent
+        {
+            extent.width,
+            extent.height,
+            1
+        },
+    };
+
+    commandBuffer.copyBufferToImage(buffer, image, vk::ImageLayout::eTransferDstOptimal, 1, &region);
+    endSingleTimeCommands(device, commandBuffer, commandQueue, commandPool);
 }
