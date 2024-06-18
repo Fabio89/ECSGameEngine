@@ -6,24 +6,48 @@ import <glm/glm.hpp>;
 
 constexpr size_t MaxFramesInFlight{2};
 
-struct Vertex
-{
-    glm::vec2 pos;
-    //glm::vec3 color;
-    glm::vec2 texCoordinates;
+using IdType = size_t;
+export using TextureId = IdType;
 
-    static vk::VertexInputBindingDescription getBindingDescription();
-    static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions();
+struct Texture
+{
+    TextureId m_id;
+    vk::Image m_image;
+    vk::DeviceMemory m_memory;
+    vk::ImageView m_view;
+    vk::Sampler m_sampler; // TODO: should be shared between textures??
 };
 
+class TextureManager
+{
+public:
+    void shutdown(vk::Device device);
+    TextureId createTexture(const char* path, vk::Device device, vk::PhysicalDevice physicalDevice, vk::Queue queue,
+                            vk::CommandPool commandPool);
+    Texture getTextureData(TextureId textureId) const;
+
+private:
+    void destroyTexture(vk::Device device, const Texture& texture);
+    std::vector<Texture> m_textures;
+} textureManager;
+
+export struct Vertex
+{
+    glm::vec3 pos;
+    glm::vec2 texCoordinates;
+};
+
+export struct MeshData
+{
+    std::vector<Vertex> vertices;
+    std::vector<uint16_t> indices;
+};
+
+export using MeshId = IdType;
 struct Mesh
 {
-    struct VertexData
-    {
-        std::vector<Vertex> vertices;
-        std::vector<uint16_t> indices;
-    } vertexData;
-
+    MeshId id;
+    MeshData data;
     vk::Buffer vertexBuffer{nullptr};
     vk::DeviceMemory vertexBufferMemory{nullptr};
     vk::Buffer indexBuffer{nullptr};
@@ -34,14 +58,52 @@ struct Mesh
     std::vector<vk::DescriptorSet> descriptorSets;
 };
 
-[[nodiscard]] Mesh createMesh(Mesh::VertexData data,
-                              vk::Device device,
-                              vk::PhysicalDevice physicalDevice,
-                              vk::SurfaceKHR surface,
-                              vk::Queue queue,
-                              vk::CommandPool cmdPool,
-                              vk::DescriptorPool descriptorPool,
-                              vk::DescriptorSetLayout descriptorSetLayout);
+class MeshManager
+{
+public:
+    void init(vk::Device device,
+              vk::PhysicalDevice physicalDevice,
+              vk::SurfaceKHR surface,
+              vk::Queue queue,
+              vk::CommandPool cmdPool,
+              vk::DescriptorPool descriptorPool,
+              vk::DescriptorSetLayout descriptorSetLayout);
+    
+    void shutdown();
+    
+    MeshId createMesh(MeshData data);
+    Mesh getMeshData(MeshId meshId) const;
+    
+private:
+    vk::Device m_device{nullptr};
+    vk::PhysicalDevice m_physicalDevice{nullptr};
+    vk::SurfaceKHR m_surface{nullptr};
+    vk::Queue m_queue{nullptr};
+    vk::CommandPool m_cmdPool{nullptr};
+    vk::DescriptorPool m_descriptorPool{nullptr};
+    vk::DescriptorSetLayout m_descriptorSetLayout{nullptr};
+    std::vector<Mesh> m_meshes;
+} meshManager;
+
+struct RenderObject
+{
+    Mesh m_mesh;
+    Texture m_texture;
+    glm::vec3 m_location;
+};
+
+class RenderObjectManager
+{
+public:
+    void createRenderObject(MeshId mesh, TextureId texture, glm::vec3 location);
+    void draw();
+
+    std::vector<RenderObject> m_objects;
+
+private:
+} renderObjectManager;
+
+//std::vector<RenderObject> testObjects;
 
 struct UniformBufferObject
 {
@@ -76,27 +138,6 @@ private:
     vk::Device m_device{nullptr};
     vk::DescriptorPool m_descriptorPool{nullptr};
 };
-
-struct Texture
-{
-    vk::Image m_image;
-    vk::DeviceMemory m_memory;
-    vk::ImageView m_view;
-    vk::Sampler m_sampler; // TODO: should be shared between textures??
-};
-
-Texture createTexture(const char* path, vk::Device device, vk::PhysicalDevice physicalDevice, vk::Queue queue,
-                      vk::CommandPool commandPool);
-void destroyTexture(vk::Device device, const Texture& texture);
-
-struct RenderObject
-{
-    Mesh m_mesh;
-    Texture m_texture;
-    glm::vec3 m_location;
-};
-
-std::vector<RenderObject> testObjects;
 
 export class VulkanApplication
 {

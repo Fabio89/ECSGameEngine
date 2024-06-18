@@ -7,18 +7,38 @@ import <imgui_impl_vulkan.h>;
 import <glm/gtc/matrix_transform.hpp>;
 import <glm/ext/vector_int2.hpp>;
 
-Texture createTexture(const char* path, vk::Device device, vk::PhysicalDevice physicalDevice, vk::Queue queue,
-                      vk::CommandPool commandPool)
+void TextureManager::shutdown(vk::Device device)
 {
+    for (const Texture& texture : m_textures)
+    {
+        destroyTexture(device, texture);
+    }
+    m_textures.clear();
+}
+
+TextureId TextureManager::createTexture(const char* path, vk::Device device, vk::PhysicalDevice physicalDevice,
+                                        vk::Queue queue,
+                                        vk::CommandPool commandPool)
+{
+    static std::atomic<TextureId> currentId{};
+
     Texture texture;
+    texture.m_id = currentId++;
     std::tie(texture.m_image, texture.m_memory) = TextureUtils::createTextureImage(path, device, physicalDevice,
         queue, commandPool);
     texture.m_view = TextureUtils::createTextureImageView(device, texture.m_image);
     texture.m_sampler = TextureUtils::createTextureSampler(device, physicalDevice);
-    return texture;
+    m_textures.emplace_back(texture);
+    return texture.m_id;
 }
 
-void destroyTexture(vk::Device device, const Texture& texture)
+Texture TextureManager::getTextureData(TextureId textureId) const
+{
+    auto it = std::ranges::find_if(m_textures, [textureId](auto&& texture) { return texture.m_id == textureId; });
+    return it != m_textures.end() ? *it : Texture{};
+}
+
+void TextureManager::destroyTexture(vk::Device device, const Texture& texture)
 {
     device.destroySampler(texture.m_sampler);
     device.destroyImageView(texture.m_view);
@@ -88,46 +108,46 @@ void VulkanApplication::init()
 
     // Create some objects
     {
+        meshManager.init(m_device, m_physicalDevice, m_surface, m_graphicsQueue,
+                         m_commandPool, m_descriptorPool, m_descriptorSetLayout);
+
         std::filesystem::path imagePath{EngineUtils::getExePath()};
         imagePath += "/../../GameEngine/Render/Textures/statue-1275469_1280.jpg";
         std::cout << "Image path: " << imagePath.generic_string().data() << std::endl;
 
-        Mesh::VertexData vertexData
+        const TextureId commonTexture = textureManager.createTexture(imagePath.generic_string().data(), m_device, m_physicalDevice,
+                                                  m_graphicsQueue,
+                                                  m_commandPool);
+        
+        MeshData squareData
         {
             .vertices
             {
-                {{-0.5f, -0.5f}, {1.0f, 0.0f}},
-                {{0.5f, -0.5f}, {0.0f, 0.0f}},
-                {{0.5f, 0.5f}, {0.0f, 1.0f}},
-                {{-0.5f, 0.5f}, {1.0f, 1.0f}}
+                {{-0.5f, -0.5f, 0}, {1.0f, 0.0f}},
+                {{0.5f, -0.5f, 0}, {0.0f, 0.0f}},
+                {{0.5f, 0.5f, 0}, {0.0f, 1.0f}},
+                {{-0.5f, 0.5f, 0}, {1.0f, 1.0f}}
             },
             .indices
             {
                 0, 1, 2, 2, 3, 0
             }
         };
-        testObjects.reserve(2);
-        testObjects.emplace_back(
-            RenderObject
-            {
-                .m_mesh = createMesh(std::move(vertexData), m_device, m_physicalDevice, m_surface, m_graphicsQueue,
-                                     m_commandPool, m_descriptorPool, m_descriptorSetLayout),
-                .m_texture = createTexture(imagePath.generic_string().data(), m_device, m_physicalDevice,
-                                           m_graphicsQueue,
-                                           m_commandPool),
-                .m_location = {1, 0, 1}
-            });
+        const MeshId square = meshManager.createMesh(squareData);
 
-        Mesh::VertexData vertexData2
+
+        renderObjectManager.createRenderObject(square, commonTexture, {1, 0, 1});
+
+        MeshData hexagonData
         {
             .vertices
             {
-                {{0.0f, 1.0f}, {0.5f, 1.0f}}, // Top vertex
-                {{0.866f, 0.5f}, {1.0f, 0.75f}}, // Top-right vertex
-                {{0.866f, -0.5f}, {1.0f, 0.25f}}, // Bottom-right vertex
-                {{0.0f, -1.0f}, {0.5f, 0.0f}}, // Bottom vertex
-                {{-0.866f, -0.5f}, {0.0f, 0.25f}}, // Bottom-left vertex
-                {{-0.866f, 0.5f}, {0.0f, 0.75f}}, // Top-left vertex,
+                {{0.0f, 1.0f, 0}, {0.5f, 1.0f}}, // Top vertex
+                {{0.866f, 0.5f, 0}, {1.0f, 0.75f}}, // Top-right vertex
+                {{0.866f, -0.5f, 0}, {1.0f, 0.25f}}, // Bottom-right vertex
+                {{0.0f, -1.0f, 0}, {0.5f, 0.0f}}, // Bottom vertex
+                {{-0.866f, -0.5f, 0}, {0.0f, 0.25f}}, // Bottom-left vertex
+                {{-0.866f, 0.5f, 0}, {0.0f, 0.75f}}, // Top-left vertex,
             },
 
             .indices
@@ -138,15 +158,8 @@ void VulkanApplication::init()
                 4, 3, 2 // Bottom triangle
             }
         };
-        testObjects.emplace_back(
-            RenderObject
-            {
-                .m_mesh = createMesh(std::move(vertexData2), m_device, m_physicalDevice, m_surface, m_graphicsQueue,
-                                     m_commandPool, m_descriptorPool, m_descriptorSetLayout),
-                .m_texture = createTexture(imagePath.generic_string().data(), m_device, m_physicalDevice, m_graphicsQueue,
-                              m_commandPool),
-                .m_location = {0, 1, 1}
-            });
+        const MeshId hexagon = meshManager.createMesh(std::move(hexagonData));
+        renderObjectManager.createRenderObject(hexagon, commonTexture, {0, 1, 1});
     }
 }
 
@@ -163,20 +176,8 @@ void VulkanApplication::shutdown()
     m_device.waitIdle();
 
     // Destroy objects
-    for (const auto& [m_mesh, m_texture, _] : testObjects)
-    {
-        destroyTexture(m_device, m_texture);
-
-        m_device.destroyBuffer(m_mesh.vertexBuffer);
-        m_device.freeMemory(m_mesh.vertexBufferMemory);
-        m_device.destroyBuffer(m_mesh.indexBuffer);
-        m_device.freeMemory(m_mesh.indexBufferMemory);
-        for (auto&& [buffer, memory] : std::views::zip(m_mesh.uniformBuffers, m_mesh.uniformBuffersMemory))
-        {
-            m_device.destroyBuffer(buffer);
-            m_device.freeMemory(memory);
-        }
-    }
+    meshManager.shutdown();
+    textureManager.shutdown(m_device);
 
     m_imguiHelper.shutdown();
 
@@ -528,7 +529,6 @@ void VulkanApplication::createGraphicsPipeline()
 
     const vk::PipelineShaderStageCreateInfo fragShaderStageInfo
     {
-
         .stage = vk::ShaderStageFlagBits::eFragment,
         .module = fragShaderModule,
         .pName = "main",
@@ -548,8 +548,30 @@ void VulkanApplication::createGraphicsPipeline()
         .pDynamicStates = dynamicStates.data(),
     };
 
-    auto bindingDescription = Vertex::getBindingDescription();
-    auto attributeDescriptions = Vertex::getAttributeDescriptions();
+    constexpr vk::VertexInputBindingDescription bindingDescription
+    {
+        .binding = 0,
+        .stride = sizeof(Vertex),
+        .inputRate = vk::VertexInputRate::eVertex,
+    };
+
+    constexpr std::array attributeDescriptions
+    {
+        vk::VertexInputAttributeDescription
+        {
+            .location = 0,
+            .binding = 0,
+            .format = vk::Format::eR32G32Sfloat,
+            .offset = offsetof(Vertex, pos),
+        },
+        vk::VertexInputAttributeDescription
+        {
+            .location = 1,
+            .binding = 0,
+            .format = vk::Format::eR32G32Sfloat,
+            .offset = offsetof(Vertex, texCoordinates),
+        },
+    };
 
     const vk::PipelineVertexInputStateCreateInfo vertexInputInfo
     {
@@ -925,71 +947,6 @@ bool VulkanApplication::checkValidationLayerSupport()
     return std::ranges::all_of(RenderUtils::ValidationLayers, isLayerAvailable);
 }
 
-void VulkanApplication::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex)
-{
-    constexpr vk::CommandBufferBeginInfo beginInfo
-    {
-        .flags = {},
-        .pInheritanceInfo = nullptr, // Optional
-    };
-
-    commandBuffer.begin(beginInfo);
-
-    constexpr vk::ClearValue clearColor{{0.0f, 0.0f, 0.0f, 1.0f}};
-
-    const vk::RenderPassBeginInfo renderPassInfo
-    {
-        .renderPass = m_renderPass,
-        .framebuffer = m_swapChainFramebuffers[imageIndex],
-        .renderArea
-        {
-            .offset = {0, 0},
-            .extent = m_swapChainExtent,
-        },
-        .clearValueCount = 1,
-        .pClearValues = &clearColor,
-    };
-
-    const vk::Viewport viewport
-    {
-        .x = 0.0f,
-        .y = 0.0f,
-        .width = static_cast<float>(m_swapChainExtent.width),
-        .height = static_cast<float>(m_swapChainExtent.height),
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f,
-    };
-    commandBuffer.setViewport(0, 1, &viewport);
-
-    const vk::Rect2D scissor
-    {
-        .offset = {0, 0},
-        .extent = m_swapChainExtent,
-    };
-    commandBuffer.setScissor(0, 1, &scissor);
-
-    commandBuffer.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
-    commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_graphicsPipeline);
-
-    for (const RenderObject& object : testObjects)
-    {
-        commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pipelineLayout, 0, 1,
-                                         &object.m_mesh.descriptorSets[m_currentFrame], 0, nullptr);
-
-        const vk::Buffer vertexBuffers[] = {object.m_mesh.vertexBuffer};
-        constexpr vk::DeviceSize offsets[] = {0};
-        commandBuffer.bindVertexBuffers(0, vertexBuffers, offsets);
-        commandBuffer.bindIndexBuffer(object.m_mesh.indexBuffer, 0, vk::IndexType::eUint16);
-
-        commandBuffer.drawIndexed(static_cast<uint32_t>(object.m_mesh.vertexData.indices.size()), 1, 0, 0, 0);
-    }
-
-    m_imguiHelper.renderFrame(commandBuffer);
-
-    commandBuffer.endRenderPass();
-    commandBuffer.end();
-}
-
 // ReSharper disable once CppParameterMayBeConstPtrOrRef
 void VulkanApplication::updateUniformBuffer(RenderObject& object, uint32_t currentImage, float deltaTime) const
 {
@@ -1085,7 +1042,7 @@ void VulkanApplication::drawFrame(float deltaTime)
 
     commandBuffer.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
 
-    for (RenderObject& object : testObjects)
+    for (RenderObject& object : renderObjectManager.m_objects)
     {
         commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_graphicsPipeline);
 
@@ -1101,7 +1058,7 @@ void VulkanApplication::drawFrame(float deltaTime)
 
         commandBuffer.bindVertexBuffers(0, vertexBuffers, offsets);
         commandBuffer.bindIndexBuffer(object.m_mesh.indexBuffer, 0, vk::IndexType::eUint16);
-        commandBuffer.drawIndexed(static_cast<uint32_t>(object.m_mesh.vertexData.indices.size()), 1, 0, 0, 0);
+        commandBuffer.drawIndexed(static_cast<uint32_t>(object.m_mesh.data.indices.size()), 1, 0, 0, 0);
     }
 
     m_imguiHelper.renderFrame(commandBuffer);
@@ -1279,63 +1236,60 @@ void ImGuiHelper::shutdown()
     m_descriptorPool = nullptr;
 }
 
-vk::VertexInputBindingDescription Vertex::getBindingDescription()
+void MeshManager::init(vk::Device device, vk::PhysicalDevice physicalDevice, vk::SurfaceKHR surface, vk::Queue queue,
+                       vk::CommandPool cmdPool, vk::DescriptorPool descriptorPool,
+                       vk::DescriptorSetLayout descriptorSetLayout)
 {
-    constexpr vk::VertexInputBindingDescription bindingDescription
-    {
-        .binding = 0,
-        .stride = sizeof(Vertex),
-        .inputRate = vk::VertexInputRate::eVertex,
-    };
-
-    return bindingDescription;
+    m_device = device;
+    m_physicalDevice = physicalDevice;
+    m_surface = surface;
+    m_queue = queue;
+    m_cmdPool = cmdPool;
+    m_descriptorPool = descriptorPool;
+    m_descriptorSetLayout = descriptorSetLayout;
 }
 
-std::array<vk::VertexInputAttributeDescription, 2> Vertex::getAttributeDescriptions()
+void MeshManager::shutdown()
 {
-    return
+    for (const Mesh& mesh : m_meshes)
     {
-        vk::VertexInputAttributeDescription
+        m_device.destroyBuffer(mesh.vertexBuffer);
+        m_device.freeMemory(mesh.vertexBufferMemory);
+        m_device.destroyBuffer(mesh.indexBuffer);
+        m_device.freeMemory(mesh.indexBufferMemory);
+        for (auto&& [buffer, memory] : std::views::zip(mesh.uniformBuffers, mesh.uniformBuffersMemory))
         {
-            .location = 0,
-            .binding = 0,
-            .format = vk::Format::eR32G32Sfloat,
-            .offset = offsetof(Vertex, pos),
-        },
-        vk::VertexInputAttributeDescription
-        {
-            .location = 1,
-            .binding = 0,
-            .format = vk::Format::eR32G32Sfloat,
-            .offset = offsetof(Vertex, texCoordinates),
-        },
-    };
+            m_device.destroyBuffer(buffer);
+            m_device.freeMemory(memory);
+        }
+    }
+    m_meshes.clear();
 }
 
-Mesh createMesh(Mesh::VertexData data, vk::Device device, vk::PhysicalDevice physicalDevice,
-                vk::SurfaceKHR surface, vk::Queue queue,
-                vk::CommandPool cmdPool, vk::DescriptorPool descriptorPool, vk::DescriptorSetLayout descriptorSetLayout)
+MeshId MeshManager::createMesh(MeshData data)
 {
+    assert(m_device);
+
     Mesh mesh;
     const RenderUtils::CreateDataBufferInfo vertexBufferInfo
     {
-        .device = device,
-        .physicalDevice = physicalDevice,
-        .surface = surface,
+        .device = m_device,
+        .physicalDevice = m_physicalDevice,
+        .surface = m_surface,
         .usageType = vk::BufferUsageFlagBits::eVertexBuffer,
-        .transferQueue = queue,
-        .transferCommandPool = cmdPool,
+        .transferQueue = m_queue,
+        .transferCommandPool = m_cmdPool,
     };
     std::tie(mesh.vertexBuffer, mesh.vertexBufferMemory) = createDataBuffer(data.vertices, vertexBufferInfo);
 
     const RenderUtils::CreateDataBufferInfo indexBufferInfo
     {
-        .device = device,
-        .physicalDevice = physicalDevice,
-        .surface = surface,
+        .device = m_device,
+        .physicalDevice = m_physicalDevice,
+        .surface = m_surface,
         .usageType = vk::BufferUsageFlagBits::eIndexBuffer,
-        .transferQueue = queue,
-        .transferCommandPool = cmdPool,
+        .transferQueue = m_queue,
+        .transferCommandPool = m_cmdPool,
     };
     std::tie(mesh.indexBuffer, mesh.indexBufferMemory) = createDataBuffer(data.indices, indexBufferInfo);
 
@@ -1347,8 +1301,8 @@ Mesh createMesh(Mesh::VertexData data, vk::Device device, vk::PhysicalDevice phy
 
     const RenderUtils::CreateBufferInfo bufferInfo
     {
-        .device = device,
-        .physicalDevice = physicalDevice,
+        .device = m_device,
+        .physicalDevice = m_physicalDevice,
         .size = bufferSize,
         .usage = vk::BufferUsageFlagBits::eUniformBuffer,
         .properties = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
@@ -1359,20 +1313,42 @@ Mesh createMesh(Mesh::VertexData data, vk::Device device, vk::PhysicalDevice phy
     for (auto&& [buffer, memory, mapped] : bufferRange)
     {
         std::tie(buffer, memory) = createBuffer(bufferInfo);
-        if (device.mapMemory(memory, 0, bufferSize, {}, &mapped) != vk::Result::eSuccess)
+        if (m_device.mapMemory(memory, 0, bufferSize, {}, &mapped) != vk::Result::eSuccess)
             return {};
     }
 
-    std::vector layouts(MaxFramesInFlight, descriptorSetLayout);
+    std::vector layouts(MaxFramesInFlight, m_descriptorSetLayout);
     const vk::DescriptorSetAllocateInfo allocInfo
     {
-        .descriptorPool = descriptorPool,
+        .descriptorPool = m_descriptorPool,
         .descriptorSetCount = static_cast<uint32_t>(layouts.size()),
         .pSetLayouts = layouts.data(),
     };
 
-    mesh.descriptorSets = device.allocateDescriptorSets(allocInfo);
-    mesh.vertexData = std::move(data);
+    mesh.descriptorSets = m_device.allocateDescriptorSets(allocInfo);
+    mesh.data = std::move(data);
 
-    return mesh;
+    static std::atomic<MeshId> currentId{};
+    const MeshId id = mesh.id = currentId++;
+    m_meshes.emplace_back(std::move(mesh));
+    return id;
+}
+
+Mesh MeshManager::getMeshData(MeshId meshId) const
+{
+    auto it = std::ranges::find_if(m_meshes, [meshId](auto&& mesh) { return mesh.id == meshId; });
+    return it != m_meshes.end() ? *it : Mesh{};
+}
+
+void RenderObjectManager::createRenderObject(MeshId mesh, TextureId texture, glm::vec3 location)
+{
+    m_objects.emplace_back
+    (
+        RenderObject
+        {
+            .m_mesh = meshManager.getMeshData(mesh),
+            .m_texture = textureManager.getTextureData(texture),
+            .m_location = location
+        }
+    );
 }

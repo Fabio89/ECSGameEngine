@@ -9,13 +9,6 @@
   <component name="ChangeListManager">
     <list default="true" id="fda103a3-737a-498d-a761-fb583535bfd9" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.GameEngine/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.GameEngine/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Game/imgui.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Game/imgui.ini" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/GameEngine.vcxproj" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/GameEngine.vcxproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/Render/Shaders/Shader.frag" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Render/Shaders/Shader.frag" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/Render/Shaders/Shader.vert" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Render/Shaders/Shader.vert" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/Render/Shaders/compile.bat" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Render/Shaders/compile.bat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/Render/Shaders/frag.spv" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Render/Shaders/frag.spv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/Render/Shaders/vert.spv" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Render/Shaders/vert.spv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/GameEngine/Render/VulkanMain.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Render/VulkanMain.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/GameEngine/Render/VulkanMain.ixx" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Render/VulkanMain.ixx" afterDir="false" />
     </list>
@@ -39,7 +32,18 @@
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="cidr-memory-view://40" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Microsoft Visual Studio/2022/Preview/VC/Tools/MSVC/14.41.33923/include/vector" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../VulkanSDK/1.3.283.0/Include/vulkan/vulkan_structs.hpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/vcpkg_installed/x64-windows/include/glm/ext/matrix_transform.inl" root0="SKIP_HIGHLIGHTING" />
@@ -162,7 +166,7 @@
       <workItem from="1718626962592" duration="6985000" />
       <workItem from="1718634041691" duration="11981000" />
       <workItem from="1718647494662" duration="1082000" />
-      <workItem from="1718674839581" duration="15429000" />
+      <workItem from="1718674839581" duration="21873000" />
     </task>
     <servers />
   </component>
