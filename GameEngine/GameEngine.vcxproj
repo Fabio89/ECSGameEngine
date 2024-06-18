@@ -184,7 +184,6 @@
       <BuildStlModules>true</BuildStlModules>
       <AdditionalModuleDependencies>
       </AdditionalModuleDependencies>
-      <DebugInformationFormat>OldStyle</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

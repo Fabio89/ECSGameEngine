@@ -9,30 +9,21 @@ constexpr size_t MaxFramesInFlight{2};
 struct Vertex
 {
     glm::vec2 pos;
-    glm::vec3 color;
+    //glm::vec3 color;
     glm::vec2 texCoordinates;
 
     static vk::VertexInputBindingDescription getBindingDescription();
-    static std::array<vk::VertexInputAttributeDescription, 3> getAttributeDescriptions();
+    static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions();
 };
 
 struct Mesh
 {
     struct VertexData
     {
-        const std::vector<Vertex> vertices
-        {
-            {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-            {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-            {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-            {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
-        };
-        std::vector<uint16_t> indices
-        {
-            0, 1, 2, 2, 3, 0
-        };
+        std::vector<Vertex> vertices;
+        std::vector<uint16_t> indices;
     } vertexData;
-    
+
     vk::Buffer vertexBuffer{nullptr};
     vk::DeviceMemory vertexBufferMemory{nullptr};
     vk::Buffer indexBuffer{nullptr};
@@ -40,11 +31,17 @@ struct Mesh
     std::vector<vk::Buffer> uniformBuffers;
     std::vector<vk::DeviceMemory> uniformBuffersMemory;
     std::vector<void*> uniformBuffersMapped;
+    std::vector<vk::DescriptorSet> descriptorSets;
 };
 
-[[nodiscard]] Mesh createMesh(Mesh::VertexData data, vk::Device device, vk::PhysicalDevice physicalDevice,
-                vk::SurfaceKHR surface, vk::Queue queue,
-                vk::CommandPool cmdPool);
+[[nodiscard]] Mesh createMesh(Mesh::VertexData data,
+                              vk::Device device,
+                              vk::PhysicalDevice physicalDevice,
+                              vk::SurfaceKHR surface,
+                              vk::Queue queue,
+                              vk::CommandPool cmdPool,
+                              vk::DescriptorPool descriptorPool,
+                              vk::DescriptorSetLayout descriptorSetLayout);
 
 struct UniformBufferObject
 {
@@ -132,7 +129,7 @@ private:
 
     vk::PipelineCache m_pipelineCache{nullptr};
     vk::DescriptorPool m_descriptorPool{nullptr};
-    std::vector<vk::DescriptorSet> m_descriptorSets;
+    //std::vector<vk::DescriptorSet> m_descriptorSets;
 
     std::vector<vk::Image> m_swapChainImages;
     std::vector<vk::ImageView> m_swapChainImageViews;
@@ -172,7 +169,6 @@ private:
     void createCommandBuffers();
     void createSyncObjects();
     void createDescriptorPool();
-    void createDescriptorSets();
     void updateDescriptorSets(const RenderObject& object) const;
     void pickPhysicalDevice();
     [[nodiscard]] static bool checkValidationLayerSupport();
