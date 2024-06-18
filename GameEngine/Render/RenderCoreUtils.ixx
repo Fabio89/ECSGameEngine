@@ -98,6 +98,17 @@ export namespace RenderUtils
     void transitionImageLayout(vk::Device device, vk::Queue commandQueue, vk::CommandPool commandPool, vk::Image image,
                                vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
 
-    void copyBufferToImage(vk::Device device, vk::Queue commandQueue, vk::CommandPool commandPool, vk::Buffer buffer, vk::Image image,
-    vk::Extent2D extent);
+    void copyBufferToImage(vk::Device device, vk::Queue commandQueue, vk::CommandPool commandPool, vk::Buffer buffer,
+                           vk::Image image,
+                           vk::Extent2D extent);
+
+    vk::Format findSupportedFormat(vk::PhysicalDevice physicalDevice, const std::vector<vk::Format>& candidates,
+                                   vk::ImageTiling tiling, vk::FormatFeatureFlags features);
+
+    vk::Format findDepthFormat(vk::PhysicalDevice physicalDevice);
+
+    constexpr bool hasStencilComponent(vk::Format format)
+    {
+        return format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint;
+    }
 }

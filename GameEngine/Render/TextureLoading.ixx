@@ -2,7 +2,7 @@ export module Engine.Render.Core:TextureLoading;
 import :Vulkan;
 import :Utils;
 
-export namespace TextureUtils
+export namespace RenderUtils
 {
     // Create a Vulkan image
     [[nodiscard]] std::tuple<vk::Image, vk::DeviceMemory>
@@ -14,7 +14,8 @@ export namespace TextureUtils
                 vk::ImageTiling tiling,
                 vk::ImageUsageFlags usage);
 
-    [[nodiscard]] vk::ImageView createImageView(vk::Device device, vk::Image image, vk::Format format);
+    [[nodiscard]] vk::ImageView createImageView(vk::Device device, vk::Image image, vk::Format format,
+                                                vk::ImageAspectFlags aspectFlags = vk::ImageAspectFlagBits::eColor);
 
     // Create a Vulkan image from the specified file
     [[nodiscard]] std::tuple<vk::Image, vk::DeviceMemory>

@@ -11,11 +11,11 @@ export using TextureId = IdType;
 
 struct Texture
 {
-    TextureId m_id;
-    vk::Image m_image;
-    vk::DeviceMemory m_memory;
-    vk::ImageView m_view;
-    vk::Sampler m_sampler; // TODO: should be shared between textures??
+    TextureId id;
+    vk::Image image;
+    vk::DeviceMemory memory;
+    vk::ImageView view;
+    vk::Sampler sampler; // TODO: should be shared between textures??
 };
 
 export struct Vertex
@@ -47,6 +47,7 @@ struct RenderObject
     Mesh mesh;
     Texture texture;
     glm::vec3 location;
+    
     std::vector<vk::Buffer> uniformBuffers;
     std::vector<vk::DeviceMemory> uniformBuffersMemory;
     std::vector<void*> uniformBuffersMapped;
@@ -66,7 +67,7 @@ public:
         vk::Queue queue,
         vk::CommandPool cmdPool
     );
-
+    
     void shutdown();
 
     void createRenderObject(MeshId mesh, TextureId texture, glm::vec3 location);
@@ -96,7 +97,6 @@ private:
     std::vector<RenderObject> m_objects;
     std::vector<Mesh> m_meshes;
     std::vector<Texture> m_textures;
-
     vk::Device m_device{nullptr};
     vk::PhysicalDevice m_physicalDevice{nullptr};
     vk::SurfaceKHR m_surface{nullptr};
@@ -176,12 +176,16 @@ private:
     std::vector<vk::ImageView> m_swapChainImageViews;
     std::vector<vk::Framebuffer> m_swapChainFramebuffers;
     vk::Format m_swapChainImageFormat{vk::Format::eUndefined};
-    vk::Extent2D m_swapChainExtent{0, 0};
+    vk::Extent2D m_swapchainExtent{0, 0};
 
     std::vector<vk::Semaphore> m_imageAvailableSemaphores;
     std::vector<vk::Semaphore> m_renderFinishedSemaphores;
     std::vector<vk::Fence> m_inFlightFences;
 
+    vk::Image m_depthImage{nullptr};
+    vk::DeviceMemory m_depthImageMemory{nullptr};
+    vk::ImageView m_depthImageView{nullptr};
+    
     vk::DebugUtilsMessengerEXT m_debugMessenger{nullptr};
 
     ImGuiHelper m_imguiHelper;
@@ -199,6 +203,7 @@ private:
     void recreateSwapchain();
     void createSwapchain();
     void createImageViews();
+    void createDepthResources();
     void createFramebuffers();
 
     void cleanupSwapchain() const;

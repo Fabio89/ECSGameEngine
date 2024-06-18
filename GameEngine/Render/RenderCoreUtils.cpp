@@ -255,24 +255,22 @@ vk::Extent2D RenderUtils::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& cap
     {
         return capabilities.currentExtent;
     }
-    else
+
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+
+    vk::Extent2D actualExtent
     {
-        int width, height;
-        glfwGetFramebufferSize(window, &width, &height);
+        static_cast<uint32_t>(width),
+        static_cast<uint32_t>(height)
+    };
 
-        vk::Extent2D actualExtent
-        {
-            static_cast<uint32_t>(width),
-            static_cast<uint32_t>(height)
-        };
+    actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width,
+                                    capabilities.maxImageExtent.width);
+    actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height,
+                                     capabilities.maxImageExtent.height);
 
-        actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width,
-                                        capabilities.maxImageExtent.width);
-        actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height,
-                                         capabilities.maxImageExtent.height);
-
-        return actualExtent;
-    }
+    return actualExtent;
 }
 
 std::vector<char> RenderUtils::readFile(const std::string& filename)
@@ -310,6 +308,19 @@ void RenderUtils::transitionImageLayout(vk::Device device, vk::Queue commandQueu
 {
     const vk::CommandBuffer commandBuffer = beginSingleTimeCommands(device, commandPool);
 
+    vk::ImageAspectFlags aspectFlags;
+    if (newLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal)  // NOLINT(bugprone-branch-clone)
+    {
+        aspectFlags = vk::ImageAspectFlagBits::eDepth;
+
+        if (hasStencilComponent(format))
+            aspectFlags |= vk::ImageAspectFlagBits::eStencil;
+    }
+    else
+    {
+        aspectFlags = vk::ImageAspectFlagBits::eColor;
+    }
+
     const struct Flags
     {
         vk::AccessFlags srcAccessMask;
@@ -318,7 +329,8 @@ void RenderUtils::transitionImageLayout(vk::Device device, vk::Queue commandQueu
         vk::PipelineStageFlags dstStage;
     } flags = [oldLayout, newLayout]() -> Flags
         {
-            if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eTransferDstOptimal)
+            if (oldLayout == vk::ImageLayout::eUndefined
+                && newLayout == vk::ImageLayout::eTransferDstOptimal)
                 return
                 {
                     .srcAccessMask = {},
@@ -326,8 +338,9 @@ void RenderUtils::transitionImageLayout(vk::Device device, vk::Queue commandQueu
                     .srcStage = vk::PipelineStageFlagBits::eTopOfPipe,
                     .dstStage = vk::PipelineStageFlagBits::eTransfer,
                 };
-            if (oldLayout == vk::ImageLayout::eTransferDstOptimal && newLayout ==
-                vk::ImageLayout::eShaderReadOnlyOptimal)
+
+            if (oldLayout == vk::ImageLayout::eTransferDstOptimal
+                && newLayout == vk::ImageLayout::eShaderReadOnlyOptimal)
                 return
                 {
                     .srcAccessMask = vk::AccessFlagBits::eTransferWrite,
@@ -335,6 +348,17 @@ void RenderUtils::transitionImageLayout(vk::Device device, vk::Queue commandQueu
                     .srcStage = vk::PipelineStageFlagBits::eTransfer,
                     .dstStage = vk::PipelineStageFlagBits::eFragmentShader,
                 };
+
+            if (oldLayout == vk::ImageLayout::eUndefined
+                && newLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal)
+                return
+                {
+                    .srcAccessMask = {},
+                    .dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+                    .srcStage = vk::PipelineStageFlagBits::eTopOfPipe,
+                    .dstStage = vk::PipelineStageFlagBits::eEarlyFragmentTests,
+                };
+
             throw std::invalid_argument("unsupported layout transition!");
         }();
 
@@ -349,7 +373,7 @@ void RenderUtils::transitionImageLayout(vk::Device device, vk::Queue commandQueu
         .image = image,
         .subresourceRange
         {
-            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .aspectMask = aspectFlags,
             .baseMipLevel = 0,
             .levelCount = 1,
             .baseArrayLayer = 0,
@@ -399,4 +423,32 @@ void RenderUtils::copyBufferToImage(vk::Device device, vk::Queue commandQueue, v
 
     commandBuffer.copyBufferToImage(buffer, image, vk::ImageLayout::eTransferDstOptimal, 1, &region);
     endSingleTimeCommands(device, commandBuffer, commandQueue, commandPool);
+}
+
+vk::Format RenderUtils::findSupportedFormat(vk::PhysicalDevice physicalDevice,
+                                            const std::vector<vk::Format>& candidates, vk::ImageTiling tiling,
+                                            vk::FormatFeatureFlags features)
+{
+    for (vk::Format format : candidates)
+    {
+        const vk::FormatProperties props = physicalDevice.getFormatProperties(format);
+
+        if (tiling == vk::ImageTiling::eLinear && (props.linearTilingFeatures & features) == features)
+            return format;
+        if (tiling == vk::ImageTiling::eOptimal && (props.optimalTilingFeatures & features) == features)
+            return format;
+    }
+
+    throw std::runtime_error("failed to find supported format!");
+}
+
+vk::Format RenderUtils::findDepthFormat(vk::PhysicalDevice physicalDevice)
+{
+    return findSupportedFormat
+    (
+        physicalDevice,
+        {vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint},
+        vk::ImageTiling::eOptimal,
+        vk::FormatFeatureFlagBits::eDepthStencilAttachment
+    );
 }

@@ -12,18 +12,18 @@ TextureId RenderObjectManager::createTexture(const char* path)
     static std::atomic<TextureId> currentId{};
 
     Texture texture;
-    texture.m_id = currentId++;
-    std::tie(texture.m_image, texture.m_memory) = TextureUtils::createTextureImage(path, m_device, m_physicalDevice,
-        m_queue, m_cmdPool);
-    texture.m_view = TextureUtils::createTextureImageView(m_device, texture.m_image);
-    texture.m_sampler = TextureUtils::createTextureSampler(m_device, m_physicalDevice);
+    texture.id = currentId++;
+    std::tie(texture.image, texture.memory) = RenderUtils::createTextureImage(path, m_device, m_physicalDevice,
+                                                                              m_queue, m_cmdPool);
+    texture.view = RenderUtils::createTextureImageView(m_device, texture.image);
+    texture.sampler = RenderUtils::createTextureSampler(m_device, m_physicalDevice);
     m_textures.emplace_back(texture);
-    return texture.m_id;
+    return texture.id;
 }
 
 Texture RenderObjectManager::getTextureData(TextureId textureId) const
 {
-    auto it = std::ranges::find_if(m_textures, [textureId](auto&& texture) { return texture.m_id == textureId; });
+    auto it = std::ranges::find_if(m_textures, [textureId](auto&& texture) { return texture.id == textureId; });
     return it != m_textures.end() ? *it : Texture{};
 }
 
@@ -67,8 +67,9 @@ void VulkanApplication::init()
         createRenderPass();
         createDescriptorSetLayout();
         createGraphicsPipeline();
-        createFramebuffers();
         createCommandPool();
+        createDepthResources();
+        createFramebuffers();
         createCommandBuffers();
         createSyncObjects();
         createDescriptorPool();
@@ -192,6 +193,10 @@ void VulkanApplication::shutdown()
     m_device.destroyPipelineLayout(m_pipelineLayout);
     m_device.destroyRenderPass(m_renderPass);
 
+    m_device.destroyImage(m_depthImage);
+    m_device.destroyImageView(m_depthImageView);
+    m_device.freeMemory(m_depthImageMemory);
+    
     for (size_t i = 0; i < MaxFramesInFlight; ++i)
     {
         m_device.destroySemaphore(m_imageAvailableSemaphores[i]);
@@ -345,7 +350,7 @@ void VulkanApplication::recreateSwapchain()
         glfwWaitEvents();
     }
 
-    vkDeviceWaitIdle(m_device);
+    m_device.waitIdle();
 
     cleanupSwapchain();
 
@@ -411,7 +416,7 @@ void VulkanApplication::createSwapchain()
 
     m_swapChainImages = m_device.getSwapchainImagesKHR(m_swapChain);
     m_swapChainImageFormat = surfaceFormat.format;
-    m_swapChainExtent = extent;
+    m_swapchainExtent = extent;
 }
 
 void VulkanApplication::createImageViews()
@@ -421,7 +426,7 @@ void VulkanApplication::createImageViews()
     for (size_t i = 0; i < m_swapChainImages.size(); ++i)
     {
         m_swapChainImageViews[i] =
-            TextureUtils::createImageView(m_device, m_swapChainImages[i], m_swapChainImageFormat);
+            RenderUtils::createImageView(m_device, m_swapChainImages[i], m_swapChainImageFormat);
     }
 }
 
@@ -445,27 +450,50 @@ void VulkanApplication::createRenderPass()
         .layout = vk::ImageLayout::eColorAttachmentOptimal,
     };
 
+    const vk::AttachmentDescription depthAttachment
+    {
+        .format = RenderUtils::findDepthFormat(m_physicalDevice),
+        .samples = vk::SampleCountFlagBits::e1,
+        .loadOp = vk::AttachmentLoadOp::eClear,
+        .storeOp = vk::AttachmentStoreOp::eDontCare,
+        .stencilLoadOp = vk::AttachmentLoadOp::eDontCare,
+        .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+        .initialLayout = vk::ImageLayout::eUndefined,
+        .finalLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal
+    };
+
+    const vk::AttachmentReference depthAttachmentRef
+    {
+        .attachment = 1,
+        .layout = vk::ImageLayout::eDepthStencilAttachmentOptimal
+    };
+
     const vk::SubpassDescription subpass
     {
         .pipelineBindPoint = vk::PipelineBindPoint::eGraphics,
         .colorAttachmentCount = 1,
         .pColorAttachments = &colorAttachmentRef,
+        .pDepthStencilAttachment = &depthAttachmentRef
     };
 
     constexpr vk::SubpassDependency dependency
     {
         .srcSubpass = vk::SubpassExternal,
         .dstSubpass = 0,
-        .srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput,
-        .dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput,
+        .srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput |
+        vk::PipelineStageFlagBits::eEarlyFragmentTests,
+        .dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput |
+        vk::PipelineStageFlagBits::eEarlyFragmentTests,
         .srcAccessMask = {},
-        .dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite,
+        .dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
     };
+
+    const std::array attachments = {colorAttachment, depthAttachment};
 
     const vk::RenderPassCreateInfo renderPassInfo
     {
-        .attachmentCount = 1,
-        .pAttachments = &colorAttachment,
+        .attachmentCount = static_cast<uint32_t>(attachments.size()),
+        .pAttachments = attachments.data(),
         .subpassCount = 1,
         .pSubpasses = &subpass,
         .dependencyCount = 1,
@@ -592,8 +620,8 @@ void VulkanApplication::createGraphicsPipeline()
     {
         .x = 0.0f,
         .y = 0.0f,
-        .width = static_cast<float>(m_swapChainExtent.width),
-        .height = static_cast<float>(m_swapChainExtent.height),
+        .width = static_cast<float>(m_swapchainExtent.width),
+        .height = static_cast<float>(m_swapchainExtent.height),
         .minDepth = 0.0f,
         .maxDepth = 1.0f,
     };
@@ -601,7 +629,7 @@ void VulkanApplication::createGraphicsPipeline()
     const vk::Rect2D scissor
     {
         .offset = {0, 0},
-        .extent = m_swapChainExtent,
+        .extent = m_swapchainExtent,
     };
 
     const vk::PipelineViewportStateCreateInfo viewportStateInfo
@@ -672,6 +700,19 @@ void VulkanApplication::createGraphicsPipeline()
         throw std::runtime_error("failed to create pipeline layout!");
     }
 
+    const vk::PipelineDepthStencilStateCreateInfo depthStencil
+    {
+        .depthTestEnable = vk::True,
+        .depthWriteEnable = vk::True,
+        .depthCompareOp = vk::CompareOp::eLess,
+        .depthBoundsTestEnable = vk::False,
+        .stencilTestEnable = vk::False,
+        .front = {}, // Optional
+        .back = {}, // Optional
+        .minDepthBounds = 0.0f, // Optional
+        .maxDepthBounds = 1.0f, // Optional
+    };
+
     const vk::GraphicsPipelineCreateInfo pipelineInfo
     {
         .stageCount = 2,
@@ -681,7 +722,7 @@ void VulkanApplication::createGraphicsPipeline()
         .pViewportState = &viewportStateInfo,
         .pRasterizationState = &rasterizerInfo,
         .pMultisampleState = &multisamplingInfo,
-        .pDepthStencilState = nullptr, // Optional
+        .pDepthStencilState = &depthStencil,
         .pColorBlendState = &colorBlendingInfo,
         .pDynamicState = &dynamicStateInfo,
         .layout = m_pipelineLayout,
@@ -710,16 +751,16 @@ void VulkanApplication::createFramebuffers()
 
     for (size_t i = 0; i < m_swapChainImageViews.size(); ++i)
     {
-        const vk::ImageView attachments[] = {m_swapChainImageViews[i]};
+        const std::array attachments{m_swapChainImageViews[i], m_depthImageView};
 
         const vk::FramebufferCreateInfo framebufferInfo
         {
             .renderPass = m_renderPass,
-            .attachmentCount = 1,
-            .pAttachments = attachments,
-            .width = m_swapChainExtent.width,
-            .height = m_swapChainExtent.height,
-            .layers = 1,
+            .attachmentCount = static_cast<uint32_t>(attachments.size()),
+            .pAttachments = attachments.data(),
+            .width = m_swapchainExtent.width,
+            .height = m_swapchainExtent.height,
+            .layers = 1
         };
 
         m_swapChainFramebuffers[i] = m_device.createFramebuffer(framebufferInfo, nullptr);
@@ -839,7 +880,7 @@ void VulkanApplication::createDescriptorPool()
 
 void RenderObjectManager::updateDescriptorSets(const RenderObject& object) const
 {
-    const bool hasTexture = object.texture.m_image;
+    const bool hasTexture = object.texture.image;
     const uint32_t descriptorWriteCount = static_cast<uint32_t>(hasTexture) + 1;
 
     for (size_t i = 0; i < MaxFramesInFlight; i++)
@@ -870,8 +911,8 @@ void RenderObjectManager::updateDescriptorSets(const RenderObject& object) const
         {
             const vk::DescriptorImageInfo imageInfo
             {
-                .sampler = object.texture.m_sampler,
-                .imageView = object.texture.m_view,
+                .sampler = object.texture.sampler,
+                .imageView = object.texture.view,
                 .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
             };
             descriptorWrites.emplace_back
@@ -1008,7 +1049,11 @@ void VulkanApplication::drawFrame(float deltaTime)
 
     commandBuffer.begin(beginInfo);
 
-    constexpr vk::ClearValue clearColor{{0.0f, 0.0f, 0.0f, 1.0f}};
+    constexpr std::array clearColor
+    {
+        vk::ClearValue{vk::ClearColorValue{0.0f, 0.0f, 0.0f, 1.0f}},
+        vk::ClearValue{vk::ClearDepthStencilValue{1.0f, 0}},
+    };
 
     const vk::RenderPassBeginInfo renderPassInfo
     {
@@ -1017,18 +1062,18 @@ void VulkanApplication::drawFrame(float deltaTime)
         .renderArea
         {
             .offset = {0, 0},
-            .extent = m_swapChainExtent,
+            .extent = m_swapchainExtent,
         },
-        .clearValueCount = 1,
-        .pClearValues = &clearColor,
+        .clearValueCount = static_cast<uint32_t>(clearColor.size()),
+        .pClearValues = clearColor.data(),
     };
 
     const vk::Viewport viewport
     {
         .x = 0.0f,
         .y = 0.0f,
-        .width = static_cast<float>(m_swapChainExtent.width),
-        .height = static_cast<float>(m_swapChainExtent.height),
+        .width = static_cast<float>(m_swapchainExtent.width),
+        .height = static_cast<float>(m_swapchainExtent.height),
         .minDepth = 0.0f,
         .maxDepth = 1.0f,
     };
@@ -1037,13 +1082,13 @@ void VulkanApplication::drawFrame(float deltaTime)
     const vk::Rect2D scissor
     {
         .offset = {0, 0},
-        .extent = m_swapChainExtent,
+        .extent = m_swapchainExtent,
     };
     commandBuffer.setScissor(0, 1, &scissor);
 
     commandBuffer.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
 
-    objectManager.renderFrame(commandBuffer, m_graphicsPipeline, m_pipelineLayout, m_swapChainExtent, deltaTime,
+    objectManager.renderFrame(commandBuffer, m_graphicsPipeline, m_pipelineLayout, m_swapchainExtent, deltaTime,
                               m_currentFrame);
 
     m_imguiHelper.renderFrame(commandBuffer);
@@ -1241,6 +1286,27 @@ void RenderObjectManager::init
     m_cmdPool = cmdPool;
 }
 
+void VulkanApplication::createDepthResources()
+{
+    const vk::Format depthFormat = RenderUtils::findDepthFormat(m_physicalDevice);
+    std::tie(m_depthImage, m_depthImageMemory) = RenderUtils::createImage
+    (
+        m_device,
+        m_physicalDevice,
+        vk::MemoryPropertyFlagBits::eDeviceLocal,
+        m_swapchainExtent,
+        depthFormat,
+        vk::ImageTiling::eOptimal,
+        vk::ImageUsageFlagBits::eDepthStencilAttachment
+    );
+
+    m_depthImageView = RenderUtils::createImageView(m_device, m_depthImage, depthFormat,
+                                                    vk::ImageAspectFlagBits::eDepth);
+
+    RenderUtils::transitionImageLayout(m_device, m_graphicsQueue, m_commandPool, m_depthImage, depthFormat,
+                                       vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+}
+
 MeshId RenderObjectManager::createMesh(MeshData data)
 {
     assert(m_device);
@@ -1305,10 +1371,10 @@ void RenderObjectManager::shutdown()
 
     for (const Texture& texture : m_textures)
     {
-        m_device.destroySampler(texture.m_sampler);
-        m_device.destroyImageView(texture.m_view);
-        m_device.destroyImage(texture.m_image);
-        m_device.freeMemory(texture.m_memory);
+        m_device.destroySampler(texture.sampler);
+        m_device.destroyImageView(texture.view);
+        m_device.destroyImage(texture.image);
+        m_device.freeMemory(texture.memory);
     }
     m_textures.clear();
 }

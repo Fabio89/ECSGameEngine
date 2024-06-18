@@ -8,7 +8,7 @@ import std;
 
 // Create a Vulkan image
 [[nodiscard]] std::tuple<vk::Image, vk::DeviceMemory>
-TextureUtils::createImage(vk::Device device,
+RenderUtils::createImage(vk::Device device,
                           vk::PhysicalDevice physicalDevice,
                           vk::MemoryPropertyFlags properties,
                           vk::Extent2D extent,
@@ -54,7 +54,8 @@ TextureUtils::createImage(vk::Device device,
     return std::make_pair(image, memory);
 }
 
-vk::ImageView TextureUtils::createImageView(vk::Device device, vk::Image image, vk::Format format)
+vk::ImageView RenderUtils::createImageView(vk::Device device, vk::Image image, vk::Format format,
+                                            vk::ImageAspectFlags aspectFlags)
 {
     const vk::ImageViewCreateInfo viewInfo
     {
@@ -63,7 +64,7 @@ vk::ImageView TextureUtils::createImageView(vk::Device device, vk::Image image, 
         .format = format,
         .subresourceRange
         {
-            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .aspectMask = aspectFlags,
             .baseMipLevel = 0,
             .levelCount = 1,
             .baseArrayLayer = 0,
@@ -75,7 +76,7 @@ vk::ImageView TextureUtils::createImageView(vk::Device device, vk::Image image, 
 
 // Create a Vulkan image from the specified file
 [[nodiscard]] std::tuple<vk::Image, vk::DeviceMemory>
-TextureUtils::createTextureImage(const char* path, vk::Device device, vk::PhysicalDevice physicalDevice,
+RenderUtils::createTextureImage(const char* path, vk::Device device, vk::PhysicalDevice physicalDevice,
                                  vk::Queue commandQueue, vk::CommandPool
                                  commandPool)
 {
@@ -86,7 +87,7 @@ TextureUtils::createTextureImage(const char* path, vk::Device device, vk::Physic
     if (!pixels)
         throw std::runtime_error("failed to load texture image!");
 
-    const RenderUtils::CreateBufferInfo bufferInfo
+    const CreateBufferInfo bufferInfo
     {
         .device = device,
         .physicalDevice = physicalDevice,
@@ -119,13 +120,13 @@ TextureUtils::createTextureImage(const char* path, vk::Device device, vk::Physic
     const auto image = std::get<vk::Image>(result);
 
     constexpr auto format = vk::Format::eR8G8B8A8Srgb;
-    RenderUtils::transitionImageLayout(device, commandQueue, commandPool,
+    transitionImageLayout(device, commandQueue, commandPool,
                                        image, format, vk::ImageLayout::eUndefined,
                                        vk::ImageLayout::eTransferDstOptimal);
 
-    RenderUtils::copyBufferToImage(device, commandQueue, commandPool, stagingBuffer, image, imageExtent);
+    copyBufferToImage(device, commandQueue, commandPool, stagingBuffer, image, imageExtent);
 
-    RenderUtils::transitionImageLayout(device, commandQueue, commandPool,
+    transitionImageLayout(device, commandQueue, commandPool,
                                        image, format, vk::ImageLayout::eTransferDstOptimal,
                                        vk::ImageLayout::eShaderReadOnlyOptimal);
 
@@ -135,12 +136,12 @@ TextureUtils::createTextureImage(const char* path, vk::Device device, vk::Physic
     return result;
 }
 
-vk::ImageView TextureUtils::createTextureImageView(vk::Device device, vk::Image image)
+vk::ImageView RenderUtils::createTextureImageView(vk::Device device, vk::Image image)
 {
     return createImageView(device, image, vk::Format::eR8G8B8A8Srgb);
 }
 
-vk::Sampler TextureUtils::createTextureSampler(vk::Device device, vk::PhysicalDevice physicalDevice)
+vk::Sampler RenderUtils::createTextureSampler(vk::Device device, vk::PhysicalDevice physicalDevice)
 {
     const vk::PhysicalDeviceProperties properties = physicalDevice.getProperties();
 
