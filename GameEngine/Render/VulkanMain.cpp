@@ -1,6 +1,7 @@
 module Engine.Render.Application;
 
 import Engine.Core;
+import Engine.Render.Core;
 import <imgui.h>;
 import <imgui_impl_glfw.h>;
 import <imgui_impl_vulkan.h>;
@@ -97,6 +98,14 @@ void VulkanApplication::init()
         imagePath += "/../../GameEngine/Render/Textures/statue-1275469_1280.jpg";
         std::cout << "Image path: " << imagePath.generic_string().data() << std::endl;
 
+        std::filesystem::path modelPath{EngineUtils::getExePath()};
+        modelPath += "/../../GameEngine/External/MeshLoading/viking_room.obj";
+
+        std::filesystem::path texturePath{EngineUtils::getExePath()};
+        texturePath += "/../../GameEngine/External/MeshLoading/viking_room.png";
+
+        const TextureId vikingRoomTexture = objectManager.createTexture(texturePath.generic_string().data());
+        
         const TextureId commonTexture = objectManager.createTexture(imagePath.generic_string().data());
 
         MeshData squareData
@@ -140,9 +149,11 @@ void VulkanApplication::init()
         };
         const MeshId doubleSquare = objectManager.createMesh(doubleSquareData);
 
-        objectManager.createRenderObject(doubleSquare, commonTexture, {0, 0, 0});
-        objectManager.createRenderObject(square, commonTexture, {1, 0, 1});
-
+        auto model = ModelUtils::loadModel(modelPath.generic_string().data());
+        const MeshId vikingRoomMesh = objectManager.createMesh(model);
+        // objectManager.createRenderObject(doubleSquare, commonTexture, {0, 0, 0});
+        // objectManager.createRenderObject(square, commonTexture, {1, 0, 1});
+        objectManager.createRenderObject(vikingRoomMesh, vikingRoomTexture, {});
         MeshData hexagonData
         {
             .vertices
@@ -192,10 +203,6 @@ void VulkanApplication::shutdown()
     m_device.destroyPipeline(m_graphicsPipeline);
     m_device.destroyPipelineLayout(m_pipelineLayout);
     m_device.destroyRenderPass(m_renderPass);
-
-    m_device.destroyImage(m_depthImage);
-    m_device.destroyImageView(m_depthImageView);
-    m_device.freeMemory(m_depthImageMemory);
     
     for (size_t i = 0; i < MaxFramesInFlight; ++i)
     {
@@ -356,6 +363,7 @@ void VulkanApplication::recreateSwapchain()
 
     createSwapchain();
     createImageViews();
+    createDepthResources();
     createFramebuffers();
 }
 
@@ -774,16 +782,16 @@ void VulkanApplication::createFramebuffers()
 void VulkanApplication::cleanupSwapchain() const
 {
     for (vk::Framebuffer framebuffer : m_swapChainFramebuffers)
-    {
-        vkDestroyFramebuffer(m_device, framebuffer, nullptr);
-    }
+        m_device.destroyFramebuffer(framebuffer);
 
     for (vk::ImageView imageView : m_swapChainImageViews)
-    {
-        vkDestroyImageView(m_device, imageView, nullptr);
-    }
+        m_device.destroyImageView(imageView);
 
-    vkDestroySwapchainKHR(m_device, m_swapChain, nullptr);
+    m_device.destroySwapchainKHR(m_swapChain);
+
+    m_device.destroyImageView(m_depthImageView);
+    m_device.destroyImage(m_depthImage);
+    m_device.freeMemory(m_depthImageMemory);
 }
 
 void VulkanApplication::createCommandPool()
@@ -1441,7 +1449,7 @@ void RenderObjectManager::renderFrame(vk::CommandBuffer commandBuffer, vk::Pipel
         updateUniformBuffer(object, swapchainExtent, currentFrame, deltaTime);
 
         commandBuffer.bindVertexBuffers(0, vertexBuffers, offsets);
-        commandBuffer.bindIndexBuffer(object.mesh.indexBuffer, 0, vk::IndexType::eUint16);
+        commandBuffer.bindIndexBuffer(object.mesh.indexBuffer, 0, MeshData::indexType);
         commandBuffer.drawIndexed(static_cast<uint32_t>(object.mesh.data.indices.size()), 1, 0, 0, 0);
     }
 }

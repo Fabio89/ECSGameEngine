@@ -241,6 +241,8 @@
     </ClCompile>
     <ClCompile Include="Job.ixx">
     </ClCompile>
+    <ClCompile Include="Render\Model.ixx">
+    </ClCompile>
     <ClCompile Include="Render\Render.cpp">
     </ClCompile>
     <ClCompile Include="Render\Render.ixx">
@@ -271,6 +273,7 @@
     <None Include="Render\Shaders\Shader.vert" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="External\MeshLoading\tiny_obj_loader.h" />
     <ClInclude Include="External\TextureLoading\stb_image.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

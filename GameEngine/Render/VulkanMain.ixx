@@ -6,9 +6,6 @@ import <glm/glm.hpp>;
 
 constexpr size_t MaxFramesInFlight{2};
 
-using IdType = size_t;
-export using TextureId = IdType;
-
 struct Texture
 {
     TextureId id;
@@ -17,20 +14,6 @@ struct Texture
     vk::ImageView view;
     vk::Sampler sampler; // TODO: should be shared between textures??
 };
-
-export struct Vertex
-{
-    glm::vec3 pos;
-    glm::vec2 texCoordinates;
-};
-
-export struct MeshData
-{
-    std::vector<Vertex> vertices;
-    std::vector<uint16_t> indices;
-};
-
-export using MeshId = IdType;
 
 struct Mesh
 {
