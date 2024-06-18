@@ -7,43 +7,24 @@ import <imgui_impl_vulkan.h>;
 import <glm/gtc/matrix_transform.hpp>;
 import <glm/ext/vector_int2.hpp>;
 
-void TextureManager::shutdown(vk::Device device)
-{
-    for (const Texture& texture : m_textures)
-    {
-        destroyTexture(device, texture);
-    }
-    m_textures.clear();
-}
-
-TextureId TextureManager::createTexture(const char* path, vk::Device device, vk::PhysicalDevice physicalDevice,
-                                        vk::Queue queue,
-                                        vk::CommandPool commandPool)
+TextureId RenderObjectManager::createTexture(const char* path)
 {
     static std::atomic<TextureId> currentId{};
 
     Texture texture;
     texture.m_id = currentId++;
-    std::tie(texture.m_image, texture.m_memory) = TextureUtils::createTextureImage(path, device, physicalDevice,
-        queue, commandPool);
-    texture.m_view = TextureUtils::createTextureImageView(device, texture.m_image);
-    texture.m_sampler = TextureUtils::createTextureSampler(device, physicalDevice);
+    std::tie(texture.m_image, texture.m_memory) = TextureUtils::createTextureImage(path, m_device, m_physicalDevice,
+        m_queue, m_cmdPool);
+    texture.m_view = TextureUtils::createTextureImageView(m_device, texture.m_image);
+    texture.m_sampler = TextureUtils::createTextureSampler(m_device, m_physicalDevice);
     m_textures.emplace_back(texture);
     return texture.m_id;
 }
 
-Texture TextureManager::getTextureData(TextureId textureId) const
+Texture RenderObjectManager::getTextureData(TextureId textureId) const
 {
     auto it = std::ranges::find_if(m_textures, [textureId](auto&& texture) { return texture.m_id == textureId; });
     return it != m_textures.end() ? *it : Texture{};
-}
-
-void TextureManager::destroyTexture(vk::Device device, const Texture& texture)
-{
-    device.destroySampler(texture.m_sampler);
-    device.destroyImageView(texture.m_view);
-    device.destroyImage(texture.m_image);
-    device.freeMemory(texture.m_memory);
 }
 
 VulkanApplication::~VulkanApplication() noexcept
@@ -106,19 +87,17 @@ void VulkanApplication::init()
     };
     m_imguiHelper.init(m_window, imguiInfo);
 
+    objectManager.init(m_device, m_physicalDevice, m_surface, m_descriptorPool, m_descriptorSetLayout,
+                       m_graphicsQueue, m_commandPool);
+
     // Create some objects
     {
-        meshManager.init(m_device, m_physicalDevice, m_surface, m_graphicsQueue,
-                         m_commandPool, m_descriptorPool, m_descriptorSetLayout);
-
         std::filesystem::path imagePath{EngineUtils::getExePath()};
         imagePath += "/../../GameEngine/Render/Textures/statue-1275469_1280.jpg";
         std::cout << "Image path: " << imagePath.generic_string().data() << std::endl;
 
-        const TextureId commonTexture = textureManager.createTexture(imagePath.generic_string().data(), m_device, m_physicalDevice,
-                                                  m_graphicsQueue,
-                                                  m_commandPool);
-        
+        const TextureId commonTexture = objectManager.createTexture(imagePath.generic_string().data());
+
         MeshData squareData
         {
             .vertices
@@ -130,13 +109,38 @@ void VulkanApplication::init()
             },
             .indices
             {
-                0, 1, 2, 2, 3, 0
+                0, 1, 2,
+                2, 3, 0
             }
         };
-        const MeshId square = meshManager.createMesh(squareData);
+        const MeshId square = objectManager.createMesh(squareData);
 
+        MeshData doubleSquareData
+        {
+            .vertices
+            {
+                {{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f}},
+                {{0.5f, -0.5f, 0.0f}, {1.0f, 0.0f}},
+                {{0.5f, 0.5f, 0.0f}, {1.0f, 1.0f}},
+                {{-0.5f, 0.5f, 0.0f}, {0.0f, 1.0f}},
 
-        renderObjectManager.createRenderObject(square, commonTexture, {1, 0, 1});
+                {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}},
+                {{0.5f, -0.5f, -0.5f}, {1.0f, 0.0f}},
+                {{0.5f, 0.5f, -0.5f}, {1.0f, 1.0f}},
+                {{-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f}}
+            },
+            .indices
+            {
+                0, 1, 2,
+                2, 3, 0,
+                4, 5, 6,
+                6, 7, 4
+            }
+        };
+        const MeshId doubleSquare = objectManager.createMesh(doubleSquareData);
+
+        objectManager.createRenderObject(doubleSquare, commonTexture, {0, 0, 0});
+        objectManager.createRenderObject(square, commonTexture, {1, 0, 1});
 
         MeshData hexagonData
         {
@@ -158,8 +162,8 @@ void VulkanApplication::init()
                 4, 3, 2 // Bottom triangle
             }
         };
-        const MeshId hexagon = meshManager.createMesh(std::move(hexagonData));
-        renderObjectManager.createRenderObject(hexagon, commonTexture, {0, 1, 1});
+        const MeshId hexagon = objectManager.createMesh(std::move(hexagonData));
+        objectManager.createRenderObject(hexagon, commonTexture, {0, 1, 1});
     }
 }
 
@@ -175,10 +179,7 @@ void VulkanApplication::shutdown()
     m_terminated = true;
     m_device.waitIdle();
 
-    // Destroy objects
-    meshManager.shutdown();
-    textureManager.shutdown(m_device);
-
+    objectManager.shutdown();
     m_imguiHelper.shutdown();
 
     cleanupSwapchain();
@@ -561,7 +562,7 @@ void VulkanApplication::createGraphicsPipeline()
         {
             .location = 0,
             .binding = 0,
-            .format = vk::Format::eR32G32Sfloat,
+            .format = vk::Format::eR32G32B32Sfloat,
             .offset = offsetof(Vertex, pos),
         },
         vk::VertexInputAttributeDescription
@@ -836,9 +837,9 @@ void VulkanApplication::createDescriptorPool()
     m_descriptorPool = m_device.createDescriptorPool(poolInfo, nullptr);
 }
 
-void VulkanApplication::updateDescriptorSets(const RenderObject& object) const
+void RenderObjectManager::updateDescriptorSets(const RenderObject& object) const
 {
-    const bool hasTexture = object.m_texture.m_image;
+    const bool hasTexture = object.texture.m_image;
     const uint32_t descriptorWriteCount = static_cast<uint32_t>(hasTexture) + 1;
 
     for (size_t i = 0; i < MaxFramesInFlight; i++)
@@ -848,7 +849,7 @@ void VulkanApplication::updateDescriptorSets(const RenderObject& object) const
 
         const vk::DescriptorBufferInfo vertexBufferInfo
         {
-            .buffer = object.m_mesh.uniformBuffers[i],
+            .buffer = object.uniformBuffers[i],
             .offset = 0,
             .range = sizeof(UniformBufferObject),
         };
@@ -856,7 +857,7 @@ void VulkanApplication::updateDescriptorSets(const RenderObject& object) const
         (
             vk::WriteDescriptorSet
             {
-                .dstSet = object.m_mesh.descriptorSets[i],
+                .dstSet = object.descriptorSets[i],
                 .dstBinding = 0,
                 .dstArrayElement = 0,
                 .descriptorCount = 1,
@@ -869,15 +870,15 @@ void VulkanApplication::updateDescriptorSets(const RenderObject& object) const
         {
             const vk::DescriptorImageInfo imageInfo
             {
-                .sampler = object.m_texture.m_sampler,
-                .imageView = object.m_texture.m_view,
+                .sampler = object.texture.m_sampler,
+                .imageView = object.texture.m_view,
                 .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
             };
             descriptorWrites.emplace_back
             (
                 vk::WriteDescriptorSet
                 {
-                    .dstSet = object.m_mesh.descriptorSets[i],
+                    .dstSet = object.descriptorSets[i],
                     .dstBinding = 1,
                     .dstArrayElement = 0,
                     .descriptorCount = 1,
@@ -947,21 +948,21 @@ bool VulkanApplication::checkValidationLayerSupport()
     return std::ranges::all_of(RenderUtils::ValidationLayers, isLayerAvailable);
 }
 
-// ReSharper disable once CppParameterMayBeConstPtrOrRef
-void VulkanApplication::updateUniformBuffer(RenderObject& object, uint32_t currentImage, float deltaTime) const
+void RenderObjectManager::updateUniformBuffer(RenderObject& object, vk::Extent2D swapchainExtent, uint32_t currentImage,
+                                              float deltaTime)
 {
     static float timeElapsed = 0.f;
     UniformBufferObject uniformBufferObject
     {
-        .model = translate(glm::mat4(1), object.m_location) * rotate(glm::mat4(1.0f), timeElapsed * glm::radians(90.0f),
-                                                                     glm::vec3(0.0f, 0.0f, 1.0f)),
+        .model = translate(glm::mat4(1), object.location) * rotate(glm::mat4(1.0f), timeElapsed * glm::radians(90.0f),
+                                                                   glm::vec3(0.0f, 0.0f, 1.0f)),
         .view = lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
         .proj = glm::perspective(glm::radians(45.0f),
-                                 m_swapChainExtent.width / static_cast<float>(m_swapChainExtent.height), 0.1f, 10.0f),
+                                 swapchainExtent.width / static_cast<float>(swapchainExtent.height), 0.1f, 10.0f),
     };
     uniformBufferObject.proj[1][1] *= -1;
 
-    memcpy(object.m_mesh.uniformBuffersMapped[currentImage], &uniformBufferObject, sizeof(uniformBufferObject));
+    memcpy(object.uniformBuffersMapped[currentImage], &uniformBufferObject, sizeof(uniformBufferObject));
     timeElapsed += deltaTime;
 }
 
@@ -1042,24 +1043,8 @@ void VulkanApplication::drawFrame(float deltaTime)
 
     commandBuffer.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
 
-    for (RenderObject& object : renderObjectManager.m_objects)
-    {
-        commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_graphicsPipeline);
-
-        updateDescriptorSets(object);
-
-        commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, m_pipelineLayout, 0, 1,
-                                         &object.m_mesh.descriptorSets[m_currentFrame], 0, nullptr);
-
-        const vk::Buffer vertexBuffers[] = {object.m_mesh.vertexBuffer};
-        constexpr vk::DeviceSize offsets[] = {0};
-
-        updateUniformBuffer(object, m_currentFrame, deltaTime);
-
-        commandBuffer.bindVertexBuffers(0, vertexBuffers, offsets);
-        commandBuffer.bindIndexBuffer(object.m_mesh.indexBuffer, 0, vk::IndexType::eUint16);
-        commandBuffer.drawIndexed(static_cast<uint32_t>(object.m_mesh.data.indices.size()), 1, 0, 0, 0);
-    }
+    objectManager.renderFrame(commandBuffer, m_graphicsPipeline, m_pipelineLayout, m_swapChainExtent, deltaTime,
+                              m_currentFrame);
 
     m_imguiHelper.renderFrame(commandBuffer);
 
@@ -1236,37 +1221,27 @@ void ImGuiHelper::shutdown()
     m_descriptorPool = nullptr;
 }
 
-void MeshManager::init(vk::Device device, vk::PhysicalDevice physicalDevice, vk::SurfaceKHR surface, vk::Queue queue,
-                       vk::CommandPool cmdPool, vk::DescriptorPool descriptorPool,
-                       vk::DescriptorSetLayout descriptorSetLayout)
+void RenderObjectManager::init
+(
+    vk::Device device,
+    vk::PhysicalDevice physicalDevice,
+    vk::SurfaceKHR surface,
+    vk::DescriptorPool descriptorPool,
+    vk::DescriptorSetLayout descriptorSetLayout,
+    vk::Queue queue,
+    vk::CommandPool cmdPool
+)
 {
     m_device = device;
     m_physicalDevice = physicalDevice;
     m_surface = surface;
-    m_queue = queue;
-    m_cmdPool = cmdPool;
     m_descriptorPool = descriptorPool;
     m_descriptorSetLayout = descriptorSetLayout;
+    m_queue = queue;
+    m_cmdPool = cmdPool;
 }
 
-void MeshManager::shutdown()
-{
-    for (const Mesh& mesh : m_meshes)
-    {
-        m_device.destroyBuffer(mesh.vertexBuffer);
-        m_device.freeMemory(mesh.vertexBufferMemory);
-        m_device.destroyBuffer(mesh.indexBuffer);
-        m_device.freeMemory(mesh.indexBufferMemory);
-        for (auto&& [buffer, memory] : std::views::zip(mesh.uniformBuffers, mesh.uniformBuffersMemory))
-        {
-            m_device.destroyBuffer(buffer);
-            m_device.freeMemory(memory);
-        }
-    }
-    m_meshes.clear();
-}
-
-MeshId MeshManager::createMesh(MeshData data)
+MeshId RenderObjectManager::createMesh(MeshData data)
 {
     assert(m_device);
 
@@ -1293,11 +1268,62 @@ MeshId MeshManager::createMesh(MeshData data)
     };
     std::tie(mesh.indexBuffer, mesh.indexBufferMemory) = createDataBuffer(data.indices, indexBufferInfo);
 
+    mesh.data = std::move(data);
+
+    static std::atomic<MeshId> currentId{};
+    const MeshId id = mesh.id = currentId++;
+    m_meshes.emplace_back(std::move(mesh));
+    return id;
+}
+
+Mesh RenderObjectManager::getMeshData(MeshId meshId) const
+{
+    auto it = std::ranges::find_if(m_meshes, [meshId](auto&& mesh) { return mesh.id == meshId; });
+    return it != m_meshes.end() ? *it : Mesh{};
+}
+
+void RenderObjectManager::shutdown()
+{
+    for (const RenderObject& object : m_objects)
+    {
+        for (auto&& [buffer, memory] : std::views::zip(object.uniformBuffers, object.uniformBuffersMemory))
+        {
+            m_device.destroyBuffer(buffer);
+            m_device.freeMemory(memory);
+        }
+    }
+    m_objects.clear();
+
+    for (const Mesh& mesh : m_meshes)
+    {
+        m_device.destroyBuffer(mesh.vertexBuffer);
+        m_device.freeMemory(mesh.vertexBufferMemory);
+        m_device.destroyBuffer(mesh.indexBuffer);
+        m_device.freeMemory(mesh.indexBufferMemory);
+    }
+    m_meshes.clear();
+
+    for (const Texture& texture : m_textures)
+    {
+        m_device.destroySampler(texture.m_sampler);
+        m_device.destroyImageView(texture.m_view);
+        m_device.destroyImage(texture.m_image);
+        m_device.freeMemory(texture.m_memory);
+    }
+    m_textures.clear();
+}
+
+void RenderObjectManager::createRenderObject(MeshId mesh, TextureId texture, glm::vec3 location)
+{
+    RenderObject object;
     static constexpr vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
 
-    mesh.uniformBuffers = std::vector<vk::Buffer>(MaxFramesInFlight);
-    mesh.uniformBuffersMemory = std::vector<vk::DeviceMemory>(MaxFramesInFlight);
-    mesh.uniformBuffersMapped = std::vector<void*>(MaxFramesInFlight);
+    object.mesh = getMeshData(mesh);
+    object.texture = getTextureData(texture);
+    object.location = location;
+    object.uniformBuffers = std::vector<vk::Buffer>(MaxFramesInFlight);
+    object.uniformBuffersMemory = std::vector<vk::DeviceMemory>(MaxFramesInFlight);
+    object.uniformBuffersMapped = std::vector<void*>(MaxFramesInFlight);
 
     const RenderUtils::CreateBufferInfo bufferInfo
     {
@@ -1308,13 +1334,13 @@ MeshId MeshManager::createMesh(MeshData data)
         .properties = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
     };
 
-    auto bufferRange = std::views::zip(mesh.uniformBuffers, mesh.uniformBuffersMemory, mesh.uniformBuffersMapped);
+    auto bufferRange = std::views::zip(object.uniformBuffers, object.uniformBuffersMemory, object.uniformBuffersMapped);
 
     for (auto&& [buffer, memory, mapped] : bufferRange)
     {
         std::tie(buffer, memory) = createBuffer(bufferInfo);
         if (m_device.mapMemory(memory, 0, bufferSize, {}, &mapped) != vk::Result::eSuccess)
-            return {};
+            return;
     }
 
     std::vector layouts(MaxFramesInFlight, m_descriptorSetLayout);
@@ -1325,30 +1351,31 @@ MeshId MeshManager::createMesh(MeshData data)
         .pSetLayouts = layouts.data(),
     };
 
-    mesh.descriptorSets = m_device.allocateDescriptorSets(allocInfo);
-    mesh.data = std::move(data);
+    object.descriptorSets = m_device.allocateDescriptorSets(allocInfo);
 
-    static std::atomic<MeshId> currentId{};
-    const MeshId id = mesh.id = currentId++;
-    m_meshes.emplace_back(std::move(mesh));
-    return id;
+    m_objects.emplace_back(std::move(object));
 }
 
-Mesh MeshManager::getMeshData(MeshId meshId) const
+void RenderObjectManager::renderFrame(vk::CommandBuffer commandBuffer, vk::Pipeline graphicsPipeline,
+                                      vk::PipelineLayout pipelineLayout, vk::Extent2D swapchainExtent, float deltaTime,
+                                      uint32_t currentFrame)
 {
-    auto it = std::ranges::find_if(m_meshes, [meshId](auto&& mesh) { return mesh.id == meshId; });
-    return it != m_meshes.end() ? *it : Mesh{};
-}
+    for (RenderObject& object : objectManager.m_objects)
+    {
+        commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
 
-void RenderObjectManager::createRenderObject(MeshId mesh, TextureId texture, glm::vec3 location)
-{
-    m_objects.emplace_back
-    (
-        RenderObject
-        {
-            .m_mesh = meshManager.getMeshData(mesh),
-            .m_texture = textureManager.getTextureData(texture),
-            .m_location = location
-        }
-    );
+        updateDescriptorSets(object);
+
+        commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1,
+                                         &object.descriptorSets[currentFrame], 0, nullptr);
+
+        const vk::Buffer vertexBuffers[] = {object.mesh.vertexBuffer};
+        constexpr vk::DeviceSize offsets[] = {0};
+
+        updateUniformBuffer(object, swapchainExtent, currentFrame, deltaTime);
+
+        commandBuffer.bindVertexBuffers(0, vertexBuffers, offsets);
+        commandBuffer.bindIndexBuffer(object.mesh.indexBuffer, 0, vk::IndexType::eUint16);
+        commandBuffer.drawIndexed(static_cast<uint32_t>(object.mesh.data.indices.size()), 1, 0, 0, 0);
+    }
 }

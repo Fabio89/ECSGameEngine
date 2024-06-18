@@ -18,19 +18,6 @@ struct Texture
     vk::Sampler m_sampler; // TODO: should be shared between textures??
 };
 
-class TextureManager
-{
-public:
-    void shutdown(vk::Device device);
-    TextureId createTexture(const char* path, vk::Device device, vk::PhysicalDevice physicalDevice, vk::Queue queue,
-                            vk::CommandPool commandPool);
-    Texture getTextureData(TextureId textureId) const;
-
-private:
-    void destroyTexture(vk::Device device, const Texture& texture);
-    std::vector<Texture> m_textures;
-} textureManager;
-
 export struct Vertex
 {
     glm::vec3 pos;
@@ -44,6 +31,7 @@ export struct MeshData
 };
 
 export using MeshId = IdType;
+
 struct Mesh
 {
     MeshId id;
@@ -52,58 +40,71 @@ struct Mesh
     vk::DeviceMemory vertexBufferMemory{nullptr};
     vk::Buffer indexBuffer{nullptr};
     vk::DeviceMemory indexBufferMemory{nullptr};
+};
+
+struct RenderObject
+{
+    Mesh mesh;
+    Texture texture;
+    glm::vec3 location;
     std::vector<vk::Buffer> uniformBuffers;
     std::vector<vk::DeviceMemory> uniformBuffersMemory;
     std::vector<void*> uniformBuffersMapped;
     std::vector<vk::DescriptorSet> descriptorSets;
 };
 
-class MeshManager
-{
-public:
-    void init(vk::Device device,
-              vk::PhysicalDevice physicalDevice,
-              vk::SurfaceKHR surface,
-              vk::Queue queue,
-              vk::CommandPool cmdPool,
-              vk::DescriptorPool descriptorPool,
-              vk::DescriptorSetLayout descriptorSetLayout);
-    
-    void shutdown();
-    
-    MeshId createMesh(MeshData data);
-    Mesh getMeshData(MeshId meshId) const;
-    
-private:
-    vk::Device m_device{nullptr};
-    vk::PhysicalDevice m_physicalDevice{nullptr};
-    vk::SurfaceKHR m_surface{nullptr};
-    vk::Queue m_queue{nullptr};
-    vk::CommandPool m_cmdPool{nullptr};
-    vk::DescriptorPool m_descriptorPool{nullptr};
-    vk::DescriptorSetLayout m_descriptorSetLayout{nullptr};
-    std::vector<Mesh> m_meshes;
-} meshManager;
-
-struct RenderObject
-{
-    Mesh m_mesh;
-    Texture m_texture;
-    glm::vec3 m_location;
-};
-
 class RenderObjectManager
 {
 public:
-    void createRenderObject(MeshId mesh, TextureId texture, glm::vec3 location);
-    void draw();
+    void init
+    (
+        vk::Device device,
+        vk::PhysicalDevice physicalDevice,
+        vk::SurfaceKHR surface,
+        vk::DescriptorPool descriptorPool,
+        vk::DescriptorSetLayout descriptorSetLayout,
+        vk::Queue queue,
+        vk::CommandPool cmdPool
+    );
 
-    std::vector<RenderObject> m_objects;
+    void shutdown();
+
+    void createRenderObject(MeshId mesh, TextureId texture, glm::vec3 location);
+
+    MeshId createMesh(MeshData data);
+
+    TextureId createTexture(const char* path);
+
+    void renderFrame
+    (
+        vk::CommandBuffer commandBuffer,
+        vk::Pipeline graphicsPipeline,
+        vk::PipelineLayout pipelineLayout,
+        vk::Extent2D swapchainExtent,
+        float deltaTime,
+        uint32_t currentFrame
+    );
 
 private:
-} renderObjectManager;
+    Mesh getMeshData(MeshId meshId) const;
+    Texture getTextureData(TextureId textureId) const;
 
-//std::vector<RenderObject> testObjects;
+    void updateDescriptorSets(const RenderObject& object) const;
+    static void updateUniformBuffer(RenderObject& object, vk::Extent2D swapchainExtent, uint32_t currentImage,
+                                    float deltaTime);
+
+    std::vector<RenderObject> m_objects;
+    std::vector<Mesh> m_meshes;
+    std::vector<Texture> m_textures;
+
+    vk::Device m_device{nullptr};
+    vk::PhysicalDevice m_physicalDevice{nullptr};
+    vk::SurfaceKHR m_surface{nullptr};
+    vk::DescriptorPool m_descriptorPool{nullptr};
+    vk::DescriptorSetLayout m_descriptorSetLayout{nullptr};
+    vk::Queue m_queue{nullptr};
+    vk::CommandPool m_cmdPool{nullptr};
+} objectManager;
 
 struct UniformBufferObject
 {
@@ -170,7 +171,6 @@ private:
 
     vk::PipelineCache m_pipelineCache{nullptr};
     vk::DescriptorPool m_descriptorPool{nullptr};
-    //std::vector<vk::DescriptorSet> m_descriptorSets;
 
     std::vector<vk::Image> m_swapChainImages;
     std::vector<vk::ImageView> m_swapChainImageViews;
@@ -210,10 +210,7 @@ private:
     void createCommandBuffers();
     void createSyncObjects();
     void createDescriptorPool();
-    void updateDescriptorSets(const RenderObject& object) const;
     void pickPhysicalDevice();
     [[nodiscard]] static bool checkValidationLayerSupport();
-    void recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex);
-    void updateUniformBuffer(RenderObject& object, uint32_t currentImage, float deltaTime) const;
     void drawFrame(float deltaTime);
 };
