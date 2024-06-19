@@ -1,6 +1,8 @@
 module;
 
 #include <compare>
+#pragma warning(disable : 4996)
+#define _CRT_SECURE_NO_WARNINGS
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 

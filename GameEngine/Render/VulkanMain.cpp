@@ -1,13 +1,16 @@
+module;
+
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_vulkan.h>
+#include <glm/gtc/matrix_transform.hpp>
+
 module Engine.Render.Application;
 
 import Engine.AssetManager;
+import Engine.Config;
 import Engine.Core;
 import Engine.Render.Core;
-import <imgui.h>;
-import <imgui_impl_glfw.h>;
-import <imgui_impl_vulkan.h>;
-import <glm/gtc/matrix_transform.hpp>;
-import <glm/ext/vector_int2.hpp>;
 
 TextureId RenderObjectManager::createTexture(const char* path)
 {
@@ -15,7 +18,7 @@ TextureId RenderObjectManager::createTexture(const char* path)
 
     Texture texture;
     texture.id = currentId++;
-    std::string fullPath = AssetManager::getContentRoot() + path;
+    std::string fullPath = Config::getContentRoot() + path;
     std::tie(texture.image, texture.memory) = RenderUtils::createTextureImage(
         fullPath.c_str(), m_device, m_physicalDevice,
         m_queue, m_cmdPool);
@@ -27,7 +30,7 @@ TextureId RenderObjectManager::createTexture(const char* path)
 
 void RenderObjectManager::createObjectsFromConfig()
 {
-    const auto& cfg = AssetManager::getEngineConfig();
+    const auto& cfg = Config::getEngineConfig();
     std::map<std::string, MeshId> meshes;
     std::map<std::string, TextureId> textures;
 
@@ -113,6 +116,8 @@ VulkanApplication::~VulkanApplication() noexcept
 
 void VulkanApplication::init()
 {
+    m_windowSize = Config::getApplicationSettings().resolution;
+    
     // Init window
     {
         glfwInit();
@@ -276,7 +281,7 @@ void VulkanApplication::createLogicalDevice()
     queueCreateInfos.reserve(indices.size());
 
     auto indexRange = indices | std::views::transform([&](auto&& index) { return *index; });
-    std::set uniqueQueueFamilies(indexRange.begin(), indexRange.end());
+    std::set<std::optional<uint32_t>> uniqueQueueFamilies(indexRange.begin(), indexRange.end());
 
     for (std::optional<uint32_t> queueFamily : uniqueQueueFamilies)
     {
@@ -392,7 +397,7 @@ void VulkanApplication::createSwapchain()
 
     const QueueFamilyIndices indices = QueueFamilyUtils::findQueueFamilies(m_physicalDevice, m_surface);
     auto indicesRange = indices | std::views::transform([](std::optional<uint32_t> value) { return *value; });
-    const std::vector queueFamilyIndices(indicesRange.begin(), indicesRange.end());
+    const std::vector<uint32_t> queueFamilyIndices(indicesRange.begin(), indicesRange.end());
 
     if (indices.get(QueueFamilyType::Graphics) != indices.get(QueueFamilyType::Present))
     {

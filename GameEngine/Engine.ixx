@@ -2,16 +2,10 @@ module;
 export module Engine.Core;
 
 import std;
+import Engine.Config;
 import Engine.Job;
 
-export struct EngineSettings
-{
-    static constexpr int MaxComponentsPerEntity = 64;
-
-    int numThreads{4};
-
-    float targetFps{120.f};
-};
+static constexpr int maxComponentsPerEntity = 64;
 
 export using Entity = size_t;
 export using ComponentTypeId = std::type_index;
@@ -35,7 +29,7 @@ private:
     std::vector<std::function<void(float)>> m_updateFunctions;
 };
 
-using EntitySignature = std::bitset<EngineSettings::MaxComponentsPerEntity>;
+using EntitySignature = std::bitset<maxComponentsPerEntity>;
 
 // Archetype
 class Archetype
@@ -95,7 +89,7 @@ export class World
 public:
     World();
 
-    World(const EngineSettings&);
+    World(const ApplicationSettings&);
 
     Entity createEntity();
 
@@ -214,7 +208,7 @@ void World::addComponent(Entity entity, Args&&... args)
         m_archetypes.erase(signature);
     }
 
-    signature.set(Component<T>::typeId.hash_code() % EngineSettings::MaxComponentsPerEntity);
+    signature.set(Component<T>::typeId.hash_code() % maxComponentsPerEntity);
     editOrCreateArchetype(signature).addComponent<T>(entity, T(std::forward<Args>(args)...));
 
     for(auto& observer : m_archetypeChangeObservers)

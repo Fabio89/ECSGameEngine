@@ -16,6 +16,7 @@ module;
 #define VULKAN_HPP_NO_SMART_HANDLE
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #define _CRT_SECURE_NO_WARNINGS
+#pragma warning(disable : 5105)
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_extension_inspection.hpp>
 #include <vulkan/vulkan_format_traits.hpp>

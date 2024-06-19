@@ -1,8 +1,10 @@
 module;
+
+#pragma warning(disable : 5105)
+#include <windows.h>
+
 export module Engine.AssetManager;
 import std;
-import <windows.h>;
-import <External/Json/json.hpp>;
 
 namespace AssetManager
 {
@@ -23,31 +25,6 @@ namespace AssetManager
     {
         static const std::string path = std::filesystem::canonical(getExecutableRoot() + "../../GameEngine").
             generic_string() + "/";
-        return path;
-    }
-
-    export const nlohmann::json& getEngineConfig()
-    {
-        static nlohmann::json config = []
-        {
-            nlohmann::json j;
-            std::string path = getEngineSourceRoot() + "Config.json";
-            std::ifstream i{path};
-            i >> j;
-            return j;
-        }();
-
-        return config;
-    }
-
-    export const std::string& getContentRoot()
-    {
-        static const std::string path = []
-        {
-            std::string rootRelative = getEngineConfig()["contentRoot"];
-            std::filesystem::path completePath{getExecutableRoot() + "../../" + rootRelative};
-            return canonical(completePath).generic_string() + "/";
-        }();
         return path;
     }
 }

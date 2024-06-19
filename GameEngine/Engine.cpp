@@ -1,4 +1,5 @@
 module Engine.Core;
+import Engine.Config;
 
 void System::update(float deltaTime)
 {
@@ -32,11 +33,11 @@ void Archetype::removeEntity(Entity entity)
 }
 
 World::World()
-	: World{ EngineSettings{} }
+	: World{ ApplicationSettings{} }
 {
 }
 
-World::World(const EngineSettings& settings)
+World::World(const ApplicationSettings& settings)
 	: m_jobSystem{ settings.numThreads }
 {
 }

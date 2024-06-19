@@ -137,7 +137,7 @@ public:
     bool shouldWindowClose() const;
 
 private:
-    glm::ivec2 m_windowSize{1600, 900};
+    glm::ivec2 m_windowSize{800, 600};
     GLFWwindow* m_window{nullptr};
     vk::Instance m_instance{nullptr};
     vk::PhysicalDevice m_physicalDevice{nullptr};

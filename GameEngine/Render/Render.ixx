@@ -1,7 +1,11 @@
+module;
+
+#pragma warning(disable : 5105)
+#include <windows.h>
+
 export module Engine.Render;
 import Engine.Core;
 import std;
-import <windows.h>;
 
 export struct LoopSettings
 {

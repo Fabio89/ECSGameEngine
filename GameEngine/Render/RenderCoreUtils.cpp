@@ -1,9 +1,11 @@
 module;
 
 #include <cassert>
+#include <vulkan/vulkan_core.h>
 #include <vulkan/vk_platform.h>
 
 module Engine.Render.Core;
+import std.compat;
 
 [[nodiscard]] uint32_t RenderUtils::findMemoryType(vk::PhysicalDevice physicalDevice, uint32_t typeFilter,
                                                    vk::MemoryPropertyFlags properties)
@@ -49,8 +51,9 @@ void RenderUtils::endSingleTimeCommands(vk::Device device, vk::CommandBuffer buf
         . pCommandBuffers = &buffer,
     };
 
-    // ReSharper disable once CppDeclaratorNeverUsed
-    auto result = queue.submit(1, &submitInfo, nullptr);
+    if (queue.submit(1, &submitInfo, nullptr) != vk::Result::eSuccess)
+        throw std::runtime_error("failed to submit queue!");
+
     queue.waitIdle();
     device.freeCommandBuffers(pool, 1, &buffer);
 }
@@ -172,27 +175,30 @@ bool RenderUtils::checkDeviceExtensionSupport(vk::PhysicalDevice device)
 
 namespace RenderUtils
 {
-    VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback
+    VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallback
     (
-        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-        VkDebugUtilsMessageTypeFlagsEXT messageType,
-        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-        void* pUserData
+        vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+        vk::DebugUtilsMessageTypeFlagBitsEXT messageType,
+        const vk::DebugUtilsMessengerCallbackDataEXT* callbackData,
+        void* userData
     )
     {
-        std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+        std::cerr << "validation layer: " << callbackData->pMessage << std::endl;
         return vk::False;
     }
 }
 
 vk::DebugUtilsMessengerCreateInfoEXT RenderUtils::newDebugUtilsMessengerCreateInfo()
 {
-    vk::DebugUtilsMessengerCreateInfoEXT info{};
-    info.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
-        vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
-    info.messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
+    vk::DebugUtilsMessengerCreateInfoEXT info
+    {
+        .messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
+        vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError,
+        .messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
         vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
-        info.pfnUserCallback = debugCallback;
+        .pfnUserCallback = reinterpret_cast<PFN_vkDebugUtilsMessengerCallbackEXT>(debugCallback),
+    };
+
     return info;
 }
 
@@ -309,7 +315,7 @@ void RenderUtils::transitionImageLayout(vk::Device device, vk::Queue commandQueu
     const vk::CommandBuffer commandBuffer = beginSingleTimeCommands(device, commandPool);
 
     vk::ImageAspectFlags aspectFlags;
-    if (newLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal)  // NOLINT(bugprone-branch-clone)
+    if (newLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal) // NOLINT(bugprone-branch-clone)
     {
         aspectFlags = vk::ImageAspectFlagBits::eDepth;
 
@@ -354,7 +360,8 @@ void RenderUtils::transitionImageLayout(vk::Device device, vk::Queue commandQueu
                 return
                 {
                     .srcAccessMask = {},
-                    .dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+                    .dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead |
+                    vk::AccessFlagBits::eDepthStencilAttachmentWrite,
                     .srcStage = vk::PipelineStageFlagBits::eTopOfPipe,
                     .dstStage = vk::PipelineStageFlagBits::eEarlyFragmentTests,
                 };

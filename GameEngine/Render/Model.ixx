@@ -9,7 +9,7 @@ module;
 
 export module Engine.Render.Core:Model;
 import :Vulkan;
-import Engine.AssetManager;
+import Engine.Config;
 import std;
 
 using IdType = size_t;
@@ -54,7 +54,7 @@ export namespace ModelUtils
         std::vector<tinyobj::material_t> materials;
         std::string warn, err;
 
-        if (!LoadObj(&attrib, &shapes, &materials, &warn, &err, (AssetManager::getContentRoot() + path).c_str()))
+        if (!LoadObj(&attrib, &shapes, &materials, &warn, &err, (Config::getContentRoot() + path).c_str()))
         {
             throw std::runtime_error(warn + err);
         }

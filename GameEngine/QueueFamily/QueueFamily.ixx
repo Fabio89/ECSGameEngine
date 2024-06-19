@@ -1,7 +1,7 @@
 export module Engine.Render.Core:QueueFamily;
-
-import <vulkan/vulkan.hpp>;
+import vulkan_hpp;
 import std;
+import <cstdint>;
 
 export enum class QueueFamilyType : size_t
 {
@@ -35,7 +35,7 @@ public:
 namespace QueueFamilyUtils
 {
 	export bool areAllIndicesSet(const QueueFamilyIndices&);
-	export QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
+	export QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice device, vk::SurfaceKHR surface);
 }
 
 QueueFamilyIndices::QueueFamilyIndices()
@@ -62,36 +62,30 @@ bool QueueFamilyUtils::areAllIndicesSet(const QueueFamilyIndices& indices)
 	return std::ranges::all_of(indices, [](auto&& index) { return index.has_value(); });
 }
 
-QueueFamilyIndices QueueFamilyUtils::findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface)
+QueueFamilyIndices QueueFamilyUtils::findQueueFamilies(vk::PhysicalDevice device, vk::SurfaceKHR surface)
 {
 	QueueFamilyIndices indices;
 
-	uint32_t queueFamilyCount = 0;
-	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
-
-	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+	std::vector<vk::QueueFamilyProperties> queueFamilies = device.getQueueFamilyProperties();
 
 	for (uint32_t i = 0; i < queueFamilies.size(); ++i)
 	{
-		const VkQueueFamilyProperties& family = queueFamilies[i];
-		if ((family.queueFlags & VK_QUEUE_GRAPHICS_BIT))
+		const vk::QueueFamilyProperties& family = queueFamilies[i];
+		if ((family.queueFlags & vk::QueueFlagBits::eGraphics))
 			indices.get(QueueFamilyType::Graphics) = i;
-		else if ((family.queueFlags & VK_QUEUE_TRANSFER_BIT))
+		else if ((family.queueFlags & vk::QueueFlagBits::eTransfer))
 			indices.get(QueueFamilyType::Transfer) = i;
 
 		{
-			VkBool32 presentSupport = false;
-			vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
-			if (presentSupport)
+			if (device.getSurfaceSupportKHR(i, surface))
 				indices.get(QueueFamilyType::Present) = i;
 		}
 
-		if (QueueFamilyUtils::areAllIndicesSet(indices))
+		if (areAllIndicesSet(indices))
 			break;
 	}
 
-	auto isGraphicsFamily = [](const VkQueueFamilyProperties& family) { return (family.queueFlags & VK_QUEUE_GRAPHICS_BIT); };
+	auto isGraphicsFamily = [](const vk::QueueFamilyProperties& family) { return !!(family.queueFlags & vk::QueueFlagBits::eGraphics); };
 	if (auto it = std::ranges::find_if(queueFamilies, isGraphicsFamily); it != queueFamilies.end())
 	{
 		indices.get(QueueFamilyType::Graphics) = static_cast<uint32_t>(it - queueFamilies.begin());

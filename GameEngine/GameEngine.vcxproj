@@ -168,20 +168,20 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>
       </PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <EnableModules>true</EnableModules>
+      <EnableModules>false</EnableModules>
       <FloatingPointModel />
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir);$(VK_SDK_PATH)\Include;$(SolutionDir)\vcpkg_installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
-      <BuildStlModules>true</BuildStlModules>
+      <BuildStlModules>false</BuildStlModules>
       <AdditionalModuleDependencies>
       </AdditionalModuleDependencies>
     </ClCompile>
@@ -232,6 +232,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AssetManager.ixx">
+    </ClCompile>
+    <ClCompile Include="Config.cpp">
+    </ClCompile>
+    <ClCompile Include="Config.ixx">
     </ClCompile>
     <ClCompile Include="ExternalModules\vulkan.ixx">
     </ClCompile>

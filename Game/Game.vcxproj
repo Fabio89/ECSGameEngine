@@ -161,18 +161,18 @@
       </PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <EnableModules>true</EnableModules>
+      <EnableModules>false</EnableModules>
       <FloatingPointModel />
       <AdditionalIncludeDirectories>$(VK_SDK_PATH)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <BuildStlModules>true</BuildStlModules>
+      <BuildStlModules>false</BuildStlModules>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(VK_SDK_PATH)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>MSVCRT.lib</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
       <Command>

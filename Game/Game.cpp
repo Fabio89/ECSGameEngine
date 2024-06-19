@@ -1,3 +1,4 @@
+import Engine.Config;
 import Engine.Core;
 import Engine.Render;
 
@@ -28,12 +29,6 @@ public:
 	}
 };
 
-EngineSettings settings
-{
-	.numThreads = 6,
-	.targetFps = 120.f
-};
-
 void gameInit(World& world)
 {
 	// Create entities
@@ -54,6 +49,7 @@ void gameShutdown()
 
 int main()
 {
+	const ApplicationSettings& settings = Config::getApplicationSettings();
 	World world{ settings };
 	ApplicationState appState{.world = world};
 	const LoopSettings loopSettings{ .targetFps = settings.targetFps };
