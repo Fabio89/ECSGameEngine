@@ -8,21 +8,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fda103a3-737a-498d-a761-fb583535bfd9" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Content/statue.jpg" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Content/viking_room.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/GameEngine/AssetManager.ixx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/GameEngine/Config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/GameEngine/External/json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/GameEngine/ExternalModules/vulkan.ixx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.GameEngine/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.GameEngine/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ExternalModules/vulkan.ixx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/Engine.ixx" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Engine.ixx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/External/MeshLoading/viking_room.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/GameEngine.vcxproj" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/GameEngine.vcxproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/Render/Model.ixx" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Render/Model.ixx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GameEngine/Render/Textures/statue-1275469_1280.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GameEngine/AssetManager.ixx" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/AssetManager.ixx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GameEngine/Config.json" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Config.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/GameEngine/Render/VulkanMain.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Render/VulkanMain.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/vcpkg.json" beforeDir="false" afterPath="$PROJECT_DIR$/vcpkg.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GameEngine/Render/VulkanMain.ixx" beforeDir="false" afterPath="$PROJECT_DIR$/GameEngine/Render/VulkanMain.ixx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/vcpkg_installed/vcpkg/blds/detect_compiler/x64-windows-rel/CMakeFiles/3.29.2/CompilerIdC/CMakeCCompilerId.exe" beforeDir="false" afterPath="$PROJECT_DIR$/vcpkg_installed/vcpkg/blds/detect_compiler/x64-windows-rel/CMakeFiles/3.29.2/CompilerIdC/CMakeCCompilerId.exe" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/vcpkg_installed/vcpkg/blds/detect_compiler/x64-windows-rel/CMakeFiles/3.29.2/CompilerIdCXX/CMakeCXXCompilerId.exe" beforeDir="false" afterPath="$PROJECT_DIR$/vcpkg_installed/vcpkg/blds/detect_compiler/x64-windows-rel/CMakeFiles/3.29.2/CompilerIdCXX/CMakeCXXCompilerId.exe" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/vcpkg_installed/vcpkg/blds/detect_compiler/x64-windows-rel/vcpkg-parallel-configure/.ninja_log" beforeDir="false" afterPath="$PROJECT_DIR$/vcpkg_installed/vcpkg/blds/detect_compiler/x64-windows-rel/vcpkg-parallel-configure/.ninja_log" afterDir="false" />
@@ -321,8 +311,25 @@
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://C:/Program Files/Microsoft Visual Studio/2022/Preview/VC/Tools/MSVC/14.41.33923/include/array" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Microsoft Visual Studio/2022/Preview/VC/Tools/MSVC/14.41.33923/include/filesystem" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://C:/Program Files/Microsoft Visual Studio/2022/Preview/VC/Tools/MSVC/14.41.33923/include/vector" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/GameEngine/External/Json/json.hpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/vcpkg_installed/x64-windows/include/glm/ext/matrix_transform.inl" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/vcpkg_installed/x64-windows/include/glm/fwd.hpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/vcpkg_installed/x64-windows/include/glm/glm.hpp" root0="SKIP_HIGHLIGHTING" />
@@ -449,7 +456,7 @@
       <workItem from="1718712163426" duration="3998000" />
       <workItem from="1718717463353" duration="14965000" />
       <workItem from="1718733986557" duration="1788000" />
-      <workItem from="1718759049552" duration="18865000" />
+      <workItem from="1718759049552" duration="25137000" />
     </task>
     <servers />
   </component>

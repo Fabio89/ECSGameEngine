@@ -16,12 +16,85 @@ TextureId RenderObjectManager::createTexture(const char* path)
     Texture texture;
     texture.id = currentId++;
     std::string fullPath = AssetManager::getContentRoot() + path;
-    std::tie(texture.image, texture.memory) = RenderUtils::createTextureImage(fullPath.c_str(), m_device, m_physicalDevice,
-                                                                              m_queue, m_cmdPool);
+    std::tie(texture.image, texture.memory) = RenderUtils::createTextureImage(
+        fullPath.c_str(), m_device, m_physicalDevice,
+        m_queue, m_cmdPool);
     texture.view = RenderUtils::createTextureImageView(m_device, texture.image);
     texture.sampler = RenderUtils::createTextureSampler(m_device, m_physicalDevice);
     m_textures.emplace_back(texture);
     return texture.id;
+}
+
+void RenderObjectManager::createObjectsFromConfig()
+{
+    const auto& cfg = AssetManager::getEngineConfig();
+    std::map<std::string, MeshId> meshes;
+    std::map<std::string, TextureId> textures;
+
+    for (const auto& meshJson : cfg["meshes"])
+    {
+        MeshData meshData;
+        if (meshJson.contains("path"))
+        {
+            meshData = ModelUtils::loadModel(std::string{meshJson["path"]}.c_str());
+        }
+        else
+        {
+            for (const auto& verticesJson : meshJson["vertices"])
+            {
+                Vertex& vertex = meshData.vertices.emplace_back();
+                std::array<float, 3> pos = verticesJson["position"];
+                vertex.pos = {pos[0], pos[1], pos[2]};
+
+                std::array<float, 2> uv = verticesJson["uv"];
+                vertex.texCoordinates = {uv[0], uv[1]};
+            }
+            for (const auto& indicesJson : meshJson["indices"])
+            {
+                meshData.indices.emplace_back(indicesJson);
+            }
+        }
+
+        MeshId mesh = createMesh(meshData);
+        meshes.emplace(meshJson["name"], mesh);
+    }
+
+    for (const auto& texJson : cfg["textures"])
+    {
+        if (texJson.contains("path"))
+        {
+            const TextureId texture = createTexture(std::string{texJson["path"]}.c_str());
+            textures.emplace(texJson["name"], texture);
+        }
+    }
+
+    for (const auto& modelJson : cfg["models"])
+    {
+        std::string meshName = modelJson["mesh"];
+        std::string textureName = modelJson["texture"];
+
+        glm::vec3 location{};
+        if (modelJson.contains("position"))
+        {
+            std::array<float, 3> pos = modelJson["position"];
+            location = {pos[0], pos[1], pos[2]};
+        }
+
+        glm::vec3 rotation{};
+        if (modelJson.contains("rotation"))
+        {
+            std::array<float, 3> rot = modelJson["rotation"];
+            rotation = {rot[0], rot[1], rot[2]};
+        }
+
+        float scale{1.f};
+        if (modelJson.contains("scale"))
+        {
+            scale= modelJson["scale"];
+        }
+
+        createRenderObject(meshes[meshName], textures[textureName], location, rotation, scale);
+    }
 }
 
 Texture RenderObjectManager::getTextureData(TextureId textureId) const
@@ -40,8 +113,6 @@ VulkanApplication::~VulkanApplication() noexcept
 
 void VulkanApplication::init()
 {
-    AssetManager::JsonTest();
-    
     // Init window
     {
         glfwInit();
@@ -96,53 +167,7 @@ void VulkanApplication::init()
     objectManager.init(m_device, m_physicalDevice, m_surface, m_descriptorPool, m_descriptorSetLayout,
                        m_graphicsQueue, m_commandPool);
 
-    // Create some objects
-    {
-        const TextureId commonTexture = objectManager.createTexture("statue.jpg");
-
-        MeshData squareData
-        {
-            .vertices
-            {
-                {{-0.5f, -0.5f, 0}, {1.0f, 0.0f}},
-                {{0.5f, -0.5f, 0}, {0.0f, 0.0f}},
-                {{0.5f, 0.5f, 0}, {0.0f, 1.0f}},
-                {{-0.5f, 0.5f, 0}, {1.0f, 1.0f}}
-            },
-            .indices
-            {
-                0, 1, 2,
-                2, 3, 0
-            }
-        };
-        const MeshId square = objectManager.createMesh(squareData);
-        const TextureId vikingRoomTexture = objectManager.createTexture("viking_room.png");
-        auto model = ModelUtils::loadModel("viking_room.obj");
-        const MeshId vikingRoomMesh = objectManager.createMesh(model);
-        objectManager.createRenderObject(vikingRoomMesh, vikingRoomTexture, {});
-        MeshData hexagonData
-        {
-            .vertices
-            {
-                {{0.0f, 1.0f, 0}, {0.5f, 1.0f}}, // Top vertex
-                {{0.866f, 0.5f, 0}, {1.0f, 0.75f}}, // Top-right vertex
-                {{0.866f, -0.5f, 0}, {1.0f, 0.25f}}, // Bottom-right vertex
-                {{0.0f, -1.0f, 0}, {0.5f, 0.0f}}, // Bottom vertex
-                {{-0.866f, -0.5f, 0}, {0.0f, 0.25f}}, // Bottom-left vertex
-                {{-0.866f, 0.5f, 0}, {0.0f, 0.75f}}, // Top-left vertex,
-            },
-
-            .indices
-            {
-                5, 1, 0, // Top triangle
-                5, 2, 1, // Top-right triangle
-                5, 4, 2, // Bottom-right triangle
-                4, 3, 2 // Bottom triangle
-            }
-        };
-        const MeshId hexagon = objectManager.createMesh(std::move(hexagonData));
-        objectManager.createRenderObject(hexagon, commonTexture, {0, 1, 1});
-    }
+    objectManager.createObjectsFromConfig();
 }
 
 void VulkanApplication::update(float deltaTime)
@@ -169,7 +194,7 @@ void VulkanApplication::shutdown()
     m_device.destroyPipeline(m_graphicsPipeline);
     m_device.destroyPipelineLayout(m_pipelineLayout);
     m_device.destroyRenderPass(m_renderPass);
-    
+
     for (size_t i = 0; i < MaxFramesInFlight; ++i)
     {
         m_device.destroySemaphore(m_imageAvailableSemaphores[i]);
@@ -967,10 +992,15 @@ void RenderObjectManager::updateUniformBuffer(RenderObject& object, vk::Extent2D
                                               float deltaTime)
 {
     static float timeElapsed = 0.f;
+
+    //rotate(glm::mat4(1.0f), timeElapsed * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f))
     UniformBufferObject uniformBufferObject
     {
-        .model = translate(glm::mat4(1), object.location) * rotate(glm::mat4(1.0f), timeElapsed * glm::radians(90.0f),
-                                                                   glm::vec3(0.0f, 0.0f, 1.0f)),
+        .model = rotate(glm::mat4(1), glm::radians(object.rotation.x), {1, 0, 0})
+            * rotate(glm::mat4(1), glm::radians(object.rotation.y), {0, 1, 0})
+            * rotate(glm::mat4(1), glm::radians(object.rotation.z), {0, 0, 1})
+            * translate(glm::mat4(1), object.location)
+            *scale(glm::mat4(1), glm::vec3{object.scale, object.scale, object.scale}),
         .view = lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
         .proj = glm::perspective(glm::radians(45.0f),
                                  swapchainExtent.width / static_cast<float>(swapchainExtent.height), 0.1f, 10.0f),
@@ -1353,7 +1383,7 @@ void RenderObjectManager::shutdown()
     m_textures.clear();
 }
 
-void RenderObjectManager::createRenderObject(MeshId mesh, TextureId texture, glm::vec3 location)
+void RenderObjectManager::createRenderObject(MeshId mesh, TextureId texture, glm::vec3 location, glm::vec3 rotation, float scale)
 {
     RenderObject object;
     static constexpr vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
@@ -1361,6 +1391,8 @@ void RenderObjectManager::createRenderObject(MeshId mesh, TextureId texture, glm
     object.mesh = getMeshData(mesh);
     object.texture = getTextureData(texture);
     object.location = location;
+    object.rotation = rotation;
+    object.scale = scale;
     object.uniformBuffers = std::vector<vk::Buffer>(MaxFramesInFlight);
     object.uniformBuffersMemory = std::vector<vk::DeviceMemory>(MaxFramesInFlight);
     object.uniformBuffersMapped = std::vector<void*>(MaxFramesInFlight);

@@ -1,6 +1,5 @@
 {
   "contentRoot": "Content",
-  "shaderSourceRoot": "GameEngine/Render/Shaders",
   "meshes" : [
     {
       "name": "square",
@@ -27,6 +26,10 @@
     {
       "name": "viking_room",
       "path": "viking_room.obj"
+    },
+    {
+      "name": "kitten",
+      "path": "Kitten/Kitten.obj"
     }
   ],
   "textures" : [
@@ -35,18 +38,21 @@
       "path": "statue.jpg"
     },
     {
-      "name": "viking_room",
-      "path": "viking_room.png"
+      "name": "kitten",
+      "path": "Kitten/textures/Kitten_Diffuse.png"
     }
   ],
   "models" : [
     {
-      "mesh": "square",
-      "texture": "statue"
+      "mesh": "hexagon",
+      "texture": "statue",
+      "scale": 10
     },
     {
-      "mesh": "viking_room",
-      "texture": "viking_room"
+      "mesh": "kitten",
+      "texture": "kitten",
+      "rotation": [90, -90, 0],
+      "scale": 0.1
     }
   ]
 }

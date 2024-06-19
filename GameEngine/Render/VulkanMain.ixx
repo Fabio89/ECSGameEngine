@@ -30,7 +30,8 @@ struct RenderObject
     Mesh mesh;
     Texture texture;
     glm::vec3 location;
-    
+    glm::vec3 rotation;
+    float scale{1.f};
     std::vector<vk::Buffer> uniformBuffers;
     std::vector<vk::DeviceMemory> uniformBuffersMemory;
     std::vector<void*> uniformBuffersMapped;
@@ -50,14 +51,17 @@ public:
         vk::Queue queue,
         vk::CommandPool cmdPool
     );
-    
+
     void shutdown();
 
-    void createRenderObject(MeshId mesh, TextureId texture, glm::vec3 location);
+    void createRenderObject(MeshId mesh, TextureId texture, glm::vec3 location = {}, glm::vec3 rotation = {},
+                            float scale = 1.f);
 
     MeshId createMesh(MeshData data);
 
     TextureId createTexture(const char* path);
+
+    void createObjectsFromConfig();
 
     void renderFrame
     (
@@ -168,7 +172,7 @@ private:
     vk::Image m_depthImage{nullptr};
     vk::DeviceMemory m_depthImageMemory{nullptr};
     vk::ImageView m_depthImageView{nullptr};
-    
+
     vk::DebugUtilsMessengerEXT m_debugMessenger{nullptr};
 
     ImGuiHelper m_imguiHelper;

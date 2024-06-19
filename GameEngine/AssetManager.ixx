@@ -26,7 +26,7 @@ namespace AssetManager
         return path;
     }
 
-    const nlohmann::json& getEngineConfig()
+    export const nlohmann::json& getEngineConfig()
     {
         static nlohmann::json config = []
         {
@@ -49,11 +49,5 @@ namespace AssetManager
             return canonical(completePath).generic_string() + "/";
         }();
         return path;
-    }
-
-    export void JsonTest()
-    {
-        // Print out the values
-        std::cout << "Content root: " << getContentRoot() << std::endl;
     }
 }
