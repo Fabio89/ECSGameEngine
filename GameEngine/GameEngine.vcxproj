@@ -231,7 +231,9 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\ExternalModules\vulkan.ixx">
+    <ClCompile Include="AssetManager.ixx">
+    </ClCompile>
+    <ClCompile Include="ExternalModules\vulkan.ixx">
     </ClCompile>
     <ClCompile Include="Component\TextureComponent.ixx">
     </ClCompile>
@@ -275,6 +277,9 @@
   <ItemGroup>
     <ClInclude Include="External\MeshLoading\tiny_obj_loader.h" />
     <ClInclude Include="External\TextureLoading\stb_image.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Config.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

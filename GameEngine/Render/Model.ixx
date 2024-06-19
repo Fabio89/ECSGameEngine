@@ -3,10 +3,14 @@ module;
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <External/MeshLoading/tiny_obj_loader.h>
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/glm.hpp>
+#include <glm/gtx/hash.hpp>
+
 export module Engine.Render.Core:Model;
 import :Vulkan;
+import Engine.AssetManager;
 import std;
-import <glm/glm.hpp>;
 
 using IdType = size_t;
 export using TextureId = IdType;
@@ -16,6 +20,21 @@ export struct Vertex
 {
     glm::vec3 pos;
     glm::vec2 texCoordinates;
+};
+
+bool operator==(const Vertex& a, const Vertex& b)
+{
+    return a.pos == b.pos && a.texCoordinates == b.texCoordinates;
+}
+
+template <>
+struct std::hash<Vertex>
+{
+    size_t operator()(Vertex const& vertex) const noexcept
+    {
+        return ((hash<decltype(vertex.pos)>()(vertex.pos) ^
+            (hash<decltype(vertex.texCoordinates)>()(vertex.texCoordinates) << 1)) >> 1);
+    }
 };
 
 export struct MeshData
@@ -35,22 +54,24 @@ export namespace ModelUtils
         std::vector<tinyobj::material_t> materials;
         std::string warn, err;
 
-        if (!LoadObj(&attrib, &shapes, &materials, &warn, &err, path))
+        if (!LoadObj(&attrib, &shapes, &materials, &warn, &err, (AssetManager::getContentRoot() + path).c_str()))
         {
             throw std::runtime_error(warn + err);
         }
 
-        const size_t vertexCount = std::reduce(shapes.begin(), shapes.end(), (size_t)0,
-                                                   [](size_t a, auto&& b) { return a + b.mesh.indices.size(); });
+        const size_t vertexCount = std::reduce(shapes.begin(), shapes.end(), size_t{0},
+                                               [](size_t a, auto&& b) { return a + b.mesh.indices.size(); });
         MeshData mesh;
         mesh.vertices.reserve(vertexCount);
         mesh.indices.reserve(vertexCount);
+
+        std::unordered_map<Vertex, uint32_t> uniqueVertices;
 
         for (const auto& shape : shapes)
         {
             for (const auto& index : shape.mesh.indices)
             {
-                Vertex vertex
+                const Vertex vertex
                 {
                     .pos
                     {
@@ -58,14 +79,20 @@ export namespace ModelUtils
                         attrib.vertices[3 * index.vertex_index + 1],
                         attrib.vertices[3 * index.vertex_index + 2]
                     },
-                    .texCoordinates
+                    .texCoordinates =
                     {
                         attrib.texcoords[2 * index.texcoord_index + 0],
-                        attrib.texcoords[2 * index.texcoord_index + 1]
-                    },
+                        1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
+                    }
                 };
-                mesh.vertices.emplace_back(std::move(vertex));
-                mesh.indices.push_back(static_cast<uint32_t>(mesh.indices.size()));
+
+                if (!uniqueVertices.contains(vertex))
+                {
+                    uniqueVertices[vertex] = static_cast<uint32_t>(mesh.vertices.size());
+                    mesh.vertices.push_back(vertex);
+                }
+
+                mesh.indices.push_back(uniqueVertices[vertex]);
             }
         }
         return mesh;

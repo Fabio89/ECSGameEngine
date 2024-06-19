@@ -1,5 +1,6 @@
 module Engine.Render.Application;
 
+import Engine.AssetManager;
 import Engine.Core;
 import Engine.Render.Core;
 import <imgui.h>;
@@ -14,7 +15,8 @@ TextureId RenderObjectManager::createTexture(const char* path)
 
     Texture texture;
     texture.id = currentId++;
-    std::tie(texture.image, texture.memory) = RenderUtils::createTextureImage(path, m_device, m_physicalDevice,
+    std::string fullPath = AssetManager::getContentRoot() + path;
+    std::tie(texture.image, texture.memory) = RenderUtils::createTextureImage(fullPath.c_str(), m_device, m_physicalDevice,
                                                                               m_queue, m_cmdPool);
     texture.view = RenderUtils::createTextureImageView(m_device, texture.image);
     texture.sampler = RenderUtils::createTextureSampler(m_device, m_physicalDevice);
@@ -38,6 +40,8 @@ VulkanApplication::~VulkanApplication() noexcept
 
 void VulkanApplication::init()
 {
+    AssetManager::JsonTest();
+    
     // Init window
     {
         glfwInit();
@@ -94,19 +98,7 @@ void VulkanApplication::init()
 
     // Create some objects
     {
-        std::filesystem::path imagePath{EngineUtils::getExePath()};
-        imagePath += "/../../GameEngine/Render/Textures/statue-1275469_1280.jpg";
-        std::cout << "Image path: " << imagePath.generic_string().data() << std::endl;
-
-        std::filesystem::path modelPath{EngineUtils::getExePath()};
-        modelPath += "/../../GameEngine/External/MeshLoading/viking_room.obj";
-
-        std::filesystem::path texturePath{EngineUtils::getExePath()};
-        texturePath += "/../../GameEngine/External/MeshLoading/viking_room.png";
-
-        const TextureId vikingRoomTexture = objectManager.createTexture(texturePath.generic_string().data());
-        
-        const TextureId commonTexture = objectManager.createTexture(imagePath.generic_string().data());
+        const TextureId commonTexture = objectManager.createTexture("statue.jpg");
 
         MeshData squareData
         {
@@ -124,35 +116,9 @@ void VulkanApplication::init()
             }
         };
         const MeshId square = objectManager.createMesh(squareData);
-
-        MeshData doubleSquareData
-        {
-            .vertices
-            {
-                {{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f}},
-                {{0.5f, -0.5f, 0.0f}, {1.0f, 0.0f}},
-                {{0.5f, 0.5f, 0.0f}, {1.0f, 1.0f}},
-                {{-0.5f, 0.5f, 0.0f}, {0.0f, 1.0f}},
-
-                {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}},
-                {{0.5f, -0.5f, -0.5f}, {1.0f, 0.0f}},
-                {{0.5f, 0.5f, -0.5f}, {1.0f, 1.0f}},
-                {{-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f}}
-            },
-            .indices
-            {
-                0, 1, 2,
-                2, 3, 0,
-                4, 5, 6,
-                6, 7, 4
-            }
-        };
-        const MeshId doubleSquare = objectManager.createMesh(doubleSquareData);
-
-        auto model = ModelUtils::loadModel(modelPath.generic_string().data());
+        const TextureId vikingRoomTexture = objectManager.createTexture("viking_room.png");
+        auto model = ModelUtils::loadModel("viking_room.obj");
         const MeshId vikingRoomMesh = objectManager.createMesh(model);
-        // objectManager.createRenderObject(doubleSquare, commonTexture, {0, 0, 0});
-        // objectManager.createRenderObject(square, commonTexture, {1, 0, 1});
         objectManager.createRenderObject(vikingRoomMesh, vikingRoomTexture, {});
         MeshData hexagonData
         {
@@ -551,8 +517,8 @@ void VulkanApplication::createDescriptorSetLayout()
 
 void VulkanApplication::createGraphicsPipeline()
 {
-    auto vertShaderCode = RenderUtils::readFile(EngineUtils::getExePath().append("/Shaders/vert.spv"));
-    auto fragShaderCode = RenderUtils::readFile(EngineUtils::getExePath().append("/Shaders/frag.spv"));
+    auto vertShaderCode = RenderUtils::readFile(AssetManager::getExecutableRoot() + "Shaders/vert.spv");
+    auto fragShaderCode = RenderUtils::readFile(AssetManager::getExecutableRoot() + "Shaders/frag.spv");
 
     vk::ShaderModule vertShaderModule = RenderUtils::createShaderModule(vertShaderCode, m_device);
     vk::ShaderModule fragShaderModule = RenderUtils::createShaderModule(fragShaderCode, m_device);
@@ -1199,17 +1165,17 @@ void ImGuiHelper::init(GLFWwindow* window, const ImGuiInitInfo& initInfo)
     // Init ImGui
     ImGui_ImplGlfw_InitForVulkan(window, true);
 
-    constexpr vk::DescriptorPoolSize imguiPoolSizes[]
+    constexpr std::array imguiPoolSizes
     {
-        {vk::DescriptorType::eCombinedImageSampler, 1},
+        vk::DescriptorPoolSize{vk::DescriptorType::eCombinedImageSampler, 1},
     };
 
     const vk::DescriptorPoolCreateInfo imguiPoolInfo
     {
         .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
         .maxSets = static_cast<uint32_t>(MaxFramesInFlight),
-        .poolSizeCount = static_cast<uint32_t>(EngineUtils::getArraySize(imguiPoolSizes)),
-        .pPoolSizes = imguiPoolSizes,
+        .poolSizeCount = static_cast<uint32_t>(imguiPoolSizes.size()),
+        .pPoolSizes = imguiPoolSizes.data(),
     };
 
     m_descriptorPool = initInfo.device.createDescriptorPool(imguiPoolInfo, nullptr);
