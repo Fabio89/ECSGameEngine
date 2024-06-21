@@ -1,6 +1,7 @@
 import Engine.Config;
 import Engine.Core;
 import Engine.Render;
+import Engine.World;
 
 import std;
 
@@ -31,15 +32,17 @@ public:
 
 void gameInit(World& world)
 {
-	// Create entities
-	Entity entity1 = world.createEntity();
-	world.addComponent<Position>(entity1, 0.0f, 0.0f);
-	world.addComponent<Velocity>(entity1, 1.0f, 1.0f);
+	// // Create entities
+	// Entity entity1 = world.createEntity();
+	// world.addComponent<Position>(entity1, 0.0f, 0.0f);
+	// world.addComponent<Velocity>(entity1, 1.0f, 1.0f);
+	//
+	// // Create systems
+	// auto movementSystem = std::make_unique<MovementSystem>();
+	// movementSystem->addEntity(entity1, world);
+	// world.addSystem(std::move(movementSystem));
 
-	// Create systems
-	auto movementSystem = std::make_unique<MovementSystem>();
-	movementSystem->addEntity(entity1, world);
-	world.addSystem(std::move(movementSystem));
+	world.createObjectsFromConfig();
 }
 
 void gameShutdown()
@@ -50,11 +53,17 @@ void gameShutdown()
 int main()
 {
 	const ApplicationSettings& settings = Config::getApplicationSettings();
-	World world{ settings };
-	ApplicationState appState{.world = world};
+	ApplicationState globalState;
+
+	World world{ settings, globalState };
 	const LoopSettings loopSettings{ .targetFps = settings.targetFps };
 
-	std::thread renderThread = runRenderThread(loopSettings, appState);
+	std::thread renderThread = runRenderThread(loopSettings, globalState);
+
+	while(!appState.initialized)
+	{
+		//std::cout << "Waiting for render thread...\n";
+	}
 	
 	gameInit(world);
 

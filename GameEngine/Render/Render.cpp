@@ -6,9 +6,14 @@ void renderThreadFunc(LoopSettings settings, ApplicationState& state)
 	try
 	{
 		VulkanApplication application;
-		application.init();
+		application.init(state);
 
-		performLoop(settings, [&](float deltaTime) { application.update(deltaTime); }, [&] {	return !application.shouldWindowClose(); });
+		performLoop
+		(
+			settings, 
+			[&](float deltaTime) { application.update(deltaTime); }, 
+			[&] { return !application.shouldWindowClose(); }
+		);
 
 		{
 			std::lock_guard lock(state.mutex);

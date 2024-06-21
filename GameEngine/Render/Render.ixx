@@ -12,11 +12,14 @@ export struct LoopSettings
 	float targetFps = 120.f;
 };
 
+class VulkanApplication;
+
 export struct ApplicationState
 {
 	std::mutex mutex;
+	VulkanApplication* application{nullptr};
+	bool initialized = false;
 	bool closing = false;
-	World& world;
 };
 
 export std::thread runRenderThread(LoopSettings settings, ApplicationState& state);

@@ -1,6 +1,6 @@
 {
   "targetFps" : 120,
-  "resolution": [1600, 900],
+  "resolution": [1200, 700],
   "contentRoot": "Content",
   "meshes" : [
     {
@@ -40,15 +40,19 @@
       "path": "statue.jpg"
     },
     {
+      "name": "viking_room",
+      "path": "viking_room.png"
+    },
+    {
       "name": "kitten",
       "path": "Kitten/textures/Kitten_Diffuse.png"
     }
   ],
   "models" : [
     {
-      "mesh": "hexagon",
-      "texture": "statue",
-      "scale": 10
+      "mesh": "viking_room",
+      "texture": "viking_room",
+      "scale": 2
     },
     {
       "mesh": "kitten",
