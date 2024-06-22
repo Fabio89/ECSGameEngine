@@ -8,6 +8,7 @@
         "glfw-binding",
         "vulkan-binding"
       ]
-    }
+    },
+    "cryptopp"
   ]
 }

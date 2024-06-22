@@ -12,7 +12,47 @@ export struct LoopSettings
 	float targetFps = 120.f;
 };
 
-class VulkanApplication;
+export class VulkanApplication;
+
+class MeshAsset;
+class TextureAsset;
+
+export template <typename T>
+class ThreadSafeQueue 
+{
+public:
+	void push(const T& item) 
+	{
+		std::lock_guard lock{m_mutex};
+		m_queue.push(item);
+		m_condition.notify_one();
+	}
+
+	std::optional<T> tryPop()
+	{
+		std::optional<T> item;
+		std::lock_guard lock{m_mutex};
+		if (!m_queue.empty())
+		{
+			item.emplace(std::move(m_queue.front()));
+			m_queue.pop();
+		}
+		return item;
+	}
+
+	void waitAndPop(T& item)
+	{
+		std::unique_lock lock{m_mutex};
+		m_condition.wait(lock, [this] { return !m_queue.empty(); });
+		item = m_queue.front();
+		m_queue.pop();
+	}
+
+private:
+	std::queue<T> m_queue;
+	std::mutex m_mutex;
+	std::condition_variable m_condition;
+};
 
 export struct ApplicationState
 {

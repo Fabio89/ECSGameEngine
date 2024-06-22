@@ -16,7 +16,7 @@ public:
     void addEntity(Entity entity, World& world)
     {
         ModelComponent& model = world.editComponent<ModelComponent>(entity);
-
-        renderObjectManager.createRenderObject(model.mesh, model.texture);
+        
+        //m_renderObjectManager.createRenderObject(model.mesh, model.texture);
     }
 };

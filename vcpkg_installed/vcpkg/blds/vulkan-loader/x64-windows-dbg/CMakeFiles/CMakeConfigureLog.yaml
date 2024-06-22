@@ -4,20 +4,20 @@ events:
   -
     kind: "message-v1"
     backtrace:
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineSystem.cmake:205 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineSystem.cmake:205 (message)"
       - "CMakeLists.txt:21 (project)"
     message: |
-      The system is: Windows - 10.0.19045 - AMD64
+      The system is: Windows - 10.0.22631 - AMD64
   -
     kind: "message-v1"
     backtrace:
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
       - "CMakeLists.txt:21 (project)"
     message: |
       Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
-      Compiler: C:/Program Files/Microsoft Visual Studio/2022/Professional/VC/Tools/MSVC/14.34.31933/bin/Hostx64/x64/cl.exe 
+      Compiler: C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.39.33519/bin/Hostx64/x64/cl.exe 
       Build flags: /nologo;/DWIN32;/D_WINDOWS;/W3;/utf-8;/MP
       Id flags:  
       
@@ -31,32 +31,32 @@ events:
       Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CMakeCCompilerId.obj"
       
       The C compiler identification is MSVC, found in:
-        D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/x64-windows-dbg/CMakeFiles/3.29.2/CompilerIdC/CMakeCCompilerId.exe
+        C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/x64-windows-dbg/CMakeFiles/3.30.0-rc3/CompilerIdC/CMakeCCompilerId.exe
       
   -
     kind: "message-v1"
     backtrace:
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:1216 (message)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:250 (CMAKE_DETERMINE_MSVC_SHOWINCLUDES_PREFIX)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineCompilerId.cmake:1243 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineCompilerId.cmake:250 (CMAKE_DETERMINE_MSVC_SHOWINCLUDES_PREFIX)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
       - "CMakeLists.txt:21 (project)"
     message: |
       Detecting C compiler /showIncludes prefix:
         main.c
-        Note: including file: D:\\repos\\ECSGameEngine\\vcpkg_installed\\vcpkg\\blds\\vulkan-loader\\x64-windows-dbg\\CMakeFiles\\ShowIncludes\\foo.h
+        Note: including file: C:\\Dev\\ECSGameEngine\\vcpkg_installed\\vcpkg\\blds\\vulkan-loader\\x64-windows-dbg\\CMakeFiles\\ShowIncludes\\foo.h
         
       Found prefix "Note: including file: "
   -
     kind: "try_compile-v1"
     backtrace:
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineCompilerABI.cmake:64 (try_compile)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineCompilerABI.cmake:74 (try_compile)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
       - "CMakeLists.txt:21 (project)"
     checks:
       - "Detecting C compiler ABI info"
     directories:
-      source: "D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/x64-windows-dbg/CMakeFiles/CMakeScratch/TryCompile-hk12wq"
-      binary: "D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/x64-windows-dbg/CMakeFiles/CMakeScratch/TryCompile-hk12wq"
+      source: "C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/x64-windows-dbg/CMakeFiles/CMakeScratch/TryCompile-n4ahjc"
+      binary: "C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/x64-windows-dbg/CMakeFiles/CMakeScratch/TryCompile-n4ahjc"
     cmakeVariables:
       CMAKE_C_FLAGS: " /nologo /DWIN32 /D_WINDOWS /W3 /utf-8 /MP "
       CMAKE_C_FLAGS_DEBUG: "/D_DEBUG /MDd /Z7 /Ob0 /Od /RTC1 "
@@ -72,24 +72,24 @@ events:
       variable: "CMAKE_C_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: 'D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/x64-windows-dbg/CMakeFiles/CMakeScratch/TryCompile-hk12wq'
+        Change Dir: 'C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/x64-windows-dbg/CMakeFiles/CMakeScratch/TryCompile-n4ahjc'
         
-        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe" -v cmTC_7e89d
-        [1/2] C:\\PROGRA~1\\MICROS~3\\2022\\PROFES~1\\VC\\Tools\\MSVC\\1434~1.319\\bin\\Hostx64\\x64\\cl.exe  /nologo   /nologo /DWIN32 /D_WINDOWS /W3 /utf-8 /MP   /D_DEBUG /MDd /Z7 /Ob0 /Od /RTC1  -MDd /showIncludes /FoCMakeFiles\\cmTC_7e89d.dir\\CMakeCCompilerABI.c.obj /FdCMakeFiles\\cmTC_7e89d.dir\\ /FS -c C:\\Users\\famarchese\\AppData\\Local\\vcpkg\\downloads\\tools\\cmake-3.29.2-windows\\cmake-3.29.2-windows-i386\\share\\cmake-3.29\\Modules\\CMakeCCompilerABI.c
-        [2/2] C:\\Windows\\system32\\cmd.exe /C "cd . && C:\\Users\\famarchese\\AppData\\Local\\vcpkg\\downloads\\tools\\cmake-3.29.2-windows\\cmake-3.29.2-windows-i386\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_7e89d.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~3\\2022\\PROFES~1\\VC\\Tools\\MSVC\\1434~1.319\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_7e89d.dir\\CMakeCCompilerABI.c.obj  /out:cmTC_7e89d.exe /implib:cmTC_7e89d.lib /pdb:cmTC_7e89d.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe" -v cmTC_862ee
+        [1/2] C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1439~1.335\\bin\\Hostx64\\x64\\cl.exe  /nologo   /nologo /DWIN32 /D_WINDOWS /W3 /utf-8 /MP   /D_DEBUG /MDd /Z7 /Ob0 /Od /RTC1  -MDd /showIncludes /FoCMakeFiles\\cmTC_862ee.dir\\CMakeCCompilerABI.c.obj /FdCMakeFiles\\cmTC_862ee.dir\\ /FS -c "C:\\Program Files\\CMake\\share\\cmake-3.30\\Modules\\CMakeCCompilerABI.c"
+        [2/2] C:\\WINDOWS\\system32\\cmd.exe /C "cd . && "C:\\Program Files\\CMake\\bin\\cmake.exe" -E vs_link_exe --intdir=CMakeFiles\\cmTC_862ee.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MICROS~2\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1439~1.335\\bin\\Hostx64\\x64\\link.exe /nologo CMakeFiles\\cmTC_862ee.dir\\CMakeCCompilerABI.c.obj  /out:cmTC_862ee.exe /implib:cmTC_862ee.lib /pdb:cmTC_862ee.pdb /version:0.0 /machine:x64  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
         
       exitCode: 0
   -
     kind: "message-v1"
     backtrace:
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineCompilerABI.cmake:170 (message)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineCompilerABI.cmake:218 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
       - "CMakeLists.txt:21 (project)"
     message: |
       Parsed C implicit link information:
         link line regex: [^( *|.*[/\\])(ld[0-9]*(\\.[a-z]+)?|link\\.exe|lld-link(\\.exe)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
         linker tool regex: [^[ 	]*(->|")?[ 	]*(([^"]*[/\\])?(ld[0-9]*(\\.[a-z]+)?|link\\.exe|lld-link(\\.exe)?))("|,| |$)]
-        linker tool for 'C': C:/PROGRA~1/MICROS~3/2022/PROFES~1/VC/Tools/MSVC/1434~1.319/bin/Hostx64/x64/link.exe
+        linker tool for 'C': C:/PROGRA~1/MICROS~2/2022/COMMUN~1/VC/Tools/MSVC/1439~1.335/bin/Hostx64/x64/link.exe
         implicit libs: []
         implicit objs: []
         implicit dirs: []
@@ -99,24 +99,24 @@ events:
   -
     kind: "message-v1"
     backtrace:
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/Internal/CMakeDetermineLinkerId.cmake:40 (message)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineCompilerABI.cmake:207 (cmake_determine_linker_id)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/Internal/CMakeDetermineLinkerId.cmake:40 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineCompilerABI.cmake:255 (cmake_determine_linker_id)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
       - "CMakeLists.txt:21 (project)"
     message: |
-      Running the C compiler's linker: "C:/PROGRA~1/MICROS~3/2022/PROFES~1/VC/Tools/MSVC/1434~1.319/bin/Hostx64/x64/link.exe" "-v"
-      Microsoft (R) Incremental Linker Version 14.34.31937.0
+      Running the C compiler's linker: "C:/PROGRA~1/MICROS~2/2022/COMMUN~1/VC/Tools/MSVC/1439~1.335/bin/Hostx64/x64/link.exe" "-v"
+      Microsoft (R) Incremental Linker Version 14.39.33523.0
       Copyright (C) Microsoft Corporation.  All rights reserved.
   -
     kind: "message-v1"
     backtrace:
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:1178 (message)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineASM_MASMCompiler.cmake:17 (include)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineCompilerId.cmake:1205 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineASM_MASMCompiler.cmake:17 (include)"
       - "loader/CMakeLists.txt:150 (enable_language)"
     message: |
       Checking whether the ASM_MASM compiler is GNU using "--version" did not match "(GNU assembler)|(GCC)|(Free Software Foundation)":
-      Microsoft (R) Macro Assembler (x64) Version 14.34.31937.0
+      Microsoft (R) Macro Assembler (x64) Version 14.39.33523.0
       Copyright (C) Microsoft Corporation.  All rights reserved.
       
       MASM : warning A4018:invalid command-line option : --version
@@ -124,13 +124,13 @@ events:
   -
     kind: "message-v1"
     backtrace:
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:1178 (message)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineASM_MASMCompiler.cmake:17 (include)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineCompilerId.cmake:1205 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineASM_MASMCompiler.cmake:17 (include)"
       - "loader/CMakeLists.txt:150 (enable_language)"
     message: |
       Checking whether the ASM_MASM compiler is AppleClang using "--version" did not match "(Apple (clang|LLVM) version)":
-      Microsoft (R) Macro Assembler (x64) Version 14.34.31937.0
+      Microsoft (R) Macro Assembler (x64) Version 14.39.33523.0
       Copyright (C) Microsoft Corporation.  All rights reserved.
       
       MASM : warning A4018:invalid command-line option : --version
@@ -138,13 +138,13 @@ events:
   -
     kind: "message-v1"
     backtrace:
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:1178 (message)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineASM_MASMCompiler.cmake:17 (include)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineCompilerId.cmake:1205 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineASM_MASMCompiler.cmake:17 (include)"
       - "loader/CMakeLists.txt:150 (enable_language)"
     message: |
       Checking whether the ASM_MASM compiler is Clang using "--version" did not match "(clang version)":
-      Microsoft (R) Macro Assembler (x64) Version 14.34.31937.0
+      Microsoft (R) Macro Assembler (x64) Version 14.39.33523.0
       Copyright (C) Microsoft Corporation.  All rights reserved.
       
       MASM : warning A4018:invalid command-line option : --version
@@ -152,13 +152,13 @@ events:
   -
     kind: "message-v1"
     backtrace:
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:1178 (message)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineASM_MASMCompiler.cmake:17 (include)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineCompilerId.cmake:1205 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineASM_MASMCompiler.cmake:17 (include)"
       - "loader/CMakeLists.txt:150 (enable_language)"
     message: |
       Checking whether the ASM_MASM compiler is ARMClang using "--version" did not match "armclang":
-      Microsoft (R) Macro Assembler (x64) Version 14.34.31937.0
+      Microsoft (R) Macro Assembler (x64) Version 14.39.33523.0
       Copyright (C) Microsoft Corporation.  All rights reserved.
       
       MASM : warning A4018:invalid command-line option : --version
@@ -166,13 +166,13 @@ events:
   -
     kind: "message-v1"
     backtrace:
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:1178 (message)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineASM_MASMCompiler.cmake:17 (include)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineCompilerId.cmake:1205 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineASM_MASMCompiler.cmake:17 (include)"
       - "loader/CMakeLists.txt:150 (enable_language)"
     message: |
       Checking whether the ASM_MASM compiler is OrangeC using "--version" did not match "occ \\(OrangeC\\) Version":
-      Microsoft (R) Macro Assembler (x64) Version 14.34.31937.0
+      Microsoft (R) Macro Assembler (x64) Version 14.39.33523.0
       Copyright (C) Microsoft Corporation.  All rights reserved.
       
       MASM : warning A4018:invalid command-line option : --version
@@ -180,13 +180,13 @@ events:
   -
     kind: "message-v1"
     backtrace:
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:1178 (message)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineASM_MASMCompiler.cmake:17 (include)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineCompilerId.cmake:1205 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineASM_MASMCompiler.cmake:17 (include)"
       - "loader/CMakeLists.txt:150 (enable_language)"
     message: |
       Checking whether the ASM_MASM compiler is HP using "-V" did not match "HP C":
-      Microsoft (R) Macro Assembler (x64) Version 14.34.31937.0
+      Microsoft (R) Macro Assembler (x64) Version 14.39.33523.0
       Copyright (C) Microsoft Corporation.  All rights reserved.
       
       MASM : warning A4018:invalid command-line option : -V
@@ -194,13 +194,13 @@ events:
   -
     kind: "message-v1"
     backtrace:
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:1178 (message)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineASM_MASMCompiler.cmake:17 (include)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineCompilerId.cmake:1205 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineASM_MASMCompiler.cmake:17 (include)"
       - "loader/CMakeLists.txt:150 (enable_language)"
     message: |
       Checking whether the ASM_MASM compiler is Intel using "--version" did not match "(ICC)":
-      Microsoft (R) Macro Assembler (x64) Version 14.34.31937.0
+      Microsoft (R) Macro Assembler (x64) Version 14.39.33523.0
       Copyright (C) Microsoft Corporation.  All rights reserved.
       
       MASM : warning A4018:invalid command-line option : --version
@@ -208,14 +208,14 @@ events:
   -
     kind: "message-v1"
     backtrace:
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:1178 (message)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineASM_MASMCompiler.cmake:17 (include)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineCompilerId.cmake:1205 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineASM_MASMCompiler.cmake:17 (include)"
       - "loader/CMakeLists.txt:150 (enable_language)"
     message: |
       Checking whether the ASM_MASM compiler is IntelLLVM using "--version" did not match "(Intel[^
       ]+oneAPI)":
-      Microsoft (R) Macro Assembler (x64) Version 14.34.31937.0
+      Microsoft (R) Macro Assembler (x64) Version 14.39.33523.0
       Copyright (C) Microsoft Corporation.  All rights reserved.
       
       MASM : warning A4018:invalid command-line option : --version
@@ -223,13 +223,13 @@ events:
   -
     kind: "message-v1"
     backtrace:
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:1178 (message)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineASM_MASMCompiler.cmake:17 (include)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineCompilerId.cmake:1205 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineASM_MASMCompiler.cmake:17 (include)"
       - "loader/CMakeLists.txt:150 (enable_language)"
     message: |
       Checking whether the ASM_MASM compiler is SunPro using "-V" did not match "Sun C":
-      Microsoft (R) Macro Assembler (x64) Version 14.34.31937.0
+      Microsoft (R) Macro Assembler (x64) Version 14.39.33523.0
       Copyright (C) Microsoft Corporation.  All rights reserved.
       
       MASM : warning A4018:invalid command-line option : -V
@@ -237,13 +237,13 @@ events:
   -
     kind: "message-v1"
     backtrace:
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:1178 (message)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineASM_MASMCompiler.cmake:17 (include)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineCompilerId.cmake:1205 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineASM_MASMCompiler.cmake:17 (include)"
       - "loader/CMakeLists.txt:150 (enable_language)"
     message: |
       Checking whether the ASM_MASM compiler is XL using "-qversion" did not match "XL C":
-      Microsoft (R) Macro Assembler (x64) Version 14.34.31937.0
+      Microsoft (R) Macro Assembler (x64) Version 14.39.33523.0
       Copyright (C) Microsoft Corporation.  All rights reserved.
       
       MASM : warning A4018:invalid command-line option : -qversion
@@ -251,13 +251,13 @@ events:
   -
     kind: "message-v1"
     backtrace:
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineCompilerId.cmake:1165 (message)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
-      - "C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/share/cmake-3.29/Modules/CMakeDetermineASM_MASMCompiler.cmake:17 (include)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineCompilerId.cmake:1192 (message)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
+      - "C:/Program Files/CMake/share/cmake-3.30/Modules/CMakeDetermineASM_MASMCompiler.cmake:17 (include)"
       - "loader/CMakeLists.txt:150 (enable_language)"
     message: |
       Checking whether the ASM_MASM compiler is MSVC using "-?" matched "Microsoft":
-      Microsoft (R) Macro Assembler (x64) Version 14.34.31937.0
+      Microsoft (R) Macro Assembler (x64) Version 14.39.33523.0
       Copyright (C) Microsoft Corporation.  All rights reserved.
       
               ML64 [ /options ] filelist [ /link linkoptions ]
@@ -281,7 +281,7 @@ events:
       /Sa Maximize source listing               /Zs Perform syntax check only
       /ZH:MD5 Use MD5 for checksum in debug info
       /ZH:SHA_256 Use SHA256 for checksum in debug info (default)
-      /Gy[-] separate functions for linker
+      /Gy[-] separate functions for linker      /quiet Suppress 'Assembling' message
       /errorReport:<option> Deprecated. Report internal assembler errors to Microsoft
           none - do not send report
           prompt - prompt to immediately send report

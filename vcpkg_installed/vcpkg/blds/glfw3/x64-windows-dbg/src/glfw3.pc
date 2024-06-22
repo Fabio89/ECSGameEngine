@@ -1,7 +1,7 @@
-prefix=D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/glfw3_x64-windows/debug
+prefix=C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/glfw3_x64-windows/debug
 exec_prefix=${prefix}
-includedir=D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/glfw3_x64-windows/debug/include
-libdir=D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/glfw3_x64-windows/debug/lib
+includedir=C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/glfw3_x64-windows/debug/include
+libdir=C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/glfw3_x64-windows/debug/lib
 
 Name: GLFW
 Description: A multi-platform library for OpenGL, window and input

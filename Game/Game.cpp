@@ -45,6 +45,7 @@ void gameInit(World& world)
 	world.createObjectsFromConfig();
 }
 
+
 void gameShutdown()
 {
 	std::cout << "[Game] Shutdown complete.\n";
@@ -60,7 +61,7 @@ int main()
 
 	std::thread renderThread = runRenderThread(loopSettings, globalState);
 
-	while(!appState.initialized)
+	while(!globalState.initialized)
 	{
 		//std::cout << "Waiting for render thread...\n";
 	}
@@ -72,7 +73,7 @@ int main()
 		world.updateSystems(deltaTime);
 	};
 
-	auto shouldRun = [&appState] { return !appState.closing; };
+	auto shouldRun = [&globalState] { return !globalState.closing; };
 
 	performLoop(loopSettings, gameTick, shouldRun);
 

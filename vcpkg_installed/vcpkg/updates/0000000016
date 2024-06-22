@@ -1,0 +1,6 @@
+Package: vcpkg-cmake
+Version: 2024-04-18
+Architecture: x64-windows
+Multi-Arch: same
+Abi: 6eb8b674579414dcb1c0e823b6fcf5ca2389e844e94c476d2210f60a85996cba
+Status: purge ok half-installed

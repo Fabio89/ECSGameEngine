@@ -40,9 +40,10 @@ public:
     void update(float deltaTime);
     void shutdown();
     bool shouldWindowClose() const;
-    RenderObjectManager renderObjectManager;
+    void requestAddRenderObject(RenderMessages::AddObject command);
     
 private:
+	RenderObjectManager m_renderObjectManager;
     glm::ivec2 m_windowSize{800, 600};
     GLFWwindow* m_window{nullptr};
     vk::Instance m_instance{nullptr};

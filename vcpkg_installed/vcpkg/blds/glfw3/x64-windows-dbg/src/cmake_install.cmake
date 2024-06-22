@@ -1,8 +1,8 @@
-# Install script for directory: D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/blds/glfw3/src/3.4-2448ff4533.clean/src
+# Install script for directory: C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/glfw3/src/3.4-2448ff4533.clean/src
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/glfw3_x64-windows/debug")
+  set(CMAKE_INSTALL_PREFIX "C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/glfw3_x64-windows/debug")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -33,10 +33,10 @@ if(NOT DEFINED CMAKE_CROSSCOMPILING)
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY OPTIONAL FILES "D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/blds/glfw3/x64-windows-dbg/src/glfw3dll.lib")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY OPTIONAL FILES "C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/glfw3/x64-windows-dbg/src/glfw3dll.lib")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" TYPE SHARED_LIBRARY FILES "D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/blds/glfw3/x64-windows-dbg/src/glfw3.dll")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" TYPE SHARED_LIBRARY FILES "C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/glfw3/x64-windows-dbg/src/glfw3.dll")
 endif()
 

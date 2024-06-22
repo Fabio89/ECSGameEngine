@@ -1,7 +1,9 @@
 module Engine.World;
 
+import Engine.Guid;
 import Engine.Component.Model;
 import Engine.Config;
+import Engine.Render.Application;
 import Engine.Render.Core;
 import std;
 import <glm/glm.hpp>;
@@ -9,79 +11,63 @@ import <glm/glm.hpp>;
 void World::createObjectsFromConfig()
 {
     const auto& cfg = Config::getEngineConfig();
-    std::map<std::string, MeshId> meshes;
-    std::map<std::string, TextureId> textures;
 
-    for (const auto& meshJson : cfg["meshes"])
+    for (const Json& meshJson : *cfg.find("meshes"))
     {
-        MeshData meshData;
-        if (meshJson.contains("path"))
-        {
-            meshData = ModelUtils::loadModel(std::string{meshJson["path"]}.c_str());
-        }
-        else
-        {
-            for (const auto& verticesJson : meshJson["vertices"])
-            {
-                Vertex& vertex = meshData.vertices.emplace_back();
-                std::array<float, 3> pos = verticesJson["position"];
-                vertex.pos = {pos[0], pos[1], pos[2]};
-
-                std::array<float, 2> uv = verticesJson["uv"];
-                vertex.texCoordinates = {uv[0], uv[1]};
-            }
-            for (const auto& indicesJson : meshJson["indices"])
-            {
-                meshData.indices.emplace_back(indicesJson);
-            }
-        }
-
-        MeshId mesh = m_renderObjectManager.createMesh(meshData);
-        meshes.emplace(meshJson["name"], mesh);
+        auto mesh = std::make_unique<MeshAsset>(meshJson);
+        m_loadedAssets.emplace_back(std::move(mesh));
     }
 
-    for (const auto& texJson : cfg["textures"])
+    for (const auto& texJson : *cfg.find("textures"))
     {
-        if (texJson.contains("path"))
-        {
-            const TextureId texture = m_renderObjectManager.createTexture(std::string{texJson["path"]}.c_str());
-            textures.emplace(texJson["name"], texture);
-        }
+        auto texture = std::make_unique<TextureAsset>(texJson);
+        m_loadedAssets.emplace_back(std::move(texture));
     }
 
-    ModelSystem modelSystem;
-    for (const auto& modelJson : cfg["models"])
+    for (const auto& modelJson : *cfg.find("models"))
     {
-        std::string meshName = modelJson["mesh"];
-        std::string textureName = modelJson["texture"];
+        Guid meshGuid{*modelJson.find("mesh")};
+        Guid textureGuid{*modelJson.find("texture")};
 
         glm::vec3 location{};
         if (modelJson.contains("position"))
         {
-            std::array<float, 3> pos = modelJson["position"];
+            std::array<float, 3> pos = *modelJson.find("position");
             location = {pos[0], pos[1], pos[2]};
         }
 
         glm::vec3 rotation{};
-        if (modelJson.contains("rotation"))
+        if (auto it = modelJson.find("rotation"); it != modelJson.end())
         {
-            std::array<float, 3> rot = modelJson["rotation"];
-            rotation = {rot[0], rot[1], rot[2]};
+            rotation = *it;
         }
 
         float scale{1.f};
-        if (modelJson.contains("scale"))
+        if (auto it = modelJson.find("scale"); it != modelJson.end())
         {
-            scale = modelJson["scale"];
+            scale = *it;
         }
 
-        m_renderObjectManager.createRenderObject(meshes[meshName], textures[textureName], location, rotation, scale);
+        auto meshAssetIt = std::ranges::find_if( m_loadedAssets, [&](auto&& texture) {return texture->getGuid() == meshGuid;});
+        auto textureAssetIt = std::ranges::find_if(m_loadedAssets, [&](auto&& texture) {return texture->getGuid() == textureGuid;});
+        if (meshAssetIt == m_loadedAssets.end() || textureAssetIt == m_loadedAssets.end())
+            throw std::runtime_error("Tried to load model that references an unloaded asset!");
+
+        RenderMessages::AddObject command
+        {
+            .mesh = static_cast<const MeshAsset*>(meshAssetIt->get()),
+            .texture = static_cast<const TextureAsset*>(textureAssetIt->get()),
+            .location = location,
+            .rotation = rotation,
+            .scale = scale
+        };
+        m_applicationState.get().application->requestAddRenderObject(std::move(command));
     }
 }
 
 World::World(const ApplicationSettings& settings, ApplicationState& globalState)
     : m_jobSystem{settings.numThreads}
-    , m_renderObjectManager{globalState.application.m_renderObjectManager}
+      , m_applicationState{globalState}
 {
 }
 

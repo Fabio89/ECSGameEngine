@@ -180,10 +180,9 @@
             <UndefinePreprocessorDefinitions>
             </UndefinePreprocessorDefinitions>
             <AdditionalIncludeDirectories>$(ProjectDir);$(VK_SDK_PATH)\Include;$(SolutionDir)\vcpkg_installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-            <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
-            <BuildStlModules>false</BuildStlModules>
             <AdditionalModuleDependencies>
             </AdditionalModuleDependencies>
+            <RemoveUnreferencedCodeData>false</RemoveUnreferencedCodeData>
         </ClCompile>
         <Link>
             <SubSystem>Console</SubSystem>
@@ -192,7 +191,7 @@
         </Link>
         <Lib>
             <AdditionalLibraryDirectories>$(VK_SDK_PATH)\Lib;$(VcpkgInstalledDir)\x64-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-            <AdditionalDependencies>glfw3dll.lib; glm.lib; imgui.lib</AdditionalDependencies>
+            <AdditionalDependencies>Rpcrt4.lib; glfw3dll.lib; glm.lib; imgui.lib</AdditionalDependencies>
         </Lib>
         <PostBuildEvent>
             <Command>xcopy /s /y "$(ProjectDir)Render\Shaders\*.spv" "$(OutDir)Shaders\"</Command>
@@ -239,6 +238,7 @@
         <ClCompile Include="Engine.cpp" />
         <ClCompile Include="Engine.ixx" />
         <ClCompile Include="ExternalModules\vulkan.ixx" />
+        <ClCompile Include="Guid.ixx" />
         <ClCompile Include="Job.ixx" />
         <ClCompile Include="QueueFamily\QueueFamily.ixx" />
         <ClCompile Include="Render\Model.ixx" />

@@ -1,8 +1,8 @@
-# Install script for directory: D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/src/-1.3.280.0-a675026bd4.clean/scripts
+# Install script for directory: C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/src/-1.3.280.0-a675026bd4.clean/scripts
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/vulkan-loader_x64-windows/debug")
+  set(CMAKE_INSTALL_PREFIX "C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/vulkan-loader_x64-windows/debug")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -32,7 +32,7 @@ if(NOT DEFINED CMAKE_CROSSCOMPILING)
   set(CMAKE_CROSSCOMPILING "OFF")
 endif()
 
-# Set default install directory permissions.
+# Set path to fallback-tool for dependency-resolution.
 if(NOT DEFINED CMAKE_OBJDUMP)
   set(CMAKE_OBJDUMP "CMAKE_OBJDUMP-NOTFOUND")
 endif()

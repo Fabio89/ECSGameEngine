@@ -1,10 +1,10 @@
 module;
-
 export module Engine.Config;
 import Engine.AssetManager;
+import Engine.Guid;
 import std;
-import <glm/glm.hpp>;
 import <External/Json/json.hpp>;
+import <glm/glm.hpp>;
 
 export struct ApplicationSettings
 {
@@ -13,13 +13,31 @@ export struct ApplicationSettings
     int numThreads{6};
 };
 
+export namespace glm
+{
+    template <int Size, typename T>
+    void from_json(const nlohmann::json& j, vec<Size, T>& val)
+    {
+        std::array<T, Size> arr = j;
+        for (int i = 0; i < Size; ++i)
+            val[i] = arr[i];
+    }
+
+    void to_json(nlohmann::json& j, const ivec2& val)
+    {
+        j = nlohmann::json{val.x, val.y};
+    }
+}
+
+export using Json = nlohmann::json;
+
 namespace Config
 {
-    export const nlohmann::json& getEngineConfig()
+    export const Json& getEngineConfig()
     {
-        static nlohmann::json config = []
+        static Json config = []
         {
-            nlohmann::json j;
+            Json j;
             std::string path = AssetManager::getEngineSourceRoot() + "Config.json";
             std::ifstream i{path};
             i >> j;
@@ -34,15 +52,14 @@ namespace Config
         static const ApplicationSettings settings = []
         {
             ApplicationSettings ret;
-            const nlohmann::json& json = getEngineConfig();
-            if (auto propName = "maxFps"; json.contains(propName))
+            const Json& json = getEngineConfig();
+            if (auto it = json.find("maxFps"); it != json.end())
             {
-                ret.targetFps = json[propName];
+                ret.targetFps = *it;
             }
-            if (auto propName = "resolution"; json.contains(propName))
+            if (auto it = json.find("resolution"); it != json.end())
             {
-                std::array<int, 2> res = json[propName];
-                ret.resolution = {res[0], res[1]};
+                ret.resolution = *it;
             }
             return ret;
         }();
@@ -54,10 +71,46 @@ namespace Config
     {
         static const std::string path = []
         {
-            std::string rootRelative = getEngineConfig()["contentRoot"];
+            std::string rootRelative = *getEngineConfig().find("contentRoot");
             std::filesystem::path completePath{AssetManager::getExecutableRoot() + "../../" + rootRelative};
             return canonical(completePath).generic_string() + "/";
         }();
         return path;
     }
 }
+
+export class AssetBase
+{
+public:
+    AssetBase() = default;
+
+    explicit AssetBase(const Json& serializedData);
+
+    const Guid& getGuid() const { return m_id; };
+
+    virtual ~AssetBase() = default;
+
+private:
+    Guid m_id;
+};
+
+export template <typename T>
+T Deserialize(const Json& serializedData) { return T{}; }
+
+export template <typename T>
+class Asset : public AssetBase
+{
+public:
+    using AssetBase::AssetBase;
+
+    Asset(const Json& serializedData)
+        : AssetBase{serializedData}
+    , m_data{Deserialize<T>(serializedData)}
+    {
+    }
+
+    const T& getData() const { return m_data; }
+
+private:
+    T m_data;
+};

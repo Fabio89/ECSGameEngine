@@ -6,6 +6,7 @@ module;
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
+#include <windows.h>
 
 export module Engine.Render.Core:Model;
 import :Vulkan;
@@ -15,6 +16,7 @@ import std;
 using IdType = size_t;
 export using TextureId = IdType;
 export using MeshId = IdType;
+export using MeshGuid = GUID;
 
 export struct Vertex
 {
@@ -37,6 +39,27 @@ struct std::hash<Vertex>
     }
 };
 
+export struct TextureData
+{
+    std::string path;
+};
+
+template <>
+TextureData Deserialize(const Json& serializedData)
+{
+    TextureData data;
+    if (auto it = serializedData.find("path"); it != serializedData.end())
+    {
+        data.path = *it;
+    }
+    return data;
+}
+
+export class TextureAsset : public Asset<TextureData>
+{
+    using Asset::Asset;
+};
+
 export struct MeshData
 {
     std::vector<Vertex> vertices;
@@ -44,6 +67,14 @@ export struct MeshData
 
     static constexpr auto indexType{vk::IndexType::eUint32};
 };
+
+export class MeshAsset : public Asset<MeshData>
+{
+    using Asset::Asset;
+};
+
+template <>
+MeshData Deserialize(const Json& serializedData);
 
 export namespace ModelUtils
 {
@@ -97,4 +128,29 @@ export namespace ModelUtils
         }
         return mesh;
     }
+}
+
+template <>
+MeshData Deserialize(const Json& serializedData)
+{
+    MeshData data;
+    if (auto it = serializedData.find("path"); it != serializedData.end())
+    {
+        data = ModelUtils::loadModel(std::string{*it}.c_str());
+    }
+    else if (auto verticesIt = serializedData.find("vertices"), indicesIt = serializedData.find("indices"); verticesIt != serializedData.end() && indicesIt != serializedData.
+        end())
+    {
+        for (const auto& verticesJson : *verticesIt)
+        {
+            Vertex& vertex = data.vertices.emplace_back();
+            vertex.pos = *verticesJson.find("position");
+            vertex.texCoordinates = *verticesJson.find("uv");
+        }
+        for (const auto& indicesJson : *indicesIt)
+        {
+            data.indices.emplace_back(indicesJson);
+        }
+    }
+    return data;
 }

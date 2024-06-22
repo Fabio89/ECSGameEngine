@@ -1,8 +1,8 @@
-# Install script for directory: D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/src/-1.3.280.0-a675026bd4.clean/loader
+# Install script for directory: C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/src/-1.3.280.0-a675026bd4.clean/loader
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/vulkan-loader_x64-windows/debug")
+  set(CMAKE_INSTALL_PREFIX "C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/vulkan-loader_x64-windows/debug")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -32,17 +32,17 @@ if(NOT DEFINED CMAKE_CROSSCOMPILING)
   set(CMAKE_CROSSCOMPILING "OFF")
 endif()
 
-# Set default install directory permissions.
+# Set path to fallback-tool for dependency-resolution.
 if(NOT DEFINED CMAKE_OBJDUMP)
   set(CMAKE_OBJDUMP "CMAKE_OBJDUMP-NOTFOUND")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY OPTIONAL FILES "D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/x64-windows-dbg/loader/vulkan-1.lib")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY OPTIONAL FILES "C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/x64-windows-dbg/loader/vulkan-1.lib")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" TYPE SHARED_LIBRARY FILES "D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/x64-windows-dbg/loader/vulkan-1.dll")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" TYPE SHARED_LIBRARY FILES "C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/x64-windows-dbg/loader/vulkan-1.dll")
   if(EXISTS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/vulkan-1.dll" AND
      NOT IS_SYMLINK "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/vulkan-1.dll")
     if(CMAKE_INSTALL_DO_STRIP)
@@ -55,7 +55,7 @@ if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT
   if(EXISTS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/cmake/VulkanLoader/VulkanLoaderConfig.cmake")
     file(DIFFERENT _cmake_export_file_changed FILES
          "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/cmake/VulkanLoader/VulkanLoaderConfig.cmake"
-         "D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/x64-windows-dbg/loader/CMakeFiles/Export/599675438f54c38aa61065dc4f290152/VulkanLoaderConfig.cmake")
+         "C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/x64-windows-dbg/loader/CMakeFiles/Export/599675438f54c38aa61065dc4f290152/VulkanLoaderConfig.cmake")
     if(_cmake_export_file_changed)
       file(GLOB _cmake_old_config_files "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/cmake/VulkanLoader/VulkanLoaderConfig-*.cmake")
       if(_cmake_old_config_files)
@@ -68,13 +68,13 @@ if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT
     endif()
     unset(_cmake_export_file_changed)
   endif()
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/VulkanLoader" TYPE FILE FILES "D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/x64-windows-dbg/loader/CMakeFiles/Export/599675438f54c38aa61065dc4f290152/VulkanLoaderConfig.cmake")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/VulkanLoader" TYPE FILE FILES "C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/x64-windows-dbg/loader/CMakeFiles/Export/599675438f54c38aa61065dc4f290152/VulkanLoaderConfig.cmake")
   if(CMAKE_INSTALL_CONFIG_NAME MATCHES "^([Dd][Ee][Bb][Uu][Gg])$")
-    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/VulkanLoader" TYPE FILE FILES "D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/x64-windows-dbg/loader/CMakeFiles/Export/599675438f54c38aa61065dc4f290152/VulkanLoaderConfig-debug.cmake")
+    file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/VulkanLoader" TYPE FILE FILES "C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/x64-windows-dbg/loader/CMakeFiles/Export/599675438f54c38aa61065dc4f290152/VulkanLoaderConfig-debug.cmake")
   endif()
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/VulkanLoader" TYPE FILE FILES "D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/x64-windows-dbg/loader/generated/VulkanLoaderConfigVersion.cmake")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/VulkanLoader" TYPE FILE FILES "C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/vulkan-loader/x64-windows-dbg/loader/generated/VulkanLoaderConfigVersion.cmake")
 endif()
 

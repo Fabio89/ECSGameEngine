@@ -1,8 +1,7 @@
 module;
-
+#include <glm/gtc/matrix_transform.hpp>
 module Engine.Render.Core;
 import std;
-import <glm/gtc/matrix_transform.hpp>;
 
 void RenderObjectManager::init
 (
@@ -22,28 +21,27 @@ void RenderObjectManager::init
     m_descriptorSetLayout = descriptorSetLayout;
     m_queue = queue;
     m_cmdPool = cmdPool;
+    m_objects.reserve(100);
+    m_meshes.reserve(100);
+    m_textures.reserve(100);
 }
 
-TextureId RenderObjectManager::createTexture(const char* path)
-{
-    static std::atomic<TextureId> currentId{};
 
-    Texture texture;
-    texture.id = currentId++;
-    std::string fullPath = Config::getContentRoot() + path;
-    std::tie(texture.image, texture.memory) = RenderUtils::createTextureImage(
-        fullPath.c_str(), m_device, m_physicalDevice,
-        m_queue, m_cmdPool);
-    texture.view = RenderUtils::createTextureImageView(m_device, texture.image);
-    texture.sampler = RenderUtils::createTextureSampler(m_device, m_physicalDevice);
-    m_textures.emplace_back(texture);
-    return texture.id;
-}
-
-Texture RenderObjectManager::getTextureData(TextureId textureId) const
+const Texture& RenderObjectManager::addTexture(const TextureData& textureData, Guid guid)
 {
-    auto it = std::ranges::find_if(m_textures, [textureId](auto&& texture) { return texture.id == textureId; });
-    return it != m_textures.end() ? *it : Texture{};
+	static std::atomic<TextureId> currentId{};
+
+	Texture& texture = m_textures.emplace_back();
+	texture.id = currentId++;
+	std::string fullPath = Config::getContentRoot() + textureData.path;
+	std::tie(texture.image, texture.memory) = RenderUtils::createTextureImage(
+		fullPath.c_str(), m_device, m_physicalDevice,
+		m_queue, m_cmdPool);
+	texture.view = RenderUtils::createTextureImageView(m_device, texture.image);
+	texture.sampler = RenderUtils::createTextureSampler(m_device, m_physicalDevice);
+	m_textureMap.emplace(guid, texture.id);
+	std::cout << "Added texture: " << guid.toString() << std::endl;
+	return texture;
 }
 
 void RenderObjectManager::updateDescriptorSets(const RenderObject& object) const
@@ -116,10 +114,10 @@ void RenderObjectManager::updateUniformBuffer(RenderObject& object, vk::Extent2D
     UniformBufferObject uniformBufferObject
     {
         .model = rotate(glm::mat4(1), glm::radians(object.rotation.x), {1, 0, 0})
-            * rotate(glm::mat4(1), glm::radians(object.rotation.y), {0, 1, 0})
-            * rotate(glm::mat4(1), glm::radians(object.rotation.z), {0, 0, 1})
-            * translate(glm::mat4(1), object.location)
-            *scale(glm::mat4(1), glm::vec3{object.scale, object.scale, object.scale}),
+        * rotate(glm::mat4(1), glm::radians(object.rotation.y), {0, 1, 0})
+        * rotate(glm::mat4(1), glm::radians(object.rotation.z), {0, 0, 1})
+        * translate(glm::mat4(1), object.location)
+        * scale(glm::mat4(1), glm::vec3{object.scale, object.scale, object.scale}),
         .view = lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
         .proj = glm::perspective(glm::radians(45.0f),
                                  swapchainExtent.width / static_cast<float>(swapchainExtent.height), 0.1f, 10.0f),
@@ -130,11 +128,10 @@ void RenderObjectManager::updateUniformBuffer(RenderObject& object, vk::Extent2D
     timeElapsed += deltaTime;
 }
 
-MeshId RenderObjectManager::createMesh(MeshData data)
+const Mesh& RenderObjectManager::addMesh(MeshData data, Guid guid)
 {
     assert(m_device);
-
-    Mesh mesh;
+    Mesh& mesh = m_meshes.emplace_back();
     const RenderUtils::CreateDataBufferInfo vertexBufferInfo
     {
         .device = m_device,
@@ -161,14 +158,9 @@ MeshId RenderObjectManager::createMesh(MeshData data)
 
     static std::atomic<MeshId> currentId{};
     const MeshId id = mesh.id = currentId++;
-    m_meshes.emplace_back(std::move(mesh));
-    return id;
-}
-
-Mesh RenderObjectManager::getMeshData(MeshId meshId) const
-{
-    auto it = std::ranges::find_if(m_meshes, [meshId](auto&& mesh) { return mesh.id == meshId; });
-    return it != m_meshes.end() ? *it : Mesh{};
+    m_meshMap.emplace(guid, id);
+    std::cout << "Added mesh: " << guid.toString() << std::endl;
+    return mesh;
 }
 
 void RenderObjectManager::shutdown()
@@ -202,13 +194,61 @@ void RenderObjectManager::shutdown()
     m_textures.clear();
 }
 
-void RenderObjectManager::createRenderObject(MeshId mesh, TextureId texture, glm::vec3 location, glm::vec3 rotation, float scale)
+void RenderObjectManager::addCommand(RenderMessages::AddObject command)
+{
+    m_addObjectCommands.push(std::move(command));
+}
+
+void RenderObjectManager::executePendingCommands()
+{
+    auto cmd = m_addObjectCommands.tryPop();
+    while (cmd.has_value())
+    {
+        addRenderObject(*cmd->mesh, *cmd->texture, cmd->location, cmd->rotation, cmd->scale);
+        cmd = m_addObjectCommands.tryPop();
+    }
+}
+
+void RenderObjectManager::addRenderObject(const MeshAsset& meshAsset, const TextureAsset& textureAsset, glm::vec3 location, glm::vec3 rotation, float scale)
 {
     RenderObject object;
     static constexpr vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
 
-    object.mesh = getMeshData(mesh);
-    object.texture = getTextureData(texture);
+    const Mesh* mesh = nullptr;
+	{
+		auto idIt = m_meshMap.find(meshAsset.getGuid());
+		if (idIt == m_meshMap.end())
+		{
+			mesh = &addMesh(meshAsset.getData(), meshAsset.getGuid());
+		}
+		else if (auto it = std::ranges::find_if(m_meshes, [id = idIt->second](auto&& element) { return element.id == id; }); it != m_meshes.end())
+		{
+			mesh = &*it;
+		}
+		else
+		{
+			throw std::runtime_error("Tried to add a render object with invalid mesh!");
+		}
+    }
+
+	const Texture* texture = nullptr;
+    {
+        if (auto idIt = m_textureMap.find(textureAsset.getGuid()); idIt == m_textureMap.end())
+        {
+			texture = &addTexture(textureAsset.getData(), textureAsset.getGuid());
+        }
+        else if (auto it = std::ranges::find_if(m_textures, [id = idIt->second](auto&& element) { return element.id == id; }); it != m_textures.end())
+        {
+			texture = &*it;
+        }
+        else
+        {
+			throw std::runtime_error("Tried to add a render object with invalid texture!");
+        }
+    }
+
+    object.mesh = *mesh;
+    object.texture = *texture;
     object.location = location;
     object.rotation = rotation;
     object.scale = scale;
@@ -245,6 +285,7 @@ void RenderObjectManager::createRenderObject(MeshId mesh, TextureId texture, glm
     object.descriptorSets = m_device.allocateDescriptorSets(allocInfo);
 
     m_objects.emplace_back(std::move(object));
+    std::cout << "Added render object\n\tMesh: " << meshAsset.getGuid().toString() << "\n\tTexture: " << textureAsset.getGuid().toString() << std::endl;
 }
 
 void RenderObjectManager::renderFrame(vk::CommandBuffer commandBuffer, vk::Pipeline graphicsPipeline,

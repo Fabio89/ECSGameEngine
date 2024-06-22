@@ -1,22 +1,22 @@
 
-if (NOT EXISTS "D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/blds/glfw3/x64-windows-rel/install_manifest.txt")
-    message(FATAL_ERROR "Cannot find install manifest: \"D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/blds/glfw3/x64-windows-rel/install_manifest.txt\"")
+if (NOT EXISTS "C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/glfw3/x64-windows-rel/install_manifest.txt")
+    message(FATAL_ERROR "Cannot find install manifest: \"C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/glfw3/x64-windows-rel/install_manifest.txt\"")
 endif()
 
-file(READ "D:/repos/ECSGameEngine/vcpkg_installed/vcpkg/blds/glfw3/x64-windows-rel/install_manifest.txt" files)
+file(READ "C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/glfw3/x64-windows-rel/install_manifest.txt" files)
 string(REGEX REPLACE "\n" ";" files "${files}")
 
 foreach (file ${files})
   message(STATUS "Uninstalling \"$ENV{DESTDIR}${file}\"")
   if (EXISTS "$ENV{DESTDIR}${file}")
-    exec_program("C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/bin/cmake.exe" ARGS "-E remove \"$ENV{DESTDIR}${file}\""
+    exec_program("C:/Program Files/CMake/bin/cmake.exe" ARGS "-E remove \"$ENV{DESTDIR}${file}\""
                  OUTPUT_VARIABLE rm_out
                  RETURN_VALUE rm_retval)
     if (NOT "${rm_retval}" STREQUAL 0)
       MESSAGE(FATAL_ERROR "Problem when removing \"$ENV{DESTDIR}${file}\"")
     endif()
   elseif (IS_SYMLINK "$ENV{DESTDIR}${file}")
-    EXEC_PROGRAM("C:/Users/famarchese/AppData/Local/vcpkg/downloads/tools/cmake-3.29.2-windows/cmake-3.29.2-windows-i386/bin/cmake.exe" ARGS "-E remove \"$ENV{DESTDIR}${file}\""
+    EXEC_PROGRAM("C:/Program Files/CMake/bin/cmake.exe" ARGS "-E remove \"$ENV{DESTDIR}${file}\""
                  OUTPUT_VARIABLE rm_out
                  RETURN_VALUE rm_retval)
     if (NOT "${rm_retval}" STREQUAL 0)

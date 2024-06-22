@@ -74,16 +74,17 @@ void VulkanApplication::init(ApplicationState& applicationState)
     };
     m_imguiHelper.init(m_window, imguiInfo);
 
-    renderObjectManager.init(m_device, m_physicalDevice, m_surface, m_descriptorPool, m_descriptorSetLayout,
+    m_renderObjectManager.init(m_device, m_physicalDevice, m_surface, m_descriptorPool, m_descriptorSetLayout,
                        m_graphicsQueue, m_commandPool);
-    applicationState.initialized = true;
     applicationState.application = this;
+    applicationState.initialized = true;
 }
 
 void VulkanApplication::update(float deltaTime)
 {
     m_graphicsQueue.waitIdle(); // TODO: Optimization target. Explore VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT.
     glfwPollEvents();
+    m_renderObjectManager.executePendingCommands();
     drawFrame(deltaTime);
 }
 
@@ -92,7 +93,7 @@ void VulkanApplication::shutdown()
     m_terminated = true;
     m_device.waitIdle();
 
-    renderObjectManager.shutdown();
+    m_renderObjectManager.shutdown();
     m_imguiHelper.shutdown();
 
     cleanupSwapchain();
@@ -128,6 +129,11 @@ void VulkanApplication::shutdown()
 bool VulkanApplication::shouldWindowClose() const
 {
     return glfwWindowShouldClose(m_window);
+}
+
+void VulkanApplication::requestAddRenderObject(RenderMessages::AddObject command)
+{
+    m_renderObjectManager.addCommand(std::move(command));
 }
 
 void VulkanApplication::createInstance()
@@ -918,7 +924,7 @@ void VulkanApplication::drawFrame(float deltaTime)
 
     commandBuffer.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
 
-    renderObjectManager.renderFrame(commandBuffer, m_graphicsPipeline, m_pipelineLayout, m_swapchainExtent, deltaTime,
+    m_renderObjectManager.renderFrame(commandBuffer, m_graphicsPipeline, m_pipelineLayout, m_swapchainExtent, deltaTime,
                               m_currentFrame);
 
     m_imguiHelper.renderFrame(commandBuffer);

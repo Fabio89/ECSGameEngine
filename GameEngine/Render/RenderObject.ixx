@@ -1,6 +1,9 @@
 export module Engine.Render.Core:RenderObject;
 import :Model;
 import :Vulkan;
+import Engine.Guid;
+import Engine.Render;
+import std;
 import <glm/glm.hpp>;
 
 struct Texture
@@ -42,6 +45,18 @@ struct RenderObject
     std::vector<vk::DescriptorSet> descriptorSets;
 };
 
+export namespace RenderMessages
+{
+	struct AddObject
+	{
+		const MeshAsset* mesh;
+		const TextureAsset* texture;
+		glm::vec3 location;
+		glm::vec3 rotation;
+		float scale;
+	};
+}
+
 export class RenderObjectManager
 {
 public:
@@ -57,14 +72,14 @@ public:
     );
 
     void shutdown();
-
-    void createRenderObject(MeshId mesh, TextureId texture, glm::vec3 location = {}, glm::vec3 rotation = {},
-                            float scale = 1.f);
-
-    MeshId createMesh(MeshData data);
-
-    TextureId createTexture(const char* path);
+    void addCommand(RenderMessages::AddObject command);
+    void executePendingCommands();
+    void addRenderObject(const MeshAsset& mesh, const TextureAsset& texture, glm::vec3 location = {}, glm::vec3 rotation = {},
+                    float scale = 1.f);
     
+    const Mesh& addMesh(MeshData data, Guid guid);
+    const Texture& addTexture(const TextureData& textureData, Guid guid);
+
     void renderFrame
     (
         vk::CommandBuffer commandBuffer,
@@ -76,16 +91,19 @@ public:
     );
 
 private:
-    Mesh getMeshData(MeshId meshId) const;
-    Texture getTextureData(TextureId textureId) const;
-
     void updateDescriptorSets(const RenderObject& object) const;
     static void updateUniformBuffer(RenderObject& object, vk::Extent2D swapchainExtent, uint32_t currentImage,
                                     float deltaTime);
 
+    ThreadSafeQueue<RenderMessages::AddObject> m_addObjectCommands;
+    
     std::vector<RenderObject> m_objects;
     std::vector<Mesh> m_meshes;
     std::vector<Texture> m_textures;
+
+    std::unordered_map<Guid, MeshId> m_meshMap;
+    std::unordered_map<Guid, TextureId> m_textureMap;
+
     vk::Device m_device{nullptr};
     vk::PhysicalDevice m_physicalDevice{nullptr};
     vk::SurfaceKHR m_surface{nullptr};
