@@ -10,6 +10,7 @@ module;
 
 export module Engine.Render.Core:Model;
 import :Vulkan;
+import Engine.AssetManager;
 import Engine.Config;
 import std;
 
@@ -21,12 +22,12 @@ export using MeshGuid = GUID;
 export struct Vertex
 {
     glm::vec3 pos;
-    glm::vec2 texCoordinates;
+    glm::vec2 uv;
 };
 
 bool operator==(const Vertex& a, const Vertex& b)
 {
-    return a.pos == b.pos && a.texCoordinates == b.texCoordinates;
+    return a.pos == b.pos && a.uv == b.uv;
 }
 
 template <>
@@ -35,7 +36,7 @@ struct std::hash<Vertex>
     size_t operator()(Vertex const& vertex) const noexcept
     {
         return ((hash<decltype(vertex.pos)>()(vertex.pos) ^
-            (hash<decltype(vertex.texCoordinates)>()(vertex.texCoordinates) << 1)) >> 1);
+            (hash<decltype(vertex.uv)>()(vertex.uv) << 1)) >> 1);
     }
 };
 
@@ -55,10 +56,7 @@ TextureData Deserialize(const Json& serializedData)
     return data;
 }
 
-export class TextureAsset : public Asset<TextureData>
-{
-    using Asset::Asset;
-};
+export using TextureAsset = Asset<TextureData>;
 
 export struct MeshData
 {
@@ -68,10 +66,7 @@ export struct MeshData
     static constexpr auto indexType{vk::IndexType::eUint32};
 };
 
-export class MeshAsset : public Asset<MeshData>
-{
-    using Asset::Asset;
-};
+export using MeshAsset = Asset<MeshData>;
 
 template <>
 MeshData Deserialize(const Json& serializedData);
@@ -110,7 +105,7 @@ export namespace ModelUtils
                         attrib.vertices[3 * index.vertex_index + 1],
                         attrib.vertices[3 * index.vertex_index + 2]
                     },
-                    .texCoordinates =
+                    .uv =
                     {
                         attrib.texcoords[2 * index.texcoord_index + 0],
                         1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
@@ -143,9 +138,9 @@ MeshData Deserialize(const Json& serializedData)
     {
         for (const auto& verticesJson : *verticesIt)
         {
-            Vertex& vertex = data.vertices.emplace_back();
-            vertex.pos = *verticesJson.find("position");
-            vertex.texCoordinates = *verticesJson.find("uv");
+            auto& [pos, uv] = data.vertices.emplace_back();
+            pos = *verticesJson.find("position");
+            uv = *verticesJson.find("uv");
         }
         for (const auto& indicesJson : *indicesIt)
         {

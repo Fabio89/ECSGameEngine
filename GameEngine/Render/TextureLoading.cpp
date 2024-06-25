@@ -9,12 +9,12 @@ import std;
 // Create a Vulkan image
 [[nodiscard]] std::tuple<vk::Image, vk::DeviceMemory>
 RenderUtils::createImage(vk::Device device,
-                          vk::PhysicalDevice physicalDevice,
-                          vk::MemoryPropertyFlags properties,
-                          vk::Extent2D extent,
-                          vk::Format format,
-                          vk::ImageTiling tiling,
-                          vk::ImageUsageFlags usage)
+                         vk::PhysicalDevice physicalDevice,
+                         vk::MemoryPropertyFlags properties,
+                         vk::Extent2D extent,
+                         vk::Format format,
+                         vk::ImageTiling tiling,
+                         vk::ImageUsageFlags usage)
 {
     const vk::ImageCreateInfo imageInfo
     {
@@ -55,7 +55,7 @@ RenderUtils::createImage(vk::Device device,
 }
 
 vk::ImageView RenderUtils::createImageView(vk::Device device, vk::Image image, vk::Format format,
-                                            vk::ImageAspectFlags aspectFlags)
+                                           vk::ImageAspectFlags aspectFlags)
 {
     const vk::ImageViewCreateInfo viewInfo
     {
@@ -77,15 +77,15 @@ vk::ImageView RenderUtils::createImageView(vk::Device device, vk::Image image, v
 // Create a Vulkan image from the specified file
 [[nodiscard]] std::tuple<vk::Image, vk::DeviceMemory>
 RenderUtils::createTextureImage(const char* path, vk::Device device, vk::PhysicalDevice physicalDevice,
-                                 vk::Queue commandQueue, vk::CommandPool
-                                 commandPool)
+                                vk::Queue commandQueue, vk::CommandPool
+                                commandPool)
 {
     int texWidth, texHeight, texChannels;
     stbi_uc* pixels = stbi_load(path, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     const vk::DeviceSize imageSize = texWidth * texHeight * 4;
 
     if (!pixels)
-        throw std::runtime_error("failed to load texture image!");
+        throw std::runtime_error(std::string{"failed to load texture image: "} + path);
 
     const CreateBufferInfo bufferInfo
     {
@@ -121,14 +121,14 @@ RenderUtils::createTextureImage(const char* path, vk::Device device, vk::Physica
 
     constexpr auto format = vk::Format::eR8G8B8A8Srgb;
     transitionImageLayout(device, commandQueue, commandPool,
-                                       image, format, vk::ImageLayout::eUndefined,
-                                       vk::ImageLayout::eTransferDstOptimal);
+                          image, format, vk::ImageLayout::eUndefined,
+                          vk::ImageLayout::eTransferDstOptimal);
 
     copyBufferToImage(device, commandQueue, commandPool, stagingBuffer, image, imageExtent);
 
     transitionImageLayout(device, commandQueue, commandPool,
-                                       image, format, vk::ImageLayout::eTransferDstOptimal,
-                                       vk::ImageLayout::eShaderReadOnlyOptimal);
+                          image, format, vk::ImageLayout::eTransferDstOptimal,
+                          vk::ImageLayout::eShaderReadOnlyOptimal);
 
     device.destroyBuffer(stagingBuffer);
     device.freeMemory(stagingBufferMemory);

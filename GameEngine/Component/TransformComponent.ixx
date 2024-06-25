@@ -1,29 +1,62 @@
 export module Engine.Component.Transform;
+import Engine.Render.Application;
 import Engine.Render.Core;
+import Engine.Config;
 import Engine.Core;
 import Engine.World;
+import <glm/glm.hpp>;
 
 export struct TransformComponent : Component<TransformComponent>
 {
-    TextureId texture;
-    MeshId mesh;
+    glm::vec3 position;
+    glm::vec3 rotation;
+    float scale{1.f};
 };
 
-class ModelSystem : public System
+template <>
+TransformComponent Deserialize(const Json& data)
+{
+    glm::vec3 position{};
+    if (auto it = data.find("position"); it != data.end())
+    {
+        position = *it;
+    }
+    
+    glm::vec3 rotation{};
+    if (auto it = data.find("rotation"); it != data.end())
+    {
+        rotation = *it;
+    }
+    
+    float scale{1.f};
+    if (auto it = data.find("scale"); it != data.end())
+    {
+        scale = *it;
+    }
+    
+    return
+    {
+        .position = position,
+        .rotation = rotation,
+        .scale = scale
+    };
+}
+
+export class TransformSystem : public System
 {
 public:
-//     void addEntity(Entity entity, World& world)
-//     {
-//         TransformComponent& transform = world.editComponent<TransformComponent>(entity);
-//         world.observeOnComponentAdded([this](Entity entity, ComponentTypeId componentType) { onComponentAdded(entity, componentType); });
-//     }
-//
-// private:
-//     void onComponentAdded(Entity entity, ComponentTypeId componentType)
-//     {
-//         if (componentType == TransformComponent::typeId)
-//         {
-//         
-//         }
-//     }
+    void onComponentAdded(World& world, Entity entity, ComponentTypeId componentType) override
+    {
+        if (componentType == TransformComponent::typeId)
+        {
+            const auto& component = world.readComponent<TransformComponent>(entity);
+            world.getApplication().requestSetObjectTransform
+            ({
+                .entity = entity,
+                .location = component.position,
+                .rotation = component.rotation,
+                .scale = component.scale
+            });
+        }
+    }
 };

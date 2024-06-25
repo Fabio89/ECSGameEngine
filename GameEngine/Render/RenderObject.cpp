@@ -29,19 +29,19 @@ void RenderObjectManager::init
 
 const Texture& RenderObjectManager::addTexture(const TextureData& textureData, Guid guid)
 {
-	static std::atomic<TextureId> currentId{};
+    static std::atomic<TextureId> currentId{};
 
-	Texture& texture = m_textures.emplace_back();
-	texture.id = currentId++;
-	std::string fullPath = Config::getContentRoot() + textureData.path;
-	std::tie(texture.image, texture.memory) = RenderUtils::createTextureImage(
-		fullPath.c_str(), m_device, m_physicalDevice,
-		m_queue, m_cmdPool);
-	texture.view = RenderUtils::createTextureImageView(m_device, texture.image);
-	texture.sampler = RenderUtils::createTextureSampler(m_device, m_physicalDevice);
-	m_textureMap.emplace(guid, texture.id);
-	std::cout << "Added texture: " << guid.toString() << std::endl;
-	return texture;
+    Texture& texture = m_textures.emplace_back();
+    texture.id = currentId++;
+    std::string fullPath = Config::getContentRoot() + textureData.path;
+    std::tie(texture.image, texture.memory) = RenderUtils::createTextureImage(
+        fullPath.c_str(), m_device, m_physicalDevice,
+        m_queue, m_cmdPool);
+    texture.view = RenderUtils::createTextureImageView(m_device, texture.image);
+    texture.sampler = RenderUtils::createTextureSampler(m_device, m_physicalDevice);
+    m_textureMap.emplace(guid, texture.id);
+    std::cout << "Added texture: " << guid.toString() << std::endl;
+    return texture;
 }
 
 void RenderObjectManager::updateDescriptorSets(const RenderObject& object) const
@@ -199,59 +199,73 @@ void RenderObjectManager::addCommand(RenderMessages::AddObject command)
     m_addObjectCommands.push(std::move(command));
 }
 
+void RenderObjectManager::addCommand(RenderMessages::SetTransform command)
+{
+    m_setTransformCommands.push(std::move(command));
+}
+
 void RenderObjectManager::executePendingCommands()
 {
-    auto cmd = m_addObjectCommands.tryPop();
-    while (cmd.has_value())
     {
-        addRenderObject(*cmd->mesh, *cmd->texture, cmd->location, cmd->rotation, cmd->scale);
-        cmd = m_addObjectCommands.tryPop();
+        auto cmd = m_addObjectCommands.tryPop();
+        while (cmd.has_value())
+        {
+            addRenderObject(cmd->entity, *cmd->mesh, *cmd->texture);
+            cmd = m_addObjectCommands.tryPop();
+        }
+    }
+
+    {
+        auto cmd = m_setTransformCommands.tryPop();
+        while (cmd.has_value())
+        {
+            setObjectTransform(cmd->entity, cmd->location, cmd->rotation, cmd->scale);
+            cmd = m_setTransformCommands.tryPop();
+        }
     }
 }
 
-void RenderObjectManager::addRenderObject(const MeshAsset& meshAsset, const TextureAsset& textureAsset, glm::vec3 location, glm::vec3 rotation, float scale)
+void RenderObjectManager::addRenderObject(Entity entity, const MeshAsset& meshAsset, const TextureAsset& textureAsset)
 {
     RenderObject object;
     static constexpr vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
 
     const Mesh* mesh = nullptr;
-	{
-		auto idIt = m_meshMap.find(meshAsset.getGuid());
-		if (idIt == m_meshMap.end())
-		{
-			mesh = &addMesh(meshAsset.getData(), meshAsset.getGuid());
-		}
-		else if (auto it = std::ranges::find_if(m_meshes, [id = idIt->second](auto&& element) { return element.id == id; }); it != m_meshes.end())
-		{
-			mesh = &*it;
-		}
-		else
-		{
-			throw std::runtime_error("Tried to add a render object with invalid mesh!");
-		}
-    }
-
-	const Texture* texture = nullptr;
     {
-        if (auto idIt = m_textureMap.find(textureAsset.getGuid()); idIt == m_textureMap.end())
+        auto idIt = m_meshMap.find(meshAsset.getGuid());
+        if (idIt == m_meshMap.end())
         {
-			texture = &addTexture(textureAsset.getData(), textureAsset.getGuid());
+            mesh = &addMesh(meshAsset.getData(), meshAsset.getGuid());
         }
-        else if (auto it = std::ranges::find_if(m_textures, [id = idIt->second](auto&& element) { return element.id == id; }); it != m_textures.end())
+        else if (auto it = std::ranges::find_if(m_meshes, [id = idIt->second](auto&& element) { return element.id == id; }); it != m_meshes.end())
         {
-			texture = &*it;
+            mesh = &*it;
         }
         else
         {
-			throw std::runtime_error("Tried to add a render object with invalid texture!");
+            throw std::runtime_error("Tried to add a render object with invalid mesh!");
         }
     }
 
+    const Texture* texture = nullptr;
+    {
+        if (auto idIt = m_textureMap.find(textureAsset.getGuid()); idIt == m_textureMap.end())
+        {
+            texture = &addTexture(textureAsset.getData(), textureAsset.getGuid());
+        }
+        else if (auto it = std::ranges::find_if(m_textures, [id = idIt->second](auto&& element) { return element.id == id; }); it != m_textures.end())
+        {
+            texture = &*it;
+        }
+        else
+        {
+            throw std::runtime_error("Tried to add a render object with invalid texture!");
+        }
+    }
+
+    object.entity = entity;
     object.mesh = *mesh;
     object.texture = *texture;
-    object.location = location;
-    object.rotation = rotation;
-    object.scale = scale;
     object.uniformBuffers = std::vector<vk::Buffer>(MaxFramesInFlight);
     object.uniformBuffersMemory = std::vector<vk::DeviceMemory>(MaxFramesInFlight);
     object.uniformBuffersMapped = std::vector<void*>(MaxFramesInFlight);
@@ -286,6 +300,17 @@ void RenderObjectManager::addRenderObject(const MeshAsset& meshAsset, const Text
 
     m_objects.emplace_back(std::move(object));
     std::cout << "Added render object\n\tMesh: " << meshAsset.getGuid().toString() << "\n\tTexture: " << textureAsset.getGuid().toString() << std::endl;
+}
+
+void RenderObjectManager::setObjectTransform(Entity entity, glm::vec3 location, glm::vec3 rotation, float scale)
+{
+    auto it = std::ranges::find_if(m_objects, [&](auto&& object) { return object.entity == entity; });
+    if (it != m_objects.end())
+    {
+        it->location = location;
+        it->rotation = rotation;
+        it->scale = scale;
+    }
 }
 
 void RenderObjectManager::renderFrame(vk::CommandBuffer commandBuffer, vk::Pipeline graphicsPipeline,

@@ -30,13 +30,27 @@ struct std::hash<EntitySignature>
 
 class RenderObjectManager;
 
-export class World
+export class World;
+
+export class System
+{
+public:
+    virtual ~System() = default;
+    void update(float deltaTime);
+    void addUpdateFunction(std::function<void(float)> func);
+    virtual void onComponentAdded(World&, Entity, ComponentTypeId) {}
+    
+private:
+    std::vector<std::function<void(float)>> m_updateFunctions;
+};
+
+class World
 {
 public:
     World(const ApplicationSettings&, ApplicationState& globalState);
 
     Entity createEntity();
-
+    
     template <typename T, typename... Args>
     void addComponent(Entity entity, Args&&... args);
 
@@ -50,6 +64,9 @@ public:
 
     void addSystem(std::unique_ptr<System> system);
 
+    template<typename T>
+    void addSystem();
+    
     void updateSystems(float deltaTime);
 
     ArchetypeChangedObserverHandle observeOnComponentAdded(ArchetypeChangedCallback observer);
@@ -57,12 +74,14 @@ public:
 
     void createObjectsFromConfig();
 
+    const VulkanApplication& getApplication() const { return *m_applicationState.get().application; }
+    VulkanApplication& getApplication() { return *m_applicationState.get().application; }
+
 private:
     const Archetype& readArchetype(const EntitySignature& signature) const;
     Archetype& editArchetype(const EntitySignature& signature);
     Archetype& editOrCreateArchetype(const EntitySignature& signature);
 
-    std::vector<std::unique_ptr<AssetBase>> m_loadedAssets;
     std::unordered_map<ArchetypeChangedObserverHandle, ArchetypeChangedCallback> m_archetypeChangeObservers;
     JobSystem m_jobSystem;
     Entity m_nextEntity = 0;
@@ -107,4 +126,14 @@ template <typename T>
 T& World::editComponent(Entity entity)
 {
     return const_cast<T&>(readComponent<T>(entity));
+}
+
+template <typename T>
+void World::addSystem()
+{
+    System* system = m_systems.emplace_back(std::make_unique<T>()).get();
+    observeOnComponentAdded([system, this](Entity entity, ComponentTypeId componentId)
+    {
+        system->onComponentAdded(*this, entity, componentId);
+    });
 }

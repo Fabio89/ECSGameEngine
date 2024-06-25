@@ -2,83 +2,94 @@ import Engine.Config;
 import Engine.Core;
 import Engine.Render;
 import Engine.World;
+import Engine.Component.Model;
+import Engine.Component.Transform;
 
 import std;
 
-struct Position : Component<Position> {
-	float x{ 0.f }, y{ 0.f };
-	Position() = default;
-	Position(float x, float y) : x(x), y(y) {}
+struct Position : Component<Position>
+{
+    float x{0.f}, y{0.f};
+    Position() = default;
+
+    Position(float x, float y) : x(x), y(y)
+    {
+    }
 };
 
-struct Velocity : Component<Velocity> {
-	float vx{ 0.f }, vy{ 0.f };
-	Velocity() = default;
-	Velocity(float vx, float vy) : vx(vx), vy(vy) {}
+struct Velocity : Component<Velocity>
+{
+    float vx{0.f}, vy{0.f};
+    Velocity() = default;
+
+    Velocity(float vx, float vy) : vx(vx), vy(vy)
+    {
+    }
 };
 
 class MovementSystem : public System
 {
 public:
-	void addEntity(Entity entity, World& manager) {
-		Position& pos = manager.editComponent<Position>(entity);
-		Velocity& vel = manager.editComponent<Velocity>(entity);
-		addUpdateFunction([&pos, &vel](float deltaTime) {
-			pos.x += vel.vx * deltaTime;
-			pos.y += vel.vy * deltaTime;
-			});
-	}
+    void addEntity(Entity entity, World& manager)
+    {
+        Position& pos = manager.editComponent<Position>(entity);
+        Velocity& vel = manager.editComponent<Velocity>(entity);
+        addUpdateFunction([&pos, &vel](float deltaTime)
+        {
+            pos.x += vel.vx * deltaTime;
+            pos.y += vel.vy * deltaTime;
+        });
+    }
 };
 
 void gameInit(World& world)
 {
-	// // Create entities
-	// Entity entity1 = world.createEntity();
-	// world.addComponent<Position>(entity1, 0.0f, 0.0f);
-	// world.addComponent<Velocity>(entity1, 1.0f, 1.0f);
-	//
-	// // Create systems
-	// auto movementSystem = std::make_unique<MovementSystem>();
-	// movementSystem->addEntity(entity1, world);
-	// world.addSystem(std::move(movementSystem));
+    // // Create entities
+    // Entity entity1 = world.createEntity();
+    // world.addComponent<Position>(entity1, 0.0f, 0.0f);
+    // world.addComponent<Velocity>(entity1, 1.0f, 1.0f);
+    //
+    // // Create systems
+    world.addSystem<ModelSystem>();
+    world.addSystem<TransformSystem>();
 
-	world.createObjectsFromConfig();
+    world.createObjectsFromConfig();
 }
 
 
 void gameShutdown()
 {
-	std::cout << "[Game] Shutdown complete.\n";
+    std::cout << "[Game] Shutdown complete.\n";
 }
 
 int main()
 {
-	const ApplicationSettings& settings = Config::getApplicationSettings();
-	ApplicationState globalState;
+    const ApplicationSettings& settings = Config::getApplicationSettings();
+    ApplicationState globalState;
 
-	World world{ settings, globalState };
-	const LoopSettings loopSettings{ .targetFps = settings.targetFps };
+    World world{settings, globalState};
+    const LoopSettings loopSettings{.targetFps = settings.targetFps};
 
-	std::thread renderThread = runRenderThread(loopSettings, globalState);
+    std::thread renderThread = runRenderThread(loopSettings, globalState);
 
-	while(!globalState.initialized)
-	{
-		//std::cout << "Waiting for render thread...\n";
-	}
-	
-	gameInit(world);
+    while (!globalState.initialized)
+    {
+        //std::cout << "Waiting for render thread...\n";
+    }
 
-	auto gameTick = [&world](float deltaTime)
-	{
-		world.updateSystems(deltaTime);
-	};
+    gameInit(world);
 
-	auto shouldRun = [&globalState] { return !globalState.closing; };
+    auto gameTick = [&world](float deltaTime)
+    {
+        world.updateSystems(deltaTime);
+    };
 
-	performLoop(loopSettings, gameTick, shouldRun);
+    auto shouldRun = [&globalState] { return !globalState.closing; };
 
-	gameShutdown();
-	renderThread.join();
+    performLoop(loopSettings, gameTick, shouldRun);
 
-	return 0;
+    gameShutdown();
+    renderThread.join();
+
+    return 0;
 }

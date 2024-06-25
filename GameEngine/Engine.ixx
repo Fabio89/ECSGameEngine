@@ -5,6 +5,7 @@ import std;
 import Engine.Config;
 import Engine.Job;
 
+class World;
 export using Entity = size_t;
 export using ComponentTypeId = std::type_index;
 export template <typename T>
@@ -15,17 +16,6 @@ struct Component
 
 template <typename T>
 const ComponentTypeId Component<T>::typeId(typeid(T));
-
-export class System
-{
-public:
-    virtual ~System() = default;
-    void update(float deltaTime);
-    void addUpdateFunction(std::function<void(float)> func);
-
-private:
-    std::vector<std::function<void(float)>> m_updateFunctions;
-};
 
 // Archetype
 export class Archetype
@@ -66,7 +56,7 @@ private:
     private:
         std::vector<T> m_components;
         std::unordered_map<Entity, size_t> m_entityToIndex;
-        std::unordered_map<size_t, Entity> indexToEntity;
+        std::unordered_map<size_t, Entity> m_indexToEntity;
     };
 
     std::unordered_map<ComponentTypeId, std::unique_ptr<ComponentArrayBase>> m_componentArrays;
@@ -87,30 +77,30 @@ void Archetype::ComponentArray<T>::insert(Entity entity, T component)
 {
     if (m_entityToIndex.contains(entity))
     {
-        size_t index = m_entityToIndex[entity];
+        const size_t index = m_entityToIndex[entity];
         m_components[index] = component;
     }
     else
     {
-        size_t index = m_components.size();
+        const size_t index = m_components.size();
         m_components.push_back(component);
         m_entityToIndex[entity] = index;
-        indexToEntity[index] = entity;
+        m_indexToEntity[index] = entity;
     }
 }
 
 template <typename T>
 void Archetype::ComponentArray<T>::remove(Entity entity)
 {
-    size_t index = m_entityToIndex[entity];
-    size_t lastIndex = m_components.size() - 1;
+    const size_t index = m_entityToIndex[entity];
+    const size_t lastIndex = m_components.size() - 1;
     m_components[index] = m_components[lastIndex];
-    Entity lastEntity = indexToEntity[lastIndex];
+    const Entity lastEntity = m_indexToEntity[lastIndex];
     m_entityToIndex[lastEntity] = index;
-    indexToEntity[index] = lastEntity;
+    m_indexToEntity[index] = lastEntity;
     m_components.pop_back();
     m_entityToIndex.erase(entity);
-    indexToEntity.erase(lastIndex);
+    m_indexToEntity.erase(lastIndex);
 }
 
 template <typename T>

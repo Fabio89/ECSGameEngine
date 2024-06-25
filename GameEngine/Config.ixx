@@ -1,6 +1,7 @@
 module;
+//#pragma warning(disable : 5105)
+#include <windows.h>
 export module Engine.Config;
-import Engine.AssetManager;
 import Engine.Guid;
 import std;
 import <External/Json/json.hpp>;
@@ -16,6 +17,7 @@ export struct ApplicationSettings
 export namespace glm
 {
     template <int Size, typename T>
+    // ReSharper disable once CppInconsistentNaming
     void from_json(const nlohmann::json& j, vec<Size, T>& val)
     {
         std::array<T, Size> arr = j;
@@ -23,6 +25,7 @@ export namespace glm
             val[i] = arr[i];
     }
 
+    // ReSharper disable once CppInconsistentNaming
     void to_json(nlohmann::json& j, const ivec2& val)
     {
         j = nlohmann::json{val.x, val.y};
@@ -31,14 +34,37 @@ export namespace glm
 
 export using Json = nlohmann::json;
 
+export template <typename T>
+T Deserialize(const Json& serializedData) { return T{}; }
+
 namespace Config
 {
+    export const std::string& getExecutableRoot()
+    {
+        static const std::string exeRoot = []
+        {
+            std::string buffer;
+            buffer.resize(MAX_PATH);
+            GetModuleFileName(nullptr, buffer.data(), MAX_PATH);
+            auto pos = buffer.find_last_of("\\/") + 1;
+            return std::filesystem::canonical(buffer.substr(0, pos)).generic_string() + "/";
+        }();
+        return exeRoot;
+    }
+
+    export const std::string& getEngineSourceRoot()
+    {
+        static const std::string path = std::filesystem::canonical(getExecutableRoot() + "../../GameEngine").
+            generic_string() + "/";
+        return path;
+    }
+    
     export const Json& getEngineConfig()
     {
         static Json config = []
         {
             Json j;
-            std::string path = AssetManager::getEngineSourceRoot() + "Config.json";
+            std::string path = getEngineSourceRoot() + "Config.json";
             std::ifstream i{path};
             i >> j;
             return j;
@@ -72,45 +98,9 @@ namespace Config
         static const std::string path = []
         {
             std::string rootRelative = *getEngineConfig().find("contentRoot");
-            std::filesystem::path completePath{AssetManager::getExecutableRoot() + "../../" + rootRelative};
+            std::filesystem::path completePath{getExecutableRoot() + "../../" + rootRelative};
             return canonical(completePath).generic_string() + "/";
         }();
         return path;
     }
 }
-
-export class AssetBase
-{
-public:
-    AssetBase() = default;
-
-    explicit AssetBase(const Json& serializedData);
-
-    const Guid& getGuid() const { return m_id; };
-
-    virtual ~AssetBase() = default;
-
-private:
-    Guid m_id;
-};
-
-export template <typename T>
-T Deserialize(const Json& serializedData) { return T{}; }
-
-export template <typename T>
-class Asset : public AssetBase
-{
-public:
-    using AssetBase::AssetBase;
-
-    Asset(const Json& serializedData)
-        : AssetBase{serializedData}
-    , m_data{Deserialize<T>(serializedData)}
-    {
-    }
-
-    const T& getData() const { return m_data; }
-
-private:
-    T m_data;
-};

@@ -69,5 +69,35 @@
       "rotation": [90, -90, 0],
       "scale": 0.1
     }
+  ],
+  "entities" : [
+    {
+      "id": "DC262ED3-8757-4899-A68C-7E4F06BFEEF0",
+      "components": {
+        "ModelComponent": {
+          "mesh": "36E8872E-6CE6-4828-9D86-19DF43ACC7B7",
+          "texture": "EFD21785-8F33-4DA2-A84A-599535A490E9"
+        },
+        "TransformComponent": {
+          "position": [0, 0, 0],
+          "rotation": [0, 0, 0],
+          "scale": 2
+        }
+      }
+    },
+    {
+      "id": "5544E44A-417B-4062-BBF4-4DC95BDA6C6F",
+      "components": {
+        "ModelComponent": {
+          "mesh": "2B92092F-A6EA-4616-B860-C669F65DB6F4",
+          "texture": "2A757788-D07B-40F5-B66B-B938CC447CD5"
+        },
+        "TransformComponent": {
+          "position": [0, 0, 0],
+          "rotation": [90, -90, 0],
+          "scale": 0.1
+        }
+      }
+    }
   ]
 }

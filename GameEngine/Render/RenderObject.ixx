@@ -1,6 +1,7 @@
 export module Engine.Render.Core:RenderObject;
 import :Model;
 import :Vulkan;
+import Engine.Core;
 import Engine.Guid;
 import Engine.Render;
 import std;
@@ -8,36 +9,37 @@ import <glm/glm.hpp>;
 
 struct Texture
 {
-    TextureId id;
-    vk::Image image;
-    vk::DeviceMemory memory;
-    vk::ImageView view;
-    vk::Sampler sampler; // TODO: should be shared between textures??
+    TextureId id{};
+    vk::Image image{};
+    vk::DeviceMemory memory{};
+    vk::ImageView view{};
+    vk::Sampler sampler{}; // TODO: should be shared between textures??
 };
 
 struct Mesh
 {
-    MeshId id;
+    MeshId id{};
     MeshData data;
-    vk::Buffer vertexBuffer{nullptr};
-    vk::DeviceMemory vertexBufferMemory{nullptr};
-    vk::Buffer indexBuffer{nullptr};
-    vk::DeviceMemory indexBufferMemory{nullptr};
+    vk::Buffer vertexBuffer{};
+    vk::DeviceMemory vertexBufferMemory{};
+    vk::Buffer indexBuffer{};
+    vk::DeviceMemory indexBufferMemory{};
 };
 
 struct UniformBufferObject
 {
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 proj;
+    glm::mat4 model{};
+    glm::mat4 view{};
+    glm::mat4 proj{};
 };
 
 struct RenderObject
 {
+    Entity entity{};
     Mesh mesh;
     Texture texture;
-    glm::vec3 location;
-    glm::vec3 rotation;
+    glm::vec3 location{};
+    glm::vec3 rotation{};
     float scale{1.f};
     std::vector<vk::Buffer> uniformBuffers;
     std::vector<vk::DeviceMemory> uniformBuffersMemory;
@@ -47,14 +49,20 @@ struct RenderObject
 
 export namespace RenderMessages
 {
-	struct AddObject
-	{
-		const MeshAsset* mesh;
-		const TextureAsset* texture;
-		glm::vec3 location;
-		glm::vec3 rotation;
-		float scale;
-	};
+    struct AddObject
+    {
+        Entity entity;
+        const MeshAsset* mesh{};
+        const TextureAsset* texture{};
+    };
+
+    struct SetTransform
+    {
+        Entity entity;
+        glm::vec3 location{};
+        glm::vec3 rotation{};
+        float scale{1.f};
+    };
 }
 
 export class RenderObjectManager
@@ -73,10 +81,11 @@ public:
 
     void shutdown();
     void addCommand(RenderMessages::AddObject command);
+    void addCommand(RenderMessages::SetTransform command);
     void executePendingCommands();
-    void addRenderObject(const MeshAsset& mesh, const TextureAsset& texture, glm::vec3 location = {}, glm::vec3 rotation = {},
-                    float scale = 1.f);
-    
+    void addRenderObject(Entity entity, const MeshAsset& meshAsset, const TextureAsset& textureAsset);
+    void setObjectTransform(Entity entity, glm::vec3 location = {}, glm::vec3 rotation = {}, float scale = 1.f);
+
     const Mesh& addMesh(MeshData data, Guid guid);
     const Texture& addTexture(const TextureData& textureData, Guid guid);
 
@@ -96,7 +105,8 @@ private:
                                     float deltaTime);
 
     ThreadSafeQueue<RenderMessages::AddObject> m_addObjectCommands;
-    
+    ThreadSafeQueue<RenderMessages::SetTransform> m_setTransformCommands;
+
     std::vector<RenderObject> m_objects;
     std::vector<Mesh> m_meshes;
     std::vector<Texture> m_textures;

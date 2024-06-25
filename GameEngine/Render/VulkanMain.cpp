@@ -136,6 +136,11 @@ void VulkanApplication::requestAddRenderObject(RenderMessages::AddObject command
     m_renderObjectManager.addCommand(std::move(command));
 }
 
+void VulkanApplication::requestSetObjectTransform(RenderMessages::SetTransform command)
+{
+    m_renderObjectManager.addCommand(std::move(command));
+}
+
 void VulkanApplication::createInstance()
 {
     if constexpr (vk::EnableValidationLayers)
@@ -458,8 +463,8 @@ void VulkanApplication::createDescriptorSetLayout()
 
 void VulkanApplication::createGraphicsPipeline()
 {
-    auto vertShaderCode = RenderUtils::readFile(AssetManager::getExecutableRoot() + "Shaders/vert.spv");
-    auto fragShaderCode = RenderUtils::readFile(AssetManager::getExecutableRoot() + "Shaders/frag.spv");
+    auto vertShaderCode = RenderUtils::readFile(Config::getExecutableRoot() + "Shaders/vert.spv");
+    auto fragShaderCode = RenderUtils::readFile(Config::getExecutableRoot() + "Shaders/frag.spv");
 
     vk::ShaderModule vertShaderModule = RenderUtils::createShaderModule(vertShaderCode, m_device);
     vk::ShaderModule fragShaderModule = RenderUtils::createShaderModule(fragShaderCode, m_device);
@@ -513,7 +518,7 @@ void VulkanApplication::createGraphicsPipeline()
             .location = 1,
             .binding = 0,
             .format = vk::Format::eR32G32Sfloat,
-            .offset = offsetof(Vertex, texCoordinates),
+            .offset = offsetof(Vertex, uv),
         },
     };
 

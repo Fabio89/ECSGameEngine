@@ -1,30 +1,56 @@
 module;
 
-#pragma warning(disable : 5105)
-#include <windows.h>
-
 export module Engine.AssetManager;
+import Engine.Config;
+import Engine.Guid;
 import std;
+
+export class AssetBase
+{
+public:
+    explicit AssetBase(const Json& serializedData);
+
+    const Guid& getGuid() const { return m_id; };
+
+    virtual ~AssetBase() = default;
+
+    virtual std::type_index getType() const = 0;
+
+private:
+    Guid m_id;
+};
+
+export template <typename T>
+class Asset final : public AssetBase
+{
+public:
+    Asset(const Json& serializedData)
+        : AssetBase{serializedData},
+          m_data{Deserialize<T>(serializedData)}
+    {
+    }
+
+    const T& getData() const { return m_data; }
+    std::type_index getType() const override { return typeid(Asset); }
+
+private:
+    T m_data;
+};
 
 namespace AssetManager
 {
-    export const std::string& getExecutableRoot()
+    std::vector<std::unique_ptr<AssetBase>> g_loadedAssets;
+
+    export template <typename T>
+    const T* loadAsset(const Json& serializedData)
     {
-        static const std::string exeRoot = []
-        {
-            std::string buffer;
-            buffer.resize(MAX_PATH);
-            GetModuleFileName(nullptr, buffer.data(), MAX_PATH);
-            auto pos = buffer.find_last_of("\\/") + 1;
-            return std::filesystem::canonical(buffer.substr(0, pos)).generic_string() + "/";
-        }();
-        return exeRoot;
+        return static_cast<const T*>(g_loadedAssets.emplace_back(std::make_unique<T>(serializedData)).get());
     }
 
-    export const std::string& getEngineSourceRoot()
+    export template <typename T>
+    const T* findAsset(const Guid& guid)
     {
-        static const std::string path = std::filesystem::canonical(getExecutableRoot() + "../../GameEngine").
-            generic_string() + "/";
-        return path;
+        auto it = std::ranges::find_if(g_loadedAssets, [&](auto&& asset) { return asset->getGuid() == guid; });
+        return it != g_loadedAssets.end() && (*it)->getType() == typeid(T) ? static_cast<const T*>(it->get()) : nullptr;
     }
-}
+};

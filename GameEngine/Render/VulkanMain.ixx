@@ -41,7 +41,8 @@ public:
     void shutdown();
     bool shouldWindowClose() const;
     void requestAddRenderObject(RenderMessages::AddObject command);
-    
+    void requestSetObjectTransform(RenderMessages::SetTransform command);
+
 private:
 	RenderObjectManager m_renderObjectManager;
     glm::ivec2 m_windowSize{800, 600};
