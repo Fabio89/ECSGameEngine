@@ -164,7 +164,7 @@
       <EnableModules>false</EnableModules>
       <FloatingPointModel />
       <AdditionalIncludeDirectories>$(VK_SDK_PATH)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <BuildStlModules>false</BuildStlModules>
     </ClCompile>
     <Link>

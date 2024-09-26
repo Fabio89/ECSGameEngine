@@ -1,10 +1,13 @@
 module Engine.World;
 
+import Engine.ApplicationState;
 import Engine.AssetManager;
 import Engine.ComponentRegistry;
+import Engine.DebugWidget;
 import Engine.Guid;
 import Engine.Components;
 import Engine.Config;
+import Engine.ImGui;
 import Engine.Render.Application;
 import Engine.Render.Core;
 import std;
@@ -53,9 +56,9 @@ void World::createObjectsFromConfig()
             {
                 const std::string& typeName = it.key();
                 const Json& componentData = it.value();
-                if (auto createFunc = ComponentRegistry::getComponentCreateFunc(typeName))
+                if (const ComponentTypeBase* componentType = ComponentRegistry::get(typeName))
                 {
-                    createFunc(*this, entity, componentData);
+                    componentType->createInstance(*this, entity, componentData);
                 }
             }
         }
@@ -66,6 +69,7 @@ World::World(const ApplicationSettings& settings, ApplicationState& globalState)
     : m_jobSystem{settings.numThreads},
       m_applicationState{globalState}
 {
+    globalState.world = this;
 }
 
 Entity World::createEntity()
@@ -75,14 +79,19 @@ Entity World::createEntity()
     return entity;
 }
 
+void World::addDebugWidget(std::unique_ptr<DebugWidget> widget)
+{
+    m_applicationState.get().debugUI->addWidget(std::move(widget));
+}
+
 const Archetype& World::readArchetype(const EntitySignature& signature) const
 {
     if (auto it = m_archetypes.find(signature); it != m_archetypes.end())
     {
         return it->second;
     }
-    static const Archetype invalid;
-    return invalid;
+    
+    throw std::runtime_error{"Couldn't find requested archetype!\n\tRequested: " + signature.bitset.to_string() + "\n"};
 }
 
 Archetype& World::editArchetype(const EntitySignature& signature)
@@ -92,10 +101,6 @@ Archetype& World::editArchetype(const EntitySignature& signature)
 
 Archetype& World::editOrCreateArchetype(const EntitySignature& signature)
 {
-    if (!m_archetypes.contains(signature))
-    {
-        m_archetypes[signature] = Archetype();
-    }
     return m_archetypes[signature];
 }
 

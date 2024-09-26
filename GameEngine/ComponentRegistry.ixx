@@ -5,33 +5,76 @@ import Engine.Core;
 import Engine.World;
 import std;
 
-namespace ComponentRegistry
+export class ComponentTypeBase
 {
-    using ComponentCreateFunc = std::function<void(World&, Entity, const Json&)>;
-    std::unordered_map<std::string, ComponentCreateFunc> g_registry;
+public:
+    virtual ~ComponentTypeBase() = default;
+    virtual ComponentTypeId getTypeId() const = 0;
+    virtual std::string getActualName() const = 0;
+    virtual std::string getDisplayName() const = 0;
+    virtual void createInstance(World& world, Entity entity, const Json& data) const = 0;
+};
 
-    template <typename T>
-    void createComponent(World& world, Entity entity, const Json& data)
+export template<ValidComponent T>
+class ComponentType final : public ComponentTypeBase
+{
+public:
+    ComponentType(std::string displayName) : m_displayName{std::move(displayName)}
     {
-        world.addComponent<T>(entity, Deserialize<T>(data));
-    }
+        std::string actualName{typeid(T).name()};
 
-    export template <typename T>
-    void registerComponent()
-    {
-        std::string name{typeid(T).name()};
-
-        const size_t endPos = name.find_last_not_of(' ');
-        size_t startPos = name.find_last_of(' ', endPos);
+        const size_t endPos = actualName.find_last_not_of(' ');
+        size_t startPos = actualName.find_last_of(' ', endPos);
         if (startPos == std::string::npos)
             startPos = 0;
 
-        std::string cleanName = name.substr(startPos + 1, endPos - startPos);
-        g_registry[cleanName] = createComponent<T>;
+        m_actualName = actualName.substr(startPos + 1, endPos - startPos);
+        if (m_displayName.empty())
+            m_displayName = m_actualName;
+
+        std::cout << "Registered component `" << m_actualName << "`" << std::endl;
+    }
+
+    ComponentTypeId getTypeId() const override { return T::typeId; }
+    std::string getActualName() const override { return m_actualName; }
+    std::string getDisplayName() const override { return m_displayName; }
+    void createInstance(World& world, Entity entity, const Json& data) const override { world.addComponent<T>(entity, deserialize<T>(data)); }
+
+private:
+    std::string m_actualName;
+    std::string m_displayName;
+};
+
+namespace ComponentRegistry
+{
+    using ComponentCreateFunc = std::function<void(World&, Entity, const Json&)>;
+
+    std::vector<std::unique_ptr<const ComponentTypeBase>> componentTypes;
+    std::unordered_map<ComponentTypeId, const ComponentTypeBase*> byId;
+    std::unordered_map<std::string, const ComponentTypeBase*> byName;
+
+    export template<ValidComponent T>
+    class Entry
+    {
+    public:
+        explicit Entry(std::string displayName = {})
+        {
+            std::cout << "Adding entry!!" << std::endl;
+            std::unique_ptr<const ComponentTypeBase>& type = componentTypes.emplace_back(std::make_unique<ComponentType<T>>(std::move(displayName)));
+            byId[type->getTypeId()] = type.get();
+            byName[type->getActualName()] = type.get();
+        }
     };
 
-    export ComponentCreateFunc getComponentCreateFunc(const std::string& typeName)
+    export const ComponentTypeBase* get(ComponentTypeId typeId)
     {
-        return g_registry[typeName];
+        auto it = byId.find(typeId);
+        return it != byId.end() ? it->second : nullptr;
+    }
+
+    export const ComponentTypeBase* get(const std::string& name)
+    {
+        auto it = byName.find(name);
+        return it != byName.end() ? it->second : nullptr;
     }
 }

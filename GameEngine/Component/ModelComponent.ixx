@@ -1,5 +1,6 @@
 export module Engine.Component.Model;
 import Engine.AssetManager;
+import Engine.ComponentRegistry;
 import Engine.Render.Application;
 import Engine.Render.Core;
 import Engine.Core;
@@ -13,8 +14,10 @@ export struct ModelComponent : Component<ModelComponent>
     const TextureAsset* texture{nullptr};
 };
 
+//ComponentRegistry::Entry<ModelComponent> reg{"Name"};
+
 template <>
-ModelComponent Deserialize(const Json& serializedData)
+ModelComponent deserialize(const Json& serializedData)
 {
     const Guid meshGuid{*serializedData.find("mesh")};
     const Guid textureGuid{*serializedData.find("texture")};

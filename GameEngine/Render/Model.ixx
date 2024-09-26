@@ -46,7 +46,7 @@ export struct TextureData
 };
 
 template <>
-TextureData Deserialize(const Json& serializedData)
+TextureData deserialize(const Json& serializedData)
 {
     TextureData data;
     if (auto it = serializedData.find("path"); it != serializedData.end())
@@ -69,7 +69,7 @@ export struct MeshData
 export using MeshAsset = Asset<MeshData>;
 
 template <>
-MeshData Deserialize(const Json& serializedData);
+MeshData deserialize(const Json& serializedData);
 
 export namespace ModelUtils
 {
@@ -126,7 +126,7 @@ export namespace ModelUtils
 }
 
 template <>
-MeshData Deserialize(const Json& serializedData)
+MeshData deserialize(const Json& serializedData)
 {
     MeshData data;
     if (auto it = serializedData.find("path"); it != serializedData.end())

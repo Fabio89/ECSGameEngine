@@ -2,21 +2,20 @@ module;
 
 export module Engine.World;
 
+import Engine.ApplicationState;
 import Engine.Config;
 import Engine.Core;
+import Engine.Decl;
 import Engine.Job;
-import Engine.Render;
 import std;
-import std.compat;
 
-import Engine.Render.Core;
-
+export class DebugWidget;
 static constexpr int maxComponentsPerEntity = 64;
 
 struct EntitySignature
 {
     friend bool operator==(const EntitySignature& a, const EntitySignature& b) { return a.bitset == b.bitset; }
-    std::bitset<maxComponentsPerEntity> bitset;
+    std::bitset<maxComponentsPerEntity> bitset{};
 };
 
 template <>
@@ -28,56 +27,131 @@ struct std::hash<EntitySignature>
     }
 };
 
-class RenderObjectManager;
-
-export class World;
-
 export class System
 {
 public:
     virtual ~System() = default;
-    void update(float deltaTime);
+    virtual void update(float deltaTime);
     void addUpdateFunction(std::function<void(float)> func);
-    virtual void onComponentAdded(World&, Entity, ComponentTypeId) {}
-    
+
+    virtual void onComponentAdded(World&, Entity, ComponentTypeId)
+    {
+    }
+
 private:
     std::vector<std::function<void(float)>> m_updateFunctions;
 };
 
-class World
+export class World
 {
 public:
     World(const ApplicationSettings&, ApplicationState& globalState);
 
     Entity createEntity();
-    
-    template <typename T, typename... Args>
-    void addComponent(Entity entity, Args&&... args);
 
-    template <typename T>
-    const T& readComponent(Entity entity) const;
+    template <ValidComponent T, typename... Args>
+    void addComponent(Entity entity, Args&&... args)
+    {
+        EntitySignature& signature = m_entities[entity];
+        const EntitySignature oldSignature = signature;
 
-    template <typename T>
-    T& editComponent(Entity entity);
+        Archetype& oldArchetype = editOrCreateArchetype(signature);
+
+        signature.bitset.set(Component<T>::typeId.hash_code() % maxComponentsPerEntity);
+
+        const bool usingExistingArchetype = m_archetypes.contains(signature);
+
+        Archetype& newArchetype = m_archetypes[signature];
+        if (usingExistingArchetype)
+        {
+            newArchetype.steal(oldArchetype, entity);
+        }
+        else
+        {
+            newArchetype = oldArchetype.cloneForEntity(entity);
+            oldArchetype.removeEntity(entity);
+        }
+        newArchetype.addComponent<T>(entity, T(std::forward<Args>(args)...));
+        
+        if (oldArchetype.isEmpty())
+        {
+            m_archetypes.erase(oldSignature);
+        }
+
+        for (auto& callback : m_archetypeChangeObservers | std::views::values)
+        {
+            callback(entity, Component<T>::typeId);
+        }
+    }
+
+    template <ValidComponent T>
+    const T& readComponent(Entity entity) const
+    {
+        if (auto it = m_entities.find(entity); it != m_entities.end())
+        {
+            try
+            {
+                return readArchetype(it->second).readComponent<T>(entity);
+            }
+            catch (const std::exception& ex)
+            {
+                std::cerr << "Error: " << ex.what() << std::endl;
+            }
+        }
+        throw std::runtime_error{std::string{"Couldn't find component "} + typeid(T).name()};
+    }
+
+    auto getComponentTypesInEntity(Entity entity) const
+    {
+        std::vector<ComponentTypeId> result;
+        if (auto it = m_entities.find(entity); it != m_entities.end())
+        {
+            try
+            {
+                return readArchetype(it->second).getComponentTypes();
+            }
+            catch (const std::exception& ex)
+            {
+                std::cerr << "Error: " << ex.what() << std::endl;
+            }
+        }
+        throw std::runtime_error{std::format("Couldn't find components for entity {}", entity)}; 
+    }
+
+    template <ValidComponent T>
+    T& editComponent(Entity entity) { return const_cast<T&>(readComponent<T>(entity)); }
 
     void removeEntity(Entity entity);
 
     void addSystem(std::unique_ptr<System> system);
 
-    template<typename T>
-    void addSystem();
-    
+    template <typename T>
+    void addSystem()
+    {
+        System* system = m_systems.emplace_back(std::make_unique<T>()).get();
+        observeOnComponentAdded([system, this](Entity entity, ComponentTypeId componentId)
+        {
+            system->onComponentAdded(*this, entity, componentId);
+        });
+    }
+
     void updateSystems(float deltaTime);
+
+    template <typename T>
+    void addDebugWidget() { addDebugWidget(std::make_unique<T>()); }
 
     ArchetypeChangedObserverHandle observeOnComponentAdded(ArchetypeChangedCallback observer);
     void unobserveOnComponentAdded(ArchetypeChangedObserverHandle observerHandle);
 
     void createObjectsFromConfig();
 
+    auto getEntitiesRange() const { return m_entities | std::views::keys; }
+
     const VulkanApplication& getApplication() const { return *m_applicationState.get().application; }
     VulkanApplication& getApplication() { return *m_applicationState.get().application; }
 
 private:
+    void addDebugWidget(std::unique_ptr<DebugWidget> widget);
     const Archetype& readArchetype(const EntitySignature& signature) const;
     Archetype& editArchetype(const EntitySignature& signature);
     Archetype& editOrCreateArchetype(const EntitySignature& signature);
@@ -90,50 +164,3 @@ private:
     std::vector<std::unique_ptr<System>> m_systems;
     std::reference_wrapper<ApplicationState> m_applicationState;
 };
-
-template <typename T, typename... Args>
-void World::addComponent(Entity entity, Args&&... args)
-{
-    EntitySignature& signature = m_entities[entity];
-    Archetype& oldArchetype = editArchetype(signature);
-    oldArchetype.removeEntity(entity);
-    if (oldArchetype.isEmpty())
-    {
-        m_archetypes.erase(signature);
-    }
-
-    signature.bitset.set(Component<T>::typeId.hash_code() % maxComponentsPerEntity);
-    editOrCreateArchetype(signature).addComponent<T>(entity, T(std::forward<Args>(args)...));
-
-    for (auto& callback : m_archetypeChangeObservers | std::views::values)
-    {
-        callback(entity, Component<T>::typeId);
-    }
-}
-
-template <typename T>
-const T& World::readComponent(Entity entity) const
-{
-    if (auto it = m_entities.find(entity); it != m_entities.end())
-    {
-        return readArchetype(it->second).readComponent<T>(entity);
-    }
-    static const T invalid{};
-    return invalid;
-}
-
-template <typename T>
-T& World::editComponent(Entity entity)
-{
-    return const_cast<T&>(readComponent<T>(entity));
-}
-
-template <typename T>
-void World::addSystem()
-{
-    System* system = m_systems.emplace_back(std::make_unique<T>()).get();
-    observeOnComponentAdded([system, this](Entity entity, ComponentTypeId componentId)
-    {
-        system->onComponentAdded(*this, entity, componentId);
-    });
-}

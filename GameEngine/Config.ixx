@@ -35,7 +35,7 @@ export namespace glm
 export using Json = nlohmann::json;
 
 export template <typename T>
-T Deserialize(const Json& serializedData) { return T{}; }
+T deserialize(const Json& serializedData) { return T{}; }
 
 namespace Config
 {

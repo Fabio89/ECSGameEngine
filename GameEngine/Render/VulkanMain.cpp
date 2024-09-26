@@ -1,15 +1,15 @@
 module;
 
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_vulkan.h>
-
+#include <cassert>
+#include <cstddef>
 module Engine.Render.Application;
 
+import Engine.DebugWidget.EntityExplorer;
 import Engine.AssetManager;
 import Engine.Config;
 import Engine.Core;
 import Engine.Render.Core;
+import Engine.World;
 
 VulkanApplication::~VulkanApplication() noexcept
 {
@@ -39,8 +39,8 @@ void VulkanApplication::init(ApplicationState& applicationState)
 
         // Determine what API version is available
         const uint32_t apiVersion = vk::enumerateInstanceVersion();
-        std::cout << "Loader/Runtime support detected for Vulkan " << VK_VERSION_MAJOR(apiVersion) << "." <<
-            VK_VERSION_MINOR(apiVersion) << "\n";
+        std::cout << "Loader/Runtime support detected for Vulkan " << vk::apiVersionMajor(apiVersion) << "." <<
+            vk::apiVersionMinor(apiVersion) << "\n";
 
         createInstance();
 
@@ -63,6 +63,7 @@ void VulkanApplication::init(ApplicationState& applicationState)
 
     const ImGuiInitInfo imguiInfo
     {
+        .world = applicationState.world,
         .instance = m_instance,
         .physicalDevice = m_physicalDevice,
         .device = m_device,
@@ -77,6 +78,7 @@ void VulkanApplication::init(ApplicationState& applicationState)
     m_renderObjectManager.init(m_device, m_physicalDevice, m_surface, m_descriptorPool, m_descriptorSetLayout,
                        m_graphicsQueue, m_commandPool);
     applicationState.application = this;
+    applicationState.debugUI = &m_imguiHelper;
     applicationState.initialized = true;
 }
 
@@ -150,10 +152,10 @@ void VulkanApplication::createInstance()
     constexpr vk::ApplicationInfo appInfo
     {
         .pApplicationName = "Hello Triangle",
-        .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
+        .applicationVersion = vk::makeApiVersion(0, 1, 0, 0),
         .pEngineName = "No Engine",
-        .engineVersion = VK_MAKE_VERSION(1, 0, 0),
-        .apiVersion = VK_API_VERSION_1_3,
+        .engineVersion = vk::makeApiVersion(0, 1, 0, 0),
+        .apiVersion = vk::ApiVersion13
     };
 
     auto extensions = getRequiredExtensions();
@@ -855,12 +857,12 @@ void VulkanApplication::drawFrame(float deltaTime)
     const vk::Semaphore renderFinishedSemaphore = m_renderFinishedSemaphores[m_currentFrame];
     const vk::CommandBuffer commandBuffer = m_commandBuffers[m_currentFrame];
 
-    if (m_device.waitForFences(1, &fence, vk::False, UINT64_MAX) != vk::Result::eSuccess)
+    if (m_device.waitForFences(1, &fence, vk::False, std::numeric_limits<uint64_t>::max()) != vk::Result::eSuccess)
     {
         throw std::runtime_error("failed to wait for fences!");
     }
 
-    const auto imageResult = m_device.acquireNextImageKHR(m_swapChain, UINT64_MAX, imageAvailableSemaphore,
+    const auto imageResult = m_device.acquireNextImageKHR(m_swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphore,
                                                           nullptr);
 
     if (imageResult.result == vk::Result::eErrorOutOfDateKHR)
@@ -1009,102 +1011,6 @@ void VulkanApplication::framebufferResizeCallback(GLFWwindow* window, int width,
 {
     auto app = static_cast<VulkanApplication*>(glfwGetWindowUserPointer(window));
     app->m_framebufferResized = true;
-}
-
-void ImGuiHelper::init(GLFWwindow* window, const ImGuiInitInfo& initInfo)
-{
-    if constexpr (!enabled)
-        return;
-
-    m_device = initInfo.device;
-
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
-
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-
-    // Init ImGui
-    ImGui_ImplGlfw_InitForVulkan(window, true);
-
-    constexpr std::array imguiPoolSizes
-    {
-        vk::DescriptorPoolSize{vk::DescriptorType::eCombinedImageSampler, 1},
-    };
-
-    const vk::DescriptorPoolCreateInfo imguiPoolInfo
-    {
-        .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-        .maxSets = static_cast<uint32_t>(MaxFramesInFlight),
-        .poolSizeCount = static_cast<uint32_t>(imguiPoolSizes.size()),
-        .pPoolSizes = imguiPoolSizes.data(),
-    };
-
-    m_descriptorPool = initInfo.device.createDescriptorPool(imguiPoolInfo, nullptr);
-    if (!m_descriptorPool)
-        throw std::runtime_error("failed to create descriptor pool!");
-
-    ImGui_ImplVulkan_InitInfo imguiInitInfo
-    {
-        .Instance = initInfo.instance,
-        .PhysicalDevice = initInfo.physicalDevice,
-        .Device = initInfo.device,
-        .QueueFamily = *QueueFamilyUtils::findQueueFamilies(initInfo.physicalDevice, initInfo.surface).get(
-            QueueFamilyType::Graphics),
-        .Queue = initInfo.queue,
-        .DescriptorPool = m_descriptorPool,
-        .RenderPass = initInfo.renderPass,
-        .MinImageCount = 2,
-        .ImageCount = static_cast<uint32_t>(initInfo.imageCount),
-        .MSAASamples = VK_SAMPLE_COUNT_1_BIT,
-        .PipelineCache = initInfo.pipelineCache,
-        .Subpass = 0,
-        .Allocator = nullptr,
-        .CheckVkResultFn = nullptr,
-    };
-    ImGui_ImplVulkan_Init(&imguiInitInfo);
-}
-
-void ImGuiHelper::drawFrame()
-{
-    if constexpr (!enabled)
-        return;
-
-    ImGui_ImplVulkan_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-    // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-    if (m_showDemoWindow)
-        ImGui::ShowDemoWindow(&m_showDemoWindow);
-}
-
-// ReSharper disable once CppMemberFunctionMayBeStatic
-void ImGuiHelper::renderFrame(vk::CommandBuffer commandBuffer)
-{
-    if constexpr (!enabled)
-        return;
-
-    ImGui::Render();
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
-}
-
-void ImGuiHelper::shutdown()
-{
-    if constexpr (!enabled)
-        return;
-
-    ImGui_ImplVulkan_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
-
-    m_device.destroy(m_descriptorPool);
-    m_descriptorPool = nullptr;
 }
 
 void VulkanApplication::createDepthResources()

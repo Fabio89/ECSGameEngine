@@ -4,6 +4,7 @@ module;
 #include <windows.h>
 
 export module Engine.Render;
+import Engine.ApplicationState;
 import Engine.Core;
 import std;
 
@@ -11,8 +12,6 @@ export struct LoopSettings
 {
 	float targetFps = 120.f;
 };
-
-export class VulkanApplication;
 
 class MeshAsset;
 class TextureAsset;
@@ -52,14 +51,6 @@ private:
 	std::queue<T> m_queue;
 	std::mutex m_mutex;
 	std::condition_variable m_condition;
-};
-
-export struct ApplicationState
-{
-	std::mutex mutex;
-	VulkanApplication* application{nullptr};
-	bool initialized = false;
-	bool closing = false;
 };
 
 export std::thread runRenderThread(LoopSettings settings, ApplicationState& state);

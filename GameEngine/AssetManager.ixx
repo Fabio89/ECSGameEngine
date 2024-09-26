@@ -26,7 +26,7 @@ class Asset final : public AssetBase
 public:
     Asset(const Json& serializedData)
         : AssetBase{serializedData},
-          m_data{Deserialize<T>(serializedData)}
+          m_data{deserialize<T>(serializedData)}
     {
     }
 

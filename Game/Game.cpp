@@ -1,5 +1,7 @@
+import Engine.ApplicationState;
 import Engine.Config;
 import Engine.Core;
+import Engine.DebugWidget.EntityExplorer;
 import Engine.Render;
 import Engine.World;
 import Engine.Component.Model;
@@ -7,53 +9,15 @@ import Engine.Component.Transform;
 
 import std;
 
-struct Position : Component<Position>
-{
-    float x{0.f}, y{0.f};
-    Position() = default;
-
-    Position(float x, float y) : x(x), y(y)
-    {
-    }
-};
-
-struct Velocity : Component<Velocity>
-{
-    float vx{0.f}, vy{0.f};
-    Velocity() = default;
-
-    Velocity(float vx, float vy) : vx(vx), vy(vy)
-    {
-    }
-};
-
-class MovementSystem : public System
-{
-public:
-    void addEntity(Entity entity, World& manager)
-    {
-        Position& pos = manager.editComponent<Position>(entity);
-        Velocity& vel = manager.editComponent<Velocity>(entity);
-        addUpdateFunction([&pos, &vel](float deltaTime)
-        {
-            pos.x += vel.vx * deltaTime;
-            pos.y += vel.vy * deltaTime;
-        });
-    }
-};
-
 void gameInit(World& world)
 {
-    // // Create entities
-    // Entity entity1 = world.createEntity();
-    // world.addComponent<Position>(entity1, 0.0f, 0.0f);
-    // world.addComponent<Velocity>(entity1, 1.0f, 1.0f);
-    //
-    // // Create systems
+    // Create systems
     world.addSystem<ModelSystem>();
     world.addSystem<TransformSystem>();
 
     world.createObjectsFromConfig();
+    world.addDebugWidget<DebugWidgets::EntityExplorer>();
+    world.addDebugWidget<DebugWidgets::ImGuiDemo>();
 }
 
 

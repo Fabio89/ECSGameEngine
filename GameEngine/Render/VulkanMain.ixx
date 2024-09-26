@@ -1,36 +1,11 @@
 export module Engine.Render.Application;
 
+import Engine.ImGui;
+import Engine.ApplicationState;
 import Engine.Render;
 import Engine.Render.Core;
 import std;
 import <glm/glm.hpp>;
-
-struct ImGuiInitInfo
-{
-    vk::Instance instance;
-    vk::PhysicalDevice physicalDevice;
-    vk::Device device;
-    vk::SurfaceKHR surface;
-    vk::Queue queue;
-    vk::RenderPass renderPass;
-    size_t imageCount;
-    vk::PipelineCache pipelineCache;
-};
-
-class ImGuiHelper
-{
-public:
-    static constexpr bool enabled = true;
-    void init(GLFWwindow* window, const ImGuiInitInfo& initInfo);
-    void drawFrame();
-    void renderFrame(vk::CommandBuffer commandBuffer);
-    void shutdown();
-
-private:
-    bool m_showDemoWindow{true};
-    vk::Device m_device{nullptr};
-    vk::DescriptorPool m_descriptorPool{nullptr};
-};
 
 export class VulkanApplication
 {
