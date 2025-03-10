@@ -1,14 +1,11 @@
 module;
 export module Engine.ImGui;
-import Engine.ApplicationState;
 import Engine.DebugWidget;
 import Engine.Render.Core;
-import Engine.World;
 import std;
 
 export struct ImGuiInitInfo
 {
-    World* world{};
     vk::Instance instance;
     vk::PhysicalDevice physicalDevice;
     vk::Device device;
@@ -35,7 +32,6 @@ public:
     void shutdown();
 
 private:
-    World* m_world{};
     vk::Device m_device{};
     vk::DescriptorPool m_descriptorPool{};
     std::vector<std::unique_ptr<DebugWidget>> m_debugWidgets;

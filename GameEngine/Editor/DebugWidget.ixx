@@ -1,16 +1,20 @@
 export module Engine.DebugWidget;
-import Engine.ApplicationState;
-import Engine.World;
+
+export class World;
 
 export class DebugWidget
 {
 public:
-    virtual ~DebugWidget() = default;
-    virtual void draw(World& world) = 0;
-};
-
-export template<typename T>
-void drawDebugWidget(T& item)
-{
+    DebugWidget(const DebugWidget&) = delete;
+    DebugWidget(DebugWidget&&) = delete;
+    DebugWidget& operator=(const DebugWidget&) = delete;
+    DebugWidget& operator=(DebugWidget&&) = delete;
     
-}
+    virtual ~DebugWidget() = default;
+    explicit DebugWidget(World& world) : m_world{&world} {}
+    void draw() { draw(*m_world); }
+
+private:
+    virtual void draw(World& world) = 0;
+    World* m_world{};
+};

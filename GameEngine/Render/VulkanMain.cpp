@@ -4,12 +4,9 @@ module;
 #include <cstddef>
 module Engine.Render.Application;
 
-import Engine.DebugWidget.EntityExplorer;
 import Engine.AssetManager;
 import Engine.Config;
 import Engine.Core;
-import Engine.Render.Core;
-import Engine.World;
 
 VulkanApplication::~VulkanApplication() noexcept
 {
@@ -19,7 +16,7 @@ VulkanApplication::~VulkanApplication() noexcept
     }
 }
 
-void VulkanApplication::init(ApplicationState& applicationState)
+void VulkanApplication::init()
 {
     m_windowSize = Config::getApplicationSettings().resolution;
     
@@ -63,7 +60,6 @@ void VulkanApplication::init(ApplicationState& applicationState)
 
     const ImGuiInitInfo imguiInfo
     {
-        .world = applicationState.world,
         .instance = m_instance,
         .physicalDevice = m_physicalDevice,
         .device = m_device,
@@ -77,8 +73,6 @@ void VulkanApplication::init(ApplicationState& applicationState)
 
     m_renderObjectManager.init(m_device, m_physicalDevice, m_surface, m_descriptorPool, m_descriptorSetLayout,
                        m_graphicsQueue, m_commandPool);
-    applicationState.application = this;
-    applicationState.debugUI = &m_imguiHelper;
 }
 
 void VulkanApplication::update(float deltaTime)
@@ -132,14 +126,30 @@ bool VulkanApplication::shouldWindowClose() const
     return glfwWindowShouldClose(m_window);
 }
 
-void VulkanApplication::requestAddRenderObject(RenderMessages::AddObject command)
+void VulkanApplication::addRenderObject(Entity entity, const MeshAsset* mesh, const TextureAsset* texture)
 {
-    m_renderObjectManager.addCommand(std::move(command));
+    m_renderObjectManager.addCommand
+    ({
+        .entity = entity,
+        .mesh = mesh,
+        .texture = texture
+    });
 }
 
-void VulkanApplication::requestSetObjectTransform(RenderMessages::SetTransform command)
+void VulkanApplication::setRenderObjectTransform(Entity entity, glm::vec3 location, glm::vec3 rotation, float scale)
 {
-    m_renderObjectManager.addCommand(std::move(command));
+    m_renderObjectManager.addCommand
+    ({
+        .entity = entity,
+        .location = location,
+        .rotation = rotation,
+        .scale = scale
+    });
+}
+
+void VulkanApplication::addDebugWidget(std::unique_ptr<DebugWidget> widget)
+{
+    m_imguiHelper.addWidget(std::move(widget));
 }
 
 void VulkanApplication::createInstance()
@@ -214,7 +224,7 @@ void VulkanApplication::createLogicalDevice()
             });
     }
 
-    const vk::PhysicalDeviceFeatures deviceFeatures
+    constexpr vk::PhysicalDeviceFeatures deviceFeatures
     {
         .samplerAnisotropy = vk::True,
     };
@@ -365,7 +375,7 @@ void VulkanApplication::createRenderPass()
         .finalLayout = vk::ImageLayout::ePresentSrcKHR,
     };
 
-    constexpr vk::AttachmentReference colorAttachmentRef
+    static constexpr vk::AttachmentReference colorAttachmentRef
     {
         .attachment = 0,
         .layout = vk::ImageLayout::eColorAttachmentOptimal,
@@ -383,13 +393,13 @@ void VulkanApplication::createRenderPass()
         .finalLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal
     };
 
-    const vk::AttachmentReference depthAttachmentRef
+    static constexpr vk::AttachmentReference depthAttachmentRef
     {
         .attachment = 1,
         .layout = vk::ImageLayout::eDepthStencilAttachmentOptimal
     };
 
-    const vk::SubpassDescription subpass
+    static constexpr vk::SubpassDescription subpass
     {
         .pipelineBindPoint = vk::PipelineBindPoint::eGraphics,
         .colorAttachmentCount = 1,
@@ -397,7 +407,7 @@ void VulkanApplication::createRenderPass()
         .pDepthStencilAttachment = &depthAttachmentRef
     };
 
-    constexpr vk::SubpassDependency dependency
+    static constexpr vk::SubpassDependency dependency
     {
         .srcSubpass = vk::SubpassExternal,
         .dstSubpass = 0,
@@ -430,7 +440,7 @@ void VulkanApplication::createRenderPass()
 
 void VulkanApplication::createDescriptorSetLayout()
 {
-    constexpr vk::DescriptorSetLayoutBinding layoutBinding
+    static constexpr vk::DescriptorSetLayoutBinding layoutBinding
     {
         .binding = 0,
         .descriptorType = vk::DescriptorType::eUniformBuffer,
@@ -439,7 +449,7 @@ void VulkanApplication::createDescriptorSetLayout()
         .pImmutableSamplers = nullptr, // Optional
     };
 
-    constexpr vk::DescriptorSetLayoutBinding samplerLayoutBinding
+    static constexpr vk::DescriptorSetLayoutBinding samplerLayoutBinding
     {
         .binding = 1,
         .descriptorType = vk::DescriptorType::eCombinedImageSampler,
@@ -448,8 +458,8 @@ void VulkanApplication::createDescriptorSetLayout()
         .pImmutableSamplers = nullptr, // Optional
     };
 
-    constexpr std::array bindings{layoutBinding, samplerLayoutBinding};
-    const vk::DescriptorSetLayoutCreateInfo layoutInfo
+    static constexpr std::array bindings{layoutBinding, samplerLayoutBinding};
+    static constexpr vk::DescriptorSetLayoutCreateInfo layoutInfo
     {
         .bindingCount = static_cast<uint32_t>(bindings.size()),
         .pBindings = bindings.data(),
@@ -498,14 +508,14 @@ void VulkanApplication::createGraphicsPipeline()
         .pDynamicStates = dynamicStates.data(),
     };
 
-    constexpr vk::VertexInputBindingDescription bindingDescription
+    static constexpr vk::VertexInputBindingDescription bindingDescription
     {
         .binding = 0,
         .stride = sizeof(Vertex),
         .inputRate = vk::VertexInputRate::eVertex,
     };
 
-    constexpr std::array attributeDescriptions
+    static constexpr std::array attributeDescriptions
     {
         vk::VertexInputAttributeDescription
         {
@@ -531,7 +541,7 @@ void VulkanApplication::createGraphicsPipeline()
         .pVertexAttributeDescriptions = attributeDescriptions.data(), // Optional
     };
 
-    constexpr vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo
+    static constexpr vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo
     {
         .topology = vk::PrimitiveTopology::eTriangleList,
         .primitiveRestartEnable = vk::False,
@@ -561,7 +571,7 @@ void VulkanApplication::createGraphicsPipeline()
         .pScissors = &scissor
     };
 
-    const vk::PipelineRasterizationStateCreateInfo rasterizerInfo
+    static constexpr vk::PipelineRasterizationStateCreateInfo rasterizerInfo
     {
         .depthClampEnable = vk::False,
         .rasterizerDiscardEnable = vk::False,
@@ -575,7 +585,7 @@ void VulkanApplication::createGraphicsPipeline()
         .lineWidth = 1.0f,
     };
 
-    const vk::PipelineMultisampleStateCreateInfo multisamplingInfo
+    static constexpr vk::PipelineMultisampleStateCreateInfo multisamplingInfo
     {
         .rasterizationSamples = vk::SampleCountFlagBits::e1,
         .sampleShadingEnable = vk::False,
@@ -585,7 +595,7 @@ void VulkanApplication::createGraphicsPipeline()
         .alphaToOneEnable = vk::False, // Optional
     };
 
-    const vk::PipelineColorBlendAttachmentState colorBlendAttachment
+    static constexpr vk::PipelineColorBlendAttachmentState colorBlendAttachment
     {
         .blendEnable = vk::False,
         .srcColorBlendFactor = vk::BlendFactor::eOne, // Optional
@@ -598,7 +608,7 @@ void VulkanApplication::createGraphicsPipeline()
         vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
     };
 
-    const vk::PipelineColorBlendStateCreateInfo colorBlendingInfo
+    static constexpr vk::PipelineColorBlendStateCreateInfo colorBlendingInfo
     {
         .logicOpEnable = vk::False,
         .logicOp = vk::LogicOp::eCopy, // Optional
@@ -621,7 +631,7 @@ void VulkanApplication::createGraphicsPipeline()
         throw std::runtime_error("failed to create pipeline layout!");
     }
 
-    const vk::PipelineDepthStencilStateCreateInfo depthStencil
+    constexpr vk::PipelineDepthStencilStateCreateInfo depthStencil
     {
         .depthTestEnable = vk::True,
         .depthWriteEnable = vk::True,
@@ -781,14 +791,14 @@ void VulkanApplication::createSyncObjects()
 
 void VulkanApplication::createDescriptorPool()
 {
-    constexpr uint32_t count = MaxFramesInFlight;
-    constexpr std::array poolSizes
+    static constexpr uint32_t count = MaxFramesInFlight;
+    static constexpr std::array poolSizes
     {
         vk::DescriptorPoolSize{vk::DescriptorType::eUniformBuffer, count},
         vk::DescriptorPoolSize{vk::DescriptorType::eCombinedImageSampler, count},
     };
 
-    const vk::DescriptorPoolCreateInfo poolInfo
+    static constexpr vk::DescriptorPoolCreateInfo poolInfo
     {
         .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
         .maxSets = 1000, // TODO figure this out

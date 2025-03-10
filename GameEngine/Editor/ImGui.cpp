@@ -9,7 +9,6 @@ void ImGuiHelper::init(GLFWwindow* window, const ImGuiInitInfo& initInfo)
     if constexpr (!enabled)
         return;
 
-    m_world = initInfo.world;
     m_device = initInfo.device;
 
     // Setup Dear ImGui context
@@ -74,7 +73,7 @@ void ImGuiHelper::drawFrame()
 
     for (auto& widget : m_debugWidgets)
     {
-        widget->draw(*m_world);
+        widget->draw();
     }
 }
 

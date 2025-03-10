@@ -1,12 +1,9 @@
 module Engine.World;
 
-import Engine.ApplicationState;
 import Engine.AssetManager;
 import Engine.ComponentRegistry;
-import Engine.DebugWidget;
 import Engine.Guid;
 import Engine.Components;
-import Engine.Config;
 import Engine.ImGui;
 import Engine.Render.Application;
 import Engine.Render.Core;
@@ -65,11 +62,10 @@ void World::createObjectsFromConfig()
     }
 }
 
-World::World(const ApplicationSettings& settings, ApplicationState& globalState)
+World::World(const ApplicationSettings& settings, IRenderManager* renderManager)
     : m_jobSystem{settings.numThreads},
-      m_applicationState{globalState}
+      m_renderManager{*renderManager}
 {
-    globalState.world = this;
 }
 
 Entity World::createEntity()
@@ -81,7 +77,7 @@ Entity World::createEntity()
 
 void World::addDebugWidget(std::unique_ptr<DebugWidget> widget)
 {
-    m_applicationState.get().debugUI->addWidget(std::move(widget));
+    m_renderManager.get().addDebugWidget(std::move(widget));
 }
 
 const Archetype& World::readArchetype(const EntitySignature& signature) const
@@ -90,7 +86,7 @@ const Archetype& World::readArchetype(const EntitySignature& signature) const
     {
         return it->second;
     }
-    
+
     throw std::runtime_error{"Couldn't find requested archetype!\n\tRequested: " + signature.bitset.to_string() + "\n"};
 }
 

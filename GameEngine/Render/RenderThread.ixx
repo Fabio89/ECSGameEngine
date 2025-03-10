@@ -3,18 +3,16 @@ module;
 #pragma warning(disable : 5105)
 #include <windows.h>
 
-export module Engine.Render;
-import Engine.ApplicationState;
+export module Engine.RenderThread;
 import Engine.Core;
 import std;
+
+export struct IRenderManager;
 
 export struct LoopSettings
 {
     float targetFps = 120.f;
 };
-
-class MeshAsset;
-class TextureAsset;
 
 export template <typename T>
 class ThreadSafeQueue
@@ -58,23 +56,25 @@ export struct RenderThreadState
     std::atomic<bool> initialised{false};
     std::atomic<bool> closing{false};
     std::condition_variable initialisedCondition{};
+    IRenderManager* renderManager{};
 };
 
 export struct RenderThreadParams
 {
     LoopSettings settings;
-    ApplicationState* state{};
 };
 
 export class RenderThread
 {
 public:
     explicit RenderThread(RenderThreadParams params);
-
     ~RenderThread() { m_thread.join(); }
     RenderThread(const RenderThread&) = delete;
     RenderThread(RenderThread&&) = delete;
-
+    RenderThread& operator=(const RenderThread&) = delete;
+    RenderThread& operator=(RenderThread&&) = delete;
+    
+    IRenderManager* getRenderManager() { return m_sharedState.renderManager; }
     bool isClosing() const { return m_sharedState.closing; }
     
 private:
@@ -84,7 +84,7 @@ private:
 };
 
 export template <typename T_Body, typename T_Condition>
-void performLoop(const LoopSettings& settings, T_Body&& body, T_Condition&& condition)
+void performLoop(const LoopSettings& settings, const T_Body& body, const T_Condition& condition)
 {
     using ms = std::chrono::milliseconds;
     const auto targetFrameDuration = ms{static_cast<int>(1000 / settings.targetFps)};

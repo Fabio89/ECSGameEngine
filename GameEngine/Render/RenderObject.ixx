@@ -3,7 +3,7 @@ import :Model;
 import :Vulkan;
 import Engine.Core;
 import Engine.Guid;
-import Engine.Render;
+import Engine.RenderThread;
 import std;
 import <glm/glm.hpp>;
 
@@ -114,11 +114,11 @@ private:
     std::unordered_map<Guid, MeshId> m_meshMap;
     std::unordered_map<Guid, TextureId> m_textureMap;
 
-    vk::Device m_device{nullptr};
-    vk::PhysicalDevice m_physicalDevice{nullptr};
-    vk::SurfaceKHR m_surface{nullptr};
-    vk::DescriptorPool m_descriptorPool{nullptr};
-    vk::DescriptorSetLayout m_descriptorSetLayout{nullptr};
-    vk::Queue m_queue{nullptr};
-    vk::CommandPool m_cmdPool{nullptr};
+    vk::Device m_device{};
+    vk::PhysicalDevice m_physicalDevice{};
+    vk::SurfaceKHR m_surface{};
+    vk::DescriptorPool m_descriptorPool{};
+    vk::DescriptorSetLayout m_descriptorSetLayout{};
+    vk::Queue m_queue{};
+    vk::CommandPool m_cmdPool{};
 };

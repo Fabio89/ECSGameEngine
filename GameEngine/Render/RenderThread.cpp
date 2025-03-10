@@ -1,13 +1,14 @@
-module Engine.Render;
+module Engine.RenderThread;
 import Engine.Render.Application;
+import Engine.RenderManager;
 
 void renderThreadFunc(RenderThreadParams params, RenderThreadState& sharedState)
 {
     try
     {
         VulkanApplication application;
-        application.init(*params.state);
-
+        application.init();
+        sharedState.renderManager = &application;
         sharedState.initialised = true;
         sharedState.initialisedCondition.notify_all();
 
@@ -27,6 +28,7 @@ void renderThreadFunc(RenderThreadParams params, RenderThreadState& sharedState)
     catch (const std::exception& ex)
     {
         std::cerr << "Error: " << ex.what() << std::endl;
+        throw;
     }
 }
 
@@ -46,5 +48,5 @@ void RenderThread::waitTillInitialised()
 
     const std::chrono::duration<double, std::milli> duration = std::chrono::high_resolution_clock::now() - start;
 
-    std::cout << "Render system initialised. Time elapsed: " << duration.count() << "ms\n";
+    std::cout << "[Render] Initialised in " << duration.count() << "ms\n";
 }

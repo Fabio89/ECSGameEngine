@@ -10,8 +10,8 @@ import Engine.World;
 
 export struct ModelComponent : Component<ModelComponent>
 {
-    const MeshAsset* mesh{nullptr};
-    const TextureAsset* texture{nullptr};
+    const MeshAsset* mesh{};
+    const TextureAsset* texture{};
 };
 
 //ComponentRegistry::Entry<ModelComponent> reg{"Name"};
@@ -37,12 +37,7 @@ public:
         if (componentType == ModelComponent::typeId)
         {
             const ModelComponent& model = world.readComponent<ModelComponent>(entity);
-            world.getApplication().requestAddRenderObject
-            ({
-                .entity = entity,
-                .mesh = model.mesh,
-                .texture = model.texture
-            });
+            world.getRenderManager().addRenderObject(entity, model.mesh, model.texture);
         }
     }
 };

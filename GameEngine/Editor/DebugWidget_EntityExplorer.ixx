@@ -1,12 +1,11 @@
 module;
 #include <imgui.h>
 export module Engine.DebugWidget.EntityExplorer;
-export import Engine.DebugWidget;
-import Engine.ApplicationState;
 import Engine.ComponentRegistry;
 import Engine.Component.Name;
 import Engine.Component.Model;
 import Engine.Component.Transform;
+import Engine.DebugWidget;
 import Engine.Render.Core;
 import Engine.World;
 import Engine.Core;
@@ -16,19 +15,24 @@ export namespace DebugWidgets
     class ImGuiDemo : public DebugWidget
     {
     public:
+        using DebugWidget::DebugWidget;
+
+    private:
         void draw(World&) override
         {
             if (m_showDemoWindow)
                 ImGui::ShowDemoWindow(&m_showDemoWindow);
         }
 
-    private:
         bool m_showDemoWindow{true};
     };
 
     class EntityExplorer : public DebugWidget
     {
     public:
+        using DebugWidget::DebugWidget;
+
+    private:
         void draw(World& world) override
         {
             static float splitRatio = 0.5f; // The initial ratio of the split
@@ -120,8 +124,7 @@ export namespace DebugWidgets
 
             ImGui::End();
         }
-
-    private:
+        
         bool isSelected(Entity entity, ComponentTypeId componentType) const
         {
             return m_currentlySelected.has_value() && m_currentlySelected->first == entity && m_currentlySelected->second == componentType;

@@ -1,12 +1,11 @@
-import Engine.ApplicationState;
+import Engine.RenderManager;
 import Engine.Config;
 import Engine.Core;
 import Engine.DebugWidget.EntityExplorer;
-import Engine.Render;
+import Engine.RenderThread;
 import Engine.World;
 import Engine.Component.Model;
 import Engine.Component.Transform;
-
 import std;
 
 void gameInit(World& world)
@@ -29,11 +28,10 @@ void gameShutdown()
 int main()
 {
     const ApplicationSettings& settings = Config::getApplicationSettings();
-    ApplicationState globalState;
-    World world{settings, globalState};
     const LoopSettings loopSettings{.targetFps = settings.targetFps};
 
-    RenderThread renderThread{{loopSettings, &globalState}};
+    RenderThread renderThread{{loopSettings}};
+    World world{settings, renderThread.getRenderManager()};
 
     gameInit(world);
 

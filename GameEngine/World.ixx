@@ -2,14 +2,15 @@ module;
 
 export module Engine.World;
 
-import Engine.ApplicationState;
 import Engine.Config;
 import Engine.Core;
-import Engine.Decl;
 import Engine.Job;
+import Engine.RenderManager;
 import std;
 
 export class DebugWidget;
+export class World;
+
 static constexpr int maxComponentsPerEntity = 64;
 
 struct EntitySignature
@@ -45,7 +46,7 @@ private:
 export class World
 {
 public:
-    World(const ApplicationSettings&, ApplicationState& globalState);
+    World(const ApplicationSettings&, IRenderManager* renderManager);
 
     Entity createEntity();
 
@@ -138,7 +139,7 @@ public:
     void updateSystems(float deltaTime);
 
     template <typename T>
-    void addDebugWidget() { addDebugWidget(std::make_unique<T>()); }
+    void addDebugWidget() { addDebugWidget(std::make_unique<T>(*this)); }
 
     ArchetypeChangedObserverHandle observeOnComponentAdded(ArchetypeChangedCallback observer);
     void unobserveOnComponentAdded(ArchetypeChangedObserverHandle observerHandle);
@@ -147,8 +148,8 @@ public:
 
     auto getEntitiesRange() const { return m_entities | std::views::keys; }
 
-    const VulkanApplication& getApplication() const { return *m_applicationState.get().application; }
-    VulkanApplication& getApplication() { return *m_applicationState.get().application; }
+    const IRenderManager& getRenderManager() const { return m_renderManager.get(); }
+    IRenderManager& getRenderManager() { return m_renderManager.get(); }
 
 private:
     void addDebugWidget(std::unique_ptr<DebugWidget> widget);
@@ -162,5 +163,5 @@ private:
     std::unordered_map<Entity, EntitySignature> m_entities;
     std::unordered_map<EntitySignature, Archetype> m_archetypes;
     std::vector<std::unique_ptr<System>> m_systems;
-    std::reference_wrapper<ApplicationState> m_applicationState;
+    std::reference_wrapper<IRenderManager> m_renderManager;
 };

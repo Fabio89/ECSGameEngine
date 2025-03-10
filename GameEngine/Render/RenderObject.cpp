@@ -232,8 +232,7 @@ void RenderObjectManager::addRenderObject(Entity entity, const MeshAsset& meshAs
 
     const Mesh* mesh = nullptr;
     {
-        auto idIt = m_meshMap.find(meshAsset.getGuid());
-        if (idIt == m_meshMap.end())
+        if (auto idIt = m_meshMap.find(meshAsset.getGuid()); idIt == m_meshMap.end())
         {
             mesh = &addMesh(meshAsset.getData(), meshAsset.getGuid());
         }

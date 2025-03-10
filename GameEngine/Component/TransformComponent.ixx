@@ -7,8 +7,6 @@ import Engine.Core;
 import Engine.World;
 import <glm/glm.hpp>;
 
-import Engine.DebugWidget;
-
 export struct TransformComponent : Component<TransformComponent>
 {
     glm::vec3 position;
@@ -65,12 +63,6 @@ private:
     static void updateRenderTransform(World& world, Entity entity)
     {
         const auto& component = world.readComponent<TransformComponent>(entity);
-        world.getApplication().requestSetObjectTransform
-        ({
-            .entity = entity,
-            .location = component.position,
-            .rotation = component.rotation,
-            .scale = component.scale
-        });
+        world.getRenderManager().setRenderObjectTransform(entity, component.position, component.rotation, component.scale);
     }
 };

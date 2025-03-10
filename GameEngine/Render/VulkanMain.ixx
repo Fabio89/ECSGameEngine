@@ -1,46 +1,54 @@
 export module Engine.Render.Application;
 
+import Engine.DebugWidget;
 import Engine.ImGui;
-import Engine.ApplicationState;
-import Engine.Render;
 import Engine.Render.Core;
+import Engine.RenderManager;
 import std;
 import <glm/glm.hpp>;
 
-export class VulkanApplication
+export class VulkanApplication final : public IRenderManager
 {
 public:
-    ~VulkanApplication() noexcept;
-    void init(ApplicationState& applicationState);
+    VulkanApplication() = default;
+    ~VulkanApplication() override;
+    VulkanApplication(const VulkanApplication&) = delete;
+    VulkanApplication(VulkanApplication&&) = delete;
+    VulkanApplication& operator=(const VulkanApplication&) = delete;
+    VulkanApplication& operator=(VulkanApplication&&) = delete;
+    
+    void init();
     void update(float deltaTime);
     void shutdown();
     bool shouldWindowClose() const;
-    void requestAddRenderObject(RenderMessages::AddObject command);
-    void requestSetObjectTransform(RenderMessages::SetTransform command);
+
+    void addDebugWidget(std::unique_ptr<DebugWidget> widget) override;
+    void addRenderObject(Entity entity, const MeshAsset* mesh, const TextureAsset* texture) override;
+    void setRenderObjectTransform(Entity entity, glm::vec3 location, glm::vec3 rotation, float scale = 1.f) override;
 
 private:
-	RenderObjectManager m_renderObjectManager;
+    RenderObjectManager m_renderObjectManager;
     glm::ivec2 m_windowSize{800, 600};
-    GLFWwindow* m_window{nullptr};
-    vk::Instance m_instance{nullptr};
-    vk::PhysicalDevice m_physicalDevice{nullptr};
-    vk::Device m_device{nullptr};
-    vk::SurfaceKHR m_surface{nullptr};
-    vk::SwapchainKHR m_swapChain{nullptr};
-    vk::Queue m_graphicsQueue{nullptr};
-    vk::Queue m_presentQueue{nullptr};
-    vk::Queue m_transferQueue{nullptr};
-    vk::RenderPass m_renderPass{nullptr};
-    vk::DescriptorSetLayout m_descriptorSetLayout{nullptr};
-    vk::PipelineLayout m_pipelineLayout{nullptr};
-    vk::Pipeline m_graphicsPipeline{nullptr};
+    GLFWwindow* m_window{};
+    vk::Instance m_instance{};
+    vk::PhysicalDevice m_physicalDevice{};
+    vk::Device m_device{};
+    vk::SurfaceKHR m_surface{};
+    vk::SwapchainKHR m_swapChain{};
+    vk::Queue m_graphicsQueue{};
+    vk::Queue m_presentQueue{};
+    vk::Queue m_transferQueue{};
+    vk::RenderPass m_renderPass{};
+    vk::DescriptorSetLayout m_descriptorSetLayout{};
+    vk::PipelineLayout m_pipelineLayout{};
+    vk::Pipeline m_graphicsPipeline{};
 
-    vk::CommandPool m_commandPool{nullptr};
-    vk::CommandPool m_transferCommandPool{nullptr};
+    vk::CommandPool m_commandPool{};
+    vk::CommandPool m_transferCommandPool{};
     std::vector<vk::CommandBuffer> m_commandBuffers;
 
-    vk::PipelineCache m_pipelineCache{nullptr};
-    vk::DescriptorPool m_descriptorPool{nullptr};
+    vk::PipelineCache m_pipelineCache{};
+    vk::DescriptorPool m_descriptorPool{};
 
     std::vector<vk::Image> m_swapChainImages;
     std::vector<vk::ImageView> m_swapChainImageViews;
@@ -52,11 +60,11 @@ private:
     std::vector<vk::Semaphore> m_renderFinishedSemaphores;
     std::vector<vk::Fence> m_inFlightFences;
 
-    vk::Image m_depthImage{nullptr};
-    vk::DeviceMemory m_depthImageMemory{nullptr};
-    vk::ImageView m_depthImageView{nullptr};
+    vk::Image m_depthImage{};
+    vk::DeviceMemory m_depthImageMemory{};
+    vk::ImageView m_depthImageView{};
 
-    vk::DebugUtilsMessengerEXT m_debugMessenger{nullptr};
+    vk::DebugUtilsMessengerEXT m_debugMessenger{};
 
     ImGuiHelper m_imguiHelper;
 
