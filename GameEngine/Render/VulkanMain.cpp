@@ -1016,7 +1016,7 @@ std::vector<const char*> VulkanApplication::getRequiredExtensions()
     return extensions;
 }
 
-void VulkanApplication::framebufferResizeCallback(GLFWwindow* window, int width, int height)
+void VulkanApplication::framebufferResizeCallback(GLFWwindow* window, [[maybe_unused]] int width, [[maybe_unused]] int height)
 {
     auto app = static_cast<VulkanApplication*>(glfwGetWindowUserPointer(window));
     app->m_framebufferResized = true;

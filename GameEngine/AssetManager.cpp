@@ -4,10 +4,10 @@ AssetBase::AssetBase(const Json& serializedData)
 {
     if (auto it = serializedData.find("id"); it != serializedData.end())
     {
-        m_id = Guid{*it};
+        m_id = Guid::createFromString(*it);
     }
     else
     {
-        m_id = {};
+        m_id = Guid::createRandom();
     }
 }

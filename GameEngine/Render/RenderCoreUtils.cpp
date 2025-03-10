@@ -177,10 +177,10 @@ namespace RenderUtils
 {
     VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallback
     (
-        vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-        vk::DebugUtilsMessageTypeFlagBitsEXT messageType,
+        [[maybe_unused]] vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+        [[maybe_unused]] vk::DebugUtilsMessageTypeFlagBitsEXT messageType,
         const vk::DebugUtilsMessengerCallbackDataEXT* callbackData,
-        void* userData
+        [[maybe_unused]] void* userData
     )
     {
         std::cerr << "validation layer: " << callbackData->pMessage << std::endl;
@@ -262,7 +262,7 @@ vk::Extent2D RenderUtils::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& cap
         return capabilities.currentExtent;
     }
 
-    int width, height;
+    int width{}, height{};
     glfwGetFramebufferSize(window, &width, &height);
 
     vk::Extent2D actualExtent

@@ -170,8 +170,6 @@
         <ClCompile>
             <WarningLevel>Level4</WarningLevel>
             <SDLCheck>false</SDLCheck>
-            <PreprocessorDefinitions>
-            </PreprocessorDefinitions>
             <ConformanceMode>true</ConformanceMode>
             <LanguageStandard>stdcpplatest</LanguageStandard>
             <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -183,6 +181,7 @@
             <AdditionalModuleDependencies></AdditionalModuleDependencies>
             <RemoveUnreferencedCodeData>false</RemoveUnreferencedCodeData>
             <BuildStlModules>true</BuildStlModules>
+            <PreprocessorDefinitions>GLFW_DLL</PreprocessorDefinitions>
         </ClCompile>
         <Link>
             <SubSystem>Console</SubSystem>
@@ -191,7 +190,7 @@
         </Link>
         <Lib>
             <AdditionalLibraryDirectories>$(VK_SDK_PATH)\Lib;$(VcpkgInstalledDir)\x64-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-            <AdditionalDependencies>Rpcrt4.lib; glfw3dll.lib; glm.lib; imgui.lib</AdditionalDependencies>
+            <AdditionalDependencies>glfw3dll.lib; glm.lib; imgui.lib; Bcrypt.lib;</AdditionalDependencies>
         </Lib>
         <PostBuildEvent>
             <Command>xcopy /s /y "$(ProjectDir)Render\Shaders\*.spv" "$(OutDir)Shaders\"</Command>

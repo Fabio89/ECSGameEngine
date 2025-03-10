@@ -1,58 +1,58 @@
 module;
-#include <stdio.h>
-#include <windows.h>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_hash.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
 export module Engine.Guid;
-import std;
-import std.compat;
 
-export struct Guid
+export template <>
+struct std::hash<boost::uuids::uuid>;
+
+export class Guid
 {
-    Guid() { CoCreateGuid(&impl); }
+public:
+    Guid() = default;
 
-    explicit Guid(const std::string& str);
+    static Guid createFromString(const std::string& str) { return Guid{boost::uuids::string_generator()(str)}; }
+    static Guid createRandom() { return Guid{boost::uuids::random_generator()()}; }
 
-    std::string toString() const;
+    bool operator==(const Guid& other) const { return m_impl == other.m_impl; }
 
-    GUID impl;
-    friend bool operator==(const Guid& a, const Guid& b) { return a.impl == b.impl; }
+    auto operator<=>(const Guid& other) const
+    {
+        if (m_impl == other.m_impl)
+            return std::strong_ordering::equal;
+        if (m_impl < other.m_impl)
+            return std::strong_ordering::less;
+        return std::strong_ordering::greater;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Guid& guid)
+    {
+        os << guid.m_impl;
+        return os;
+    }
+
+    friend std::istream& operator>>(std::istream& is, Guid& guid)
+    {
+        is >> guid.m_impl;
+        return is;
+    }
+
+    std::size_t hashValue() const { return hash_value(m_impl); }
+
+private:
+    explicit Guid(boost::uuids::uuid&& uuid) : m_impl{std::move(uuid)} {}
+    
+    boost::uuids::uuid m_impl{};
 };
-
-Guid::Guid(const std::string& str)
-{
-    GUID guid;
-    unsigned short data4[8];
-    if (sscanf_s(str.c_str(),
-                 "%8x-%4hx-%4hx-%2hx%2hx-%2hx%2hx%2hx%2hx%2hx%2hx",
-                 &guid.Data1, &guid.Data2, &guid.Data3,
-                 &data4[0], &data4[1], &data4[2], &data4[3],
-                 &data4[4], &data4[5], &data4[6], &data4[7]) != 11)
-    {
-        throw std::invalid_argument("Invalid GUID string format");
-    }
-    for (int i = 0; i < 8; ++i)
-    {
-        guid.Data4[i] = static_cast<uint8_t>(data4[i]);
-    }
-    impl = guid;
-}
-
-std::string Guid::toString() const
-{
-    char guidStr[37];
-    snprintf(guidStr, sizeof(guidStr),
-                  "%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X",
-                  impl.Data1, impl.Data2, impl.Data3,
-                  impl.Data4[0], impl.Data4[1], impl.Data4[2], impl.Data4[3],
-                  impl.Data4[4], impl.Data4[5], impl.Data4[6], impl.Data4[7]);
-    return std::string(guidStr);
-}
 
 template <>
 struct std::hash<Guid>
 {
-    size_t operator()(const Guid& guid) const noexcept
+    std::size_t operator ()(const Guid& value) const BOOST_NOEXCEPT
     {
-        RPC_STATUS status = RPC_S_OK;
-        return ::UuidHash(&const_cast<GUID&>(guid.impl), &status);
+        return value.hashValue();
     }
 };

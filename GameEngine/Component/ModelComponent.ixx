@@ -19,8 +19,8 @@ export struct ModelComponent : Component<ModelComponent>
 template <>
 ModelComponent deserialize(const Json& serializedData)
 {
-    const Guid meshGuid{*serializedData.find("mesh")};
-    const Guid textureGuid{*serializedData.find("texture")};
+    const Guid meshGuid = Guid::createFromString(*serializedData.find("mesh"));
+    const Guid textureGuid = Guid::createFromString(*serializedData.find("texture"));
     
     return
     {

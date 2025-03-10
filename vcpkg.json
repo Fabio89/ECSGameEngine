@@ -9,6 +9,7 @@
         "vulkan-binding"
       ]
     },
-    "cryptopp"
+    "cryptopp",
+    "boost-uuid"
   ]
 }

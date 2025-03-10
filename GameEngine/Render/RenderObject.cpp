@@ -26,21 +26,20 @@ void RenderObjectManager::init
     m_textures.reserve(100);
 }
 
-
 const Texture& RenderObjectManager::addTexture(const TextureData& textureData, Guid guid)
 {
     static std::atomic<TextureId> currentId{};
 
     Texture& texture = m_textures.emplace_back();
     texture.id = currentId++;
-    std::string fullPath = Config::getContentRoot() + textureData.path;
+    const std::string fullPath = Config::getContentRoot() + textureData.path;
     std::tie(texture.image, texture.memory) = RenderUtils::createTextureImage(
         fullPath.c_str(), m_device, m_physicalDevice,
         m_queue, m_cmdPool);
     texture.view = RenderUtils::createTextureImageView(m_device, texture.image);
     texture.sampler = RenderUtils::createTextureSampler(m_device, m_physicalDevice);
     m_textureMap.emplace(guid, texture.id);
-    std::cout << "Added texture: " << guid.toString() << std::endl;
+    std::cout << "Added texture: " << guid << std::endl;
     return texture;
 }
 
@@ -105,6 +104,7 @@ void RenderObjectManager::updateDescriptorSets(const RenderObject& object) const
     }
 }
 
+// ReSharper disable once CppParameterMayBeConstPtrOrRef
 void RenderObjectManager::updateUniformBuffer(RenderObject& object, vk::Extent2D swapchainExtent, uint32_t currentImage,
                                               float deltaTime)
 {
@@ -159,7 +159,7 @@ const Mesh& RenderObjectManager::addMesh(MeshData data, Guid guid)
     static std::atomic<MeshId> currentId{};
     const MeshId id = mesh.id = currentId++;
     m_meshMap.emplace(guid, id);
-    std::cout << "Added mesh: " << guid.toString() << std::endl;
+    std::cout << "Added mesh: " << guid << std::endl;
     return mesh;
 }
 
@@ -230,13 +230,13 @@ void RenderObjectManager::addRenderObject(Entity entity, const MeshAsset& meshAs
     RenderObject object;
     static constexpr vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
 
-    const Mesh* mesh = nullptr;
+    const Mesh* mesh;
     {
-        if (auto idIt = m_meshMap.find(meshAsset.getGuid()); idIt == m_meshMap.end())
+        if (const auto idIt = m_meshMap.find(meshAsset.getGuid()); idIt == m_meshMap.end())
         {
             mesh = &addMesh(meshAsset.getData(), meshAsset.getGuid());
         }
-        else if (auto it = std::ranges::find_if(m_meshes, [id = idIt->second](auto&& element) { return element.id == id; }); it != m_meshes.end())
+        else if (const auto it = std::ranges::find_if(m_meshes, [id = idIt->second](auto&& element) { return element.id == id; }); it != m_meshes.end())
         {
             mesh = &*it;
         }
@@ -246,13 +246,13 @@ void RenderObjectManager::addRenderObject(Entity entity, const MeshAsset& meshAs
         }
     }
 
-    const Texture* texture = nullptr;
+    const Texture* texture;
     {
-        if (auto idIt = m_textureMap.find(textureAsset.getGuid()); idIt == m_textureMap.end())
+        if (const auto idIt = m_textureMap.find(textureAsset.getGuid()); idIt == m_textureMap.end())
         {
             texture = &addTexture(textureAsset.getData(), textureAsset.getGuid());
         }
-        else if (auto it = std::ranges::find_if(m_textures, [id = idIt->second](auto&& element) { return element.id == id; }); it != m_textures.end())
+        else if (const auto it = std::ranges::find_if(m_textures, [id = idIt->second](auto&& element) { return element.id == id; }); it != m_textures.end())
         {
             texture = &*it;
         }
@@ -298,12 +298,12 @@ void RenderObjectManager::addRenderObject(Entity entity, const MeshAsset& meshAs
     object.descriptorSets = m_device.allocateDescriptorSets(allocInfo);
 
     m_objects.emplace_back(std::move(object));
-    std::cout << "Added render object\n\tMesh: " << meshAsset.getGuid().toString() << "\n\tTexture: " << textureAsset.getGuid().toString() << std::endl;
+    std::cout << "Added render object\n\tMesh: " << meshAsset.getGuid() << "\n\tTexture: " << textureAsset.getGuid() << std::endl;
 }
 
 void RenderObjectManager::setObjectTransform(Entity entity, glm::vec3 location, glm::vec3 rotation, float scale)
 {
-    auto it = std::ranges::find_if(m_objects, [&](auto&& object) { return object.entity == entity; });
+    const auto it = std::ranges::find_if(m_objects, [&](auto&& object) { return object.entity == entity; });
     if (it != m_objects.end())
     {
         it->location = location;
