@@ -79,7 +79,6 @@ void VulkanApplication::init(ApplicationState& applicationState)
                        m_graphicsQueue, m_commandPool);
     applicationState.application = this;
     applicationState.debugUI = &m_imguiHelper;
-    applicationState.initialized = true;
 }
 
 void VulkanApplication::update(float deltaTime)

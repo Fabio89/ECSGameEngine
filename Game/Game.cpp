@@ -30,16 +30,10 @@ int main()
 {
     const ApplicationSettings& settings = Config::getApplicationSettings();
     ApplicationState globalState;
-
     World world{settings, globalState};
     const LoopSettings loopSettings{.targetFps = settings.targetFps};
 
-    std::thread renderThread = runRenderThread(loopSettings, globalState);
-
-    while (!globalState.initialized)
-    {
-        //std::cout << "Waiting for render thread...\n";
-    }
+    RenderThread renderThread{{loopSettings, &globalState}};
 
     gameInit(world);
 
@@ -48,12 +42,11 @@ int main()
         world.updateSystems(deltaTime);
     };
 
-    auto shouldRun = [&globalState] { return !globalState.closing; };
+    auto shouldRun = [&renderThread] { return !renderThread.isClosing(); };
 
     performLoop(loopSettings, gameTick, shouldRun);
 
     gameShutdown();
-    renderThread.join();
 
     return 0;
 }
