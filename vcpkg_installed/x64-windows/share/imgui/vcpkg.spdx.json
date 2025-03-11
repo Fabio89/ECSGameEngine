@@ -3,13 +3,13 @@
   "spdxVersion": "SPDX-2.2",
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
-  "documentNamespace": "https://spdx.org/spdxdocs/imgui-x64-windows-1.90.7-c009d948-c3e7-41a8-bc3e-9f5f2c84af90",
-  "name": "imgui:x64-windows@1.90.7 b0c30596e4713f540a947aeb407c4f163eb4fcfe90adfe000e3ed5dfcffcf1b6",
+  "documentNamespace": "https://spdx.org/spdxdocs/imgui-x64-windows-1.90.7-3011ed26-3905-4ec8-baf8-f8c8722d727b",
+  "name": "imgui:x64-windows@1.90.7 e812fc27515fbb13dc71640f61f4b8b066c64dd605a1a198bfa521c209cb7eeb",
   "creationInfo": {
     "creators": [
-      "Tool: vcpkg-d6945642ee5c3076addd1a42c331bbf4cfc97457"
+      "Tool: vcpkg-2024-12-09-1005b78fa1bf1dde1a20c2734cba4ea61ca94d9a"
     ],
-    "created": "2024-06-22T00:42:47Z"
+    "created": "2025-03-10T18:07:34Z"
   },
   "relationships": [
     {
@@ -79,7 +79,7 @@
     {
       "name": "imgui:x64-windows",
       "SPDXID": "SPDXRef-binary",
-      "versionInfo": "b0c30596e4713f540a947aeb407c4f163eb4fcfe90adfe000e3ed5dfcffcf1b6",
+      "versionInfo": "e812fc27515fbb13dc71640f61f4b8b066c64dd605a1a198bfa521c209cb7eeb",
       "downloadLocation": "NONE",
       "licenseConcluded": "MIT",
       "licenseDeclared": "NOASSERTION",
@@ -87,7 +87,7 @@
       "comment": "This is a binary package built by vcpkg."
     },
     {
-      "SPDXID": "SPDXRef-resource-1",
+      "SPDXID": "SPDXRef-resource-0",
       "name": "ocornut/imgui",
       "downloadLocation": "git+https://github.com/ocornut/imgui@v1.90.7-docking",
       "licenseConcluded": "NOASSERTION",
@@ -101,7 +101,35 @@
       ]
     },
     {
+      "SPDXID": "SPDXRef-resource-1",
+      "name": "ocornut/imgui",
+      "downloadLocation": "git+https://github.com/ocornut/imgui@v1.90.7",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA512",
+          "checksumValue": "8cdec45c8b58b3768a2216af2a1cba3d0e772ac48420b57057a4a8eda5766c121b4a8457a81b5896defe00b822c40d6aac6ee2b31f4133f2b9a02b231b1529d2"
+        }
+      ]
+    },
+    {
       "SPDXID": "SPDXRef-resource-2",
+      "name": "ocornut/imgui_test_engine",
+      "downloadLocation": "git+https://github.com/ocornut/imgui_test_engine@v1.90.7",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA512",
+          "checksumValue": "0c3b11f46f7ed259e0bf2b0634848aee1fe0b34609349b30f445dd774c739690df4cf12498895f0734b16084be4d32ae80e9e2ada291dd88f7d4fad8fda49a2b"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-resource-3",
       "name": "imgui_fonts_droid_sans.h",
       "packageFileName": "imgui_fonts_droid_sans.h",
       "downloadLocation": "https://raw.githubusercontent.com/libigl/libigl-imgui/c3efb9b62780f55f9bba34561f79a3087e057fc0/imgui_fonts_droid_sans.h",

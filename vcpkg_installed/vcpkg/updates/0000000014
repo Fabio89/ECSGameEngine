@@ -1,8 +1,9 @@
-Package: glfw3
-Version: 3.4
-Depends: vcpkg-cmake, vcpkg-cmake-config
+Package: boost-predef
+Version: 1.85.0
+Port-Version: 1
+Depends: boost-cmake, boost-config, boost-headers
 Architecture: x64-windows
 Multi-Arch: same
-Abi: 521e8afd76a3ddaf95601210d28fed2a5b8ee47b0f5093828555c9e786d52051
-Description: GLFW is a free, Open Source, multi-platform library for OpenGL, OpenGL ES and Vulkan application development. It provides a simple, platform-independent API for creating windows, contexts and surfaces, reading input, handling events, etc.
-Status: purge ok half-installed
+Abi: 9e96616d4a8cb9c1aff0cf40cb0755f9e27ac4d10563c306013435d014263798
+Description: Boost predef module
+Status: install ok half-installed

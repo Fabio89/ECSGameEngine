@@ -1,6 +1,9 @@
-Package: vcpkg-cmake-config
-Version: 2024-05-23
+Package: boost-static-assert
+Version: 1.85.0
+Port-Version: 1
+Depends: boost-cmake, boost-config, boost-headers
 Architecture: x64-windows
 Multi-Arch: same
-Abi: c16a51555c9dac11637dc74ff9b5265d6058c42da6c5b02ab4db830778fa74a0
-Status: purge ok half-installed
+Abi: 8378d72cd765683876d67c790df776529e25f4156612295bd5d666d787a8f548
+Description: Boost static_assert module
+Status: install ok half-installed

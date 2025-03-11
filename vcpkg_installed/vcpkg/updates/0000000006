@@ -1,9 +1,8 @@
-Package: vulkan
-Version: 2023-12-17
-Depends: vcpkg-cmake, vulkan-headers, vulkan-loader
+Package: boost-uninstall
+Version: 1.85.0
+Port-Version: 1
 Architecture: x64-windows
 Multi-Arch: same
-Abi: e789826d78cd81f5bbfd944e934518630efaf8df1a0413303cf592ea944b65a5
-Description: A stub package that ensures that Vulkan headers and a loader are available.
-    On Android, the NDK provides a loader at API level 24 or higher.
-Status: purge ok half-installed
+Abi: ae0ee6ed3afc608dcbe1389685fb122acac0a105cc744038af7757b262ef1ef2
+Description: Internal vcpkg port used to uninstall Boost
+Status: install ok half-installed

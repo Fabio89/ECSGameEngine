@@ -4,5 +4,5 @@ Port-Version: 2
 Depends: vcpkg-cmake, vcpkg-cmake-config
 Architecture: x64-windows
 Multi-Arch: same
-Abi: 60eee91720e17156d650d4ab4e2179bcb2f0bc3628e0e99290eaae097d2e72c1
+Abi: 14bb95d964564b74c206d2c3a3e1f85223bcacee812dd555c9c5088fd797df73
 Description: OpenGL Mathematics (GLM)

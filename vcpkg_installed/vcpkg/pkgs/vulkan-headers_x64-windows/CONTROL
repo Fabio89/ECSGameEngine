@@ -3,5 +3,5 @@ Version: 1.3.280.0
 Depends: vcpkg-cmake, vcpkg-cmake-config
 Architecture: x64-windows
 Multi-Arch: same
-Abi: e369474c56742e831467460297dd5362d40f19c4c698500f515050d8b8fa0c6e
+Abi: ee44b4dcd0ed4b042bee75881d4ac36cef01c85f75915c30ed85d6919f61b9b3
 Description: Vulkan header files and API registry

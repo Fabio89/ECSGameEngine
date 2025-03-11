@@ -1,6 +1,9 @@
-Package: vcpkg-cmake
-Version: 2024-04-18
+Package: boost-preprocessor
+Version: 1.85.0
+Port-Version: 1
+Depends: boost-cmake, boost-config, boost-headers
 Architecture: x64-windows
 Multi-Arch: same
-Abi: ff991bf1f24610cadb58b563cd8c728ed675992ac9a19af0d7ba8b47ade61cd9
+Abi: 48655d30b042a998e794398063e8402d849a5230e44eb07ad45bc6b0fc959231
+Description: Boost preprocessor module
 Status: install ok half-installed

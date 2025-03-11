@@ -1,9 +1,9 @@
-Package: glm
-Version: 1.0.1
-Port-Version: 2
-Depends: vcpkg-cmake, vcpkg-cmake-config
+Package: boost-io
+Version: 1.85.0
+Port-Version: 1
+Depends: boost-cmake, boost-config, boost-headers
 Architecture: x64-windows
 Multi-Arch: same
-Abi: 60eee91720e17156d650d4ab4e2179bcb2f0bc3628e0e99290eaae097d2e72c1
-Description: OpenGL Mathematics (GLM)
+Abi: 5ee1cda56547efc7af06f32aaba939fcbe19cedf573e885ebf1650ca272d8593
+Description: Boost io module
 Status: install ok half-installed

@@ -1,7 +1,6 @@
-Package: imgui
-Feature: glfw-binding
-Depends: glfw3
+Package: vcpkg-boost
+Version: 2024-05-15
 Architecture: x64-windows
 Multi-Arch: same
-Description: Make available GLFW binding
-Status: purge ok not-installed
+Abi: 245fe5c72244165de4a495a86c0e066b15d5379e9ca1edfca141c3726fb97b92
+Status: install ok installed

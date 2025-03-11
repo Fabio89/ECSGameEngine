@@ -1,8 +1,9 @@
-Package: imgui
-Version: 1.90.7
-Depends: vcpkg-cmake, vcpkg-cmake-config
+Package: boost-detail
+Version: 1.85.0
+Port-Version: 1
+Depends: boost-cmake, boost-config, boost-core, boost-headers, boost-preprocessor, boost-static-assert, boost-type-traits
 Architecture: x64-windows
 Multi-Arch: same
-Abi: b0c30596e4713f540a947aeb407c4f163eb4fcfe90adfe000e3ed5dfcffcf1b6
-Description: Bloat-free Immediate Mode Graphical User interface for C++ with minimal dependencies.
+Abi: 918618c549ba4123fe5c22f1e204ca057a81665ae5141764148275e9fa60aa55
+Description: Boost detail module
 Status: install ok half-installed

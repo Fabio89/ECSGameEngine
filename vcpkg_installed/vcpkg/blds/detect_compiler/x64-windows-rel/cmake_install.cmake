@@ -1,4 +1,4 @@
-# Install script for directory: C:/Program Files/Microsoft Visual Studio/2022/Preview/VC/vcpkg/scripts/detect_compiler
+# Install script for directory: C:/Program Files/Microsoft Visual Studio/2022/BuildTools/VC/vcpkg/scripts/detect_compiler
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

@@ -3,13 +3,13 @@
   "spdxVersion": "SPDX-2.2",
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
-  "documentNamespace": "https://spdx.org/spdxdocs/cryptopp-x64-windows-8.9.0-f0548045-4575-4e97-8943-b7b35cc578e5",
-  "name": "cryptopp:x64-windows@8.9.0 d3bbdc7818dde6f5720177a649615d3f6947e152c5816e3cb3f88f015cec3985",
+  "documentNamespace": "https://spdx.org/spdxdocs/cryptopp-x64-windows-8.9.0-58c15c78-714d-4f96-be30-cba07ebde626",
+  "name": "cryptopp:x64-windows@8.9.0 4ec173fca7b2469e5af37229029213990e059dd46325868ea55712fcfb120cbf",
   "creationInfo": {
     "creators": [
-      "Tool: vcpkg-d6945642ee5c3076addd1a42c331bbf4cfc97457"
+      "Tool: vcpkg-2024-12-09-1005b78fa1bf1dde1a20c2734cba4ea61ca94d9a"
     ],
-    "created": "2024-06-22T00:42:05Z"
+    "created": "2025-03-10T18:06:58Z"
   },
   "relationships": [
     {
@@ -69,7 +69,7 @@
     {
       "name": "cryptopp:x64-windows",
       "SPDXID": "SPDXRef-binary",
-      "versionInfo": "d3bbdc7818dde6f5720177a649615d3f6947e152c5816e3cb3f88f015cec3985",
+      "versionInfo": "4ec173fca7b2469e5af37229029213990e059dd46325868ea55712fcfb120cbf",
       "downloadLocation": "NONE",
       "licenseConcluded": "BSL-1.0",
       "licenseDeclared": "NOASSERTION",
@@ -77,7 +77,7 @@
       "comment": "This is a binary package built by vcpkg."
     },
     {
-      "SPDXID": "SPDXRef-resource-1",
+      "SPDXID": "SPDXRef-resource-0",
       "name": "abdes/cryptopp-cmake",
       "downloadLocation": "git+https://github.com/abdes/cryptopp-cmake@CRYPTOPP_${CRYPTOPP_VERSION}",
       "licenseConcluded": "NOASSERTION",
@@ -87,6 +87,34 @@
         {
           "algorithm": "SHA512",
           "checksumValue": "3ec33b107ab627a514e1ebbc4b6522ee8552525f36730d9b5feb85e61ba7fc24fd36eb6050e328c6789ff60d47796beaa8eebf7dead787a34395294fae9bb733"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-resource-1",
+      "name": "weidai11/cryptopp",
+      "downloadLocation": "git+https://github.com/weidai11/cryptopp@CRYPTOPP_${CRYPTOPP_VERSION}",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA512",
+          "checksumValue": "28a67141155c9c15e3e6a2173b3a8487cc38a2a2ade73bf4a09814ca541be6b06e9a501be26f7e2f42a2f80df21b076aa5d8ad4224dc0a1f8d7f3b24deae465e"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-resource-2",
+      "name": "noloader/cryptopp-pem",
+      "downloadLocation": "git+https://github.com/noloader/cryptopp-pem@095f08ff2ef9bca7b81036a59f2395e4f08ce2e8",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA512",
+          "checksumValue": "49912758a635faca1f49665ac9552b20576b46e0283aaabc19bb012bdc80586106452018e5088b9b46967717982ca6022ca968edc4cac96a7506d2b1a3e4bf13"
         }
       ]
     }

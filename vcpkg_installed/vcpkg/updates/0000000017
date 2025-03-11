@@ -1,6 +1,9 @@
-Package: vcpkg-cmake
-Version: 2024-04-18
+Package: boost-winapi
+Version: 1.85.0
+Port-Version: 1
+Depends: boost-cmake, boost-config, boost-headers, boost-predef
 Architecture: x64-windows
 Multi-Arch: same
-Abi: 6eb8b674579414dcb1c0e823b6fcf5ca2389e844e94c476d2210f60a85996cba
-Status: purge ok not-installed
+Abi: 5d215a2ad305870e99946639e1766d330661fd1441e065f433640506c138a715
+Description: Boost winapi module
+Status: install ok installed

@@ -1,9 +1,9 @@
-Package: glm
-Version: 1.0.1
-Port-Version: 2
-Depends: vcpkg-cmake, vcpkg-cmake-config
+Package: boost-config
+Version: 1.85.0
+Port-Version: 1
+Depends: boost-cmake, boost-headers
 Architecture: x64-windows
 Multi-Arch: same
-Abi: ac6d7a0d82d508eafc56484b1fabf14e059d09a7b0d415b9054f2fd3ad35a41d
-Description: OpenGL Mathematics (GLM)
-Status: purge ok half-installed
+Abi: bb5d0b4013c5aa09c721934d655229d040923a520cda014f517fdc9c3eef0684
+Description: Boost config module
+Status: install ok half-installed

@@ -1,7 +1,9 @@
-Package: imgui
-Feature: vulkan-binding
-Depends: vulkan
+Package: boost-function-types
+Version: 1.85.0
+Port-Version: 1
+Depends: boost-cmake, boost-config, boost-core, boost-detail, boost-headers, boost-mpl, boost-preprocessor, boost-type-traits
 Architecture: x64-windows
 Multi-Arch: same
-Description: Make available Vulkan binding
+Abi: 117151bf7c5388a96635c443d1d0f7fd2acad448061441a4d09c6eaedc2010e6
+Description: Boost function_types module
 Status: install ok half-installed

@@ -1,4 +1,0 @@
-C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/imgui_x64-windows/debug/lib/imguid.lib
-C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/imgui_x64-windows/debug/share/imgui/imgui-config.cmake
-C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/imgui_x64-windows/debug/share/imgui/imgui-targets.cmake
-C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/pkgs/imgui_x64-windows/debug/share/imgui/imgui-targets-debug.cmake

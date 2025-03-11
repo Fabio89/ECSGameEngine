@@ -1,8 +1,9 @@
-Package: vulkan-headers
-Version: 1.3.280.0
-Depends: vcpkg-cmake, vcpkg-cmake-config
+Package: boost-headers
+Version: 1.85.0
+Port-Version: 1
+Depends: boost-cmake
 Architecture: x64-windows
 Multi-Arch: same
-Abi: 117997e8191b516805b2e500a6758d0974c534a98d7309de6f7d86d4bbc579d1
-Description: Vulkan header files and API registry
-Status: purge ok not-installed
+Abi: c4a01c5f967b7f515deb28df4ec01af33939f84cb8105ef62dd63b4cdd4e1f9b
+Description: Boost headers module
+Status: install ok installed

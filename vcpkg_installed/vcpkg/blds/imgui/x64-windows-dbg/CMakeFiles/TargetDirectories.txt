@@ -1,6 +1,0 @@
-C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/imgui/x64-windows-dbg/CMakeFiles/imgui.dir
-C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/imgui/x64-windows-dbg/CMakeFiles/edit_cache.dir
-C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/imgui/x64-windows-dbg/CMakeFiles/rebuild_cache.dir
-C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/imgui/x64-windows-dbg/CMakeFiles/list_install_components.dir
-C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/imgui/x64-windows-dbg/CMakeFiles/install.dir
-C:/Dev/ECSGameEngine/vcpkg_installed/vcpkg/blds/imgui/x64-windows-dbg/CMakeFiles/install/local.dir

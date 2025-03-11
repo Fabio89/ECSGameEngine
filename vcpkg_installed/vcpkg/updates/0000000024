@@ -1,8 +1,9 @@
-Package: cryptopp
-Version: 8.9.0
-Depends: vcpkg-cmake, vcpkg-cmake-config
+Package: boost-assert
+Version: 1.85.0
+Port-Version: 1
+Depends: boost-cmake, boost-config, boost-headers
 Architecture: x64-windows
 Multi-Arch: same
-Abi: d3bbdc7818dde6f5720177a649615d3f6947e152c5816e3cb3f88f015cec3985
-Description: Crypto++ is a free C++ class library of cryptographic schemes.
+Abi: db0670c8054fdb553d816fede544922732ce7c1bb43042d026635e2987e47247
+Description: Boost assert module
 Status: install ok half-installed

@@ -3,13 +3,13 @@
   "spdxVersion": "SPDX-2.2",
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
-  "documentNamespace": "https://spdx.org/spdxdocs/glfw3-x64-windows-3.4-c5e1b14a-46d6-4e91-a24b-e55aed5ee64b",
-  "name": "glfw3:x64-windows@3.4 eea3da464936c60007e89d49de05bd3227402e3af1592a4d7ed9e560c2f4f500",
+  "documentNamespace": "https://spdx.org/spdxdocs/glfw3-x64-windows-3.4-8bbfa3f7-df8c-4b29-82bf-0bbdd55d2bde",
+  "name": "glfw3:x64-windows@3.4 b3218aa57a7d6cd1001c08dfe048afee9a5bfa10b470a69a99cecc4eb502ad1b",
   "creationInfo": {
     "creators": [
-      "Tool: vcpkg-d6945642ee5c3076addd1a42c331bbf4cfc97457"
+      "Tool: vcpkg-2024-12-09-1005b78fa1bf1dde1a20c2734cba4ea61ca94d9a"
     ],
-    "created": "2024-06-22T00:42:23Z"
+    "created": "2025-03-10T18:07:15Z"
   },
   "relationships": [
     {
@@ -59,7 +59,7 @@
     {
       "name": "glfw3:x64-windows",
       "SPDXID": "SPDXRef-binary",
-      "versionInfo": "eea3da464936c60007e89d49de05bd3227402e3af1592a4d7ed9e560c2f4f500",
+      "versionInfo": "b3218aa57a7d6cd1001c08dfe048afee9a5bfa10b470a69a99cecc4eb502ad1b",
       "downloadLocation": "NONE",
       "licenseConcluded": "Zlib",
       "licenseDeclared": "NOASSERTION",
@@ -67,7 +67,7 @@
       "comment": "This is a binary package built by vcpkg."
     },
     {
-      "SPDXID": "SPDXRef-resource-1",
+      "SPDXID": "SPDXRef-resource-0",
       "name": "glfw/glfw",
       "downloadLocation": "git+https://github.com/glfw/glfw@3.4",
       "licenseConcluded": "NOASSERTION",

@@ -398,4 +398,4 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 .idea/*
-vcpkg_installed/*
+vcpkg_installed/

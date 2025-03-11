@@ -3,6 +3,6 @@ Version: 2023-12-17
 Depends: vcpkg-cmake, vulkan-headers, vulkan-loader
 Architecture: x64-windows
 Multi-Arch: same
-Abi: 6e1bb38a78bd1ad3b956fe1dd2f8df9903791190ef3404d10bf9b69f8341d009
+Abi: 5bf6309df95a7da45e84d8fab556015e84c48cd3153dcf474931a75dd668811d
 Description: A stub package that ensures that Vulkan headers and a loader are available.
     On Android, the NDK provides a loader at API level 24 or higher.

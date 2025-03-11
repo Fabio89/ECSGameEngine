@@ -1,9 +1,9 @@
-Package: vulkan
-Version: 2023-12-17
-Depends: vcpkg-cmake, vulkan-headers, vulkan-loader
+Package: boost-mpl
+Version: 1.85.0
+Port-Version: 1
+Depends: boost-cmake, boost-config, boost-core, boost-headers, boost-predef, boost-preprocessor, boost-static-assert, boost-type-traits, boost-utility
 Architecture: x64-windows
 Multi-Arch: same
-Abi: 6e1bb38a78bd1ad3b956fe1dd2f8df9903791190ef3404d10bf9b69f8341d009
-Description: A stub package that ensures that Vulkan headers and a loader are available.
-    On Android, the NDK provides a loader at API level 24 or higher.
+Abi: 83fb26b6b08a784ee117c3c0724fc8e666eee512f4974d2a30f0bc941e9007ad
+Description: Boost mpl module
 Status: install ok installed

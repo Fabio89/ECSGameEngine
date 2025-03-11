@@ -1,8 +1,9 @@
-Package: glfw3
-Version: 3.4
-Depends: vcpkg-cmake, vcpkg-cmake-config
+Package: boost-throw-exception
+Version: 1.85.0
+Port-Version: 1
+Depends: boost-assert, boost-cmake, boost-config, boost-headers
 Architecture: x64-windows
 Multi-Arch: same
-Abi: eea3da464936c60007e89d49de05bd3227402e3af1592a4d7ed9e560c2f4f500
-Description: GLFW is a free, Open Source, multi-platform library for OpenGL, OpenGL ES and Vulkan application development. It provides a simple, platform-independent API for creating windows, contexts and surfaces, reading input, handling events, etc.
+Abi: 33741b698348d6d05e95e5477da4e7a6b1bd43b5f4ca8d60d8fe0ac12ce136a3
+Description: Boost throw_exception module
 Status: install ok installed

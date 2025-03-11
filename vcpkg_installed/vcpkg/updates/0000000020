@@ -1,6 +1,9 @@
-Package: vcpkg-cmake-config
-Version: 2024-05-23
+Package: boost-type-traits
+Version: 1.85.0
+Port-Version: 1
+Depends: boost-cmake, boost-config, boost-headers, boost-static-assert
 Architecture: x64-windows
 Multi-Arch: same
-Abi: 7647d5d4f32c5488ce526c071a607cea90179d5e7e21f2f260597956e2c1f2bc
+Abi: 6143148976e7d2d137209f3a7326b0f501c1ff44a765a1aede8fa4c90c4ef912
+Description: Boost type_traits module
 Status: install ok half-installed

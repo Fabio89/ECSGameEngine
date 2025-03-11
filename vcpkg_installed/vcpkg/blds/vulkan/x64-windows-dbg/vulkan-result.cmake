@@ -1,5 +1,0 @@
-set(DETECTED_Vulkan_FOUND "TRUE")
-set(DETECTED_Vulkan_VERSION "1.3.280")
-set(DETECTED_Vulkan_INCLUDE_DIRS "C:/Dev/ECSGameEngine/vcpkg_installed/x64-windows/include")
-set(DETECTED_Vulkan_LIBRARIES "C:/Dev/ECSGameEngine/vcpkg_installed/x64-windows/debug/lib/vulkan-1.lib")
-set(DETECTED_ANDROID_NATIVE_API_LEVEL "")
