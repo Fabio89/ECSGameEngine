@@ -6,9 +6,6 @@ module;
 
 export module Engine.Guid;
 
-export template <>
-struct std::hash<boost::uuids::uuid>;
-
 export class Guid
 {
 public:
