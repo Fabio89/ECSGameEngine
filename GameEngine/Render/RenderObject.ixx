@@ -4,8 +4,8 @@ import :Vulkan;
 import Engine.Core;
 import Engine.Guid;
 import Engine.RenderThread;
+import Math;
 import std;
-import <glm/glm.hpp>;
 
 struct Texture
 {
@@ -28,9 +28,9 @@ struct Mesh
 
 struct UniformBufferObject
 {
-    glm::mat4 model{};
-    glm::mat4 view{};
-    glm::mat4 proj{};
+    mat4 model{};
+    mat4 view{};
+    mat4 proj{};
 };
 
 struct RenderObject
@@ -38,8 +38,8 @@ struct RenderObject
     Entity entity{};
     Mesh mesh;
     Texture texture;
-    glm::vec3 location{};
-    glm::vec3 rotation{};
+    vec3 location{};
+    vec3 rotation{};
     float scale{1.f};
     std::vector<vk::Buffer> uniformBuffers;
     std::vector<vk::DeviceMemory> uniformBuffersMemory;
@@ -59,8 +59,8 @@ export namespace RenderMessages
     struct SetTransform
     {
         Entity entity;
-        glm::vec3 location{};
-        glm::vec3 rotation{};
+        vec3 location{};
+        vec3 rotation{};
         float scale{1.f};
     };
 }
@@ -84,7 +84,7 @@ public:
     void addCommand(RenderMessages::SetTransform command);
     void executePendingCommands();
     void addRenderObject(Entity entity, const MeshAsset& meshAsset, const TextureAsset& textureAsset);
-    void setObjectTransform(Entity entity, glm::vec3 location = {}, glm::vec3 rotation = {}, float scale = 1.f);
+    void setObjectTransform(Entity entity, vec3 location = {}, vec3 rotation = {}, float scale = 1.f);
 
     const Mesh& addMesh(MeshData data, Guid guid);
     const Texture& addTexture(const TextureData& textureData, Guid guid);

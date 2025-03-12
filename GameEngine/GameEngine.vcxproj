@@ -229,6 +229,7 @@
         </Lib>
     </ItemDefinitionGroup>
     <ItemGroup>
+        <ClCompile Include="Math.ixx" />
         <ClCompile Include="RenderManager.ixx" />
         <ClCompile Include="AssetManager.ixx"/>
         <ClCompile Include="ComponentRegistry.ixx"/>

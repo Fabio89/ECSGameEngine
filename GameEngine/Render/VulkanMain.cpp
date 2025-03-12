@@ -1,7 +1,6 @@
 module;
-
-#include <cassert>
 #include <cstddef>
+#include <string>
 module Engine.Render.Application;
 
 import Engine.AssetManager;
@@ -136,7 +135,7 @@ void VulkanApplication::addRenderObject(Entity entity, const MeshAsset* mesh, co
     });
 }
 
-void VulkanApplication::setRenderObjectTransform(Entity entity, glm::vec3 location, glm::vec3 rotation, float scale)
+void VulkanApplication::setRenderObjectTransform(Entity entity, vec3 location, vec3 rotation, float scale)
 {
     m_renderObjectManager.addCommand
     ({
@@ -212,9 +211,8 @@ void VulkanApplication::createLogicalDevice()
 
     for (std::optional<uint32_t> queueFamily : uniqueQueueFamilies)
     {
-        assert(queueFamily.has_value());
         if (!queueFamily.has_value())
-            continue;
+            throw std::runtime_error("failed to find a unique queue family!");
 
         queueCreateInfos.emplace_back(vk::DeviceQueueCreateInfo
             {

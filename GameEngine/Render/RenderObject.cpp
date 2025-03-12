@@ -1,7 +1,7 @@
 module;
-#include <glm/gtc/matrix_transform.hpp>
 module Engine.Render.Core;
 import std;
+import std.compat;
 
 void RenderObjectManager::init
 (
@@ -110,16 +110,16 @@ void RenderObjectManager::updateUniformBuffer(RenderObject& object, vk::Extent2D
 {
     static float timeElapsed = 0.f;
 
-    //rotate(glm::mat4(1.0f), timeElapsed * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f))
+    //rotate(mat4(1.0f), timeElapsed * radians(90.0f), vec3(0.0f, 0.0f, 1.0f))
     UniformBufferObject uniformBufferObject
     {
-        .model = rotate(glm::mat4(1), glm::radians(object.rotation.x), {1, 0, 0})
-        * rotate(glm::mat4(1), glm::radians(object.rotation.y), {0, 1, 0})
-        * rotate(glm::mat4(1), glm::radians(object.rotation.z), {0, 0, 1})
-        * translate(glm::mat4(1), object.location)
-        * scale(glm::mat4(1), glm::vec3{object.scale, object.scale, object.scale}),
-        .view = lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
-        .proj = glm::perspective(glm::radians(45.0f),
+        .model = rotate(mat4(1), radians(object.rotation.x), {1, 0, 0})
+        * rotate(mat4(1), radians(object.rotation.y), {0, 1, 0})
+        * rotate(mat4(1), radians(object.rotation.z), {0, 0, 1})
+        * translate(mat4(1), object.location)
+        * scale(mat4(1), vec3{object.scale, object.scale, object.scale}),
+        .view = lookAt(vec3(2.0f, 2.0f, 2.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f)),
+        .proj = perspective(radians(45.0f),
                                  swapchainExtent.width / static_cast<float>(swapchainExtent.height), 0.1f, 10.0f),
     };
     uniformBufferObject.proj[1][1] *= -1;
@@ -130,7 +130,9 @@ void RenderObjectManager::updateUniformBuffer(RenderObject& object, vk::Extent2D
 
 const Mesh& RenderObjectManager::addMesh(MeshData data, Guid guid)
 {
-    assert(m_device);
+    if (!m_device)
+        throw std::runtime_error("RenderObjectManager::addMesh: Device is null");
+    
     Mesh& mesh = m_meshes.emplace_back();
     const RenderUtils::CreateDataBufferInfo vertexBufferInfo
     {
@@ -301,7 +303,7 @@ void RenderObjectManager::addRenderObject(Entity entity, const MeshAsset& meshAs
     std::cout << "Added render object\n\tMesh: " << meshAsset.getGuid() << "\n\tTexture: " << textureAsset.getGuid() << std::endl;
 }
 
-void RenderObjectManager::setObjectTransform(Entity entity, glm::vec3 location, glm::vec3 rotation, float scale)
+void RenderObjectManager::setObjectTransform(Entity entity, vec3 location, vec3 rotation, float scale)
 {
     const auto it = std::ranges::find_if(m_objects, [&](auto&& object) { return object.entity == entity; });
     if (it != m_objects.end())

@@ -5,25 +5,25 @@ import Engine.ComponentRegistry;
 import Engine.Config;
 import Engine.Core;
 import Engine.World;
-import <glm/glm.hpp>;
+import Math;
 
 export struct TransformComponent : Component<TransformComponent>
 {
-    glm::vec3 position;
-    glm::vec3 rotation;
+    vec3 position;
+    vec3 rotation;
     float scale{1.f};
 };
 
 template <>
 TransformComponent deserialize(const Json& data)
 {
-    glm::vec3 position{};
+    vec3 position{};
     if (auto it = data.find("position"); it != data.end())
     {
         position = *it;
     }
 
-    glm::vec3 rotation{};
+    vec3 rotation{};
     if (auto it = data.find("rotation"); it != data.end())
     {
         rotation = *it;

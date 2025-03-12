@@ -7,8 +7,8 @@ import Engine.Components;
 import Engine.ImGui;
 import Engine.Render.Application;
 import Engine.Render.Core;
+import Math;
 import std;
-import <glm/glm.hpp>;
 
 template <typename T>
 void loadAssets(const Json& json, const char* assetName)

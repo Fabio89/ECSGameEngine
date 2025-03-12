@@ -4,8 +4,8 @@ import Engine.DebugWidget;
 import Engine.ImGui;
 import Engine.Render.Core;
 import Engine.RenderManager;
+import Math;
 import std;
-import <glm/glm.hpp>;
 
 export class VulkanApplication final : public IRenderManager
 {
@@ -24,11 +24,11 @@ public:
 
     void addDebugWidget(std::unique_ptr<DebugWidget> widget) override;
     void addRenderObject(Entity entity, const MeshAsset* mesh, const TextureAsset* texture) override;
-    void setRenderObjectTransform(Entity entity, glm::vec3 location, glm::vec3 rotation, float scale = 1.f) override;
+    void setRenderObjectTransform(Entity entity, vec3 location, vec3 rotation, float scale = 1.f) override;
 
 private:
     RenderObjectManager m_renderObjectManager;
-    glm::ivec2 m_windowSize{800, 600};
+    ivec2 m_windowSize{800, 600};
     GLFWwindow* m_window{};
     vk::Instance m_instance{};
     vk::PhysicalDevice m_physicalDevice{};

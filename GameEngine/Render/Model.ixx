@@ -4,14 +4,13 @@ module;
 #include <External/MeshLoading/tiny_obj_loader.h>
 
 #define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
-#include <glm/gtx/hash.hpp>
 #include <windows.h>
 
 export module Engine.Render.Core:Model;
 import :Vulkan;
 import Engine.AssetManager;
 import Engine.Config;
+import Math;
 import std;
 
 using IdType = size_t;
@@ -21,8 +20,8 @@ export using MeshGuid = GUID;
 
 export struct Vertex
 {
-    glm::vec3 pos;
-    glm::vec2 uv;
+    vec3 pos;
+    vec2 uv;
 };
 
 bool operator==(const Vertex& a, const Vertex& b)
@@ -35,8 +34,8 @@ struct std::hash<Vertex>
 {
     size_t operator()(Vertex const& vertex) const noexcept
     {
-        return ((hash<decltype(vertex.pos)>()(vertex.pos) ^
-            (hash<decltype(vertex.uv)>()(vertex.uv) << 1)) >> 1);
+        return ((hash_vector(vertex.pos) ^
+            (hash_vector(vertex.uv) << 1)) >> 1);
     }
 };
 

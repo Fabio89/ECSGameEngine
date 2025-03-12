@@ -3,13 +3,13 @@ module;
 #include <windows.h>
 export module Engine.Config;
 import Engine.Guid;
+import Math;
 import std;
 import <External/Json/json.hpp>;
-import <glm/glm.hpp>;
 
 export struct ApplicationSettings
 {
-    glm::ivec2 resolution{800, 600};
+    ivec2 resolution{800, 600};
     float targetFps{120.f};
     int numThreads{6};
 };
