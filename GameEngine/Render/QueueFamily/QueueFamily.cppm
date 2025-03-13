@@ -1,6 +1,6 @@
 module;
 #include <cstdint>
-export module Engine.Render.Core:QueueFamily;
+export module Engine:Render.QueueFamily;
 import vulkan_hpp;
 import std;
 

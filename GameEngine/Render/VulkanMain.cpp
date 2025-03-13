@@ -1,11 +1,7 @@
 module;
 #include <cstddef>
 #include <string>
-module Engine.Render.Application;
-
-import Engine.AssetManager;
-import Engine.Config;
-import Engine.Core;
+module Engine;
 
 VulkanApplication::~VulkanApplication() noexcept
 {

@@ -1,6 +1,4 @@
-module Engine.RenderThread;
-import Engine.Render.Application;
-import Engine.RenderManager;
+module Engine;
 
 void renderThreadFunc(RenderThreadParams params, RenderThreadState& sharedState)
 {

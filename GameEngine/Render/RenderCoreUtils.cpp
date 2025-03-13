@@ -4,8 +4,7 @@ module;
 #include <vulkan/vulkan_core.h>
 #include <vulkan/vk_platform.h>
 
-module Engine.Render.Core;
-import std.compat;
+module Engine;
 
 [[nodiscard]] uint32_t RenderUtils::findMemoryType(vk::PhysicalDevice physicalDevice, uint32_t typeFilter,
                                                    vk::MemoryPropertyFlags properties)

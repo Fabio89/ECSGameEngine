@@ -1,0 +1,58 @@
+export module Engine:Component.Transform;
+import :Render.Application;
+import :ComponentRegistry;
+import :Config;
+import :Core;
+import :World;
+import :Math;
+
+export struct TransformComponent : Component<TransformComponent>
+{
+    vec3 position;
+    vec3 rotation;
+    float scale{1.f};
+};
+
+template <>
+TransformComponent deserialize(const JsonObject& data)
+{
+    const vec3 position = parseVec3(data, "position").value_or(vec3{});
+    const vec3 rotation = parseVec3(data, "rotation").value_or(vec3{});
+    
+    float scale{1.f};
+    if (const auto it = data.FindMember("scale"); it != data.MemberEnd())
+    {
+        scale = it->value.GetFloat();
+    }
+
+    return
+    {
+        .position = position,
+        .rotation = rotation,
+        .scale = scale
+    };
+}
+
+export class TransformSystem : public System
+{
+public:
+    void onComponentAdded(World& world, Entity entity, ComponentTypeId componentType) override
+    {
+        if (componentType == TransformComponent::typeId)
+        {
+            updateRenderTransform(world, entity);
+
+            addUpdateFunction([&world, entity](float)
+            {
+                updateRenderTransform(world, entity);
+            });
+        }
+    }
+
+private:
+    static void updateRenderTransform(World& world, Entity entity)
+    {
+        const auto& component = world.readComponent<TransformComponent>(entity);
+        world.getRenderManager().setRenderObjectTransform(entity, component.position, component.rotation, component.scale);
+    }
+};

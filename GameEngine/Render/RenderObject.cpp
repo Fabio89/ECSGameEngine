@@ -1,7 +1,5 @@
 module;
-module Engine.Render.Core;
-import std;
-import std.compat;
+module Engine;
 
 void RenderObjectManager::init
 (

@@ -1,15 +1,6 @@
-module Engine.World;
-
-import Engine.AssetManager;
-import Engine.ComponentRegistry;
-import Engine.Config;
-import Engine.Guid;
-import Engine.Components;
-import Engine.ImGui;
-import Engine.Render.Application;
-import Engine.Render.Core;
-import Math;
-import std;
+module Engine:World;
+import :Config;
+import :AssetManager;
 
 template <typename T>
 void loadAssets(const JsonObject& json, const char* assetName)
