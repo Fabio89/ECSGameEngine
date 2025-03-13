@@ -1,6 +1,6 @@
 module;
 export module Engine:ImGui;
-import :DebugWidget;
+import :IDebugWidget;
 import :Render.Vulkan;
 import std;
 
@@ -25,7 +25,7 @@ public:
     template <typename T>
     void addWidget() { m_debugWidgets.emplace_back(std::make_unique<T>()); }
 
-    void addWidget(std::unique_ptr<DebugWidget> widget) { m_debugWidgets.emplace_back(std::move(widget)); }
+    void addWidget(std::unique_ptr<IDebugWidget> widget) { m_debugWidgets.emplace_back(std::move(widget)); }
     
     void drawFrame();
     void renderFrame(vk::CommandBuffer commandBuffer);
@@ -34,5 +34,5 @@ public:
 private:
     vk::Device m_device{};
     vk::DescriptorPool m_descriptorPool{};
-    std::vector<std::unique_ptr<DebugWidget>> m_debugWidgets;
+    std::vector<std::unique_ptr<IDebugWidget>> m_debugWidgets;
 };

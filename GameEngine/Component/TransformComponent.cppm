@@ -1,10 +1,7 @@
 export module Engine:Component.Transform;
 import :Render.Application;
-import :ComponentRegistry;
-import :Config;
-import :Core;
+import :System;
 import :World;
-import :Math;
 
 export struct TransformComponent : Component<TransformComponent>
 {

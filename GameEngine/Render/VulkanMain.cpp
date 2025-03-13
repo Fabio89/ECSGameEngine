@@ -142,7 +142,7 @@ void VulkanApplication::setRenderObjectTransform(Entity entity, vec3 location, v
     });
 }
 
-void VulkanApplication::addDebugWidget(std::unique_ptr<DebugWidget> widget)
+void VulkanApplication::addDebugWidget(std::unique_ptr<IDebugWidget> widget)
 {
     m_imguiHelper.addWidget(std::move(widget));
 }

@@ -46,9 +46,28 @@ export inline void hash_combine(size_t &seed, size_t hash)
 	seed ^= hash;
 }
 
-export template<int N, typename T, qualifier Q>
-size_t hash_value(const vec<N, T, Q>& v)
+export template<typename T, qualifier Q>
+size_t hash_value(const vec<2, T, Q>& v)
 {
-	return std::hash<vec<N, T, Q>>()(v);
+	auto hasher = std::hash<T>{};
+	auto seed = hasher(v.x);
+	hash_combine(seed, hasher(v.y));
+	return seed;
 }
+
+export template<typename T, qualifier Q>
+size_t hash_value(const vec<3, T, Q>& v)
+{
+	auto hasher = std::hash<T>{};
+	auto seed = hasher(v.x);
+	hash_combine(seed, hasher(v.y));
+	hash_combine(seed, hasher(v.z));
+	return seed;
+}
+//
+// export template<int N, typename T, qualifier Q>
+// size_t hash_value(const vec<N, T, Q>& v)
+// {
+// 	return std::hash<vec<N, T, Q>>()(v);
+// }
 

@@ -6,6 +6,7 @@ import :Render.Model;
 import :Core;
 import :Guid;
 import :Config;
+import :System;
 import :World;
 
 export struct ModelComponent : Component<ModelComponent>

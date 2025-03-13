@@ -1,6 +1,6 @@
 export module Engine:Render.Application;
 
-import :DebugWidget;
+import :IDebugWidget;
 import :ImGui;
 import :RenderManager;
 import :Render.RenderObject;
@@ -22,7 +22,7 @@ public:
     void shutdown();
     bool shouldWindowClose() const;
 
-    void addDebugWidget(std::unique_ptr<DebugWidget> widget) override;
+    void addDebugWidget(std::unique_ptr<IDebugWidget> widget) override;
     void addRenderObject(Entity entity, const MeshAsset* mesh, const TextureAsset* texture) override;
     void setRenderObjectTransform(Entity entity, vec3 location, vec3 rotation, float scale = 1.f) override;
 

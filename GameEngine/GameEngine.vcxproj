@@ -45,7 +45,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>$(ProjectDir);$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <ExecutablePath>$(VC_ExecutablePath_x64);$(CommonExecutablePath)</ExecutablePath>
     <ExternalIncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)External\Json</ExternalIncludePath>
@@ -71,13 +71,13 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <EnableModules>true</EnableModules>
       <UndefinePreprocessorDefinitions>
       </UndefinePreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(VK_SDK_PATH)\Include;$(SolutionDir)\vcpkg_installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VK_SDK_PATH)\Include;$(SolutionDir)\vcpkg_installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RemoveUnreferencedCodeData>false</RemoveUnreferencedCodeData>
       <PreprocessorDefinitions></PreprocessorDefinitions>
       <FloatingPointModel>Fast</FloatingPointModel>
+      <TranslateIncludes>true</TranslateIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -126,6 +126,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Editor\IDebugWidget.cppm" />
     <ClCompile Include="Engine.cppm" />
     <ClCompile Include="Math.cppm" />
     <ClCompile Include="AssetManager.cppm" />
@@ -158,6 +159,7 @@
     <ClCompile Include="Render\VulkanMain.cpp" />
     <ClCompile Include="Render\VulkanMain.cppm" />
     <ClCompile Include="Render\QueueFamily\QueueFamily.cppm" />
+    <ClCompile Include="System.cppm" />
     <ClCompile Include="World.cpp" />
     <ClCompile Include="World.cppm" />
     <ClCompile Include="EngineDecl.cppm" />

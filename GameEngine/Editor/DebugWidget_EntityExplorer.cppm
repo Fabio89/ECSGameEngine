@@ -6,7 +6,6 @@ import :Component.Name;
 import :Component.Model;
 import :Component.Transform;
 import :DebugWidget;
-import :World;
 import :Core;
 import std;
 
@@ -18,7 +17,7 @@ export namespace DebugWidgets
         using DebugWidget::DebugWidget;
 
     private:
-        void draw(World&) override
+        void doDraw(World&) override
         {
             if (m_showDemoWindow)
                 ImGui::ShowDemoWindow(&m_showDemoWindow);
@@ -33,7 +32,7 @@ export namespace DebugWidgets
         using DebugWidget::DebugWidget;
 
     private:
-        void draw(World& world) override
+        void doDraw(World& world) override
         {
             static float splitRatio = 0.5f; // The initial ratio of the split
             static float splitterSize = 5.0f; // The size of the splitter

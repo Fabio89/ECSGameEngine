@@ -1,14 +1,20 @@
 export module Engine:World;
 
+import :Config;
 import :Core;
 import :Decl;
 import :Job;
 import :RenderManager;
-import std;
+import :System;
 
 export class World;
 
 static constexpr int maxComponentsPerEntity = 64;
+
+export size_t getSuperHash(int val)
+{
+    return std::hash<int>()(val);
+}
 
 struct EntitySignature
 {
@@ -17,27 +23,15 @@ struct EntitySignature
 };
 
 template <>
+struct std::hash<EntitySignature>;
+
+template <>
 struct std::hash<EntitySignature>
 {
     size_t operator()(const EntitySignature& a) const noexcept
     {
         return hash<bitset<maxComponentsPerEntity>>()(a.bitset);
     }
-};
-
-export class System
-{
-public:
-    virtual ~System() = default;
-    virtual void update(float deltaTime);
-    void addUpdateFunction(std::function<void(float)> func);
-
-    virtual void onComponentAdded(World&, Entity, ComponentTypeId)
-    {
-    }
-
-private:
-    std::vector<std::function<void(float)>> m_updateFunctions;
 };
 
 export class World
@@ -149,7 +143,7 @@ public:
     IRenderManager& getRenderManager() { return m_renderManager.get(); }
 
 private:
-    void addDebugWidget(std::unique_ptr<DebugWidget> widget);
+    void addDebugWidget(std::unique_ptr<IDebugWidget> widget);
     const Archetype& readArchetype(const EntitySignature& signature) const;
     Archetype& editArchetype(const EntitySignature& signature);
     Archetype& editOrCreateArchetype(const EntitySignature& signature);
