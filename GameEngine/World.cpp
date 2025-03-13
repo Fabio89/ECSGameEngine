@@ -1,15 +1,7 @@
-module Engine.World;
-
-import Engine.AssetManager;
-import Engine.ComponentRegistry;
-import Engine.Config;
-import Engine.Guid;
-import Engine.Components;
-import Engine.ImGui;
-import Engine.Render.Application;
-import Engine.Render.Core;
-import Math;
-import std;
+module Engine:World;
+import :AssetManager;
+import :Components;
+import :System;
 
 template <typename T>
 void loadAssets(const JsonObject& json, const char* assetName)
@@ -80,7 +72,7 @@ Entity World::createEntity()
     return entity;
 }
 
-void World::addDebugWidget(std::unique_ptr<DebugWidget> widget)
+void World::addDebugWidget(std::unique_ptr<IDebugWidget> widget)
 {
     m_renderManager.get().addDebugWidget(std::move(widget));
 }
