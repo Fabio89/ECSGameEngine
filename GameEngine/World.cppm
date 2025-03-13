@@ -4,7 +4,7 @@ import :Config;
 import :Core;
 import :Decl;
 import :Job;
-import :RenderManager;
+import :Render.IRenderManager;
 import :System;
 
 export class World;

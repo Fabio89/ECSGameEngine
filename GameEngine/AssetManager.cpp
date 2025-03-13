@@ -1,4 +1,4 @@
-module Engine;
+module Engine:AssetManager;
 
 AssetBase::AssetBase(const JsonObject& serializedData)
 {

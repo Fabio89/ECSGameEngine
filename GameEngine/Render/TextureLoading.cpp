@@ -3,7 +3,9 @@ module;
 #define STB_IMAGE_IMPLEMENTATION
 #include <External/TextureLoading/stb_image.h>
 
-module Engine;
+module Engine:Render.TextureLoading;
+import :Render.TextureLoading;
+import :Render.Utils;
 
 // Create a Vulkan image
 [[nodiscard]] std::tuple<vk::Image, vk::DeviceMemory>

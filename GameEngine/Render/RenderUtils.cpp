@@ -1,10 +1,15 @@
 module;
 
 #include <cassert>
+#include <cstring>
 #include <vulkan/vulkan_core.h>
 #include <vulkan/vk_platform.h>
 
-module Engine;
+module Engine:Render.Utils;
+import :Render.Utils;
+import :Render.QueueFamily;
+import :Render.Vulkan;
+import std;
 
 [[nodiscard]] uint32_t RenderUtils::findMemoryType(vk::PhysicalDevice physicalDevice, uint32_t typeFilter,
                                                    vk::MemoryPropertyFlags properties)

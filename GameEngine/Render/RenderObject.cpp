@@ -1,5 +1,7 @@
-module;
-module Engine;
+module Engine:Render.RenderObject;
+import :Render.RenderObject;
+import :Render.TextureLoading;
+import :Render.Vulkan;
 
 void RenderObjectManager::init
 (

@@ -72,7 +72,7 @@
       <AdditionalIncludeDirectories>$(VK_SDK_PATH)\Include; %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>false</TreatWarningAsError>
       <BuildStlModules>true</BuildStlModules>
-      <AdditionalModuleDependencies></AdditionalModuleDependencies>
+      <AdditionalModuleDependencies>C:\Dev\ECSGameEngine\SharedModules\Engine.cppm.ifc</AdditionalModuleDependencies>
       <AdditionalHeaderUnitDependencies>
       </AdditionalHeaderUnitDependencies>
       <UndefinePreprocessorDefinitions></UndefinePreprocessorDefinitions>

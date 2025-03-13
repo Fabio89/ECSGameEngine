@@ -1,7 +1,7 @@
 export module Engine:Component.Model;
 import :AssetManager;
 import :ComponentRegistry;
-import :Render.Application;
+import :Render.RenderManager;
 import :Render.Model;
 import :Core;
 import :Guid;

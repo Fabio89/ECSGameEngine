@@ -3,7 +3,7 @@ module;
 #pragma warning(disable : 5105)
 #include <windows.h>
 
-export module Engine:Render.Thread;
+export module Engine:Render.RenderThread;
 import :Core;
 import std;
 

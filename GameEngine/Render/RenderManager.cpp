@@ -1,9 +1,12 @@
 module;
-#include <cstddef>
-#include <string>
-module Engine;
 
-VulkanApplication::~VulkanApplication() noexcept
+module Engine:Render.RenderManager;
+import :Render.QueueFamily;
+import :Render.TextureLoading;
+import std.compat;
+import <cstddef>;
+
+RenderManager::~RenderManager() noexcept
 {
     if (!m_terminated)
     {
@@ -11,7 +14,7 @@ VulkanApplication::~VulkanApplication() noexcept
     }
 }
 
-void VulkanApplication::init()
+void RenderManager::init()
 {
     m_windowSize = Config::getApplicationSettings().resolution;
     
@@ -70,7 +73,7 @@ void VulkanApplication::init()
                        m_graphicsQueue, m_commandPool);
 }
 
-void VulkanApplication::update(float deltaTime)
+void RenderManager::update(float deltaTime)
 {
     m_graphicsQueue.waitIdle(); // TODO: Optimization target. Explore VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT.
     glfwPollEvents();
@@ -78,7 +81,7 @@ void VulkanApplication::update(float deltaTime)
     drawFrame(deltaTime);
 }
 
-void VulkanApplication::shutdown()
+void RenderManager::shutdown()
 {
     m_terminated = true;
     m_device.waitIdle();
@@ -116,12 +119,12 @@ void VulkanApplication::shutdown()
     glfwTerminate();
 }
 
-bool VulkanApplication::shouldWindowClose() const
+bool RenderManager::shouldWindowClose() const
 {
     return glfwWindowShouldClose(m_window);
 }
 
-void VulkanApplication::addRenderObject(Entity entity, const MeshAsset* mesh, const TextureAsset* texture)
+void RenderManager::addRenderObject(Entity entity, const MeshAsset* mesh, const TextureAsset* texture)
 {
     m_renderObjectManager.addCommand
     ({
@@ -131,7 +134,7 @@ void VulkanApplication::addRenderObject(Entity entity, const MeshAsset* mesh, co
     });
 }
 
-void VulkanApplication::setRenderObjectTransform(Entity entity, vec3 location, vec3 rotation, float scale)
+void RenderManager::setRenderObjectTransform(Entity entity, vec3 location, vec3 rotation, float scale)
 {
     m_renderObjectManager.addCommand
     ({
@@ -142,12 +145,12 @@ void VulkanApplication::setRenderObjectTransform(Entity entity, vec3 location, v
     });
 }
 
-void VulkanApplication::addDebugWidget(std::unique_ptr<IDebugWidget> widget)
+void RenderManager::addDebugWidget(std::unique_ptr<IDebugWidget> widget)
 {
     m_imguiHelper.addWidget(std::move(widget));
 }
 
-void VulkanApplication::createInstance()
+void RenderManager::createInstance()
 {
     if constexpr (vk::EnableValidationLayers)
         if (!checkValidationLayerSupport())
@@ -187,13 +190,13 @@ void VulkanApplication::createInstance()
     vk::defaultDispatchLoaderDynamic.init(m_instance);
 }
 
-void VulkanApplication::createSurface()
+void RenderManager::createSurface()
 {
     if (glfw::createWindowSurface(m_instance, m_window, nullptr, &m_surface) != vk::Result::eSuccess)
         throw std::runtime_error("failed to create window surface!");
 }
 
-void VulkanApplication::createLogicalDevice()
+void RenderManager::createLogicalDevice()
 {
     const QueueFamilyIndices indices = QueueFamilyUtils::findQueueFamilies(m_physicalDevice, m_surface);
 
@@ -264,7 +267,7 @@ void VulkanApplication::createLogicalDevice()
     m_transferQueue = m_device.getQueue(*indices.get(QueueFamilyType::Transfer), 0);
 }
 
-void VulkanApplication::recreateSwapchain()
+void RenderManager::recreateSwapchain()
 {
     int width = 0, height = 0;
     glfwGetFramebufferSize(m_window, &width, &height);
@@ -284,7 +287,7 @@ void VulkanApplication::recreateSwapchain()
     createFramebuffers();
 }
 
-void VulkanApplication::createSwapchain()
+void RenderManager::createSwapchain()
 {
     const RenderUtils::SwapChainSupportDetails swapChainSupport = RenderUtils::querySwapChainSupport(
         m_physicalDevice, m_surface);
@@ -344,7 +347,7 @@ void VulkanApplication::createSwapchain()
     m_swapchainExtent = extent;
 }
 
-void VulkanApplication::createImageViews()
+void RenderManager::createImageViews()
 {
     m_swapChainImageViews.resize(m_swapChainImages.size());
 
@@ -355,7 +358,7 @@ void VulkanApplication::createImageViews()
     }
 }
 
-void VulkanApplication::createRenderPass()
+void RenderManager::createRenderPass()
 {
     const vk::AttachmentDescription colorAttachment
     {
@@ -432,7 +435,7 @@ void VulkanApplication::createRenderPass()
     }
 }
 
-void VulkanApplication::createDescriptorSetLayout()
+void RenderManager::createDescriptorSetLayout()
 {
     static constexpr vk::DescriptorSetLayoutBinding layoutBinding
     {
@@ -466,7 +469,7 @@ void VulkanApplication::createDescriptorSetLayout()
     }
 }
 
-void VulkanApplication::createGraphicsPipeline()
+void RenderManager::createGraphicsPipeline()
 {
     auto vertShaderCode = RenderUtils::readFile(Config::getExecutableRoot() + "Shaders/vert.spv");
     auto fragShaderCode = RenderUtils::readFile(Config::getExecutableRoot() + "Shaders/frag.spv");
@@ -670,7 +673,7 @@ void VulkanApplication::createGraphicsPipeline()
     m_device.destroyShaderModule(vertShaderModule, nullptr);
 }
 
-void VulkanApplication::createFramebuffers()
+void RenderManager::createFramebuffers()
 {
     m_swapChainFramebuffers.resize(m_swapChainImageViews.size());
 
@@ -696,7 +699,7 @@ void VulkanApplication::createFramebuffers()
     }
 }
 
-void VulkanApplication::cleanupSwapchain() const
+void RenderManager::cleanupSwapchain() const
 {
     for (vk::Framebuffer framebuffer : m_swapChainFramebuffers)
         m_device.destroyFramebuffer(framebuffer);
@@ -711,7 +714,7 @@ void VulkanApplication::cleanupSwapchain() const
     m_device.freeMemory(m_depthImageMemory);
 }
 
-void VulkanApplication::createCommandPool()
+void RenderManager::createCommandPool()
 {
     const QueueFamilyIndices queueFamilyIndices = QueueFamilyUtils::findQueueFamilies(m_physicalDevice, m_surface);
 
@@ -741,7 +744,7 @@ void VulkanApplication::createCommandPool()
     }
 }
 
-void VulkanApplication::createCommandBuffers()
+void RenderManager::createCommandBuffers()
 {
     const vk::CommandBufferAllocateInfo allocInfo
     {
@@ -757,7 +760,7 @@ void VulkanApplication::createCommandBuffers()
     }
 }
 
-void VulkanApplication::createSyncObjects()
+void RenderManager::createSyncObjects()
 {
     constexpr vk::FenceCreateInfo fenceInfo
     {
@@ -783,7 +786,7 @@ void VulkanApplication::createSyncObjects()
     }
 }
 
-void VulkanApplication::createDescriptorPool()
+void RenderManager::createDescriptorPool()
 {
     static constexpr uint32_t count = MaxFramesInFlight;
     static constexpr std::array poolSizes
@@ -803,7 +806,7 @@ void VulkanApplication::createDescriptorPool()
     m_descriptorPool = m_device.createDescriptorPool(poolInfo, nullptr);
 }
 
-void VulkanApplication::pickPhysicalDevice()
+void RenderManager::pickPhysicalDevice()
 {
     const std::vector<vk::PhysicalDevice> devices = m_instance.enumeratePhysicalDevices();
     if (devices.empty())
@@ -840,7 +843,7 @@ void VulkanApplication::pickPhysicalDevice()
     }
 }
 
-bool VulkanApplication::checkValidationLayerSupport()
+bool RenderManager::checkValidationLayerSupport()
 {
     const std::vector<vk::LayerProperties> availableLayers = vk::enumerateInstanceLayerProperties();
 
@@ -853,7 +856,7 @@ bool VulkanApplication::checkValidationLayerSupport()
     return std::ranges::all_of(RenderUtils::ValidationLayers, isLayerAvailable);
 }
 
-void VulkanApplication::drawFrame(float deltaTime)
+void RenderManager::drawFrame(float deltaTime)
 {
     const vk::Fence fence = m_inFlightFences[m_currentFrame];
     const vk::Semaphore imageAvailableSemaphore = m_imageAvailableSemaphores[m_currentFrame];
@@ -995,7 +998,7 @@ void VulkanApplication::drawFrame(float deltaTime)
     m_currentFrame = (m_currentFrame + 1) % MaxFramesInFlight;
 }
 
-std::vector<const char*> VulkanApplication::getRequiredExtensions()
+std::vector<const char*> RenderManager::getRequiredExtensions()
 {
     uint32_t glfwExtensionCount = 0;
     const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
@@ -1010,13 +1013,13 @@ std::vector<const char*> VulkanApplication::getRequiredExtensions()
     return extensions;
 }
 
-void VulkanApplication::framebufferResizeCallback(GLFWwindow* window, [[maybe_unused]] int width, [[maybe_unused]] int height)
+void RenderManager::framebufferResizeCallback(GLFWwindow* window, [[maybe_unused]] int width, [[maybe_unused]] int height)
 {
-    auto app = static_cast<VulkanApplication*>(glfwGetWindowUserPointer(window));
+    auto app = static_cast<RenderManager*>(glfwGetWindowUserPointer(window));
     app->m_framebufferResized = true;
 }
 
-void VulkanApplication::createDepthResources()
+void RenderManager::createDepthResources()
 {
     const vk::Format depthFormat = RenderUtils::findDepthFormat(m_physicalDevice);
     std::tie(m_depthImage, m_depthImageMemory) = RenderUtils::createImage

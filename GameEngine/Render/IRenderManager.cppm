@@ -1,4 +1,4 @@
-export module Engine:RenderManager;
+export module Engine:Render.IRenderManager;
 import :IDebugWidget;
 import :Decl;
 import :Render.Model;

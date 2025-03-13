@@ -1,7 +1,7 @@
 export module Engine:Render.RenderObject;
 import :Decl;
 import :Render.Model;
-import :Render.Thread;
+import :Render.RenderThread;
 import std;
 
 struct Texture

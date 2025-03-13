@@ -1,21 +1,21 @@
-export module Engine:Render.Application;
+export module Engine:Render.RenderManager;
 
 import :IDebugWidget;
 import :ImGui;
-import :RenderManager;
+import :Render.IRenderManager;
 import :Render.RenderObject;
 import :Math;
 import std;
 
-export class VulkanApplication final : public IRenderManager
+export class RenderManager final : public IRenderManager
 {
 public:
-    VulkanApplication() = default;
-    ~VulkanApplication() override;
-    VulkanApplication(const VulkanApplication&) = delete;
-    VulkanApplication(VulkanApplication&&) = delete;
-    VulkanApplication& operator=(const VulkanApplication&) = delete;
-    VulkanApplication& operator=(VulkanApplication&&) = delete;
+    RenderManager() = default;
+    ~RenderManager() override;
+    RenderManager(const RenderManager&) = delete;
+    RenderManager(RenderManager&&) = delete;
+    RenderManager& operator=(const RenderManager&) = delete;
+    RenderManager& operator=(RenderManager&&) = delete;
     
     void init();
     void update(float deltaTime);

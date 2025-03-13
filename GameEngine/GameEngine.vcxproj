@@ -75,9 +75,9 @@
       </UndefinePreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(VK_SDK_PATH)\Include;$(SolutionDir)\vcpkg_installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RemoveUnreferencedCodeData>false</RemoveUnreferencedCodeData>
-      <PreprocessorDefinitions></PreprocessorDefinitions>
       <FloatingPointModel>Fast</FloatingPointModel>
       <TranslateIncludes>true</TranslateIncludes>
+      <BuildStlModules>true</BuildStlModules>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -126,43 +126,43 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Editor\IDebugWidget.cppm" />
-    <ClCompile Include="Engine.cppm" />
-    <ClCompile Include="Math.cppm" />
+    <ClCompile Include="AssetManager.cpp" />
     <ClCompile Include="AssetManager.cppm" />
     <ClCompile Include="ComponentRegistry.cppm" />
     <ClCompile Include="Component\EngineComponents.cppm" />
     <ClCompile Include="Component\ModelComponent.cppm" />
     <ClCompile Include="Component\NameComponent.cppm" />
     <ClCompile Include="Component\TransformComponent.cppm" />
-    <ClCompile Include="AssetManager.cpp" />
     <ClCompile Include="Config.cppm" />
+    <ClCompile Include="Core.cppm" />
     <ClCompile Include="Editor\DebugWidget.cppm" />
     <ClCompile Include="Editor\DebugWidget_EntityExplorer.cppm" />
+    <ClCompile Include="Editor\IDebugWidget.cppm" />
     <ClCompile Include="Editor\ImGui.cpp" />
     <ClCompile Include="Editor\ImGui.cppm" />
-    <ClCompile Include="Core.cppm" />
+    <ClCompile Include="Engine.cppm" />
+    <ClCompile Include="EngineDecl.cppm" />
     <ClCompile Include="ExternalModules\vulkan.cppm" />
     <ClCompile Include="Guid.cppm" />
     <ClCompile Include="Job.cppm" />
-    <ClCompile Include="RenderManager.cppm" />
+    <ClCompile Include="Math.cppm" />
+    <ClCompile Include="Render\IRenderManager.cppm"/>
     <ClCompile Include="Render\Model.cppm" />
-    <ClCompile Include="Render\RenderThread.cpp" />
-    <ClCompile Include="Render\RenderThread.cppm" />
-    <ClCompile Include="Render\RenderCoreUtils.cpp" />
-    <ClCompile Include="Render\RenderCoreUtils.cppm" />
+    <ClCompile Include="Render\QueueFamily\QueueFamily.cppm" />
+    <ClCompile Include="Render\RenderManager.cpp" />
+    <ClCompile Include="Render\RenderManager.cppm" />
     <ClCompile Include="Render\RenderObject.cpp" />
     <ClCompile Include="Render\RenderObject.cppm" />
+    <ClCompile Include="Render\RenderThread.cpp" />
+    <ClCompile Include="Render\RenderThread.cppm" />
+    <ClCompile Include="Render\RenderUtils.cpp" />
+    <ClCompile Include="Render\RenderUtils.cppm" />
     <ClCompile Include="Render\TextureLoading.cpp" />
     <ClCompile Include="Render\TextureLoading.cppm" />
     <ClCompile Include="Render\VulkanIntegration.cppm" />
-    <ClCompile Include="Render\VulkanMain.cpp" />
-    <ClCompile Include="Render\VulkanMain.cppm" />
-    <ClCompile Include="Render\QueueFamily\QueueFamily.cppm" />
     <ClCompile Include="System.cppm" />
     <ClCompile Include="World.cpp" />
     <ClCompile Include="World.cppm" />
-    <ClCompile Include="EngineDecl.cppm" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Render\Shaders\Shader.frag" />

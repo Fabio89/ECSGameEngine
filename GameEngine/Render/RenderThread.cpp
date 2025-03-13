@@ -1,10 +1,11 @@
-module Engine;
+module Engine:Render.RenderThread;
+import :Render.RenderManager;
 
 void renderThreadFunc(RenderThreadParams params, RenderThreadState& sharedState)
 {
     try
     {
-        VulkanApplication application;
+        RenderManager application;
         application.init();
         sharedState.renderManager = &application;
         sharedState.initialised = true;

@@ -1,5 +1,5 @@
 export module Engine:Component.Transform;
-import :Render.Application;
+import :Render.RenderManager;
 import :System;
 import :World;
 
