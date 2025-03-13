@@ -2,7 +2,9 @@ module;
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
+
 module Engine:ImGui;
+import :ImGui;
 import :Render.QueueFamily;
 
 void ImGuiHelper::init(GLFWwindow* window, const ImGuiInitInfo& initInfo)
@@ -26,12 +28,12 @@ void ImGuiHelper::init(GLFWwindow* window, const ImGuiInitInfo& initInfo)
     // Init ImGui
     ImGui_ImplGlfw_InitForVulkan(window, true);
 
-    constexpr std::array imguiPoolSizes
+    static constexpr std::array imguiPoolSizes
     {
         vk::DescriptorPoolSize{vk::DescriptorType::eCombinedImageSampler, 1},
     };
 
-    const vk::DescriptorPoolCreateInfo imguiPoolInfo
+    static constexpr vk::DescriptorPoolCreateInfo imguiPoolInfo
     {
         .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
         .maxSets = static_cast<uint32_t>(MaxFramesInFlight),

@@ -1,5 +1,4 @@
 export module Engine:Job;
-
 import std;
 
 export class JobSystem

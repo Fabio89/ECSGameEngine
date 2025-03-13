@@ -2,8 +2,8 @@ module;
 
 #include <cassert>
 #include <cstring>
-#include <vulkan/vulkan_core.h>
 #include <vulkan/vk_platform.h>
+#include <vulkan/vulkan_core.h>
 
 module Engine:Render.Utils;
 import :Render.Utils;

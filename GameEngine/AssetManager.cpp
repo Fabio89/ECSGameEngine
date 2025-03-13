@@ -1,5 +1,7 @@
 module Engine:AssetManager;
 
+import :AssetManager;
+
 AssetBase::AssetBase(const JsonObject& serializedData)
 {
     if (const auto id = parseString(serializedData, "id"))

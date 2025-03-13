@@ -1,5 +1,3 @@
-module;
-
 export module Engine:AssetManager;
 import :Config;
 import :Guid;

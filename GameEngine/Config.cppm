@@ -1,7 +1,7 @@
 module;
+
 //#pragma warning(disable : 5105)
 #include <windows.h>
-
 #include "rapidjson/document.h"
 #include "rapidjson/istreamwrapper.h"
 

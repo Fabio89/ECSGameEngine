@@ -1,5 +1,4 @@
 export module Engine:ComponentRegistry;
-
 import :Config;
 import :Core;
 import :World;

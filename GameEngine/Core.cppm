@@ -1,6 +1,4 @@
-module;
 export module Engine:Core;
-
 import :Decl;
 import std;
 

@@ -1,10 +1,13 @@
 module;
 
+#include <cstddef>
+#include <string>
+
 module Engine:Render.RenderManager;
+import :Render.RenderManager;
 import :Render.QueueFamily;
 import :Render.TextureLoading;
-import std.compat;
-import <cstddef>;
+import :Render.Utils;
 
 RenderManager::~RenderManager() noexcept
 {

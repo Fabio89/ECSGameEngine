@@ -1,5 +1,4 @@
 export module Engine:Render.RenderManager;
-
 import :IDebugWidget;
 import :ImGui;
 import :Render.IRenderManager;

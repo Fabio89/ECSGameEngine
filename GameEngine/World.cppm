@@ -1,5 +1,4 @@
 export module Engine:World;
-
 import :Config;
 import :Core;
 import :Decl;
