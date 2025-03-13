@@ -64,7 +64,7 @@ namespace Config
         {
             std::string buffer;
             buffer.resize(MAX_PATH);
-            GetModuleFileName(nullptr, buffer.data(), MAX_PATH);
+            GetModuleFileNameA(nullptr, buffer.data(), MAX_PATH);
             auto pos = buffer.find_last_of("\\/") + 1;
             return std::filesystem::canonical(buffer.substr(0, pos)).generic_string() + "/";
         }();
