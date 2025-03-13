@@ -1,11 +1,14 @@
 module;
 //#pragma warning(disable : 5105)
 #include <windows.h>
+
+#include "rapidjson/document.h"
+#include "rapidjson/istreamwrapper.h"
+
 export module Engine.Config;
 import Engine.Guid;
 import Math;
 import std;
-import <External/Json/json.hpp>;
 
 export struct ApplicationSettings
 {
@@ -14,28 +17,46 @@ export struct ApplicationSettings
     int numThreads{6};
 };
 
-export namespace glm
-{
-    template <int Size, typename T>
-    // ReSharper disable once CppInconsistentNaming
-    void from_json(const nlohmann::json& j, vec<Size, T>& val)
-    {
-        std::array<T, Size> arr = j;
-        for (int i = 0; i < Size; ++i)
-            val[i] = arr[i];
-    }
+export using JsonDocument = rapidjson::Document;
+export using JsonObject = rapidjson::Value;
 
-    // ReSharper disable once CppInconsistentNaming
-    void to_json(nlohmann::json& j, const ivec2& val)
-    {
-        j = nlohmann::json{val.x, val.y};
-    }
+export std::optional<vec2> parseVec2(const JsonObject& j, const char* key)
+{
+    const auto it = j.FindMember(key);
+    if (it == j.MemberEnd())
+        return std::nullopt;
+
+    const auto& array = it->value.GetArray();
+    if (array.Size() < 2)
+        return std::nullopt;
+
+    return vec2{array[0].GetFloat(), array[1].GetFloat()};
 }
 
-export using Json = nlohmann::json;
+export std::optional<vec3> parseVec3(const JsonObject& j, const char* key)
+{
+    const auto it = j.FindMember(key);
+    if (it == j.MemberEnd())
+        return std::nullopt;
+
+    const auto& array = it->value.GetArray();
+    if (array.Size() < 3)
+        return std::nullopt;
+
+    return vec3{array[0].GetFloat(), array[1].GetFloat(), array[2].GetFloat()};
+}
+
+export std::optional<std::string> parseString(const JsonObject& j, const char* key)
+{
+    const auto it = j.FindMember(key);
+    if (it == j.MemberEnd())
+        return std::nullopt;
+
+    return std::string{it->value.GetString()};
+}
 
 export template <typename T>
-T deserialize(const Json& serializedData) { return T{}; }
+T deserialize(const JsonObject& serializedData) { return T{}; }
 
 namespace Config
 {
@@ -58,15 +79,16 @@ namespace Config
             generic_string() + "/";
         return path;
     }
-    
-    export const Json& getEngineConfig()
+
+    export const JsonDocument& getEngineConfig()
     {
-        static Json config = []
+        static JsonDocument config = []
         {
-            Json j;
+            JsonDocument j;
             std::string path = getEngineSourceRoot() + "Config.json";
-            std::ifstream i{path};
-            i >> j;
+            std::ifstream ifs{path};
+            rapidjson::IStreamWrapper isw{ifs};
+            j.ParseStream(isw);
             return j;
         }();
 
@@ -78,14 +100,15 @@ namespace Config
         static const ApplicationSettings settings = []
         {
             ApplicationSettings ret;
-            const Json& json = getEngineConfig();
-            if (auto it = json.find("maxFps"); it != json.end())
+            const JsonDocument& json = getEngineConfig();
+
+            if (auto it = json.FindMember("maxFps"); it != json.MemberEnd())
             {
-                ret.targetFps = *it;
+                ret.targetFps = it->value.GetFloat();
             }
-            if (auto it = json.find("resolution"); it != json.end())
+            if (auto it = json.FindMember("resolution"); it != json.MemberEnd())
             {
-                ret.resolution = *it;
+                ret.resolution = ivec2{it->value.GetArray()[0].GetInt(), it->value.GetArray()[1].GetInt()};
             }
             return ret;
         }();
@@ -97,7 +120,7 @@ namespace Config
     {
         static const std::string path = []
         {
-            std::string rootRelative = *getEngineConfig().find("contentRoot");
+            std::string rootRelative = getEngineConfig().FindMember("contentRoot")->value.GetString();
             std::filesystem::path completePath{getExecutableRoot() + "../../" + rootRelative};
             return canonical(completePath).generic_string() + "/";
         }();

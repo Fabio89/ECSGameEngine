@@ -15,24 +15,15 @@ export struct TransformComponent : Component<TransformComponent>
 };
 
 template <>
-TransformComponent deserialize(const Json& data)
+TransformComponent deserialize(const JsonObject& data)
 {
-    vec3 position{};
-    if (auto it = data.find("position"); it != data.end())
-    {
-        position = *it;
-    }
-
-    vec3 rotation{};
-    if (auto it = data.find("rotation"); it != data.end())
-    {
-        rotation = *it;
-    }
-
+    const vec3 position = parseVec3(data, "position").value_or(vec3{});
+    const vec3 rotation = parseVec3(data, "rotation").value_or(vec3{});
+    
     float scale{1.f};
-    if (auto it = data.find("scale"); it != data.end())
+    if (const auto it = data.FindMember("scale"); it != data.MemberEnd())
     {
-        scale = *it;
+        scale = it->value.GetFloat();
     }
 
     return

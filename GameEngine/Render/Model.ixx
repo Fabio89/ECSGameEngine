@@ -2,8 +2,6 @@ module;
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <External/MeshLoading/tiny_obj_loader.h>
-
-#define GLM_ENABLE_EXPERIMENTAL
 #include <windows.h>
 
 export module Engine.Render.Core:Model;
@@ -16,7 +14,6 @@ import std;
 using IdType = size_t;
 export using TextureId = IdType;
 export using MeshId = IdType;
-export using MeshGuid = GUID;
 
 export struct Vertex
 {
@@ -34,8 +31,9 @@ struct std::hash<Vertex>
 {
     size_t operator()(Vertex const& vertex) const noexcept
     {
-        return ((hash_vector(vertex.pos) ^
-            (hash_vector(vertex.uv) << 1)) >> 1);
+        size_t seed = hash_value(vertex.pos);
+        hash_combine(seed, hash_value(vertex.uv));
+        return seed;
     }
 };
 
@@ -45,12 +43,12 @@ export struct TextureData
 };
 
 template <>
-TextureData deserialize(const Json& serializedData)
+TextureData deserialize(const JsonObject& serializedData)
 {
     TextureData data;
-    if (auto it = serializedData.find("path"); it != serializedData.end())
+    if (auto it = serializedData.FindMember("path"); it != serializedData.MemberEnd())
     {
-        data.path = *it;
+        data.path = it->value.GetString();
     }
     return data;
 }
@@ -68,7 +66,7 @@ export struct MeshData
 export using MeshAsset = Asset<MeshData>;
 
 template <>
-MeshData deserialize(const Json& serializedData);
+MeshData deserialize(const JsonObject& serializedData);
 
 export namespace ModelUtils
 {
@@ -125,25 +123,27 @@ export namespace ModelUtils
 }
 
 template <>
-MeshData deserialize(const Json& serializedData)
+MeshData deserialize(const JsonObject& serializedData)
 {
     MeshData data;
-    if (auto it = serializedData.find("path"); it != serializedData.end())
+    if (auto it = serializedData.FindMember("path"); it != serializedData.MemberEnd())
     {
-        data = ModelUtils::loadModel(std::string{*it}.c_str());
+        data = ModelUtils::loadModel(std::string{it->value.GetString()}.c_str());
     }
-    else if (auto verticesIt = serializedData.find("vertices"), indicesIt = serializedData.find("indices"); verticesIt != serializedData.end() && indicesIt != serializedData.
-        end())
+    else if (auto verticesJson = serializedData.FindMember("vertices"),
+        indicesJson = serializedData.FindMember("indices");
+        verticesJson != serializedData.MemberEnd() && indicesJson != serializedData.MemberEnd())
     {
-        for (const auto& verticesJson : *verticesIt)
+        for (const auto& vertices = verticesJson->value.GetArray(); const JsonObject& vertex : vertices)
         {
             auto& [pos, uv] = data.vertices.emplace_back();
-            pos = *verticesJson.find("position");
-            uv = *verticesJson.find("uv");
+            pos = parseVec3(vertex, "position").value_or(vec3{});
+            uv = parseVec2(vertex,"uv").value_or(vec2{});
         }
-        for (const auto& indicesJson : *indicesIt)
+
+        for (const auto& indices = indicesJson->value.GetArray(); const JsonObject& index : indices)
         {
-            data.indices.emplace_back(indicesJson);
+            data.indices.emplace_back(index.GetUint());
         }
     }
     return data;

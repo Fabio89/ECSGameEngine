@@ -1,283 +1,183 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-    <ItemGroup Label="ProjectConfigurations">
-        <ProjectConfiguration Include="Debug|Win32">
-            <Configuration>Debug</Configuration>
-            <Platform>Win32</Platform>
-        </ProjectConfiguration>
-        <ProjectConfiguration Include="Release|Win32">
-            <Configuration>Release</Configuration>
-            <Platform>Win32</Platform>
-        </ProjectConfiguration>
-        <ProjectConfiguration Include="Debug|x64">
-            <Configuration>Debug</Configuration>
-            <Platform>x64</Platform>
-        </ProjectConfiguration>
-        <ProjectConfiguration Include="Release|x64">
-            <Configuration>Release</Configuration>
-            <Platform>x64</Platform>
-        </ProjectConfiguration>
-    </ItemGroup>
-    <PropertyGroup Label="Globals">
-        <VCProjectVersion>17.0</VCProjectVersion>
-        <Keyword>Win32Proj</Keyword>
-        <ProjectGuid>{3357f57c-37c6-4721-8cfc-f0016b27f423}</ProjectGuid>
-        <RootNamespace>GameEngine</RootNamespace>
-        <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-        <ProjectName>Engine</ProjectName>
-    </PropertyGroup>
-    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props"/>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-        <ConfigurationType>StaticLibrary</ConfigurationType>
-        <UseDebugLibraries>true</UseDebugLibraries>
-        <PlatformToolset>v143</PlatformToolset>
-        <CharacterSet>Unicode</CharacterSet>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-        <ConfigurationType>StaticLibrary</ConfigurationType>
-        <UseDebugLibraries>false</UseDebugLibraries>
-        <PlatformToolset>v143</PlatformToolset>
-        <WholeProgramOptimization>true</WholeProgramOptimization>
-        <CharacterSet>Unicode</CharacterSet>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-        <ConfigurationType>StaticLibrary</ConfigurationType>
-        <UseDebugLibraries>true</UseDebugLibraries>
-        <PlatformToolset>v143</PlatformToolset>
-        <CharacterSet>Unicode</CharacterSet>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-        <ConfigurationType>StaticLibrary</ConfigurationType>
-        <UseDebugLibraries>false</UseDebugLibraries>
-        <PlatformToolset>v143</PlatformToolset>
-        <WholeProgramOptimization>true</WholeProgramOptimization>
-        <CharacterSet>Unicode</CharacterSet>
-    </PropertyGroup>
-    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props"/>
-    <ImportGroup Label="ExtensionSettings">
-    </ImportGroup>
-    <ImportGroup Label="Shared">
-    </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-        <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform"/>
-    </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-        <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform"/>
-    </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-        <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform"/>
-    </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-        <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform"/>
-    </ImportGroup>
-    <PropertyGroup Label="UserMacros"/>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-        <AllProjectBMIsArePublic>true</AllProjectBMIsArePublic>
-        <IncludePath>$(VK_SDK_PATH)\Include;$(IncludePath)</IncludePath>
-        <LibraryPath>$(VK_SDK_PATH)\Lib;$(LibraryPath)</LibraryPath>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-        <AllProjectBMIsArePublic>true</AllProjectBMIsArePublic>
-        <IncludePath>$(VK_SDK_PATH)\Include;$(IncludePath)</IncludePath>
-        <LibraryPath>$(VK_SDK_PATH)\Lib;$(LibraryPath)</LibraryPath>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-        <AllProjectBMIsArePublic>true</AllProjectBMIsArePublic>
-        <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-        <LibraryPath>$(LibraryPath)</LibraryPath>
-        <ExecutablePath>$(VC_ExecutablePath_x64);$(CommonExecutablePath)</ExecutablePath>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-        <AllProjectBMIsArePublic>true</AllProjectBMIsArePublic>
-        <IncludePath>$(IncludePath)</IncludePath>
-        <LibraryPath>$(LibraryPath)</LibraryPath>
-    </PropertyGroup>
-    <PropertyGroup Label="Vcpkg">
-        <VcpkgEnableManifest>true</VcpkgEnableManifest>
-    </PropertyGroup>
-    <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-        <VcpkgInstalledDir>..\vcpkg_installed</VcpkgInstalledDir>
-    </PropertyGroup>
-    <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-        <VcpkgInstalledDir>..\vcpkg_installed</VcpkgInstalledDir>
-    </PropertyGroup>
-    <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-        <VcpkgInstalledDir>..\vcpkg_installed</VcpkgInstalledDir>
-    </PropertyGroup>
-    <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-        <VcpkgInstalledDir>..\vcpkg_installed</VcpkgInstalledDir>
-    </PropertyGroup>
-    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-        <ClCompile>
-            <WarningLevel>Level3</WarningLevel>
-            <SDLCheck>false</SDLCheck>
-            <PreprocessorDefinitions>
-            </PreprocessorDefinitions>
-            <ConformanceMode>true</ConformanceMode>
-            <LanguageStandard>stdcpplatest</LanguageStandard>
-            <MultiProcessorCompilation>true</MultiProcessorCompilation>
-            <EnableModules>true</EnableModules>
-            <FloatingPointModel/>
-            <UndefinePreprocessorDefinitions>
-            </UndefinePreprocessorDefinitions>
-            <AdditionalIncludeDirectories>$(VK_SDK_PATH)\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-            <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
-            <BuildStlModules>true</BuildStlModules>
-            <AdditionalModuleDependencies>
-            </AdditionalModuleDependencies>
-        </ClCompile>
-        <Link>
-            <SubSystem>Console</SubSystem>
-            <GenerateDebugInformation>true</GenerateDebugInformation>
-            <AdditionalDependencies>vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
-        </Link>
-        <Lib>
-            <AdditionalLibraryDirectories>$(VK_SDK_PATH)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-        </Lib>
-    </ItemDefinitionGroup>
-    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-        <ClCompile>
-            <WarningLevel>Level3</WarningLevel>
-            <FunctionLevelLinking>true</FunctionLevelLinking>
-            <IntrinsicFunctions>true</IntrinsicFunctions>
-            <SDLCheck>false</SDLCheck>
-            <PreprocessorDefinitions>
-            </PreprocessorDefinitions>
-            <ConformanceMode>true</ConformanceMode>
-            <LanguageStandard>stdcpplatest</LanguageStandard>
-            <MultiProcessorCompilation>true</MultiProcessorCompilation>
-            <EnableModules>true</EnableModules>
-            <FloatingPointModel/>
-            <UndefinePreprocessorDefinitions>
-            </UndefinePreprocessorDefinitions>
-            <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
-            <BuildStlModules>true</BuildStlModules>
-            <AdditionalModuleDependencies>
-            </AdditionalModuleDependencies>
-        </ClCompile>
-        <Link>
-            <SubSystem>Console</SubSystem>
-            <EnableCOMDATFolding>true</EnableCOMDATFolding>
-            <OptimizeReferences>true</OptimizeReferences>
-            <GenerateDebugInformation>true</GenerateDebugInformation>
-            <AdditionalDependencies>vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
-        </Link>
-        <Lib>
-            <AdditionalLibraryDirectories>$(VK_SDK_PATH)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-        </Lib>
-    </ItemDefinitionGroup>
-    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-        <ClCompile>
-            <WarningLevel>Level4</WarningLevel>
-            <SDLCheck>false</SDLCheck>
-            <ConformanceMode>true</ConformanceMode>
-            <LanguageStandard>stdcpplatest</LanguageStandard>
-            <MultiProcessorCompilation>true</MultiProcessorCompilation>
-            <EnableModules>false</EnableModules>
-            <FloatingPointModel/>
-            <UndefinePreprocessorDefinitions>
-            </UndefinePreprocessorDefinitions>
-            <AdditionalIncludeDirectories>$(ProjectDir);$(VK_SDK_PATH)\Include;$(SolutionDir)\vcpkg_installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-            <AdditionalModuleDependencies></AdditionalModuleDependencies>
-            <RemoveUnreferencedCodeData>false</RemoveUnreferencedCodeData>
-            <BuildStlModules>true</BuildStlModules>
-            <PreprocessorDefinitions>GLFW_DLL</PreprocessorDefinitions>
-        </ClCompile>
-        <Link>
-            <SubSystem>Console</SubSystem>
-            <GenerateDebugInformation>true</GenerateDebugInformation>
-            <AdditionalDependencies>vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
-        </Link>
-        <Lib>
-            <AdditionalLibraryDirectories>$(VK_SDK_PATH)\Lib;$(VcpkgInstalledDir)\x64-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-            <AdditionalDependencies>glfw3dll.lib; glm.lib; imgui.lib; Bcrypt.lib;</AdditionalDependencies>
-        </Lib>
-        <PostBuildEvent>
-            <Command>xcopy /s /y "$(ProjectDir)Render\Shaders\*.spv" "$(OutDir)Shaders\"</Command>
-        </PostBuildEvent>
-    </ItemDefinitionGroup>
-    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-        <ClCompile>
-            <WarningLevel>Level3</WarningLevel>
-            <FunctionLevelLinking>true</FunctionLevelLinking>
-            <IntrinsicFunctions>true</IntrinsicFunctions>
-            <SDLCheck>false</SDLCheck>
-            <PreprocessorDefinitions>
-            </PreprocessorDefinitions>
-            <ConformanceMode>true</ConformanceMode>
-            <LanguageStandard>stdcpplatest</LanguageStandard>
-            <MultiProcessorCompilation>true</MultiProcessorCompilation>
-            <EnableModules>true</EnableModules>
-            <FloatingPointModel/>
-            <UndefinePreprocessorDefinitions>
-            </UndefinePreprocessorDefinitions>
-            <AdditionalIncludeDirectories>$(ProjectDir);$(VK_SDK_PATH)\Include;$(SolutionDir)\vcpkg_installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-            <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
-            <BuildStlModules>true</BuildStlModules>
-            <AdditionalModuleDependencies>
-            </AdditionalModuleDependencies>
-        </ClCompile>
-        <Link>
-            <SubSystem>Console</SubSystem>
-            <EnableCOMDATFolding>true</EnableCOMDATFolding>
-            <OptimizeReferences>true</OptimizeReferences>
-            <GenerateDebugInformation>true</GenerateDebugInformation>
-            <AdditionalDependencies>vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
-        </Link>
-        <Lib>
-            <AdditionalLibraryDirectories>$(VK_SDK_PATH)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-        </Lib>
-    </ItemDefinitionGroup>
-    <ItemGroup>
-        <ClCompile Include="Math.ixx" />
-        <ClCompile Include="RenderManager.ixx" />
-        <ClCompile Include="AssetManager.ixx"/>
-        <ClCompile Include="ComponentRegistry.ixx"/>
-        <ClCompile Include="Component\EngineComponents.ixx"/>
-        <ClCompile Include="Component\ModelComponent.ixx"/>
-        <ClCompile Include="Component\NameComponent.ixx"/>
-        <ClCompile Include="Component\TransformComponent.ixx"/>
-        <ClCompile Include="AssetManager.cpp"/>
-        <ClCompile Include="Config.ixx"/>
-        <ClCompile Include="Editor\DebugWidget.ixx" />
-        <ClCompile Include="Editor\DebugWidget_EntityExplorer.ixx" />
-        <ClCompile Include="Editor\ImGui.cpp"/>
-        <ClCompile Include="Editor\ImGui.ixx" />
-        <ClCompile Include="Engine.cpp"/>
-        <ClCompile Include="Engine.ixx"/>
-        <ClCompile Include="ExternalModules\vulkan.ixx"/>
-        <ClCompile Include="Guid.ixx"/>
-        <ClCompile Include="Job.ixx"/>
-        <ClCompile Include="Render\Model.ixx" />
-        <ClCompile Include="Render\RenderThread.cpp" />
-        <ClCompile Include="Render\RenderThread.ixx" />
-        <ClCompile Include="Render\RenderCore.ixx" />
-        <ClCompile Include="Render\RenderCoreUtils.cpp"/>
-        <ClCompile Include="Render\RenderCoreUtils.ixx" />
-        <ClCompile Include="Render\RenderObject.cpp"/>
-        <ClCompile Include="Render\RenderObject.ixx" />
-        <ClCompile Include="Render\TextureLoading.cpp"/>
-        <ClCompile Include="Render\TextureLoading.ixx" />
-        <ClCompile Include="Render\VulkanIntegration.ixx" />
-        <ClCompile Include="Render\VulkanMain.cpp"/>
-        <ClCompile Include="Render\VulkanMain.ixx" />
-        <ClCompile Include="Render\QueueFamily\QueueFamily.cppm" />
-        <ClCompile Include="World.cpp"/>
-        <ClCompile Include="World.ixx"/>
-        <ClCompile Include="EngineDecl.ixx" />
-    </ItemGroup>
-    <ItemGroup>
-        <None Include="Render\Shaders\Shader.frag"/>
-        <None Include="Render\Shaders\Shader.vert"/>
-    </ItemGroup>
-    <ItemGroup>
-        <ClInclude Include="External\MeshLoading\tiny_obj_loader.h"/>
-        <ClInclude Include="External\TextureLoading\stb_image.h"/>
-    </ItemGroup>
-    <ItemGroup>
-        <Content Include="Config.json"/>
-    </ItemGroup>
-    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
-    <ImportGroup Label="ExtensionTargets">
-    </ImportGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{3357f57c-37c6-4721-8cfc-f0016b27f423}</ProjectGuid>
+    <RootNamespace>GameEngine</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>Engine</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
+    <ExecutablePath>$(VC_ExecutablePath_x64);$(CommonExecutablePath)</ExecutablePath>
+    <ExternalIncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)External\Json</ExternalIncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <AllProjectBMIsArePublic>true</AllProjectBMIsArePublic>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnableManifest>true</VcpkgEnableManifest>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <VcpkgInstalledDir>..\vcpkg_installed</VcpkgInstalledDir>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <VcpkgInstalledDir>..\vcpkg_installed</VcpkgInstalledDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <SDLCheck>false</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <EnableModules>false</EnableModules>
+      <UndefinePreprocessorDefinitions>
+      </UndefinePreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(VK_SDK_PATH)\Include;$(SolutionDir)\vcpkg_installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RemoveUnreferencedCodeData>false</RemoveUnreferencedCodeData>
+      <BuildStlModules>true</BuildStlModules>
+      <PreprocessorDefinitions>ENGINE_EXPORTS;GLFW_DLL</PreprocessorDefinitions>
+      <FloatingPointModel>Fast</FloatingPointModel>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>vulkan-1.lib; winmm.lib; kernel32.lib; glfw3dll.lib; glm.lib; imgui.lib; Bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(VK_SDK_PATH)\Lib;$(VcpkgInstalledDir)\x64-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>$(VK_SDK_PATH)\Lib;$(VcpkgInstalledDir)\x64-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3dll.lib; glm.lib; imgui.lib; Bcrypt.lib;</AdditionalDependencies>
+    </Lib>
+    <PostBuildEvent>
+      <Command>xcopy /s /y "$(ProjectDir)Render\Shaders\*.spv" "$(OutDir)Shaders\" &amp; xcopy /Y /D "$(IntDir)\*.ifc" "..\SharedModules\"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>false</SDLCheck>
+      <PreprocessorDefinitions>
+      </PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <EnableModules>true</EnableModules>
+      <FloatingPointModel />
+      <UndefinePreprocessorDefinitions>
+      </UndefinePreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(VK_SDK_PATH)\Include;$(SolutionDir)\vcpkg_installed\x64-windows\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
+      <BuildStlModules>true</BuildStlModules>
+      <AdditionalModuleDependencies>
+      </AdditionalModuleDependencies>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>$(VK_SDK_PATH)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Engine.ixx" />
+    <ClCompile Include="Math.ixx" />
+    <ClCompile Include="RenderManager.ixx" />
+    <ClCompile Include="AssetManager.ixx" />
+    <ClCompile Include="ComponentRegistry.ixx" />
+    <ClCompile Include="Component\EngineComponents.ixx" />
+    <ClCompile Include="Component\ModelComponent.ixx" />
+    <ClCompile Include="Component\NameComponent.ixx" />
+    <ClCompile Include="Component\TransformComponent.ixx" />
+    <ClCompile Include="AssetManager.cpp" />
+    <ClCompile Include="Config.ixx" />
+    <ClCompile Include="Editor\DebugWidget.ixx" />
+    <ClCompile Include="Editor\DebugWidget_EntityExplorer.ixx" />
+    <ClCompile Include="Editor\ImGui.cpp" />
+    <ClCompile Include="Editor\ImGui.ixx" />
+    <ClCompile Include="Core.cpp" />
+    <ClCompile Include="Core.ixx" />
+    <ClCompile Include="ExternalModules\vulkan.ixx" />
+    <ClCompile Include="Guid.ixx" />
+    <ClCompile Include="Job.ixx" />
+    <ClCompile Include="Render\Model.ixx" />
+    <ClCompile Include="Render\RenderThread.cpp" />
+    <ClCompile Include="Render\RenderThread.ixx" />
+    <ClCompile Include="Render\RenderCore.ixx" />
+    <ClCompile Include="Render\RenderCoreUtils.cpp" />
+    <ClCompile Include="Render\RenderCoreUtils.ixx" />
+    <ClCompile Include="Render\RenderObject.cpp" />
+    <ClCompile Include="Render\RenderObject.ixx" />
+    <ClCompile Include="Render\TextureLoading.cpp" />
+    <ClCompile Include="Render\TextureLoading.ixx" />
+    <ClCompile Include="Render\VulkanIntegration.ixx" />
+    <ClCompile Include="Render\VulkanMain.cpp" />
+    <ClCompile Include="Render\VulkanMain.ixx" />
+    <ClCompile Include="Render\QueueFamily\QueueFamily.cppm" />
+    <ClCompile Include="World.cpp" />
+    <ClCompile Include="World.ixx" />
+    <ClCompile Include="EngineDecl.ixx" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Render\Shaders\Shader.frag" />
+    <None Include="Render\Shaders\Shader.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="External\Json\json.hpp" />
+    <ClInclude Include="External\MeshLoading\tiny_obj_loader.h" />
+    <ClInclude Include="External\TextureLoading\stb_image.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Config.json" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
 </Project>

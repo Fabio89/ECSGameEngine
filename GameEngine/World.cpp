@@ -2,6 +2,7 @@ module Engine.World;
 
 import Engine.AssetManager;
 import Engine.ComponentRegistry;
+import Engine.Config;
 import Engine.Guid;
 import Engine.Components;
 import Engine.ImGui;
@@ -11,11 +12,11 @@ import Math;
 import std;
 
 template <typename T>
-void loadAssets(const Json& json, const char* assetName)
+void loadAssets(const JsonObject& json, const char* assetName)
 {
-    if (auto assets = json.find(assetName); assets != json.end())
+    if (auto assets = json.FindMember(assetName); assets != json.MemberEnd())
     {
-        for (const Json& element : *assets)
+        for (const JsonObject& element : assets->value.GetArray())
         {
             AssetManager::loadAsset<T>(element);
         }
@@ -38,24 +39,28 @@ void System::addUpdateFunction(std::function<void(float)> func)
 void World::createObjectsFromConfig()
 {
     EngineComponents::init();
-
+    
     const auto& cfg = Config::getEngineConfig();
 
     loadAssets<MeshAsset>(cfg, "meshes");
     loadAssets<TextureAsset>(cfg, "textures");
-
-    if (auto entities = cfg.find("entities"); entities != cfg.end())
+    
+    if (auto entities = cfg.FindMember("entities"); entities != cfg.MemberEnd())
     {
-        for (const auto& entityJson : *entities)
+        for (const JsonObject& entityJson : entities->value.GetArray())
         {
             Entity entity = createEntity();
-            for (auto it = entityJson["components"].begin(); it != entityJson["components"].end(); ++it)
+
+            if (auto components = entityJson.FindMember("components"); components != entityJson.MemberEnd() && components->value.IsObject())
             {
-                const std::string& typeName = it.key();
-                const Json& componentData = it.value();
-                if (const ComponentTypeBase* componentType = ComponentRegistry::get(typeName))
+                for (auto it = components->value.MemberBegin(); it != components->value.MemberEnd(); ++it)
                 {
-                    componentType->createInstance(*this, entity, componentData);
+                    const std::string& typeName = it->name.GetString();
+                    const JsonObject& componentData = it->value.GetObject();
+                    if (const ComponentTypeBase* componentType = ComponentRegistry::get(typeName))
+                    {
+                        componentType->createInstance(*this, entity, componentData);
+                    }
                 }
             }
         }

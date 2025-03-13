@@ -1,16 +1,20 @@
 module;
 #define GLM_ENABLE_EXPERIMENTAL
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/ext/matrix_transform.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
-export module Math;
 
+export module Math;
+import std;
+
+export using glm::qualifier;
 export using glm::size_t;
 export using glm::vec;
 export using glm::vec2;
 export using glm::vec3;
 export using glm::ivec2;
 export using glm::qua;
-export using glm::tdualquat;
 export using glm::mat;
 export using glm::mat4;
 export using glm::int8_t;
@@ -36,58 +40,15 @@ export using glm::rotate;
 export using glm::translate;
 export using glm::scale;
 
-export template <int N, typename T>
-size_t hash_vector(vec<N, T> const& v) { return std::hash<vec<N, T>>{}(v); }
+export inline void hash_combine(size_t &seed, size_t hash)
+{
+	hash += 0x9e3779b9 + (seed << 6) + (seed >> 2);
+	seed ^= hash;
+}
 
-// export template <typename T, glm::qualifier Q>
-// inline std::size_t hash_value(vec<3, T, Q>)
-// {
-//     return std::hash<vec<1, T, Q>>()();
-// }
+export template<int N, typename T, qualifier Q>
+size_t hash_value(const vec<N, T, Q>& v)
+{
+	return std::hash<vec<N, T, Q>>()(v);
+}
 
-// export struct std::hash<vec3>;
-//
-// export template <typename T, glm::qualifier Q>
-// struct std::hash<vec<1, T, Q>>;
-//
-// export template <typename T, glm::qualifier Q>
-// struct std::hash<vec<2, T, Q>>;
-//
-// export template <typename T, glm::qualifier Q>
-// struct std::hash<vec<3, T, Q>>;
-//
-// export template <typename T, glm::qualifier Q>
-// struct std::hash<vec<4, T, Q>>;
-//
-// export template <typename T, glm::qualifier Q>
-// struct std::hash<qua<T, Q>>;
-//
-// export template <typename T, glm::qualifier Q>
-// struct std::hash<tdualquat<T, Q>>;
-//
-// export template <typename T, glm::qualifier Q>
-// struct std::hash<mat<2, 2, T, Q>>;
-//
-// export template <typename T, glm::qualifier Q>
-// struct std::hash<mat<2, 3, T, Q>>;
-//
-// export template <typename T, glm::qualifier Q>
-// struct std::hash<mat<2, 4, T, Q>>;
-//
-// export template <typename T, glm::qualifier Q>
-// struct std::hash<mat<3, 2, T, Q>>;
-//
-// export template <typename T, glm::qualifier Q>
-// struct std::hash<mat<3, 3, T, Q>>;
-//
-// export template <typename T, glm::qualifier Q>
-// struct std::hash<mat<3, 4, T, Q>>;
-//
-// export template <typename T, glm::qualifier Q>
-// struct std::hash<mat<4, 2, T, Q>>;
-//
-// export template <typename T, glm::qualifier Q>
-// struct std::hash<mat<4, 3, T, Q>>;
-//
-// export template <typename T, glm::qualifier Q>
-// struct std::hash<mat<4, 4, T, Q>>;

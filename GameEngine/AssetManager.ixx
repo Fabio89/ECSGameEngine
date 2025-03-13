@@ -8,7 +8,7 @@ import std;
 export class AssetBase
 {
 public:
-    explicit AssetBase(const Json& serializedData);
+    explicit AssetBase(const JsonObject& serializedData);
 
     const Guid& getGuid() const { return m_id; };
 
@@ -24,7 +24,7 @@ export template <typename T>
 class Asset final : public AssetBase
 {
 public:
-    Asset(const Json& serializedData)
+    Asset(const JsonObject& serializedData)
         : AssetBase{serializedData},
           m_data{deserialize<T>(serializedData)}
     {
@@ -42,7 +42,7 @@ namespace AssetManager
     std::vector<std::unique_ptr<AssetBase>> g_loadedAssets;
 
     export template <typename T>
-    const T* loadAsset(const Json& serializedData)
+    const T* loadAsset(const JsonObject& serializedData)
     {
         return static_cast<const T*>(g_loadedAssets.emplace_back(std::make_unique<T>(serializedData)).get());
     }

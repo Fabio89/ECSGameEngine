@@ -10,12 +10,12 @@ export struct NameComponent : Component<NameComponent>
 };
 
 template <>
-NameComponent deserialize(const Json& data)
+NameComponent deserialize(const JsonObject& data)
 {
     NameComponent ret;
-    if (auto it = data.find("name"); it != data.end())
+    if (auto it = data.FindMember("name"); it != data.MemberEnd())
     {
-        ret.name = *it;
+        ret.name = it->value.GetString();
     }
     return ret;
 }

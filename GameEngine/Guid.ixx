@@ -15,7 +15,7 @@ public:
     static Guid createRandom() { return Guid{boost::uuids::random_generator()()}; }
 
     bool operator==(const Guid& other) const { return m_impl == other.m_impl; }
-
+    
     auto operator<=>(const Guid& other) const
     {
         if (m_impl == other.m_impl)

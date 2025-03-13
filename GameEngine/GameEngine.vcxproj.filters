@@ -2,12 +2,8 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="Engine.ixx" />
-    <ClCompile Include="Engine.cpp" />
     <ClCompile Include="Job.ixx" />
     <ClCompile Include="Render\VulkanMain.cpp">
-      <Filter>Render</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\Render.ixx">
       <Filter>Render</Filter>
     </ClCompile>
     <ClCompile Include="Render\VulkanIntegration.ixx">
@@ -15,15 +11,6 @@
     </ClCompile>
     <ClCompile Include="Render\RenderCore.ixx">
       <Filter>Render</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\Render.cpp">
-      <Filter>Render</Filter>
-    </ClCompile>
-    <ClCompile Include="QueueFamily\QueueFamily.ixx">
-      <Filter>Render</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ExternalModules\vulkan.ixx">
-      <Filter>External Modules</Filter>
     </ClCompile>
     <ClCompile Include="Render\VulkanMain.ixx">
       <Filter>Render</Filter>
@@ -40,6 +27,34 @@
     <ClCompile Include="Render\TextureLoading.ixx">
       <Filter>Render</Filter>
     </ClCompile>
+    <ClCompile Include="Math.ixx" />
+    <ClCompile Include="RenderManager.ixx" />
+    <ClCompile Include="AssetManager.ixx" />
+    <ClCompile Include="ComponentRegistry.ixx" />
+    <ClCompile Include="Component\EngineComponents.ixx" />
+    <ClCompile Include="Component\ModelComponent.ixx" />
+    <ClCompile Include="Component\NameComponent.ixx" />
+    <ClCompile Include="Component\TransformComponent.ixx" />
+    <ClCompile Include="AssetManager.cpp" />
+    <ClCompile Include="Config.ixx" />
+    <ClCompile Include="Editor\DebugWidget.ixx" />
+    <ClCompile Include="Editor\DebugWidget_EntityExplorer.ixx" />
+    <ClCompile Include="Editor\ImGui.cpp" />
+    <ClCompile Include="Editor\ImGui.ixx" />
+    <ClCompile Include="Core.cpp" />
+    <ClCompile Include="Core.ixx" />
+    <ClCompile Include="ExternalModules\vulkan.ixx" />
+    <ClCompile Include="Guid.ixx" />
+    <ClCompile Include="Render\Model.ixx" />
+    <ClCompile Include="Render\RenderThread.cpp" />
+    <ClCompile Include="Render\RenderThread.ixx" />
+    <ClCompile Include="Render\RenderObject.cpp" />
+    <ClCompile Include="Render\RenderObject.ixx" />
+    <ClCompile Include="Render\QueueFamily\QueueFamily.cppm" />
+    <ClCompile Include="World.cpp" />
+    <ClCompile Include="World.ixx" />
+    <ClCompile Include="EngineDecl.ixx" />
+    <ClCompile Include="External\Json\json.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Render">
@@ -62,5 +77,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="External\TextureLoading\stb_image.h" />
+    <ClInclude Include="External\MeshLoading\tiny_obj_loader.h" />
   </ItemGroup>
 </Project>

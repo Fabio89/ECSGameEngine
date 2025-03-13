@@ -12,7 +12,7 @@ public:
     virtual ComponentTypeId getTypeId() const = 0;
     virtual std::string getActualName() const = 0;
     virtual std::string getDisplayName() const = 0;
-    virtual void createInstance(World& world, Entity entity, const Json& data) const = 0;
+    virtual void createInstance(World& world, Entity entity, const JsonObject& data) const = 0;
 };
 
 export template<ValidComponent T>
@@ -38,7 +38,7 @@ public:
     ComponentTypeId getTypeId() const override { return T::typeId; }
     std::string getActualName() const override { return m_actualName; }
     std::string getDisplayName() const override { return m_displayName; }
-    void createInstance(World& world, Entity entity, const Json& data) const override { world.addComponent<T>(entity, deserialize<T>(data)); }
+    void createInstance(World& world, Entity entity, const JsonObject& data) const override { world.addComponent<T>(entity, deserialize<T>(data)); }
 
 private:
     std::string m_actualName;
@@ -47,7 +47,7 @@ private:
 
 namespace ComponentRegistry
 {
-    using ComponentCreateFunc = std::function<void(World&, Entity, const Json&)>;
+    using ComponentCreateFunc = std::function<void(World&, Entity, const JsonObject&)>;
 
     std::vector<std::unique_ptr<const ComponentTypeBase>> componentTypes;
     std::unordered_map<ComponentTypeId, const ComponentTypeBase*> byId;

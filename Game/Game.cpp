@@ -1,11 +1,4 @@
-import Engine.RenderManager;
-import Engine.Config;
-import Engine.Core;
-import Engine.DebugWidget.EntityExplorer;
-import Engine.RenderThread;
-import Engine.World;
-import Engine.Component.Model;
-import Engine.Component.Transform;
+import Engine;
 import std;
 
 void gameInit(World& world)
@@ -18,7 +11,6 @@ void gameInit(World& world)
     world.addDebugWidget<DebugWidgets::EntityExplorer>();
     world.addDebugWidget<DebugWidgets::ImGuiDemo>();
 }
-
 
 void gameShutdown()
 {

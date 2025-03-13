@@ -14,13 +14,11 @@ export struct ModelComponent : Component<ModelComponent>
     const TextureAsset* texture{};
 };
 
-//ComponentRegistry::Entry<ModelComponent> reg{"Name"};
-
 template <>
-ModelComponent deserialize(const Json& serializedData)
+ModelComponent deserialize(const JsonObject& serializedData)
 {
-    const Guid meshGuid = Guid::createFromString(*serializedData.find("mesh"));
-    const Guid textureGuid = Guid::createFromString(*serializedData.find("texture"));
+    const Guid meshGuid = Guid::createFromString(serializedData.FindMember("mesh")->value.GetString());
+    const Guid textureGuid = Guid::createFromString(serializedData.FindMember("texture")->value.GetString());
     
     return
     {

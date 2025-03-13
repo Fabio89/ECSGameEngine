@@ -1,10 +1,10 @@
 module Engine.AssetManager;
 
-AssetBase::AssetBase(const Json& serializedData)
+AssetBase::AssetBase(const JsonObject& serializedData)
 {
-    if (auto it = serializedData.find("id"); it != serializedData.end())
+    if (const auto id = parseString(serializedData, "id"))
     {
-        m_id = Guid::createFromString(*it);
+        m_id = Guid::createFromString(*id);
     }
     else
     {

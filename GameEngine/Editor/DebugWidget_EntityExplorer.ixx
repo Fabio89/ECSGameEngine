@@ -9,6 +9,7 @@ import Engine.DebugWidget;
 import Engine.Render.Core;
 import Engine.World;
 import Engine.Core;
+import std;
 
 export namespace DebugWidgets
 {
