@@ -1,27 +1,23 @@
 module Engine:Render.RenderThread;
 import :Render.RenderManager;
 
-void renderThreadFunc(RenderThreadParams params, RenderThreadState& sharedState)
+void renderThreadFunc(const RenderThreadParams& params, const RenderThreadState& sharedState)
 {
     try
     {
-        RenderManager application;
-        application.init();
-        sharedState.renderManager = &application;
-        sharedState.initialised = true;
-        sharedState.initialisedCondition.notify_all();
+        auto& renderManager = *params.renderManager;
+        renderManager.init(params.window);
 
         performLoop
         (
             params.settings,
-            [&](float deltaTime) { application.update(deltaTime); },
-            [&] { return !application.shouldWindowClose(); }
+            [&](float deltaTime) { renderManager.update(deltaTime); },
+            [&] { return !sharedState.closing.load(); }
         );
 
-        sharedState.closing = true;
         std::cout << "[Application] Closing...\n";
 
-        application.shutdown();
+        renderManager.shutdown();
         std::cout << "[Render] Shutdown complete.\n";
     }
     catch (const std::exception& ex)
@@ -34,18 +30,4 @@ void renderThreadFunc(RenderThreadParams params, RenderThreadState& sharedState)
 RenderThread::RenderThread(RenderThreadParams params)
     : m_thread{std::thread{renderThreadFunc, params, std::ref(m_sharedState)}}
 {
-    waitTillInitialised();
-}
-
-void RenderThread::waitTillInitialised()
-{
-    const auto start = std::chrono::high_resolution_clock::now();
-
-    std::mutex mutex;
-    std::unique_lock lock{mutex};
-    m_sharedState.initialisedCondition.wait(lock, [this] { return m_sharedState.initialised.load(); });
-
-    const std::chrono::duration<double, std::milli> duration = std::chrono::high_resolution_clock::now() - start;
-
-    std::cout << "[Render] Initialised in " << duration.count() << "ms\n";
 }

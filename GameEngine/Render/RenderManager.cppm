@@ -15,19 +15,21 @@ public:
     RenderManager(RenderManager&&) = delete;
     RenderManager& operator=(const RenderManager&) = delete;
     RenderManager& operator=(RenderManager&&) = delete;
-    
-    void init();
-    void update(float deltaTime);
-    void shutdown();
-    bool shouldWindowClose() const;
+
+    bool hasBeenInitialised() const override { return m_initialised; }
+    void init(GLFWwindow* window) override;
+    void update(float deltaTime) override;
+    void shutdown() override;
 
     void addDebugWidget(std::unique_ptr<IDebugWidget> widget) override;
     void addRenderObject(Entity entity, const MeshAsset* mesh, const TextureAsset* texture) override;
     void setRenderObjectTransform(Entity entity, vec3 location, vec3 rotation, float scale = 1.f) override;
 
+    void updateFramebufferSize() { m_framebufferResized = true; }
+
 private:
+    bool m_initialised{};
     RenderObjectManager m_renderObjectManager;
-    ivec2 m_windowSize{800, 600};
     GLFWwindow* m_window{};
     vk::Instance m_instance{};
     vk::PhysicalDevice m_physicalDevice{};
@@ -67,11 +69,10 @@ private:
 
     ImGuiHelper m_imguiHelper;
 
+    std::atomic<bool> m_framebufferResized{};
     uint32_t m_currentFrame{0};
-    bool m_framebufferResized{false};
-    bool m_terminated{false};
+    bool m_terminated{};
     static std::vector<const char*> getRequiredExtensions();
-    static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
     void createInstance();
     void createSurface();

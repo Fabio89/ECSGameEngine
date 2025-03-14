@@ -17,20 +17,15 @@ RenderManager::~RenderManager() noexcept
     }
 }
 
-void RenderManager::init()
+void RenderManager::init(GLFWwindow* window)
 {
-    m_windowSize = Config::getApplicationSettings().resolution;
-    
     // Init window
-    {
-        glfwInit();
-        glfwWindowHint(glfw::ClientApi, glfw::NoApi);
-        glfwWindowHint(glfw::Resizable, glfw::True);
-        m_window = glfwCreateWindow(m_windowSize.x, m_windowSize.y, "Vulkan", nullptr, nullptr);
-        glfwSetWindowUserPointer(m_window, this);
-        glfwSetFramebufferSizeCallback(m_window, framebufferResizeCallback);
-    }
+    check(!m_initialised, "[RenderManager] Tried to initialise more than once!");
+    check(!m_window, "[RenderManager] Tried to create a new window without having deleted the current one!");
+    check(window, "[RenderManager] Can't initialise without a window!");
 
+    m_window = window;
+    
     // Init Vulkan
     {
         vk::defaultDispatchLoaderDynamic.init();
@@ -74,12 +69,13 @@ void RenderManager::init()
 
     m_renderObjectManager.init(m_device, m_physicalDevice, m_surface, m_descriptorPool, m_descriptorSetLayout,
                        m_graphicsQueue, m_commandPool);
+
+    m_initialised = true;
 }
 
 void RenderManager::update(float deltaTime)
 {
     m_graphicsQueue.waitIdle(); // TODO: Optimization target. Explore VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT.
-    glfwPollEvents();
     m_renderObjectManager.executePendingCommands();
     drawFrame(deltaTime);
 }
@@ -118,13 +114,6 @@ void RenderManager::shutdown()
     }
 
     m_instance.destroy();
-    glfwDestroyWindow(m_window);
-    glfwTerminate();
-}
-
-bool RenderManager::shouldWindowClose() const
-{
-    return glfwWindowShouldClose(m_window);
 }
 
 void RenderManager::addRenderObject(Entity entity, const MeshAsset* mesh, const TextureAsset* texture)
@@ -980,7 +969,7 @@ void RenderManager::drawFrame(float deltaTime)
     try
     {
         const vk::Result result = m_presentQueue.presentKHR(presentInfo);
-        shouldRecreateSwapchain = result == vk::Result::eSuboptimalKHR || m_framebufferResized;
+        shouldRecreateSwapchain = result == vk::Result::eSuboptimalKHR || m_framebufferResized.load();
     }
     catch (const vk::OutOfDateKHRError&)
     {
@@ -1009,12 +998,6 @@ std::vector<const char*> RenderManager::getRequiredExtensions()
     }
 
     return extensions;
-}
-
-void RenderManager::framebufferResizeCallback(GLFWwindow* window, [[maybe_unused]] int width, [[maybe_unused]] int height)
-{
-    auto app = static_cast<RenderManager*>(glfwGetWindowUserPointer(window));
-    app->m_framebufferResized = true;
 }
 
 void RenderManager::createDepthResources()

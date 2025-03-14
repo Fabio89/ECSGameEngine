@@ -4,7 +4,9 @@ module;
 #pragma warning(disable : 4996)
 #define _CRT_SECURE_NO_WARNINGS
 #define GLFW_INCLUDE_VULKAN
+#define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
 
 export module Engine:Render.Vulkan;
 import vulkan_hpp;
@@ -36,13 +38,28 @@ export using ::glfwWaitEvents;
 export using ::glfwGetRequiredInstanceExtensions;
 export using ::glfwGetWindowUserPointer;
 export using ::glfwCreateWindowSurface;
+export using ::glfwGetWin32Window;
+export using ::glfwMakeContextCurrent;
+export using ::glfwSwapInterval;
+
+export enum GetWindowLongOption
+{
+	GWL_Style = GWL_STYLE
+};
+
+export enum WindowStyle
+{
+	WS_Child = WS_CHILD
+};
 
 export namespace glfw
 {
 	constexpr auto ClientApi = GLFW_CLIENT_API;
 	constexpr auto NoApi = GLFW_NO_API;
+	constexpr auto Decorated = GLFW_DECORATED;
 	constexpr auto Resizable = GLFW_RESIZABLE;
 	constexpr auto True = GLFW_TRUE;
+	constexpr auto False = GLFW_FALSE;
 
 	vk::Result createWindowSurface(vk::Instance instance, GLFWwindow* window, const vk::AllocationCallbacks* allocator, vk::SurfaceKHR* surface)
 	{

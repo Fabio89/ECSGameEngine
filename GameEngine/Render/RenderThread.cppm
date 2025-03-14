@@ -5,6 +5,7 @@ module;
 
 export module Engine:Render.RenderThread;
 import :Core;
+import :Render.Vulkan;
 import std;
 
 export struct IRenderManager;
@@ -51,16 +52,15 @@ private:
     std::condition_variable m_condition;
 };
 
-export struct RenderThreadState
+struct RenderThreadState
 {
-    std::atomic<bool> initialised{false};
     std::atomic<bool> closing{false};
-    std::condition_variable initialisedCondition{};
-    IRenderManager* renderManager{};
 };
 
 export struct RenderThreadParams
 {
+    IRenderManager* renderManager{};
+    GLFWwindow* window{};
     LoopSettings settings;
 };
 
@@ -68,17 +68,22 @@ export class RenderThread
 {
 public:
     explicit RenderThread(RenderThreadParams params);
-    ~RenderThread() { m_thread.join(); }
+    ~RenderThread() { Close(); }
     RenderThread(const RenderThread&) = delete;
     RenderThread(RenderThread&&) = delete;
     RenderThread& operator=(const RenderThread&) = delete;
     RenderThread& operator=(RenderThread&&) = delete;
-    
-    IRenderManager* getRenderManager() { return m_sharedState.renderManager; }
-    bool isClosing() const { return m_sharedState.closing; }
-    
+
+    void Close()
+    {
+        if (m_thread.joinable())
+        {
+            m_sharedState.closing = true;
+            m_thread.join();
+        }
+    }
+
 private:
-    void waitTillInitialised();
     RenderThreadState m_sharedState;
     std::thread m_thread;
 };
