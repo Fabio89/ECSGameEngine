@@ -130,8 +130,7 @@ void RenderObjectManager::updateUniformBuffer(RenderObject& object, vk::Extent2D
 
 const Mesh& RenderObjectManager::addMesh(MeshData data, Guid guid)
 {
-    if (!m_device)
-        throw std::runtime_error("RenderObjectManager::addMesh: Device is null");
+    check(m_device, "RenderObjectManager::addMesh: Device is null");
     
     Mesh& mesh = m_meshes.emplace_back();
     const RenderUtils::CreateDataBufferInfo vertexBufferInfo
@@ -244,7 +243,7 @@ void RenderObjectManager::addRenderObject(Entity entity, const MeshAsset& meshAs
         }
         else
         {
-            throw std::runtime_error("Tried to add a render object with invalid mesh!");
+            fatalError("Tried to add a render object with invalid mesh!");
         }
     }
 
@@ -260,7 +259,7 @@ void RenderObjectManager::addRenderObject(Entity entity, const MeshAsset& meshAs
         }
         else
         {
-            throw std::runtime_error("Tried to add a render object with invalid texture!");
+            fatalError("Tried to add a render object with invalid texture!");
         }
     }
 

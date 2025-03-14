@@ -4,6 +4,7 @@ module;
 #include <imgui_impl_vulkan.h>
 
 module Engine:ImGui;
+import :Core;
 import :ImGui;
 import :Render.QueueFamily;
 
@@ -42,8 +43,7 @@ void ImGuiHelper::init(GLFWwindow* window, const ImGuiInitInfo& initInfo)
     };
 
     m_descriptorPool = initInfo.device.createDescriptorPool(imguiPoolInfo, nullptr);
-    if (!m_descriptorPool)
-        throw std::runtime_error("failed to create descriptor pool!");
+    check(m_descriptorPool, "failed to create descriptor pool!");
 
     ImGui_ImplVulkan_InitInfo imguiInitInfo
     {

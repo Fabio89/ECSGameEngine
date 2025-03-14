@@ -1,7 +1,6 @@
 export module Engine:World;
 import :Config;
 import :Core;
-import :Decl;
 import :Job;
 import :Render.IRenderManager;
 import :System;

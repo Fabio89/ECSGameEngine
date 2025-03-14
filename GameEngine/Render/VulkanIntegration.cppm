@@ -7,7 +7,7 @@ module;
 #include <GLFW/glfw3.h>
 
 export module Engine:Render.Vulkan;
-export import vulkan_hpp;
+import vulkan_hpp;
 
 export constexpr size_t MaxFramesInFlight{2};
 

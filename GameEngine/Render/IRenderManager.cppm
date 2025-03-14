@@ -1,6 +1,6 @@
 export module Engine:Render.IRenderManager;
+import :Core;
 import :IDebugWidget;
-import :Decl;
 import :Render.Model;
 import std;
 

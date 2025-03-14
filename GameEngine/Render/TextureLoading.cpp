@@ -4,6 +4,7 @@ module;
 #include <External/TextureLoading/stb_image.h>
 
 module Engine:Render.TextureLoading;
+import :Core;
 import :Render.TextureLoading;
 import :Render.Utils;
 
@@ -34,7 +35,7 @@ RenderUtils::createImage(vk::Device device,
     vk::Image image = device.createImage(imageInfo);
     if (!image)
     {
-        throw std::runtime_error("failed to create image!");
+        fatalError("failed to create image!");
     }
 
     const vk::MemoryRequirements memRequirements = device.getImageMemoryRequirements(image);
@@ -47,7 +48,7 @@ RenderUtils::createImage(vk::Device device,
     vk::DeviceMemory memory = device.allocateMemory(allocInfo);
     if (!memory)
     {
-        throw std::runtime_error("failed to allocate image memory!");
+        fatalError("failed to allocate image memory!");
     }
 
     device.bindImageMemory(image, memory, 0);
@@ -85,8 +86,7 @@ RenderUtils::createTextureImage(const char* path, vk::Device device, vk::Physica
     stbi_uc* pixels = stbi_load(path, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     const vk::DeviceSize imageSize = texWidth * texHeight * 4;
 
-    if (!pixels)
-        throw std::runtime_error(std::string{"failed to load texture image: "} + path);
+    check(pixels, std::string{"failed to load texture image: "} + path);
 
     const CreateBufferInfo bufferInfo
     {

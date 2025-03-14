@@ -44,7 +44,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <PublicModuleDirectories>$(PublicModuleDirectories)</PublicModuleDirectories>
+    <PublicModuleDirectories>
+    </PublicModuleDirectories>
     <LibraryPath>$(OutDir);$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -72,11 +73,13 @@
       <AdditionalIncludeDirectories>$(VK_SDK_PATH)\Include; %(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>false</TreatWarningAsError>
       <BuildStlModules>true</BuildStlModules>
-      <AdditionalModuleDependencies>C:\Dev\ECSGameEngine\SharedModules\Engine.cppm.ifc</AdditionalModuleDependencies>
+      <AdditionalModuleDependencies>$(SolutionDir)SharedModules\Engine.cppm.ifc;$(SolutionDir)SharedModules\Application.cppm.ifc;$(SolutionDir)SharedModules\Config.cppm.ifc;$(SolutionDir)SharedModules\Core.cppm.ifc;$(SolutionDir)SharedModules\Math.cppm.ifc;$(SolutionDir)SharedModules\RenderThread.cppm.ifc;$(SolutionDir)SharedModules\ModelComponent.cppm.ifc;$(SolutionDir)SharedModules\TransformComponent.cppm.ifc;$(SolutionDir)SharedModules\World.cppm.ifc</AdditionalModuleDependencies>
       <AdditionalHeaderUnitDependencies>
       </AdditionalHeaderUnitDependencies>
-      <UndefinePreprocessorDefinitions></UndefinePreprocessorDefinitions>
-      <AdditionalOptions></AdditionalOptions>
+      <UndefinePreprocessorDefinitions>
+      </UndefinePreprocessorDefinitions>
+      <AdditionalOptions>
+      </AdditionalOptions>
       <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
     </ClCompile>
     <Link>

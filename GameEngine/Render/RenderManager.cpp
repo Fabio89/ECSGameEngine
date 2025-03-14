@@ -156,8 +156,7 @@ void RenderManager::addDebugWidget(std::unique_ptr<IDebugWidget> widget)
 void RenderManager::createInstance()
 {
     if constexpr (vk::EnableValidationLayers)
-        if (!checkValidationLayerSupport())
-            throw std::runtime_error("validation layers requested, but not available!");
+        check(checkValidationLayerSupport(), "validation layers requested, but not available!");
 
     constexpr vk::ApplicationInfo appInfo
     {
@@ -195,8 +194,7 @@ void RenderManager::createInstance()
 
 void RenderManager::createSurface()
 {
-    if (glfw::createWindowSurface(m_instance, m_window, nullptr, &m_surface) != vk::Result::eSuccess)
-        throw std::runtime_error("failed to create window surface!");
+    check(glfw::createWindowSurface(m_instance, m_window, nullptr, &m_surface) == vk::Result::eSuccess, "Failed to create window surface!");
 }
 
 void RenderManager::createLogicalDevice()
@@ -213,8 +211,7 @@ void RenderManager::createLogicalDevice()
 
     for (std::optional<uint32_t> queueFamily : uniqueQueueFamilies)
     {
-        if (!queueFamily.has_value())
-            throw std::runtime_error("failed to find a unique queue family!");
+        check(queueFamily.has_value(), "failed to find a unique queue family!");
 
         queueCreateInfos.emplace_back(vk::DeviceQueueCreateInfo
             {
@@ -262,8 +259,7 @@ void RenderManager::createLogicalDevice()
     };
 
     m_device = m_physicalDevice.createDevice(createInfo);
-    if (!m_device)
-        throw std::runtime_error("failed to create logical device!");
+    check(m_device, "failed to create logical device!");
 
     m_graphicsQueue = m_device.getQueue(*indices.get(QueueFamilyType::Graphics), 0);
     m_presentQueue = m_device.getQueue(*indices.get(QueueFamilyType::Present), 0);
@@ -342,7 +338,7 @@ void RenderManager::createSwapchain()
     m_swapChain = m_device.createSwapchainKHR(createInfo, nullptr);
     if (!m_swapChain)
     {
-        throw std::runtime_error("failed to create swap chain!");
+        fatalError("failed to create swap chain!");
     }
 
     m_swapChainImages = m_device.getSwapchainImagesKHR(m_swapChain);
@@ -434,7 +430,7 @@ void RenderManager::createRenderPass()
     m_renderPass = m_device.createRenderPass(renderPassInfo, nullptr);
     if (!m_renderPass)
     {
-        throw std::runtime_error("failed to create render pass!");
+        fatalError("failed to create render pass!");
     }
 }
 
@@ -468,7 +464,7 @@ void RenderManager::createDescriptorSetLayout()
     m_descriptorSetLayout = m_device.createDescriptorSetLayout(layoutInfo, nullptr);
     if (!m_descriptorSetLayout)
     {
-        throw std::runtime_error("failed to create descriptor set layout!");
+        fatalError("failed to create descriptor set layout!");
     }
 }
 
@@ -628,7 +624,7 @@ void RenderManager::createGraphicsPipeline()
     m_pipelineLayout = m_device.createPipelineLayout(pipelineLayoutInfo, nullptr);
     if (!m_pipelineLayout)
     {
-        throw std::runtime_error("failed to create pipeline layout!");
+        fatalError("failed to create pipeline layout!");
     }
 
     constexpr vk::PipelineDepthStencilStateCreateInfo depthStencil
@@ -669,7 +665,7 @@ void RenderManager::createGraphicsPipeline()
 
     if (result != vk::Result::eSuccess)
     {
-        throw std::runtime_error("failed to create graphics pipeline!");
+        fatalError("failed to create graphics pipeline!");
     }
 
     m_device.destroyShaderModule(fragShaderModule, nullptr);
@@ -697,7 +693,7 @@ void RenderManager::createFramebuffers()
         m_swapChainFramebuffers[i] = m_device.createFramebuffer(framebufferInfo, nullptr);
         if (!m_swapChainFramebuffers[i])
         {
-            throw std::runtime_error("failed to create framebuffer!");
+            fatalError("failed to create framebuffer!");
         }
     }
 }
@@ -730,7 +726,7 @@ void RenderManager::createCommandPool()
     m_commandPool = m_device.createCommandPool(poolInfo, nullptr);
     if (!m_commandPool)
     {
-        throw std::runtime_error("failed to create command pool!");
+        fatalError("failed to create command pool!");
     }
 
     const vk::CommandPoolCreateInfo transferPoolInfo
@@ -743,7 +739,7 @@ void RenderManager::createCommandPool()
 
     if (!m_transferCommandPool)
     {
-        throw std::runtime_error("failed to create transfer command pool!");
+        fatalError("failed to create transfer command pool!");
     }
 }
 
@@ -759,7 +755,7 @@ void RenderManager::createCommandBuffers()
     m_commandBuffers = m_device.allocateCommandBuffers(allocInfo);
     if (m_commandBuffers.empty())
     {
-        throw std::runtime_error("failed to allocate command buffers!");
+        fatalError("failed to allocate command buffers!");
     }
 }
 
@@ -784,7 +780,7 @@ void RenderManager::createSyncObjects()
 
         if (!imageAvailable || !renderFinished || !fence)
         {
-            throw std::runtime_error("failed to create semaphores!");
+            fatalError("failed to create semaphores!");
         }
     }
 }
@@ -812,8 +808,7 @@ void RenderManager::createDescriptorPool()
 void RenderManager::pickPhysicalDevice()
 {
     const std::vector<vk::PhysicalDevice> devices = m_instance.enumeratePhysicalDevices();
-    if (devices.empty())
-        throw std::runtime_error("failed to find GPUs with Vulkan support!");
+    check(!devices.empty(), "failed to find GPUs with Vulkan support!");
 
     auto isDeviceSuitable = [&](vk::PhysicalDevice device)
     {
@@ -842,7 +837,7 @@ void RenderManager::pickPhysicalDevice()
     }
     else
     {
-        throw std::runtime_error("failed to find a suitable GPU!");
+        fatalError("failed to find a suitable GPU!");
     }
 }
 
@@ -868,7 +863,7 @@ void RenderManager::drawFrame(float deltaTime)
 
     if (m_device.waitForFences(1, &fence, vk::False, std::numeric_limits<uint64_t>::max()) != vk::Result::eSuccess)
     {
-        throw std::runtime_error("failed to wait for fences!");
+        fatalError("failed to wait for fences!");
     }
 
     const auto imageResult = m_device.acquireNextImageKHR(m_swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphore,
@@ -881,12 +876,12 @@ void RenderManager::drawFrame(float deltaTime)
     }
     else if (imageResult.result != vk::Result::eSuccess && imageResult.result != vk::Result::eSuboptimalKHR)
     {
-        throw std::runtime_error("failed to acquire swap chain image!");
+        fatalError("failed to acquire swap chain image!");
     }
 
     if (m_device.resetFences(1, &fence) != vk::Result::eSuccess)
     {
-        throw std::runtime_error("failed to reset fences!");
+        fatalError("failed to reset fences!");
     }
 
     m_imguiHelper.drawFrame();
@@ -966,7 +961,7 @@ void RenderManager::drawFrame(float deltaTime)
 
     if (m_graphicsQueue.submit(1, &submitInfo, fence) != vk::Result::eSuccess)
     {
-        throw std::runtime_error("failed to submit draw command buffer!");
+        fatalError("failed to submit draw command buffer!");
     }
 
     vk::SwapchainKHR swapChains[] = {m_swapChain};

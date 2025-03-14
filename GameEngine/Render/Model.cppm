@@ -4,6 +4,7 @@ module;
 #include <External/MeshLoading/tiny_obj_loader.h>
 
 export module Engine:Render.Model;
+import :Core;
 import :Render.Vulkan;
 import :AssetManager;
 import std;
@@ -76,7 +77,7 @@ export namespace ModelUtils
 
         if (!LoadObj(&attrib, &shapes, &materials, &warn, &err, (Config::getContentRoot() + path).c_str()))
         {
-            throw std::runtime_error(warn + err);
+            fatalError((warn + err).c_str());
         }
 
         const size_t vertexCount = std::reduce(shapes.begin(), shapes.end(), size_t{0},

@@ -1,5 +1,5 @@
 export module Engine:Render.RenderObject;
-import :Decl;
+import :Core;
 import :Render.Model;
 import :Render.RenderThread;
 import std;

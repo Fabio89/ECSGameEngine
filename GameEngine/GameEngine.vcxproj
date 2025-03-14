@@ -20,7 +20,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
@@ -49,6 +49,7 @@
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <ExecutablePath>$(VC_ExecutablePath_x64);$(CommonExecutablePath)</ExecutablePath>
     <ExternalIncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)External\Json</ExternalIncludePath>
+    <AllProjectBMIsArePublic>true</AllProjectBMIsArePublic>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <AllProjectBMIsArePublic>true</AllProjectBMIsArePublic>
@@ -78,6 +79,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <TranslateIncludes>true</TranslateIncludes>
       <BuildStlModules>true</BuildStlModules>
+      <CompileAsWinRT>false</CompileAsWinRT>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -90,7 +92,7 @@
       <AdditionalDependencies>glfw3dll.lib; glm.lib; imgui.lib; Bcrypt.lib;</AdditionalDependencies>
     </Lib>
     <PostBuildEvent>
-      <Command>xcopy /s /y "$(ProjectDir)Render\Shaders\*.spv" "$(OutDir)Shaders\" &amp; xcopy /Y /D "$(IntDir)\*.ifc" "..\SharedModules\"</Command>
+      <Command>xcopy /s /y "$(ProjectDir)Render\Shaders\*.spv" "$(OutDir)Shaders\" &amp; xcopy /Y /D "$(IntDir)*.ifc" "..\SharedModules\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -126,6 +128,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Application.cppm" />
     <ClCompile Include="AssetManager.cpp" />
     <ClCompile Include="AssetManager.cppm" />
     <ClCompile Include="ComponentRegistry.cppm" />
@@ -141,12 +144,11 @@
     <ClCompile Include="Editor\ImGui.cpp" />
     <ClCompile Include="Editor\ImGui.cppm" />
     <ClCompile Include="Engine.cppm" />
-    <ClCompile Include="EngineDecl.cppm" />
     <ClCompile Include="ExternalModules\vulkan.cppm" />
     <ClCompile Include="Guid.cppm" />
     <ClCompile Include="Job.cppm" />
     <ClCompile Include="Math.cppm" />
-    <ClCompile Include="Render\IRenderManager.cppm"/>
+    <ClCompile Include="Render\IRenderManager.cppm" />
     <ClCompile Include="Render\Model.cppm" />
     <ClCompile Include="Render\QueueFamily\QueueFamily.cppm" />
     <ClCompile Include="Render\RenderManager.cpp" />

@@ -1,60 +1,46 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="Engine.ixx" />
-    <ClCompile Include="Job.ixx" />
-    <ClCompile Include="Render\VulkanMain.cpp">
-      <Filter>Render</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\VulkanIntegration.ixx">
-      <Filter>Render</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\RenderCore.ixx">
-      <Filter>Render</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\VulkanMain.ixx">
-      <Filter>Render</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\RenderCoreUtils.cpp">
-      <Filter>Render</Filter>
-    </ClCompile>
-    <ClCompile Include="Render\RenderCoreUtils.ixx">
-      <Filter>Render</Filter>
-    </ClCompile>
     <ClCompile Include="Render\TextureLoading.cpp">
       <Filter>Render</Filter>
     </ClCompile>
-    <ClCompile Include="Render\TextureLoading.ixx">
-      <Filter>Render</Filter>
-    </ClCompile>
-    <ClCompile Include="Math.ixx" />
-    <ClCompile Include="RenderManager.ixx" />
-    <ClCompile Include="AssetManager.ixx" />
-    <ClCompile Include="ComponentRegistry.ixx" />
-    <ClCompile Include="Component\EngineComponents.ixx" />
-    <ClCompile Include="Component\ModelComponent.ixx" />
-    <ClCompile Include="Component\NameComponent.ixx" />
-    <ClCompile Include="Component\TransformComponent.ixx" />
     <ClCompile Include="AssetManager.cpp" />
-    <ClCompile Include="Config.ixx" />
-    <ClCompile Include="Editor\DebugWidget.ixx" />
-    <ClCompile Include="Editor\DebugWidget_EntityExplorer.ixx" />
     <ClCompile Include="Editor\ImGui.cpp" />
-    <ClCompile Include="Editor\ImGui.ixx" />
-    <ClCompile Include="Core.cpp" />
-    <ClCompile Include="Core.ixx" />
-    <ClCompile Include="ExternalModules\vulkan.ixx" />
-    <ClCompile Include="Guid.ixx" />
-    <ClCompile Include="Render\Model.ixx" />
     <ClCompile Include="Render\RenderThread.cpp" />
-    <ClCompile Include="Render\RenderThread.ixx" />
     <ClCompile Include="Render\RenderObject.cpp" />
-    <ClCompile Include="Render\RenderObject.ixx" />
     <ClCompile Include="Render\QueueFamily\QueueFamily.cppm" />
     <ClCompile Include="World.cpp" />
-    <ClCompile Include="World.ixx" />
-    <ClCompile Include="EngineDecl.ixx" />
     <ClCompile Include="External\Json\json.hpp" />
+    <ClCompile Include="Application.cppm" />
+    <ClCompile Include="AssetManager.cppm" />
+    <ClCompile Include="ComponentRegistry.cppm" />
+    <ClCompile Include="Component\EngineComponents.cppm" />
+    <ClCompile Include="Component\ModelComponent.cppm" />
+    <ClCompile Include="Component\NameComponent.cppm" />
+    <ClCompile Include="Component\TransformComponent.cppm" />
+    <ClCompile Include="Config.cppm" />
+    <ClCompile Include="Core.cppm" />
+    <ClCompile Include="Editor\DebugWidget.cppm" />
+    <ClCompile Include="Editor\DebugWidget_EntityExplorer.cppm" />
+    <ClCompile Include="Editor\IDebugWidget.cppm" />
+    <ClCompile Include="Editor\ImGui.cppm" />
+    <ClCompile Include="Engine.cppm" />
+    <ClCompile Include="ExternalModules\vulkan.cppm" />
+    <ClCompile Include="Guid.cppm" />
+    <ClCompile Include="Job.cppm" />
+    <ClCompile Include="Math.cppm" />
+    <ClCompile Include="Render\IRenderManager.cppm" />
+    <ClCompile Include="Render\Model.cppm" />
+    <ClCompile Include="Render\RenderManager.cpp" />
+    <ClCompile Include="Render\RenderManager.cppm" />
+    <ClCompile Include="Render\RenderObject.cppm" />
+    <ClCompile Include="Render\RenderThread.cppm" />
+    <ClCompile Include="Render\RenderUtils.cpp" />
+    <ClCompile Include="Render\RenderUtils.cppm" />
+    <ClCompile Include="Render\TextureLoading.cppm" />
+    <ClCompile Include="Render\VulkanIntegration.cppm" />
+    <ClCompile Include="System.cppm" />
+    <ClCompile Include="World.cppm" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Render">

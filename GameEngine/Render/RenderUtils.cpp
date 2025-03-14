@@ -6,6 +6,7 @@ module;
 #include <vulkan/vulkan_core.h>
 
 module Engine:Render.Utils;
+import :Core;
 import :Render.Utils;
 import :Render.QueueFamily;
 import :Render.Vulkan;
@@ -25,7 +26,8 @@ import std;
         }
     }
 
-    throw std::runtime_error("failed to find suitable memory type!");
+    fatalError("failed to find suitable memory type!");
+    return 0;
 }
 
 vk::CommandBuffer RenderUtils::beginSingleTimeCommands(vk::Device device, vk::CommandPool commandPool)
@@ -55,8 +57,7 @@ void RenderUtils::endSingleTimeCommands(vk::Device device, vk::CommandBuffer buf
         . pCommandBuffers = &buffer,
     };
 
-    if (queue.submit(1, &submitInfo, nullptr) != vk::Result::eSuccess)
-        throw std::runtime_error("failed to submit queue!");
+    check(queue.submit(1, &submitInfo, nullptr) == vk::Result::eSuccess, "Failed to submit queue!");
 
     queue.waitIdle();
     device.freeCommandBuffers(pool, 1, &buffer);
@@ -81,7 +82,7 @@ std::tuple<vk::Buffer, vk::DeviceMemory> RenderUtils::createBuffer(const CreateB
     buffer = info.device.createBuffer(bufferInfo, nullptr);
     if (!buffer)
     {
-        throw std::runtime_error("failed to create vertex buffer!");
+        fatalError("failed to create vertex buffer!");
     }
 
     const vk::MemoryRequirements memRequirements = info.device.getBufferMemoryRequirements(buffer);
@@ -97,7 +98,7 @@ std::tuple<vk::Buffer, vk::DeviceMemory> RenderUtils::createBuffer(const CreateB
     memory = info.device.allocateMemory(allocInfo, nullptr);
     if (!memory)
     {
-        throw std::runtime_error("failed to allocate vertex buffer memory!");
+        fatalError("failed to allocate vertex buffer memory!");
     }
 
     info.device.bindBufferMemory(buffer, memory, 0);
@@ -289,7 +290,7 @@ std::vector<char> RenderUtils::readFile(const std::string& filename)
     std::ifstream file{filename, std::ios::ate | std::ios::binary};
     if (!file.is_open())
     {
-        throw std::runtime_error("failed to open file!");
+        fatalError("failed to open file!");
     }
 
     const int fileSize = static_cast<int>(file.tellg());
@@ -370,7 +371,8 @@ void RenderUtils::transitionImageLayout(vk::Device device, vk::Queue commandQueu
                     .dstStage = vk::PipelineStageFlagBits::eEarlyFragmentTests,
                 };
 
-            throw std::invalid_argument("unsupported layout transition!");
+            fatalError("unsupported layout transition!");
+            return {};
         }();
 
     const vk::ImageMemoryBarrier barrier
@@ -450,7 +452,8 @@ vk::Format RenderUtils::findSupportedFormat(vk::PhysicalDevice physicalDevice,
             return format;
     }
 
-    throw std::runtime_error("failed to find supported format!");
+    fatalError("failed to find supported format!");
+    return {};
 }
 
 vk::Format RenderUtils::findDepthFormat(vk::PhysicalDevice physicalDevice)

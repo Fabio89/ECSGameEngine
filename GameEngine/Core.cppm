@@ -1,19 +1,35 @@
+module;
+#include <cstdlib>
+#include <windows.h>
+
 export module Engine:Core;
-import :Decl;
 import std;
 
-// export struct ComponentBase
-// {
-//     virtual ~ComponentBase() = default;
-//     virtual ComponentTypeId getTypeId() const = 0;
-// };
-//
-// export template <typename T>
-// struct Component : ComponentBase
-// {
-//     ComponentTypeId getTypeId() const final { return typeId; }
-//     static const ComponentTypeId typeId;
-// };
+export template<typename T>
+void logError(T&& message)
+{
+    std::cerr << "\033[31m" << "ERROR: " << std::forward<T>(message) << "\033[0m\n";
+}
+
+export template<typename T>
+void check(bool expression, T&& message)
+{
+    if (!expression)
+    {
+        logError(std::forward<T>(message));
+        std::abort();
+    }
+}
+
+export template<typename T>
+void fatalError(T&& message)
+{
+    logError(std::forward<T>(message));
+    std::abort();
+}
+
+export using Entity = size_t;
+export using ComponentTypeId = std::type_index;
 
 export template<typename T>
 concept ValidComponentData = true;
