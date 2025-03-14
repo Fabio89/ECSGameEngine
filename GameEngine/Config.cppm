@@ -11,7 +11,7 @@ import :Math;
 export struct ApplicationSettings
 {
     ivec2 resolution{800, 600};
-    float targetFps{120.f};
+    float targetFps{144.f};
     int numThreads{6};
 };
 

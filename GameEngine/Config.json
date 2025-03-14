@@ -1,5 +1,5 @@
 {
-  "targetFps" : 120,
+  "targetFps" : 144,
   "resolution": [1200, 700],
   "contentRoot": "Content",
   "meshes" : [
