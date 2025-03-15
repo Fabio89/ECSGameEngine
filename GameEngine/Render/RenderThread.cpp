@@ -12,7 +12,7 @@ void renderThreadFunc(const RenderThreadParams& params, const RenderThreadState&
         (
             params.settings,
             [&](float deltaTime) { renderManager.update(deltaTime); },
-            [&] { return !sharedState.closing.load(); }
+            [&] { return !closing.load(); }
         );
 
         std::cout << "[Application] Closing...\n";

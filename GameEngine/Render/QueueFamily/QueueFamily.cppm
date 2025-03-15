@@ -1,9 +1,7 @@
-module;
-#include <cstdint>
-
 export module Engine:Render.QueueFamily;
 import vulkan_hpp;
 import std;
+import std.compat;
 
 export enum class QueueFamilyType : size_t
 {

@@ -26,6 +26,8 @@ module;
 
 export module vulkan_hpp;
 
+export using ::PFN_vkDebugUtilsMessengerCallbackEXT;
+
 export VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 export namespace VULKAN_HPP_NAMESPACE

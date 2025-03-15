@@ -1,12 +1,8 @@
-module;
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_vulkan.h>
-
 module Engine:ImGui;
 import :Core;
 import :ImGui;
 import :Render.QueueFamily;
+import Wrapper.ImGui;
 
 void ImGuiHelper::init(GLFWwindow* window, const ImGuiInitInfo& initInfo)
 {
@@ -16,18 +12,18 @@ void ImGuiHelper::init(GLFWwindow* window, const ImGuiInitInfo& initInfo)
     m_device = initInfo.device;
 
     // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
+    Wrapper_ImGui::CheckVersion();
+    Wrapper_ImGui::CreateContext();
+    Wrapper_ImGui::ImGuiIO& io = Wrapper_ImGui::GetIO();
     (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
+    io.ConfigFlags |= Wrapper_ImGui::ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    io.ConfigFlags |= Wrapper_ImGui::ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
 
     // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
+    Wrapper_ImGui::StyleColorsDark();
 
     // Init ImGui
-    ImGui_ImplGlfw_InitForVulkan(window, true);
+    Wrapper_ImGui::ImGui_ImplGlfw_InitForVulkan(window, true);
 
     static constexpr std::array imguiPoolSizes
     {
@@ -45,7 +41,7 @@ void ImGuiHelper::init(GLFWwindow* window, const ImGuiInitInfo& initInfo)
     m_descriptorPool = initInfo.device.createDescriptorPool(imguiPoolInfo, nullptr);
     check(m_descriptorPool, "failed to create descriptor pool!");
 
-    ImGui_ImplVulkan_InitInfo imguiInitInfo
+    Wrapper_ImGui::ImGui_ImplVulkan_InitInfo imguiInitInfo
     {
         .Instance = initInfo.instance,
         .PhysicalDevice = initInfo.physicalDevice,
@@ -56,13 +52,13 @@ void ImGuiHelper::init(GLFWwindow* window, const ImGuiInitInfo& initInfo)
         .RenderPass = initInfo.renderPass,
         .MinImageCount = 2,
         .ImageCount = static_cast<uint32_t>(initInfo.imageCount),
-        .MSAASamples = VK_SAMPLE_COUNT_1_BIT,
+        .MSAASamples = Wrapper_ImGui::VK_SAMPLE_COUNT_1_BIT,
         .PipelineCache = initInfo.pipelineCache,
         .Subpass = 0,
         .Allocator = nullptr,
         .CheckVkResultFn = nullptr,
     };
-    ImGui_ImplVulkan_Init(&imguiInitInfo);
+    Wrapper_ImGui::ImGui_ImplVulkan_Init(&imguiInitInfo);
 }
 
 void ImGuiHelper::drawFrame()
@@ -70,9 +66,9 @@ void ImGuiHelper::drawFrame()
     if constexpr (!enabled)
         return;
 
-    ImGui_ImplVulkan_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
+    Wrapper_ImGui::ImGui_ImplVulkan_NewFrame();
+    Wrapper_ImGui::ImGui_ImplGlfw_NewFrame();
+    Wrapper_ImGui::NewFrame();
 
     for (auto& widget : m_debugWidgets)
     {
@@ -86,8 +82,8 @@ void ImGuiHelper::renderFrame(vk::CommandBuffer commandBuffer)
     if constexpr (!enabled)
         return;
 
-    ImGui::Render();
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+    Wrapper_ImGui::Render();
+    Wrapper_ImGui::ImGui_ImplVulkan_RenderDrawData(Wrapper_ImGui::GetDrawData(), commandBuffer);
 }
 
 void ImGuiHelper::shutdown()
@@ -95,9 +91,9 @@ void ImGuiHelper::shutdown()
     if constexpr (!enabled)
         return;
 
-    ImGui_ImplVulkan_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
+    Wrapper_ImGui::ImGui_ImplVulkan_Shutdown();
+    Wrapper_ImGui::ImGui_ImplGlfw_Shutdown();
+    Wrapper_ImGui::DestroyContext();
 
     m_device.destroy(m_descriptorPool);
     m_descriptorPool = nullptr;

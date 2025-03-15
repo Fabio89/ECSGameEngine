@@ -1,8 +1,4 @@
 module;
-
-#include <compare>
-#pragma warning(disable : 4996)
-#define _CRT_SECURE_NO_WARNINGS
 #define GLFW_INCLUDE_VULKAN
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3.h>
@@ -10,6 +6,7 @@ module;
 
 export module Engine:Render.Vulkan;
 import vulkan_hpp;
+import std;
 
 export constexpr size_t MaxFramesInFlight{2};
 

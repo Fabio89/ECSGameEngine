@@ -1,12 +1,7 @@
-module;
-
-//#pragma warning(disable : 5105)
-#include <windows.h>
-#include "rapidjson/document.h"
-#include "rapidjson/istreamwrapper.h"
-
 export module Engine:Config;
 import :Math;
+import Wrapper.RapidJson;
+import Wrapper.Windows;
 
 export struct ApplicationSettings
 {
@@ -14,9 +9,6 @@ export struct ApplicationSettings
     float targetFps{144.f};
     int numThreads{6};
 };
-
-export using JsonDocument = rapidjson::Document;
-export using JsonObject = rapidjson::Value;
 
 export std::optional<vec2> parseVec2(const JsonObject& j, const char* key)
 {
@@ -62,11 +54,9 @@ namespace Config
     {
         static const std::string exeRoot = []
         {
-            std::string buffer;
-            buffer.resize(MAX_PATH);
-            GetModuleFileNameA(nullptr, buffer.data(), MAX_PATH);
-            auto pos = buffer.find_last_of("\\/") + 1;
-            return std::filesystem::canonical(buffer.substr(0, pos)).generic_string() + "/";
+            const auto moduleName = Wrapper_Windows:: getModuleFileName();
+            const auto pos = moduleName.find_last_of("\\/") + 1;
+            return std::filesystem::canonical(moduleName.substr(0, pos)).generic_string() + "/";
         }();
         return exeRoot;
     }
@@ -83,9 +73,9 @@ namespace Config
         static JsonDocument config = []
         {
             JsonDocument j;
-            std::string path = getEngineSourceRoot() + "Config.json";
+            std::string path = getExecutableRoot() + "Config.json";
             std::ifstream ifs{path};
-            rapidjson::IStreamWrapper isw{ifs};
+            IStreamWrapper isw{ifs};
             j.ParseStream(isw);
             return j;
         }();

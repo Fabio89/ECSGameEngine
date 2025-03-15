@@ -2,6 +2,7 @@ module Engine:Render.RenderObject;
 import :Render.RenderObject;
 import :Render.TextureLoading;
 import :Render.Vulkan;
+import std.compat;
 
 void RenderObjectManager::init
 (
@@ -244,6 +245,7 @@ void RenderObjectManager::addRenderObject(Entity entity, const MeshAsset& meshAs
         else
         {
             fatalError("Tried to add a render object with invalid mesh!");
+            return;
         }
     }
 
@@ -260,6 +262,7 @@ void RenderObjectManager::addRenderObject(Entity entity, const MeshAsset& meshAs
         else
         {
             fatalError("Tried to add a render object with invalid texture!");
+            return;
         }
     }
 

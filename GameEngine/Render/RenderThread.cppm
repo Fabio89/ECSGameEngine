@@ -1,8 +1,3 @@
-module;
-
-#pragma warning(disable : 5105)
-#include <windows.h>
-
 export module Engine:Render.RenderThread;
 import :Core;
 import :Render.Vulkan;
@@ -54,15 +49,16 @@ private:
 
 struct RenderThreadState
 {
-    std::atomic<bool> closing{false};
+    //std::atomic<bool> closing{false};
 };
-
+std::atomic<bool> closing{false};
 export struct RenderThreadParams
 {
     IRenderManager* renderManager{};
     GLFWwindow* window{};
     LoopSettings settings;
 };
+
 
 export class RenderThread
 {
@@ -78,7 +74,7 @@ public:
     {
         if (m_thread.joinable())
         {
-            m_sharedState.closing = true;
+            closing = true;
             m_thread.join();
         }
     }
@@ -111,9 +107,7 @@ void performLoop(const LoopSettings& settings, const T_Body& body, const T_Condi
             ms sleepTime = targetFrameDuration - frameDuration - adjustment;
             if (sleepTime > ms(0))
             {
-                timeBeginPeriod(1);
                 std::this_thread::sleep_for(sleepTime);
-                timeEndPeriod(1);
             }
 
             lastFrameDuration = std::chrono::duration_cast<ms>(std::chrono::steady_clock::now() - frameStart);

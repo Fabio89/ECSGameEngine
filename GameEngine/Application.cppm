@@ -5,9 +5,37 @@ import :Component.Model;
 import :Component.Transform;
 import :DebugWidget.EntityExplorer;
 import :World;
-import <windows.h>;
+import Wrapper.Windows;
 
-export _declspec(dllexport) void runTest();
+//------------------------------------------------------------------------------------------------------------------------
+
+extern "C" __declspec(dllexport)
+inline int getCoolestNumber() { return 22; }
+
+export extern "C" __declspec(dllexport)
+void runTest(GLFWwindow* window = nullptr);
+
+export extern "C" __declspec(dllexport)
+GLFWwindow* createViewportWindow(HWND parentHwnd, int width, int height);
+
+export extern "C" __declspec(dllexport)
+void engineInit(GLFWwindow* window);
+
+export extern "C" __declspec(dllexport)
+bool engineUpdate(GLFWwindow* window, float deltaTime);
+
+export extern "C" __declspec(dllexport)
+void engineShutdown(GLFWwindow* window);
+
+//------------------------------------------------------------------------------------------------------------------------
+
+void framebufferResizeCallback(GLFWwindow* window, [[maybe_unused]] int width, [[maybe_unused]] int height)
+{
+    auto renderManager = static_cast<RenderManager*>(glfwGetWindowUserPointer(window));
+    renderManager->updateFramebufferSize();
+}
+
+GLFWwindow* createWindow(HWND parent, int width, int height);
 
 template<typename T, typename... T_Systems>
 void addSystems(World& world)
@@ -20,10 +48,75 @@ void addSystems(World& world)
     }
 }
 
-void framebufferResizeCallback(GLFWwindow* window, [[maybe_unused]] int width, [[maybe_unused]] int height)
+std::atomic<bool> shouldExit = false;
+RenderManager renderManager;
+std::thread renderThread;
+const ApplicationSettings& settings = Config::getApplicationSettings();
+World world{settings, &renderManager};
+std::mutex mutex;
+
+void runTestInRenderThread(GLFWwindow* window)
 {
-    auto renderManager = static_cast<RenderManager*>(glfwGetWindowUserPointer(window));
-    renderManager->updateFramebufferSize();
+    renderManager.init(window);
+
+    auto deltaTime = std::chrono::milliseconds{8};
+    while (!shouldExit.load())
+    {
+        renderManager.update(static_cast<float>(deltaTime.count()));
+    }
+
+    renderManager.shutdown();
+}
+
+void engineInit(GLFWwindow* window)
+{
+    renderThread = std::thread
+    {
+        runTestInRenderThread,
+        window
+    };
+    
+    addSystems<ModelSystem, TransformSystem>(world);
+    world.createObjectsFromConfig();
+    world.addDebugWidget<DebugWidgets::EntityExplorer>();
+    world.addDebugWidget<DebugWidgets::ImGuiDemo>();
+}
+
+bool engineUpdate(GLFWwindow* window, float deltaTime)
+{
+    if (glfwWindowShouldClose(window))
+    {
+        engineShutdown(window);
+        return false;
+    }
+    
+    glfwPollEvents();
+    world.updateSystems(deltaTime);
+    return true;
+}
+
+void engineShutdown(GLFWwindow* window)
+{
+    if (shouldExit.exchange(true))
+        return;
+    
+    std::cout << "[Application] Shutting down...\n";
+    
+    if (renderThread.joinable())
+    {
+        std::cout << "[Application] Waiting for render thread to complete...\n"; 
+        renderThread.join();
+        std::cout << "[Application] Render thread joined!\n"; 
+    }
+
+    glfwDestroyWindow(window);
+    glfwTerminate();
+    std::cout << "[Application] Shutdown complete!\n"; 
+}
+
+GLFWwindow* createViewportWindow(HWND parentHwnd, int width, int height)
+{
+    return createWindow(parentHwnd, width, height);
 }
 
 GLFWwindow* createWindow(HWND parent, int width, int height)
@@ -41,49 +134,9 @@ GLFWwindow* createWindow(HWND parent, int width, int height)
     if (parent)
     {
         const auto hwnd = glfwGetWin32Window(window);
-        SetParent(hwnd, parent);
-        SetWindowLongA(hwnd, GWL_Style, GetWindowLongA(hwnd, GWL_Style) | WS_Child);
+        Wrapper_Windows::SetParent(hwnd, parent);
+        Wrapper_Windows::SetWindowLongA(hwnd, GWL_Style, Wrapper_Windows::GetWindowLongA(hwnd, GWL_Style) | WS_Child);
     }
 
     return window;
-}
-
-void runTest()
-{
-    RenderManager renderManager;
-
-    const ApplicationSettings& settings = Config::getApplicationSettings();
-    const LoopSettings loopSettings{.targetFps = settings.targetFps};
-
-    GLFWwindow* window = createWindow(nullptr, settings.resolution.x, settings.resolution.y);
-    glfwSetWindowUserPointer(window, &renderManager);
-    glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
-    
-    RenderThread renderThread{{&renderManager, window, loopSettings}};
-    World world{settings, &renderManager};
-
-    addSystems<ModelSystem, TransformSystem>(world);
-    world.addDebugWidget<DebugWidgets::EntityExplorer>();
-    world.addDebugWidget<DebugWidgets::ImGuiDemo>();
-
-    world.createObjectsFromConfig();
-
-    performLoop
-    (
-        loopSettings,
-        [&world](float deltaTime)
-        {
-            glfwPollEvents();
-            world.updateSystems(deltaTime);
-        },
-        [&window]
-        {
-            return !glfwWindowShouldClose(window);
-        }
-    );
-
-    renderThread.Close();
-    
-    glfwDestroyWindow(window);
-    glfwTerminate();
 }

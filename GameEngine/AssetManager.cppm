@@ -6,7 +6,17 @@ import std;
 export class AssetBase
 {
 public:
-    explicit AssetBase(const JsonObject& serializedData);
+    explicit AssetBase(const JsonObject& serializedData)
+    {
+        if (const auto id = parseString(serializedData, "id"))
+        {
+            m_id = Guid::createFromString(*id);
+        }
+        else
+        {
+            m_id = Guid::createRandom();
+        }
+    }
 
     const Guid& getGuid() const { return m_id; };
 

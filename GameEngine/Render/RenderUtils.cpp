@@ -1,10 +1,3 @@
-module;
-
-#include <cassert>
-#include <cstring>
-#include <vulkan/vk_platform.h>
-#include <vulkan/vulkan_core.h>
-
 module Engine:Render.Utils;
 import :Core;
 import :Render.Utils;
@@ -180,7 +173,7 @@ bool RenderUtils::checkDeviceExtensionSupport(vk::PhysicalDevice device)
 
 namespace RenderUtils
 {
-    VKAPI_ATTR vk::Bool32 VKAPI_CALL debugCallback
+    vk::Bool32 debugCallback
     (
         [[maybe_unused]] vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         [[maybe_unused]] vk::DebugUtilsMessageTypeFlagBitsEXT messageType,
@@ -236,7 +229,7 @@ RenderUtils::SwapChainSupportDetails RenderUtils::querySwapChainSupport(vk::Phys
 
 vk::SurfaceFormatKHR RenderUtils::chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats)
 {
-    assert(!availableFormats.empty());
+    check(!availableFormats.empty(), "No available surface formats!");
 
     auto isDesirableFormat = [](auto&& fmt)
     {
@@ -250,13 +243,13 @@ vk::SurfaceFormatKHR RenderUtils::chooseSwapSurfaceFormat(const std::vector<vk::
 
 vk::PresentModeKHR RenderUtils::chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes)
 {
-    assert(!availablePresentModes.empty());
+    check(!availablePresentModes.empty(), "No available present modes!");
 
     if (auto it = std::ranges::find(availablePresentModes, vk::PresentModeKHR::eMailbox); it != availablePresentModes.
         end())
         return *it;
 
-    assert(std::ranges::contains(availablePresentModes, vk::PresentModeKHR::eFifo));
+    check(std::ranges::contains(availablePresentModes, vk::PresentModeKHR::eFifo), "Couldn't find required present mode: 'eFifo'");
     return vk::PresentModeKHR::eFifo;
 }
 
