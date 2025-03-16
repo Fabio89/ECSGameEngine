@@ -4,7 +4,7 @@ import <chrono>;
 
 int main()
 {
-    auto window = createViewportWindow(nullptr, 800, 600);
+    auto window = createWindow(nullptr, 800, 600);
     engineInit(window);
     bool running{true};
     constexpr std::chrono::milliseconds deltaTime{8};

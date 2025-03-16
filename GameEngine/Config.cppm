@@ -1,4 +1,5 @@
 export module Engine:Config;
+import :Core;
 import :Math;
 import Wrapper.RapidJson;
 import Wrapper.Windows;
@@ -68,19 +69,27 @@ namespace Config
         return path;
     }
 
-    export const JsonDocument& getEngineConfig()
+    export [[nodiscard]] JsonDocument parseString(std::string_view jsonStr)
     {
-        static JsonDocument config = []
-        {
-            JsonDocument j;
-            std::string path = getExecutableRoot() + "Config.json";
-            std::ifstream ifs{path};
-            IStreamWrapper isw{ifs};
-            j.ParseStream(isw);
-            return j;
-        }();
+        JsonDocument doc;
+        doc.Parse(jsonStr.data());
+        return doc;
+    }
+    
+    export [[nodiscard]] JsonDocument parseFile(std::string_view path)
+    {
+        std::ifstream ifs{path.data()};
+        check(ifs.is_open(), std::format("Failed to open file: {}", path));
 
-        return config;
+        JsonDocument doc;
+        IStreamWrapper isw{ifs};
+        doc.ParseStream(isw);
+        return doc;
+    }
+
+    export [[nodiscard]] JsonDocument getEngineConfig()
+    {
+        return parseFile(getExecutableRoot() + "Config.json");
     }
 
     export const ApplicationSettings& getApplicationSettings()

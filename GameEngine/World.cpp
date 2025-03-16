@@ -30,38 +30,13 @@ void System::addUpdateFunction(std::function<void(float)> func)
 
 void World::createObjectsFromConfig()
 {
-    EngineComponents::init();
-    
     const auto& cfg = Config::getEngineConfig();
 
-    loadAssets<MeshAsset>(cfg, "meshes");
-    loadAssets<TextureAsset>(cfg, "textures");
-    
-    if (auto entities = cfg.FindMember("entities"); entities != cfg.MemberEnd())
-    {
-        for (const JsonObject& entityJson : entities->value.GetArray())
-        {
-            Entity entity = createEntity();
-
-            if (auto components = entityJson.FindMember("components"); components != entityJson.MemberEnd() && components->value.IsObject())
-            {
-                for (auto it = components->value.MemberBegin(); it != components->value.MemberEnd(); ++it)
-                {
-                    const std::string& typeName = it->name.GetString();
-                    const JsonObject& componentData = it->value.GetObject();
-                    if (const ComponentTypeBase* componentType = ComponentRegistry::get(typeName))
-                    {
-                        componentType->createInstance(*this, entity, componentData);
-                    }
-                }
-            }
-        }
-    }
+    loadScene(cfg);
 }
 
-World::World(const ApplicationSettings& settings, IRenderManager* renderManager)
-    : m_jobSystem{settings.numThreads},
-      m_renderManager{*renderManager}
+World::World(const WorldCreateInfo& info)
+    : m_renderManager{*info.renderManager}
 {
 }
 
@@ -105,6 +80,47 @@ void World::removeEntity(Entity entity)
         editArchetype(it->second).removeEntity(entity);
         m_entities.erase(it);
     }
+}
+
+void World::loadScene(std::string_view path)
+{
+    const JsonObject& doc = Config::parseFile(path);
+    loadScene(doc);
+}
+
+void World::loadScene(const JsonObject& json)
+{
+    unloadScene();
+    
+    loadAssets<MeshAsset>(json, "meshes");
+    loadAssets<TextureAsset>(json, "textures");
+    
+    if (auto entities = json.FindMember("entities"); entities != json.MemberEnd())
+    {
+        for (const JsonObject& entityJson : entities->value.GetArray())
+        {
+            const Entity entity = createEntity();
+
+            if (auto components = entityJson.FindMember("components"); components != entityJson.MemberEnd() && components->value.IsObject())
+            {
+                for (auto it = components->value.MemberBegin(); it != components->value.MemberEnd(); ++it)
+                {
+                    const std::string& typeName = it->name.GetString();
+                    const JsonObject& componentData = it->value.GetObject();
+                    if (const ComponentTypeBase* componentType = ComponentRegistry::get(typeName))
+                    {
+                        componentType->createInstance(*this, entity, componentData);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void World::unloadScene()
+{
+    m_entities.clear();
+    m_archetypes.clear();
 }
 
 void World::addSystem(std::unique_ptr<System> system)

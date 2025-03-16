@@ -9,11 +9,6 @@ export class World;
 
 static constexpr int maxComponentsPerEntity = 64;
 
-export size_t getSuperHash(int val)
-{
-    return std::hash<int>()(val);
-}
-
 struct EntitySignature
 {
     friend bool operator==(const EntitySignature& a, const EntitySignature& b) { return a.bitset == b.bitset; }
@@ -32,13 +27,23 @@ struct std::hash<EntitySignature>
     }
 };
 
+export struct WorldCreateInfo
+{
+    IRenderManager* renderManager{};
+};
+
 export class World
 {
 public:
-    World(const ApplicationSettings&, IRenderManager* renderManager);
+    World(const WorldCreateInfo&);
 
     Entity createEntity();
+    void removeEntity(Entity entity);
 
+    void loadScene(std::string_view path);
+    void loadScene(const JsonObject& json);
+    void unloadScene();
+    
     template <ValidComponent T, typename... Args>
     void addComponent(Entity entity, Args&&... args)
     {
@@ -75,44 +80,31 @@ public:
     }
 
     template <ValidComponent T>
-    const T& readComponent(Entity entity) const
+    [[nodiscard]] const T& readComponent(Entity entity) const
     {
         if (auto it = m_entities.find(entity); it != m_entities.end())
         {
-            try
-            {
-                return readArchetype(it->second).readComponent<T>(entity);
-            }
-            catch (const std::exception& ex)
-            {
-                std::cerr << "Error: " << ex.what() << std::endl;
-            }
+            return readArchetype(it->second).readComponent<T>(entity);
         }
-        throw std::runtime_error{std::string{"Couldn't find component "} + typeid(T).name()};
+        fatalError(std::format("Couldn't find component: {}", getComponentName<T>()));
+        static const T invalid{};
+        return invalid;
     }
 
-    auto getComponentTypesInEntity(Entity entity) const
+    [[nodiscard]] Archetype::ComponentRange getComponentTypesInEntity(Entity entity) const
     {
-        std::vector<ComponentTypeId> result;
         if (auto it = m_entities.find(entity); it != m_entities.end())
         {
-            try
-            {
-                return readArchetype(it->second).getComponentTypes();
-            }
-            catch (const std::exception& ex)
-            {
-                std::cerr << "Error: " << ex.what() << std::endl;
-            }
+            return readArchetype(it->second).getComponentTypes();
         }
-        throw std::runtime_error{std::format("Couldn't find components for entity {}", entity)}; 
+        fatalError(std::format("Couldn't find components for entity {}", entity));
+        static const Archetype::ComponentArrayMap emptyMap;
+        return emptyMap | std::views::keys;
     }
 
     template <ValidComponent T>
     T& editComponent(Entity entity) { return const_cast<T&>(readComponent<T>(entity)); }
-
-    void removeEntity(Entity entity);
-
+    
     void addSystem(std::unique_ptr<System> system);
 
     template <typename T>
@@ -147,7 +139,6 @@ private:
     Archetype& editOrCreateArchetype(const EntitySignature& signature);
 
     std::unordered_map<ArchetypeChangedObserverHandle, ArchetypeChangedCallback> m_archetypeChangeObservers;
-    JobSystem m_jobSystem;
     Entity m_nextEntity = 0;
     std::unordered_map<Entity, EntitySignature> m_entities;
     std::unordered_map<EntitySignature, Archetype> m_archetypes;

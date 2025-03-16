@@ -8,8 +8,8 @@ namespace EngineComponents
 {
     export void init()
     {
-        static ComponentRegistry::Entry<ModelComponent> model;
-        static ComponentRegistry::Entry<NameComponent> name;
-        static ComponentRegistry::Entry<TransformComponent> transform;
+        ComponentRegistry::init<ModelComponent>();
+        ComponentRegistry::init<NameComponent>();
+        ComponentRegistry::init<TransformComponent>();
     }
 }

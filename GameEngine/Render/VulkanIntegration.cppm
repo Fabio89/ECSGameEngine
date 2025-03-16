@@ -25,6 +25,7 @@ export using ::glfwGetFramebufferSize;
 export using ::glfwInit;
 export using ::glfwWindowHint;
 export using ::glfwCreateWindow;
+export using ::glfwSetWindowPos;
 export using ::glfwSetWindowUserPointer;
 export using ::glfwSetFramebufferSizeCallback;
 export using ::glfwPollEvents;

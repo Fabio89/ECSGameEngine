@@ -532,8 +532,8 @@ void RenderManager::createGraphicsPipeline()
 
     const vk::Viewport viewport
     {
-        .x = 0.0f,
-        .y = 0.0f,
+        .x = 0,
+        .y = 0,
         .width = static_cast<float>(m_swapchainExtent.width),
         .height = static_cast<float>(m_swapchainExtent.height),
         .minDepth = 0.0f,
@@ -904,8 +904,8 @@ void RenderManager::drawFrame(float deltaTime)
 
     const vk::Viewport viewport
     {
-        .x = 0.0f,
-        .y = 0.0f,
+        .x = 0,
+        .y = 0,
         .width = static_cast<float>(m_swapchainExtent.width),
         .height = static_cast<float>(m_swapchainExtent.height),
         .minDepth = 0.0f,

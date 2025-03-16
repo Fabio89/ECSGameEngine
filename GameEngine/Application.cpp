@@ -1,0 +1,125 @@
+module Engine:Application;
+import :Application;
+import :Components;
+import :DebugWidget.EntityExplorer;
+import :Render.RenderManager;
+import :World;
+
+void framebufferResizeCallback(GLFWwindow* window, [[maybe_unused]] int width, [[maybe_unused]] int height)
+{
+    auto renderManager = static_cast<RenderManager*>(glfwGetWindowUserPointer(window));
+    renderManager->updateFramebufferSize();
+}
+
+GLFWwindow* createWindow(HWND parent, int width, int height);
+
+template<typename T, typename... T_Systems>
+void addSystems(World& world)
+{
+    world.addSystem<T>();
+
+    if constexpr (sizeof...(T_Systems) > 0)
+    {
+        addSystems<T_Systems...>(world);
+    }
+}
+
+std::atomic<bool> shouldExit = false;
+RenderManager renderManager;
+std::thread renderThread;
+const ApplicationSettings& settings = Config::getApplicationSettings();
+World world{{&renderManager}};
+
+void runRenderThread(GLFWwindow* window)
+{
+    renderManager.init(window);
+
+    while (!shouldExit.load())
+    {
+        auto deltaTime = std::chrono::nanoseconds{static_cast<int>(1000000.f /settings.targetFps) };
+        renderManager.update(deltaTime.count() / 1000000.f);
+        std::this_thread::sleep_for(deltaTime);
+    }
+
+    renderManager.shutdown();
+}
+
+void engineInit(GLFWwindow* window)
+{
+    renderThread = std::thread
+    {
+        runRenderThread,
+        window
+    };
+    
+    EngineComponents::init();
+
+    addSystems<ModelSystem, TransformSystem>(world);
+    world.addDebugWidget<DebugWidgets::EntityExplorer>();
+    world.addDebugWidget<DebugWidgets::ImGuiDemo>();
+}
+
+bool engineUpdate(GLFWwindow* window, float deltaTime)
+{
+    if (glfwWindowShouldClose(window))
+    {
+        engineShutdown(window);
+        return false;
+    }
+    
+    glfwPollEvents();
+    world.updateSystems(deltaTime);
+    return true;
+}
+
+void engineShutdown(GLFWwindow* window)
+{
+    if (shouldExit.exchange(true))
+        return;
+    
+    std::cout << "[Application] Shutting down...\n";
+    
+    if (renderThread.joinable())
+    {
+        std::cout << "[Application] Waiting for render thread to complete...\n"; 
+        renderThread.join();
+        std::cout << "[Application] Render thread joined!\n"; 
+    }
+
+    glfwDestroyWindow(window);
+    glfwTerminate();
+    std::cout << "[Application] Shutdown complete!\n"; 
+}
+
+void setViewportOffset(GLFWwindow* window, int x, int y)
+{
+    if (check(window, "Can't set viewport offset for null window!"))
+        glfwSetWindowPos(window, x, y);
+}
+
+void loadScene(const char* path)
+{
+    world.loadScene(path);
+}
+
+GLFWwindow* createWindow(HWND parent, int width, int height)
+{
+    glfwInit();
+    glfwWindowHint(glfw::ClientApi, glfw::NoApi);
+    glfwWindowHint(glfw::Resizable, glfw::True);
+    if (parent)
+    {
+        glfwWindowHint(glfw::Decorated, glfw::False);
+    }
+    
+    GLFWwindow* window = glfwCreateWindow(width, height, "Vulkan", nullptr, nullptr);
+
+    if (parent)
+    {
+        const auto hwnd = glfwGetWin32Window(window);
+        Wrapper_Windows::SetParent(hwnd, parent);
+        Wrapper_Windows::SetWindowLongA(hwnd, GWL_Style, Wrapper_Windows::GetWindowLongA(hwnd, GWL_Style) | WS_Child);
+    }
+
+    return window;
+}

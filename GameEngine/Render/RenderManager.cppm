@@ -26,7 +26,7 @@ public:
     void setRenderObjectTransform(Entity entity, vec3 location, vec3 rotation, float scale = 1.f) override;
 
     void updateFramebufferSize() { m_framebufferResized = true; }
-
+    
 private:
     bool m_initialised{};
     RenderObjectManager m_renderObjectManager;

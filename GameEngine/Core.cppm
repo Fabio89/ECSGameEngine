@@ -7,14 +7,24 @@ void logError(T&& message)
     std::cerr << "\033[31m" << "ERROR: " << std::forward<T>(message) << "\033[0m\n";
 }
 
+export enum class ErrorType
+{
+    Warning,
+    Error,
+    FatalError
+};
+
 export template<typename T>
-void check(bool expression, T&& message)
+bool check(bool expression, T&& message, ErrorType type = ErrorType::Error)
 {
     if (!expression)
     {
         logError(std::forward<T>(message));
-        std::abort();
+        if (type == ErrorType::FatalError)
+            std::abort();
+        return false;
     }
+    return true;
 }
 
 export template<typename T>
@@ -42,17 +52,25 @@ concept ValidComponent = std::is_base_of_v<Component<T>, T>;
 template <ValidComponentData T>
 const ComponentTypeId Component<T>::typeId(typeid(T));
 
+export template<ValidComponent T>
+std::string getComponentName() { return T::typeId.name(); }
+
 // Archetype
 export class Archetype
 {
+    class ComponentArrayBase;
+    
 public:
-    bool isEmpty() const { return m_componentArrays.empty(); }
+    using ComponentArrayMap = std::map<ComponentTypeId, std::unique_ptr<ComponentArrayBase>>;
+    using ComponentRange = std::ranges::elements_view<std::ranges::ref_view<const ComponentArrayMap>, 0>;
+    
+    [[nodiscard]] bool isEmpty() const { return m_componentArrays.empty(); }
 
     template <ValidComponent T>
     void addComponent(Entity entity, T component);
 
     template <ValidComponent T>
-    const T& readComponent(Entity entity) const;
+    [[nodiscard]] const T& readComponent(Entity entity) const;
     
     void removeEntity(Entity entity);
 
@@ -74,30 +92,36 @@ public:
         }
     }
 
-    auto getComponentTypes() const { return m_componentArrays | std::views::keys; }
+    [[nodiscard]] ComponentRange getComponentTypes() const { return m_componentArrays | std::views::keys; }
 
 private:
     class ComponentArrayBase
     {
     public:
+        ComponentArrayBase() = default;
+        ComponentArrayBase(const ComponentArrayBase&) = delete;
+        ComponentArrayBase(ComponentArrayBase&&) = delete;
+        ComponentArrayBase& operator=(const ComponentArrayBase&) = delete;
+        ComponentArrayBase& operator=(ComponentArrayBase&&) = delete;
         virtual ~ComponentArrayBase() = default;
+        
         virtual void steal(ComponentArrayBase& other, Entity entity) = 0;
         virtual void remove(Entity entity) = 0;
-        virtual bool isEmpty() const = 0;
+        [[nodiscard]] virtual bool isEmpty() const = 0;
         virtual std::unique_ptr<ComponentArrayBase> cloneForEntity(Entity entity) = 0;
     };
 
     template <ValidComponent T>
-    class ComponentArray : public ComponentArrayBase
+    class ComponentArray final : public ComponentArrayBase
     {
     public:
-        bool isEmpty() const final { return m_components.empty(); }
+        [[nodiscard]] bool isEmpty() const override { return m_components.empty(); }
 
         void insert(Entity entity, T component);
 
-        void remove(Entity entity) final;
+        void remove(Entity entity) override;
 
-        std::unique_ptr<ComponentArrayBase> cloneForEntity(Entity entity) final
+        std::unique_ptr<ComponentArrayBase> cloneForEntity(Entity entity) override
         {
             const size_t index = m_entityToIndex.find(entity)->second;
             auto componentArray = std::make_unique<ComponentArray>();
@@ -107,7 +131,7 @@ private:
             return componentArray;
         }
 
-        void steal(ComponentArrayBase& other, Entity entity) final
+        void steal(ComponentArrayBase& other, Entity entity) override
         {
             ComponentArray& otherComponentArray = static_cast<ComponentArray&>(other);
 
@@ -117,7 +141,7 @@ private:
             other.remove(entity);
         }
 
-        const T& get(Entity entity) const;
+        [[nodiscard]] const T& get(Entity entity) const;
         T& get(Entity entity);
 
     private:

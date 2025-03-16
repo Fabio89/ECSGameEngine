@@ -143,7 +143,7 @@
     <ClCompile Include="Editor\ImGui.cpp" />
     <ClCompile Include="Editor\ImGui.cppm" />
     <ClCompile Include="Engine.cppm" />
-    <ClCompile Include="Export.cpp" />
+    <ClCompile Include="Application.cpp" />
     <ClCompile Include="ExternalModules\vulkan.cppm" />
     <ClCompile Include="Guid.cppm" />
     <ClCompile Include="Job.cppm" />
@@ -255,7 +255,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="External\Json\json.hpp" />
-    <ClInclude Include="Export.h" />
     <ClInclude Include="External\MeshLoading\tiny_obj_loader.h" />
     <ClInclude Include="External\TextureLoading\stb_image.h" />
   </ItemGroup>
