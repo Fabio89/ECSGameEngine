@@ -18,14 +18,16 @@ public:
 
     bool hasBeenInitialised() const override { return m_initialised; }
     void init(GLFWwindow* window) override;
-    void update(float deltaTime) override;
+    void update() override;
     void shutdown() override;
-
+    void clear() override;
+    
     void addDebugWidget(std::unique_ptr<IDebugWidget> widget) override;
     void addRenderObject(Entity entity, const MeshAsset* mesh, const TextureAsset* texture) override;
     void setRenderObjectTransform(Entity entity, vec3 location, vec3 rotation, float scale = 1.f) override;
 
     void updateFramebufferSize() { m_framebufferResized = true; }
+    float getDeltaTime() const { return m_deltaTime; }
     
 private:
     bool m_initialised{};
@@ -68,10 +70,11 @@ private:
     vk::DebugUtilsMessengerEXT m_debugMessenger{};
 
     ImGuiHelper m_imguiHelper;
-
+    DeltaTimeTracker m_deltaTime;
     std::atomic<bool> m_framebufferResized{};
     uint32_t m_currentFrame{0};
     bool m_terminated{};
+    
     static std::vector<const char*> getRequiredExtensions();
 
     void createInstance();

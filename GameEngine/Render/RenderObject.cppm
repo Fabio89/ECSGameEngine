@@ -1,7 +1,7 @@
 export module Engine:Render.RenderObject;
 import :Core;
 import :Render.Model;
-import :Render.RenderThread;
+import :CoreTypes;
 import std;
 
 struct Texture
@@ -76,13 +76,13 @@ public:
         vk::CommandPool cmdPool
     );
 
-    void shutdown();
+    void clear();
     void addCommand(RenderMessages::AddObject command);
     void addCommand(RenderMessages::SetTransform command);
     void executePendingCommands();
     void addRenderObject(Entity entity, const MeshAsset& meshAsset, const TextureAsset& textureAsset);
     void setObjectTransform(Entity entity, vec3 location = {}, vec3 rotation = {}, float scale = 1.f);
-
+    
     const Mesh& addMesh(MeshData data, Guid guid);
     const Texture& addTexture(const TextureData& textureData, Guid guid);
 

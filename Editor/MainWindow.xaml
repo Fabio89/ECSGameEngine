@@ -5,42 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Editor"
         xmlns:ui="http://schemas.modernwpf.com/2019"
-        ui:WindowHelper.UseModernWindowStyle="True"
         mc:Ignorable="d"
         Height="1080" Width="1920"
-        Title="MainWindow">
+        Title="Mashi Engine">
     <DockPanel LastChildFill="False">
-        <Menu DockPanel.Dock="Top">
-            <!-- File Menu -->
-            <MenuItem Header="File">
-                <MenuItem Header="New" Click="OnClickMenuItem_New"/>
-                <MenuItem Header="Open" Click="OnClickMenuItem_Open"/>
-                <MenuItem Header="Save" Click="OnClickMenuItem_Save"/>
-                <MenuItem Header="Exit" Click="OnClickMenuItem_Exit"/>
-            </MenuItem>
-            
-            <!-- Edit Menu -->
-            <MenuItem Header="Edit">
-                <MenuItem Header="Undo" Click="OnClickMenuItem_Undo"/>
-                <MenuItem Header="Redo" Click="OnClickMenuItem_Redo"/>
-                <MenuItem Header="Cut" Click="OnClickMenuItem_Cut"/>
-                <MenuItem Header="Copied" Click="OnClickMenuItem_Copied"/>
-            </MenuItem>
-            
-            <!-- Help Menu -->
-            <MenuItem Header="Help">
-                <MenuItem Header="About" Click="OnClickMenuItem_About"/>
-            </MenuItem>
-        </Menu>
-        
-        <!-- Main Content Area (where the rest of your UI will go) -->
-        <Grid DockPanel.Dock="Top" Height="720">
-            <local:Viewport x:Name="Viewport" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"></local:Viewport>
-        </Grid>
+        <local:MainMenu DockPanel.Dock="Top"></local:MainMenu>
+        <local:Viewport x:Name="Viewport" DockPanel.Dock="Top" Height="720" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"></local:Viewport>
+        <local:AssetBrowser HorizontalAlignment="Stretch" Height="800" DockPanel.Dock="Bottom"></local:AssetBrowser>
     </DockPanel>
-    
-    <!-- <Grid> -->
-    <!--     <local:Viewport x:Name="Viewport" VerticalAlignment="Top" HorizontalAlignment="Left" Height="720"></local:Viewport> -->
-    <!--     ~1~ <local:AssetBrowser x:Name="AssetBrowser" VerticalAlignment="Bottom" Height="360"></local:AssetBrowser> @1@ -->
-    <!-- </Grid> -->
 </Window>

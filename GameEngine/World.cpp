@@ -1,11 +1,15 @@
 module Engine:World;
 import :AssetManager;
 import :Components;
+import :Serialisation;
 import :System;
 
 template <typename T>
 void loadAssets(const JsonObject& json, const char* assetName)
 {
+    if (!json.IsObject())
+        return;
+    
     if (auto assets = json.FindMember(assetName); assets != json.MemberEnd())
     {
         for (const JsonObject& element : assets->value.GetArray())
@@ -26,13 +30,6 @@ void System::update(float deltaTime)
 void System::addUpdateFunction(std::function<void(float)> func)
 {
     m_updateFunctions.push_back(std::move(func));
-}
-
-void World::createObjectsFromConfig()
-{
-    const auto& cfg = Config::getEngineConfig();
-
-    loadScene(cfg);
 }
 
 World::World(const WorldCreateInfo& info)
@@ -84,13 +81,18 @@ void World::removeEntity(Entity entity)
 
 void World::loadScene(std::string_view path)
 {
-    const JsonObject& doc = Config::parseFile(path);
+    std::cout << "Loading scene: " << path << '\n';
+    const JsonObject& doc = Json::fromFile(path);
     loadScene(doc);
+    std::cout << "Scene loading complete\n";
 }
 
 void World::loadScene(const JsonObject& json)
 {
     unloadScene();
+
+    if (!json.IsObject())
+        return;
     
     loadAssets<MeshAsset>(json, "meshes");
     loadAssets<TextureAsset>(json, "textures");
@@ -119,8 +121,11 @@ void World::loadScene(const JsonObject& json)
 
 void World::unloadScene()
 {
+    m_renderManager.get().clear();
     m_entities.clear();
     m_archetypes.clear();
+    for (auto& system : m_systems)
+        system->clear();
 }
 
 void World::addSystem(std::unique_ptr<System> system)

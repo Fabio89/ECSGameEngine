@@ -7,9 +7,13 @@
 
     <Application.Resources>
         <ResourceDictionary>
+            <SolidColorBrush x:Key="BackgroundColorBright" Color="#555759" />
             <SolidColorBrush x:Key="BackgroundColorSecondary" Color="#46494D" />
             <SolidColorBrush x:Key="BackgroundColorPrimary" Color="#2B2D30" />
             <SolidColorBrush x:Key="TextColor" Color="LightGray" />
+            <SolidColorBrush x:Key="BrightTextColor" Color="White" />
+            <SolidColorBrush x:Key="HighlightColor" Color="#2C4862" />
+            <SolidColorBrush x:Key="BrightHighlightColor" Color="#3B6083" />
 
             <Style TargetType="Menu">
                 <Setter Property="Background" Value="{StaticResource BackgroundColorPrimary}" />

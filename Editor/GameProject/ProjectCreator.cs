@@ -57,10 +57,10 @@ public class ProjectCreator : ViewModelBase
         UpdateProjectPathValidity();
     }
 
-    public void CreateProject()
+    public string CreateProject()
     {
         if (!UpdateProjectPathValidity() || _templates.Count == 0)
-            return;
+            return string.Empty;
         
         var template = _templates.First();
 
@@ -76,7 +76,9 @@ public class ProjectCreator : ViewModelBase
                 Directory.CreateDirectory(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(path) ?? throw new InvalidOperationException(), folder)));
             }
 
-            File.Create($"{path}{template.ProjectFile}");
+            var fullPath = $"{path}{template.ProjectFile}";
+            File.Create(fullPath);
+            return fullPath;
         }
         catch (Exception e)
         {

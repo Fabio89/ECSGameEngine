@@ -1,7 +1,9 @@
 module Engine:Render.RenderObject;
+import :Project;
 import :Render.RenderObject;
 import :Render.TextureLoading;
 import :Render.Vulkan;
+import vulkan_hpp;
 import std.compat;
 
 void RenderObjectManager::init
@@ -33,14 +35,19 @@ const Texture& RenderObjectManager::addTexture(const TextureData& textureData, G
 
     Texture& texture = m_textures.emplace_back();
     texture.id = currentId++;
-    const std::string fullPath = Config::getContentRoot() + textureData.path;
+    const std::string fullPath = Project::getContentRoot() + textureData.path;
     std::tie(texture.image, texture.memory) = RenderUtils::createTextureImage(
         fullPath.c_str(), m_device, m_physicalDevice,
         m_queue, m_cmdPool);
-    texture.view = RenderUtils::createTextureImageView(m_device, texture.image);
-    texture.sampler = RenderUtils::createTextureSampler(m_device, m_physicalDevice);
-    m_textureMap.emplace(guid, texture.id);
-    std::cout << "Added texture: " << guid << std::endl;
+
+    if (texture.image)
+    {
+        texture.view = RenderUtils::createTextureImageView(m_device, texture.image);
+        texture.sampler = RenderUtils::createTextureSampler(m_device, m_physicalDevice);
+        m_textureMap.emplace(guid, texture.id);
+        std::cout << "Added texture: " << guid << std::endl;
+    }
+
     return texture;
 }
 
@@ -131,7 +138,12 @@ void RenderObjectManager::updateUniformBuffer(RenderObject& object, vk::Extent2D
 
 const Mesh& RenderObjectManager::addMesh(MeshData data, Guid guid)
 {
-    check(m_device, "RenderObjectManager::addMesh: Device is null");
+    check(m_device, "[RenderObjectManager::addMesh] Device is null");
+    if (!check(data.vertices.size() > 0, "[RenderObjectManager::addMesh] Tried to add mesh with no vertices", ErrorType::Warning))
+    {
+        static const Mesh emptyMesh;
+        return emptyMesh;
+    }
     
     Mesh& mesh = m_meshes.emplace_back();
     const RenderUtils::CreateDataBufferInfo vertexBufferInfo
@@ -165,8 +177,13 @@ const Mesh& RenderObjectManager::addMesh(MeshData data, Guid guid)
     return mesh;
 }
 
-void RenderObjectManager::shutdown()
+void RenderObjectManager::clear()
 {
+    m_addObjectCommands.clear();
+    m_setTransformCommands.clear();
+    m_meshMap.clear();
+    m_textureMap.clear();
+    
     for (const RenderObject& object : m_objects)
     {
         for (auto&& [buffer, memory] : std::views::zip(object.uniformBuffers, object.uniformBuffersMemory))
@@ -174,6 +191,9 @@ void RenderObjectManager::shutdown()
             m_device.destroyBuffer(buffer);
             m_device.freeMemory(memory);
         }
+
+        auto result = m_device.freeDescriptorSets(m_descriptorPool, object.descriptorSets.size(), object.descriptorSets.data());
+        check(result == vk::Result::eSuccess, "[RenderObjectManager::clear] Failed to free descriptor sets!");
     }
     m_objects.clear();
 
@@ -266,6 +286,12 @@ void RenderObjectManager::addRenderObject(Entity entity, const MeshAsset& meshAs
         }
     }
 
+    if (!check(mesh, "Tried to add a render object with null mesh!", ErrorType::Error)
+        || !check(!mesh->data.vertices.empty(), "Tried to add a render object with empty mesh!", ErrorType::Warning)
+        || !check(texture, "Tried to add a render object with null texture!", ErrorType::Error)
+        || !check(texture->image, "Tried to add a render object with empty texture!", ErrorType::Warning))
+        return;
+    
     object.entity = entity;
     object.mesh = *mesh;
     object.texture = *texture;

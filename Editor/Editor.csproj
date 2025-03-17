@@ -27,7 +27,7 @@
     </ItemGroup>
 
     <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-      <Exec Command="xcopy &quot;$(SolutionDir)x64\$(Configuration)\*.dll&quot; &quot;$(TargetDir)&quot; /Y&#xA;xcopy &quot;$(SolutionDir)x64\$(Configuration)\Config.json&quot; &quot;$(TargetDir)&quot; /Y&#xA;robocopy &quot;$(SolutionDir)x64\$(Configuration)\Shaders&quot; &quot;$(TargetDir)Shaders&quot; /NFL /NDL /NJH /NJS" />
+      <Exec Command="xcopy &quot;$(SolutionDir)x64\$(Configuration)\*.dll&quot; &quot;$(TargetDir)&quot; /Y&#xA;xcopy &quot;$(ProjectDir)settings.json&quot; &quot;$(TargetDir)&quot; /Y&#xA;robocopy &quot;$(SolutionDir)x64\$(Configuration)\Shaders&quot; &quot;$(TargetDir)Shaders&quot; /NFL /NDL /NJH /NJS" />
     </Target>
 
 </Project>

@@ -27,8 +27,8 @@ export extern "C" __declspec(dllexport)
 void setViewportOffset(GLFWwindow* window, int x, int y);
 
 //------------------------------------------------------------------------------------------------------------------------
-// Scene
+// Project
 //------------------------------------------------------------------------------------------------------------------------
 
 export extern "C" __declspec(dllexport)
-void loadScene(const char* path);
+void openProject(const char* path);

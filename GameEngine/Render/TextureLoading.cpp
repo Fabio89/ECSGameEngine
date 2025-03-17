@@ -86,7 +86,11 @@ RenderUtils::createTextureImage(const char* path, vk::Device device, vk::Physica
     stbi_uc* pixels = stbi_load(path, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     const vk::DeviceSize imageSize = texWidth * texHeight * 4;
 
-    check(pixels, std::string{"failed to load texture image: "} + path);
+    if (!check(pixels, std::string{"failed to load texture image: "} + path))
+    {
+        static constexpr std::tuple<vk::Image, vk::DeviceMemory> emptyImage{};
+        return emptyImage;
+    }
 
     const CreateBufferInfo bufferInfo
     {

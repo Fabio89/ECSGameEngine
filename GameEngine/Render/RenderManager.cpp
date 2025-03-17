@@ -2,10 +2,26 @@ module;
 #include <cstddef>
 
 module Engine:Render.RenderManager;
+import :Core;
 import :Render.RenderManager;
 import :Render.QueueFamily;
 import :Render.TextureLoading;
 import :Render.Utils;
+import Wrapper.Windows;
+
+std::mutex updateLockMutex;
+std::atomic updatesBlocked{false};
+
+const std::string& getExecutableRoot()
+{
+    static const std::string exeRoot = []
+    {
+        const auto moduleName = Wrapper_Windows::getModuleFileName();
+        const auto pos = moduleName.find_last_of("\\/") + 1;
+        return std::filesystem::canonical(moduleName.substr(0, pos)).generic_string() + "/";
+    }();
+    return exeRoot;
+}
 
 RenderManager::~RenderManager() noexcept
 {
@@ -71,19 +87,26 @@ void RenderManager::init(GLFWwindow* window)
     m_initialised = true;
 }
 
-void RenderManager::update(float deltaTime)
+void RenderManager::update()
 {
+    if (updatesBlocked.load())
+        return;
+    
+    std::lock_guard lock{updateLockMutex};
+    
     m_graphicsQueue.waitIdle(); // TODO: Optimization target. Explore VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT.
     m_renderObjectManager.executePendingCommands();
-    drawFrame(deltaTime);
+    drawFrame(m_deltaTime.update());
 }
 
 void RenderManager::shutdown()
 {
+    std::lock_guard lock{updateLockMutex};
+
     m_terminated = true;
     m_device.waitIdle();
 
-    m_renderObjectManager.shutdown();
+    m_renderObjectManager.clear();
     m_imguiHelper.shutdown();
 
     cleanupSwapchain();
@@ -112,6 +135,20 @@ void RenderManager::shutdown()
     }
 
     m_instance.destroy();
+}
+
+void RenderManager::clear()
+{
+    std::lock_guard lock{updateLockMutex};
+
+    if (!m_initialised)
+        return;
+    
+    updatesBlocked = true;
+
+    m_device.waitIdle();
+    m_renderObjectManager.clear();
+    updatesBlocked = false;
 }
 
 void RenderManager::addRenderObject(Entity entity, const MeshAsset* mesh, const TextureAsset* texture)
@@ -231,8 +268,7 @@ void RenderManager::createLogicalDevice()
         .enabledLayerCount = [&]
         {
             if constexpr (vk::EnableValidationLayers)
-                return static_cast<uint32_t>(RenderUtils::ValidationLayers.
-                    size());
+                return static_cast<uint32_t>(RenderUtils::ValidationLayers.size());
             else return 0;
         }(),
         .ppEnabledLayerNames = [&]
@@ -339,8 +375,7 @@ void RenderManager::createImageViews()
 
     for (size_t i = 0; i < m_swapChainImages.size(); ++i)
     {
-        m_swapChainImageViews[i] =
-            RenderUtils::createImageView(m_device, m_swapChainImages[i], m_swapChainImageFormat);
+        m_swapChainImageViews[i] = RenderUtils::createImageView(m_device, m_swapChainImages[i], m_swapChainImageFormat);
     }
 }
 
@@ -457,8 +492,8 @@ void RenderManager::createDescriptorSetLayout()
 
 void RenderManager::createGraphicsPipeline()
 {
-    auto vertShaderCode = RenderUtils::readFile(Config::getExecutableRoot() + "Shaders/vert.spv");
-    auto fragShaderCode = RenderUtils::readFile(Config::getExecutableRoot() + "Shaders/frag.spv");
+    auto vertShaderCode = RenderUtils::readFile(getExecutableRoot() + "Shaders/vert.spv");
+    auto fragShaderCode = RenderUtils::readFile(getExecutableRoot() + "Shaders/frag.spv");
 
     vk::ShaderModule vertShaderModule = RenderUtils::createShaderModule(vertShaderCode, m_device);
     vk::ShaderModule fragShaderModule = RenderUtils::createShaderModule(fragShaderCode, m_device);

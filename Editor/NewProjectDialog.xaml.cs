@@ -5,6 +5,7 @@ using System.Windows.Data;
 using System.Windows;
 using Windows.Storage.Pickers;
 using ABI.Windows.Storage;
+using Editor.GameProject;
 using WinRT.Interop;
 
 namespace Editor;
@@ -26,9 +27,9 @@ public class InvertedBooleanToVisibilityConverter : IValueConverter
     }
 }
 
-public partial class NewProjectView : UserControl
+public partial class NewProjectDialog
 {
-    public NewProjectView()
+    public NewProjectDialog()
     {
         InitializeComponent();
         BrowsePathButton.Click += OnClick_BrowsePath;
@@ -51,6 +52,8 @@ public partial class NewProjectView : UserControl
     
     private void OnClick_CreateButton(object sender, RoutedEventArgs e)
     {
-        ProjectCreator.CreateProject();
+        var project = ProjectCreator.CreateProject();
+        if (!string.IsNullOrEmpty(project))
+            ProjectOpener.OpenProject(project);
     }
 }

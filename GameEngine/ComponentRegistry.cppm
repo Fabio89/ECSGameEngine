@@ -1,6 +1,6 @@
 export module Engine:ComponentRegistry;
-import :Config;
 import :Core;
+import :Serialisation;
 import :World;
 import std;
 

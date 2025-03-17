@@ -2,19 +2,17 @@ using System.IO;
 
 namespace Editor.GameProject;
 
-public class ProjectOpener : ViewModelBase
+public static class ProjectOpener
 {
-    private string _projectPath = string.Empty;
-
-    public string ProjectFilePath
-    {
-        get => _projectPath;
-        set => SetField(ref _projectPath, value);
-    }
+    public static event Action Opened = delegate { };
+    public static string CurrentProjectPath { get; private set; } = string.Empty;
     
-    public static void OpenProject(string path)
+    public static bool OpenProject(string path)
     {
-        Console.WriteLine($"Opened project: {path}");
-        Viewport.LoadScene(path);
+        if (!Viewport.OpenProject(path)) return false;
+        Console.WriteLine($"Opened project: '{path}'");
+        CurrentProjectPath = path;
+        Opened.Invoke();
+        return true;
     }
 }

@@ -1,6 +1,7 @@
 export module Engine;
-
+import :Render.Vulkan;
 export import :Application;
+export using ::GLFWwindow;
 //export import :Core;
 //export import :Math;
 

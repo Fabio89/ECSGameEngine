@@ -1,5 +1,4 @@
 export module Engine:World;
-import :Config;
 import :Core;
 import :Job;
 import :Render.IRenderManager;
@@ -16,16 +15,7 @@ struct EntitySignature
 };
 
 template <>
-struct std::hash<EntitySignature>;
-
-template <>
-struct std::hash<EntitySignature>
-{
-    size_t operator()(const EntitySignature& a) const noexcept
-    {
-        return hash<bitset<maxComponentsPerEntity>>()(a.bitset);
-    }
-};
+struct std::hash<EntitySignature> { size_t operator()(const EntitySignature& a) const noexcept { return hash<bitset<maxComponentsPerEntity>>()(a.bitset); } };
 
 export struct WorldCreateInfo
 {
@@ -124,9 +114,7 @@ public:
 
     ArchetypeChangedObserverHandle observeOnComponentAdded(ArchetypeChangedCallback observer);
     void unobserveOnComponentAdded(ArchetypeChangedObserverHandle observerHandle);
-
-    void createObjectsFromConfig();
-
+    
     auto getEntitiesRange() const { return m_entities | std::views::keys; }
 
     const IRenderManager& getRenderManager() const { return m_renderManager.get(); }

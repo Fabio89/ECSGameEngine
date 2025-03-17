@@ -9,6 +9,8 @@ namespace Editor;
 
 public partial class Viewport : UserControl
 {
+    public event Action EngineInitialised = delegate {};
+    
     [DllImport("Engine.dll", CallingConvention = CallingConvention.Cdecl)]
     private static extern int getCoolestNumber();
 
@@ -28,9 +30,8 @@ public partial class Viewport : UserControl
     private static extern void engineShutdown(IntPtr window);
     
     [DllImport("Engine.dll", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void loadScene(string path);
+    private static extern void openProject(string path);
     
-
     private IntPtr _glfwHwnd;
 
     public Viewport()
@@ -39,9 +40,10 @@ public partial class Viewport : UserControl
         Loaded += OnLoaded;
     }
 
-    public static void LoadScene(string path)
+    public static bool OpenProject(string path)
     {
-        loadScene(path);
+        openProject(path);
+        return true;
     }
 
     private void OnUpdate(object? sender, EventArgs e)
@@ -82,6 +84,7 @@ public partial class Viewport : UserControl
         
         setViewportOffset(_glfwHwnd, (int)windowPosition.X, (int)windowPosition.Y);
         engineInit(_glfwHwnd);
+        EngineInitialised.Invoke();
     }
 
     public void Shutdown()

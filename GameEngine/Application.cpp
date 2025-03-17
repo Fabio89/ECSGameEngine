@@ -2,6 +2,7 @@ module Engine:Application;
 import :Application;
 import :Components;
 import :DebugWidget.EntityExplorer;
+import :Project;
 import :Render.RenderManager;
 import :World;
 
@@ -27,7 +28,6 @@ void addSystems(World& world)
 std::atomic<bool> shouldExit = false;
 RenderManager renderManager;
 std::thread renderThread;
-const ApplicationSettings& settings = Config::getApplicationSettings();
 World world{{&renderManager}};
 
 void runRenderThread(GLFWwindow* window)
@@ -36,9 +36,7 @@ void runRenderThread(GLFWwindow* window)
 
     while (!shouldExit.load())
     {
-        auto deltaTime = std::chrono::nanoseconds{static_cast<int>(1000000.f /settings.targetFps) };
-        renderManager.update(deltaTime.count() / 1000000.f);
-        std::this_thread::sleep_for(deltaTime);
+        renderManager.update();
     }
 
     renderManager.shutdown();
@@ -55,7 +53,7 @@ void engineInit(GLFWwindow* window)
     EngineComponents::init();
 
     addSystems<ModelSystem, TransformSystem>(world);
-    world.addDebugWidget<DebugWidgets::EntityExplorer>();
+    // world.addDebugWidget<DebugWidgets::EntityExplorer>();
     world.addDebugWidget<DebugWidgets::ImGuiDemo>();
 }
 
@@ -97,9 +95,9 @@ void setViewportOffset(GLFWwindow* window, int x, int y)
         glfwSetWindowPos(window, x, y);
 }
 
-void loadScene(const char* path)
+void openProject(const char* path)
 {
-    world.loadScene(path);
+    Project::open(path, world);
 }
 
 GLFWwindow* createWindow(HWND parent, int width, int height)
@@ -113,7 +111,8 @@ GLFWwindow* createWindow(HWND parent, int width, int height)
     }
     
     GLFWwindow* window = glfwCreateWindow(width, height, "Vulkan", nullptr, nullptr);
-
+    glfwSwapInterval(1);
+    
     if (parent)
     {
         const auto hwnd = glfwGetWin32Window(window);

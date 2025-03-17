@@ -1,5 +1,6 @@
 export module Engine:Component.Transform;
 import :Render.RenderManager;
+import :Serialisation;
 import :System;
 import :World;
 
@@ -13,8 +14,8 @@ export struct TransformComponent : Component<TransformComponent>
 template <>
 TransformComponent deserialize(const JsonObject& data)
 {
-    const vec3 position = parseVec3(data, "position").value_or(vec3{});
-    const vec3 rotation = parseVec3(data, "rotation").value_or(vec3{});
+    const vec3 position = Json::parseVec3(data, "position").value_or(vec3{});
+    const vec3 rotation = Json::parseVec3(data, "rotation").value_or(vec3{});
     
     float scale{1.f};
     if (const auto it = data.FindMember("scale"); it != data.MemberEnd())

@@ -5,7 +5,7 @@ import :Render.RenderManager;
 import :Render.Model;
 import :Core;
 import :Guid;
-import :Config;
+import :Serialisation;
 import :System;
 import :World;
 

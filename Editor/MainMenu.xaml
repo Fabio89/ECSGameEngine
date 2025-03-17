@@ -1,0 +1,31 @@
+<UserControl x:Class="Editor.MainMenu"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:Editor"
+             mc:Ignorable="d"
+             d:DesignHeight="Auto" d:DesignWidth="600">
+    <Menu DockPanel.Dock="Top">
+        <!-- File Menu -->
+        <MenuItem Header="File">
+            <MenuItem Header="New" Click="OnClickMenuItem_New"/>
+            <MenuItem Header="Open" Click="OnClickMenuItem_Open"/>
+            <MenuItem Header="Save" Click="OnClickMenuItem_Save"/>
+            <MenuItem Header="Exit" Click="OnClickMenuItem_Exit"/>
+        </MenuItem>
+            
+        <!-- Edit Menu -->
+        <MenuItem Header="Edit">
+            <MenuItem Header="Undo" Click="OnClickMenuItem_Undo"/>
+            <MenuItem Header="Redo" Click="OnClickMenuItem_Redo"/>
+            <MenuItem Header="Cut" Click="OnClickMenuItem_Cut"/>
+            <MenuItem Header="Copied" Click="OnClickMenuItem_Copied"/>
+        </MenuItem>
+            
+        <!-- Help Menu -->
+        <MenuItem Header="Help">
+            <MenuItem Header="About" Click="OnClickMenuItem_About"/>
+        </MenuItem>
+    </Menu>
+</UserControl>
