@@ -1,8 +1,17 @@
-module Engine:Serialisation;
-import :Serialisation;
+module Engine:Serialization;
+import :Serialization;
 
 [[nodiscard]]
-std::optional<vec2> Json::parseVec2(const JsonObject& j, const char* key)
+JsonObject Json::fromVec2(vec3 v, MemoryPoolAllocator<> allocator)
+{
+    JsonObject json{kArrayType};
+    json.PushBack(v.x, allocator);
+    json.PushBack(v.y, allocator);
+    return json;
+}
+
+[[nodiscard]]
+std::optional<vec2> Json::toVec2(const JsonObject& j, const char* key)
 {
     const auto it = j.FindMember(key);
     if (it == j.MemberEnd())
@@ -16,7 +25,17 @@ std::optional<vec2> Json::parseVec2(const JsonObject& j, const char* key)
 }
 
 [[nodiscard]]
-std::optional<vec3> Json::parseVec3(const JsonObject& j, const char* key)
+JsonObject Json::fromVec3(vec3 v, MemoryPoolAllocator<> allocator)
+{
+    JsonObject json{kArrayType};
+    json.PushBack(v.x, allocator);
+    json.PushBack(v.y, allocator);
+    json.PushBack(v.z, allocator);
+    return json;
+}
+
+[[nodiscard]]
+std::optional<vec3> Json::toVec3(const JsonObject& j, const char* key)
 {
     const auto it = j.FindMember(key);
     if (it == j.MemberEnd())
@@ -30,7 +49,7 @@ std::optional<vec3> Json::parseVec3(const JsonObject& j, const char* key)
 }
 
 [[nodiscard]]
-std::optional<std::string> Json::parseString(const JsonObject& j, const char* key)
+std::optional<std::string> Json::toString(const JsonObject& j, const char* key)
 {
     const auto it = j.FindMember(key);
     if (it == j.MemberEnd())

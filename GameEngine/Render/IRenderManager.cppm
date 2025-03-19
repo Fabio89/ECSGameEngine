@@ -10,7 +10,7 @@ export struct IRenderManager
     virtual void init(GLFWwindow* window) = 0;
     virtual void update() = 0;
     virtual void shutdown() = 0;
-    virtual bool hasBeenInitialised() const = 0;
+    virtual bool hasBeenInitialized() const = 0;
     virtual void clear() = 0;
     virtual void addDebugWidget(std::unique_ptr<IDebugWidget> widget) = 0;
     virtual void addRenderObject(Entity entity, const MeshAsset* mesh, const TextureAsset* texture) = 0;

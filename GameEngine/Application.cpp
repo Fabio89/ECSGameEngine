@@ -5,6 +5,7 @@ import :DebugWidget.EntityExplorer;
 import :Project;
 import :Render.RenderManager;
 import :World;
+import Wrapper.RapidJson;
 
 void framebufferResizeCallback(GLFWwindow* window, [[maybe_unused]] int width, [[maybe_unused]] int height)
 {
@@ -89,15 +90,32 @@ void engineShutdown(GLFWwindow* window)
     std::cout << "[Application] Shutdown complete!\n"; 
 }
 
-void setViewportOffset(GLFWwindow* window, int x, int y)
+void setViewport(GLFWwindow* window, int x, int y, int width, int height)
 {
     if (check(window, "Can't set viewport offset for null window!"))
+    {
         glfwSetWindowPos(window, x, y);
+        glfwSetWindowSize(window, width, height);
+    }
 }
 
 void openProject(const char* path)
 {
     Project::open(path, world);
+}
+
+void serializeScene(char* buffer, int bufferSize)
+{
+    JsonDocument doc;
+    doc.Swap(world.serializeScene(doc.GetAllocator()).Move());
+
+    Json::StringBuffer jsonBuffer;
+    Json::PrettyWriter writer{jsonBuffer};
+    writer.SetMaxDecimalPlaces(Json::defaultFloatPrecision);
+    doc.Accept(writer);
+
+    log(std::format("Serialized scene:\n\n{}", jsonBuffer.GetString()));
+    std::memcpy(buffer, jsonBuffer.GetString(), bufferSize);
 }
 
 GLFWwindow* createWindow(HWND parent, int width, int height)

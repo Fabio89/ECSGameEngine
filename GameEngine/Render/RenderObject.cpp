@@ -192,7 +192,8 @@ void RenderObjectManager::clear()
             m_device.freeMemory(memory);
         }
 
-        auto result = m_device.freeDescriptorSets(m_descriptorPool, object.descriptorSets.size(), object.descriptorSets.data());
+        check(std::in_range<uint32_t>(object.descriptorSets.size()), "Truncating value of object.descriptorSets.size() when freeing descriptor sets!");
+        auto result = m_device.freeDescriptorSets(m_descriptorPool, static_cast<uint32_t>(object.descriptorSets.size()), object.descriptorSets.data());
         check(result == vk::Result::eSuccess, "[RenderObjectManager::clear] Failed to free descriptor sets!");
     }
     m_objects.clear();

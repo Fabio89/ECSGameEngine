@@ -1,7 +1,7 @@
 export module Engine:Render.Model;
 import :AssetManager;
 import :Render.Vulkan;
-import :Serialisation;
+import :Serialization;
 
 using IdType = size_t;
 

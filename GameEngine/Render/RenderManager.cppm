@@ -16,7 +16,7 @@ public:
     RenderManager& operator=(const RenderManager&) = delete;
     RenderManager& operator=(RenderManager&&) = delete;
 
-    bool hasBeenInitialised() const override { return m_initialised; }
+    bool hasBeenInitialized() const override { return m_initialised; }
     void init(GLFWwindow* window) override;
     void update() override;
     void shutdown() override;

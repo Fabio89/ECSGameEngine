@@ -24,7 +24,7 @@ export extern "C" __declspec(dllexport)
 void engineShutdown(GLFWwindow* window);
 
 export extern "C" __declspec(dllexport)
-void setViewportOffset(GLFWwindow* window, int x, int y);
+void setViewport(GLFWwindow* window, int x, int y, int width, int height);
 
 //------------------------------------------------------------------------------------------------------------------------
 // Project
@@ -32,3 +32,6 @@ void setViewportOffset(GLFWwindow* window, int x, int y);
 
 export extern "C" __declspec(dllexport)
 void openProject(const char* path);
+
+export extern "C" __declspec(dllexport)
+void serializeScene(char* buffer, int bufferSize);

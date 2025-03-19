@@ -15,7 +15,10 @@ struct EntitySignature
 };
 
 template <>
-struct std::hash<EntitySignature> { size_t operator()(const EntitySignature& a) const noexcept { return hash<bitset<maxComponentsPerEntity>>()(a.bitset); } };
+struct std::hash<EntitySignature>
+{
+    size_t operator()(const EntitySignature& a) const noexcept { return hash<bitset<maxComponentsPerEntity>>()(a.bitset); }
+};
 
 export struct WorldCreateInfo
 {
@@ -32,8 +35,9 @@ public:
 
     void loadScene(std::string_view path);
     void loadScene(const JsonObject& json);
+    JsonObject serializeScene(Json::MemoryPoolAllocator<>& allocator) const;
     void unloadScene();
-    
+
     template <ValidComponent T, typename... Args>
     void addComponent(Entity entity, Args&&... args)
     {
@@ -57,7 +61,7 @@ public:
             oldArchetype.removeEntity(entity);
         }
         newArchetype.addComponent<T>(entity, T(std::forward<Args>(args)...));
-        
+
         if (oldArchetype.isEmpty())
         {
             m_archetypes.erase(oldSignature);
@@ -72,12 +76,29 @@ public:
     template <ValidComponent T>
     [[nodiscard]] const T& readComponent(Entity entity) const
     {
+        return readComponent<T>(entity, Component<T>::typeId);
+    }
+
+    template <ValidComponent T>
+    [[nodiscard]] const T& readComponent(Entity entity, ComponentTypeId componentType) const
+    {
         if (auto it = m_entities.find(entity); it != m_entities.end())
         {
-            return readArchetype(it->second).readComponent<T>(entity);
+            return readArchetype(it->second).readComponent<T>(entity, componentType);
         }
         fatalError(std::format("Couldn't find component: {}", getComponentName<T>()));
         static const T invalid{};
+        return invalid;
+    }
+
+    [[nodiscard]] const ComponentBase& readComponent(Entity entity, ComponentTypeId componentType) const
+    {
+        if (auto it = m_entities.find(entity); it != m_entities.end())
+        {
+            return readArchetype(it->second).readComponent(entity, componentType);
+        }
+        fatalError(std::format("Couldn't find component: {}", componentType.name()));
+        static constexpr ComponentBase invalid{};
         return invalid;
     }
 
@@ -94,7 +115,7 @@ public:
 
     template <ValidComponent T>
     T& editComponent(Entity entity) { return const_cast<T&>(readComponent<T>(entity)); }
-    
+
     void addSystem(std::unique_ptr<System> system);
 
     template <typename T>
@@ -114,7 +135,7 @@ public:
 
     ArchetypeChangedObserverHandle observeOnComponentAdded(ArchetypeChangedCallback observer);
     void unobserveOnComponentAdded(ArchetypeChangedObserverHandle observerHandle);
-    
+
     auto getEntitiesRange() const { return m_entities | std::views::keys; }
 
     const IRenderManager& getRenderManager() const { return m_renderManager.get(); }

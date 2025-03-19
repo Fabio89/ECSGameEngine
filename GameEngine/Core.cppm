@@ -12,13 +12,13 @@ export enum class ErrorType
     FatalError
 };
 
-template<typename T>
+template <typename T>
 void log(T&& message)
 {
     std::cout << message << '\n';
 }
 
-template<typename T>
+template <typename T>
 void print(T&& message, ErrorType type)
 {
     switch (type)
@@ -35,7 +35,7 @@ void print(T&& message, ErrorType type)
     }
 }
 
-template<typename T>
+template <typename T>
 bool check(bool expression, T&& message, ErrorType type = ErrorType::Error)
 {
     if (!expression)
@@ -48,7 +48,7 @@ bool check(bool expression, T&& message, ErrorType type = ErrorType::Error)
     return true;
 }
 
-template<typename T>
+template <typename T>
 void report(T&& message, ErrorType type = ErrorType::Error)
 {
     print(std::forward<T>(message), type);
@@ -56,7 +56,7 @@ void report(T&& message, ErrorType type = ErrorType::Error)
         std::abort();
 }
 
-template<typename T>
+template <typename T>
 void fatalError(T&& message)
 {
     print(std::forward<T>(message), ErrorType::FatalError);
@@ -66,33 +66,37 @@ void fatalError(T&& message)
 export using Entity = size_t;
 export using ComponentTypeId = std::type_index;
 
-export template<typename T>
+export template <typename T>
 concept ValidComponentData = true;
 
+export struct ComponentBase
+{
+};
+
 export template <ValidComponentData T>
-struct Component
+struct Component : ComponentBase
 {
     static const ComponentTypeId typeId;
 };
 
-export template<typename T>
+export template <typename T>
 concept ValidComponent = std::is_base_of_v<Component<T>, T>;
 
 template <ValidComponentData T>
-const ComponentTypeId Component<T>::typeId(typeid(T));
+const ComponentTypeId Component<T>::typeId{typeid(T)};
 
-export template<ValidComponent T>
+export template <ValidComponent T>
 std::string getComponentName() { return T::typeId.name(); }
 
 // Archetype
 export class Archetype
 {
     class ComponentArrayBase;
-    
+
 public:
     using ComponentArrayMap = std::map<ComponentTypeId, std::unique_ptr<ComponentArrayBase>>;
     using ComponentRange = std::ranges::elements_view<std::ranges::ref_view<const ComponentArrayMap>, 0>;
-    
+
     [[nodiscard]] bool isEmpty() const { return m_componentArrays.empty(); }
 
     template <ValidComponent T>
@@ -100,6 +104,11 @@ public:
 
     template <ValidComponent T>
     [[nodiscard]] const T& readComponent(Entity entity) const;
+
+    template <ValidComponent T>
+    [[nodiscard]] const T& readComponent(Entity entity, ComponentTypeId componentType) const;
+
+    [[nodiscard]] const ComponentBase& readComponent(Entity entity, ComponentTypeId componentType) const;
     
     void removeEntity(Entity entity);
 
@@ -133,11 +142,13 @@ private:
         ComponentArrayBase& operator=(const ComponentArrayBase&) = delete;
         ComponentArrayBase& operator=(ComponentArrayBase&&) = delete;
         virtual ~ComponentArrayBase() = default;
-        
+
         virtual void steal(ComponentArrayBase& other, Entity entity) = 0;
         virtual void remove(Entity entity) = 0;
         [[nodiscard]] virtual bool isEmpty() const = 0;
         virtual std::unique_ptr<ComponentArrayBase> cloneForEntity(Entity entity) = 0;
+        [[nodiscard]] virtual const ComponentBase& get(Entity entity) const = 0;
+        [[nodiscard]] virtual ComponentBase& get(Entity entity) = 0;
     };
 
     template <ValidComponent T>
@@ -170,8 +181,8 @@ private:
             other.remove(entity);
         }
 
-        [[nodiscard]] const T& get(Entity entity) const;
-        T& get(Entity entity);
+        [[nodiscard]] const T& get(Entity entity) const override;
+        [[nodiscard]] T& get(Entity entity) override;
 
     private:
         std::vector<T> m_components;
@@ -254,12 +265,27 @@ void Archetype::addComponent(Entity entity, T component)
 template <ValidComponent T>
 const T& Archetype::readComponent(Entity entity) const
 {
-    static const auto type = Component<T>::typeId;
-    if (auto it = m_componentArrays.find(type); it != m_componentArrays.end())
+    return readComponent<T>(entity, Component<T>::typeId);
+}
+
+template <ValidComponent T>
+const T& Archetype::readComponent(Entity entity, ComponentTypeId componentType) const
+{
+    if (auto it = m_componentArrays.find(componentType); it != m_componentArrays.end())
     {
         return static_cast<const ComponentArray<T>*>(it->second.get())->get(entity);
     }
     static const T invalid{};
+    return invalid;
+}
+
+const ComponentBase& Archetype::readComponent(Entity entity, ComponentTypeId componentType) const
+{
+    if (auto it = m_componentArrays.find(componentType); it != m_componentArrays.end())
+    {
+        return it->second.get()->get(entity);
+    }
+    static constexpr ComponentBase invalid{};
     return invalid;
 }
 

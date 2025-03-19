@@ -5,6 +5,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:Editor"
              mc:Ignorable="d"
-             Height="Auto" Width="Auto">
-    <Border x:Name="ViewportHost" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  />
+             HorizontalAlignment="Stretch"
+             VerticalAlignment="Stretch"
+             >
+    <Grid x:Name="ViewportHost" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  />
 </UserControl>

@@ -162,8 +162,8 @@
     <ClCompile Include="Render\TextureLoading.cpp" />
     <ClCompile Include="Render\TextureLoading.cppm" />
     <ClCompile Include="Render\VulkanIntegration.cppm" />
-    <ClCompile Include="Serialisation.cpp" />
-    <ClCompile Include="Serialisation.cppm" />
+    <ClCompile Include="Serialization.cpp" />
+    <ClCompile Include="Serialization.cppm" />
     <ClCompile Include="System.cppm" />
     <ClCompile Include="World.cpp" />
     <ClCompile Include="World.cppm" />

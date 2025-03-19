@@ -1,6 +1,6 @@
 export module Engine:Component.Transform;
 import :Render.RenderManager;
-import :Serialisation;
+import :Serialization;
 import :System;
 import :World;
 
@@ -11,11 +11,21 @@ export struct TransformComponent : Component<TransformComponent>
     float scale{1.f};
 };
 
+template<>
+JsonObject serialize(const TransformComponent& component, Json::MemoryPoolAllocator<>& allocator)
+{
+    JsonObject json{Json::kObjectType};
+    json.AddMember("position", Json::fromVec3(component.position, allocator), allocator);
+    json.AddMember("rotation", Json::fromVec3(component.rotation, allocator), allocator);
+    json.AddMember("scale", component.scale, allocator);
+    return json;
+}
+
 template <>
 TransformComponent deserialize(const JsonObject& data)
 {
-    const vec3 position = Json::parseVec3(data, "position").value_or(vec3{});
-    const vec3 rotation = Json::parseVec3(data, "rotation").value_or(vec3{});
+    const vec3 position = Json::toVec3(data, "position").value_or(vec3{});
+    const vec3 rotation = Json::toVec3(data, "rotation").value_or(vec3{});
     
     float scale{1.f};
     if (const auto it = data.FindMember("scale"); it != data.MemberEnd())

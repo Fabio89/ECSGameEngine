@@ -6,8 +6,9 @@
              xmlns:local="clr-namespace:Editor"
              xmlns:ui="http://schemas.modernwpf.com/2019"
              mc:Ignorable="d"
-             d:DesignHeight="300" d:DesignWidth="600"
-             Height="300" Width="1920">
+             d:DesignHeight="300" d:DesignWidth="800"
+             Height="300"
+             HorizontalAlignment="Stretch">
     <UserControl.Resources>
         <HierarchicalDataTemplate DataType="{x:Type local:FolderItem}" ItemsSource="{Binding SubFolders}">
             <StackPanel Orientation="Horizontal">
@@ -16,67 +17,67 @@
             </StackPanel>
         </HierarchicalDataTemplate>
     </UserControl.Resources>
-    
-    <Border BorderBrush="Chocolate" BorderThickness="1">
-    <Grid Background="{StaticResource BackgroundColorPrimary}">
-        <!-- Folder View -->
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="200"/>
-            <ColumnDefinition Width="1"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
-        <TreeView x:Name="FolderTreeView" Foreground="{StaticResource TextColor}" SelectedItemChanged="FolderTreeView_SelectedItem" />
-        <Border Grid.Column="1" Background="{StaticResource BackgroundColorBright}" Margin="0" Padding="0" VerticalAlignment="Stretch" />
-        <ListView x:Name="AssetListView" Grid.Column="2" Foreground="{StaticResource TextColor}">
-            <ListView.ItemContainerStyle>
-                <Style TargetType="ListViewItem">
-                    <Style.Setters>
-                        <Setter Property="Background" Value="{StaticResource BackgroundColorPrimary}" />
-                        <Setter Property="Foreground" Value="{StaticResource TextColor}" />
-                        <Setter Property="Padding" Value="6"></Setter>
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="{x:Type ListViewItem}">
-                                    <Border Padding="{TemplateBinding Padding}"
-                                            Background="{TemplateBinding Background}"
-                                            BorderBrush="{TemplateBinding BorderBrush}"
-                                            BorderThickness="{TemplateBinding BorderThickness}"
-                                            SnapsToDevicePixels="true">
-                                        <GridViewRowPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                                              SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
-                                    </Border>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style.Setters>
-                    <Style.Triggers>
-                        <Trigger Property="IsSelected" Value="True">
-                            <Setter Property="Background" Value="{StaticResource HighlightColor}" />
-                            <Setter Property="Foreground" Value="{StaticResource TextColor}" />
-                        </Trigger>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="{StaticResource BackgroundColorSecondary}" />
-                            <Setter Property="Foreground" Value="{StaticResource BrightTextColor}" />
-                        </Trigger>
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsMouseOver" Value="True" />
-                                <Condition Property="IsSelected" Value="True" />
-                            </MultiTrigger.Conditions>
-                            <Setter Property="Background" Value="{StaticResource BrightHighlightColor}" />
-                            <Setter Property="Foreground" Value="{StaticResource BrightTextColor}" />
-                        </MultiTrigger>
-                    </Style.Triggers>
-                </Style>
-            </ListView.ItemContainerStyle>
-            <ListView.View>
-                <GridView>
-                    <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="200"/>
-                    <GridViewColumn Header="Type" DisplayMemberBinding="{Binding Extension}" Width="100"/>
-                </GridView>
-            </ListView.View>
-        </ListView>
 
-    </Grid></Border>
+    <Border Background="{StaticResource BackgroundColorPrimary}" BorderThickness="1" BorderBrush="{StaticResource BackgroundColorBright}" HorizontalAlignment="Stretch">
+        <Grid>
+            <!-- Folder View -->
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="1" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TreeView x:Name="FolderTreeView" Foreground="{StaticResource TextColor}" SelectedItemChanged="FolderTreeView_SelectedItem" />
+            <Border Grid.Column="1" Background="{StaticResource BackgroundColorBright}" Margin="0" Padding="0" VerticalAlignment="Stretch" />
+            <ListView x:Name="AssetListView" Grid.Column="2" HorizontalAlignment="Stretch" Foreground="{StaticResource TextColor}">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Style.Setters>
+                            <Setter Property="Background" Value="{StaticResource BackgroundColorPrimary}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextColor}" />
+                            <Setter Property="Padding" Value="6"></Setter>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="{x:Type ListViewItem}">
+                                        <Border Padding="{TemplateBinding Padding}"
+                                                Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                SnapsToDevicePixels="true">
+                                            <GridViewRowPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                                  SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style.Setters>
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="{StaticResource HighlightColor}" />
+                                <Setter Property="Foreground" Value="{StaticResource TextColor}" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{StaticResource BackgroundColorSecondary}" />
+                                <Setter Property="Foreground" Value="{StaticResource BrightTextColor}" />
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="True" />
+                                    <Condition Property="IsSelected" Value="True" />
+                                </MultiTrigger.Conditions>
+                                <Setter Property="Background" Value="{StaticResource BrightHighlightColor}" />
+                                <Setter Property="Foreground" Value="{StaticResource BrightTextColor}" />
+                            </MultiTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="200" />
+                        <GridViewColumn Header="Type" DisplayMemberBinding="{Binding Extension}" Width="100" />
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </Grid>
+    </Border>
 </UserControl>

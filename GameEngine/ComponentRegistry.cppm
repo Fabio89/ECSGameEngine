@@ -1,6 +1,6 @@
 export module Engine:ComponentRegistry;
 import :Core;
-import :Serialisation;
+import :Serialization;
 import :World;
 import std;
 
@@ -13,11 +13,12 @@ public:
     ComponentTypeBase(ComponentTypeBase&&) = delete;
     ComponentTypeBase& operator=(const ComponentTypeBase&) = delete;
     ComponentTypeBase& operator=(ComponentTypeBase&&) = delete;
-    
+
     [[nodiscard]] virtual ComponentTypeId getTypeId() const = 0;
-    [[nodiscard]] virtual std::string getActualName() const = 0;
-    [[nodiscard]] virtual std::string getDisplayName() const = 0;
+    [[nodiscard]] virtual const std::string& getActualName() const = 0;
+    [[nodiscard]] virtual const std::string& getDisplayName() const = 0;
     virtual void createInstance(World& world, Entity entity, const JsonObject& data) const = 0;
+    [[nodiscard]] virtual JsonObject serialize(const ComponentBase& thing, Json::MemoryPoolAllocator<>& allocator) const = 0;
 };
 
 export template<ValidComponent T>
@@ -39,11 +40,12 @@ public:
 
         std::cout << "Registered component `" << m_actualName << "`" << std::endl;
     }
-
+    
     [[nodiscard]] ComponentTypeId getTypeId() const override { return T::typeId; }
-    [[nodiscard]] std::string getActualName() const override { return m_actualName; }
-    [[nodiscard]] std::string getDisplayName() const override { return m_displayName; }
-    void createInstance(World& world, Entity entity, const JsonObject& data) const override { world.addComponent<T>(entity, deserialize<T>(data)); }
+    [[nodiscard]] const std::string& getActualName() const override { return m_actualName; }
+    [[nodiscard]] const std::string& getDisplayName() const override { return m_displayName; }
+    void createInstance(World& world, Entity entity, const JsonObject& json) const override { world.addComponent<T>(entity, ::deserialize<T>(json)); }
+    [[nodiscard]] JsonObject serialize(const ComponentBase& thing, Json::MemoryPoolAllocator<>& allocator) const override { return ::serialize<T>(static_cast<const T&>(thing), allocator); }
 
 private:
     std::string m_actualName;

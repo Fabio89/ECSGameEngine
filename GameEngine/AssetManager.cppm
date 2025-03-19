@@ -1,6 +1,6 @@
 export module Engine:AssetManager;
 import :Guid;
-import :Serialisation;
+import :Serialization;
 import std;
 
 export class AssetBase
@@ -8,7 +8,7 @@ export class AssetBase
 public:
     explicit AssetBase(const JsonObject& serializedData)
     {
-        if (const auto id = Json::parseString(serializedData, "id"))
+        if (const auto id = Json::toString(serializedData, "id"))
         {
             m_id = Guid::createFromString(*id);
         }

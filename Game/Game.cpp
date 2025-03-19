@@ -24,14 +24,15 @@ int main()
     engineInit(window);
     
     openProject("C:/Users/march/Documents/Mashi Projects/TestProject/project.ma");
-    performLoops(10);
-    openProject("C:/Users/march/Documents/Mashi Projects/EmptyProject/project.ma");
-    performLoops(10);
-    openProject("C:/Users/march/Documents/Mashi Projects/TestProject/project.ma");
-    performLoops(10);
-    openProject("C:/Users/march/Documents/Mashi Projects/EmptyProject/project.ma");
-    performLoops(20000);
+    // performLoops(10);
+    // openProject("C:/Users/march/Documents/Mashi Projects/EmptyProject/project.ma");
+    // performLoops(10);
+    // openProject("C:/Users/march/Documents/Mashi Projects/TestProject/project.ma");
+    // performLoops(10);
+    // openProject("C:/Users/march/Documents/Mashi Projects/EmptyProject/project.ma");
     
+    performLoops(5);
+    serializeScene();
     engineShutdown(window);
     return 0;
 }

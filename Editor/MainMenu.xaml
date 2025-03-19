@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:Editor"
              mc:Ignorable="d"
              d:DesignHeight="Auto" d:DesignWidth="600">
-    <Menu DockPanel.Dock="Top">
+    <Menu DockPanel.Dock="Top" BorderThickness="0,0,0,1" BorderBrush="{StaticResource BackgroundColorBright}">
         <!-- File Menu -->
         <MenuItem Header="File">
             <MenuItem Header="New" Click="OnClickMenuItem_New"/>

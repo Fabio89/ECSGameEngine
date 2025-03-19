@@ -5,12 +5,38 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Editor"
         xmlns:ui="http://schemas.modernwpf.com/2019"
+        ui:WindowHelper.UseModernWindowStyle="True"
         mc:Ignorable="d"
         Height="1080" Width="1920"
         Title="Mashi Engine">
-    <DockPanel LastChildFill="False">
-        <local:MainMenu DockPanel.Dock="Top"></local:MainMenu>
-        <local:Viewport x:Name="Viewport" DockPanel.Dock="Top" Height="720" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"></local:Viewport>
-        <local:AssetBrowser HorizontalAlignment="Stretch" Height="800" DockPanel.Dock="Bottom"></local:AssetBrowser>
-    </DockPanel>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <local:MainMenu DockPanel.Dock="Top" />
+        <Grid Grid.Row="1" VerticalAlignment="Stretch">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <local:Viewport Grid.Column="0" x:Name="Viewport" MinHeight="600" DockPanel.Dock="Top" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                <local:AssetBrowser Grid.Row="1" DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" />
+            </Grid>
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <local:SceneExplorer x:Name="SceneExplorer" Grid.Row="0" VerticalAlignment="Stretch"/>
+                <local:DetailsPanel Grid.Row="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+            </Grid>
+        </Grid>
+
+    </Grid>
 </Window>
