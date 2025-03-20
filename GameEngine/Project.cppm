@@ -8,6 +8,7 @@ class Project
 {
 public:
     static void open(std::string path, World& world);
+    static void saveToCurrent(const World& world);
     static std::string getContentRoot();
 
 private:
@@ -18,6 +19,13 @@ void Project::open(std::string path, World& world)
 {
     currentProjectPath = std::move(path);
     world.loadScene(currentProjectPath);
+}
+
+void Project::saveToCurrent(const World& world)
+{
+    if (!check(!currentProjectPath.empty(), "Can't save current project as none is open!"))
+        return;
+    // To be implemented
 }
 
 std::string Project::getContentRoot()

@@ -15,7 +15,7 @@ void framebufferResizeCallback(GLFWwindow* window, [[maybe_unused]] int width, [
 
 GLFWwindow* createWindow(HWND parent, int width, int height);
 
-template<typename T, typename... T_Systems>
+template <typename T, typename... T_Systems>
 void addSystems(World& world)
 {
     world.addSystem<T>();
@@ -50,7 +50,7 @@ void engineInit(GLFWwindow* window)
         runRenderThread,
         window
     };
-    
+
     EngineComponents::init();
 
     addSystems<ModelSystem, TransformSystem>(world);
@@ -65,7 +65,7 @@ bool engineUpdate(GLFWwindow* window, float deltaTime)
         engineShutdown(window);
         return false;
     }
-    
+
     glfwPollEvents();
     world.updateSystems(deltaTime);
     return true;
@@ -75,19 +75,19 @@ void engineShutdown(GLFWwindow* window)
 {
     if (shouldExit.exchange(true))
         return;
-    
+
     std::cout << "[Application] Shutting down...\n";
-    
+
     if (renderThread.joinable())
     {
-        std::cout << "[Application] Waiting for render thread to complete...\n"; 
+        std::cout << "[Application] Waiting for render thread to complete...\n";
         renderThread.join();
-        std::cout << "[Application] Render thread joined!\n"; 
+        std::cout << "[Application] Render thread joined!\n";
     }
 
     glfwDestroyWindow(window);
     glfwTerminate();
-    std::cout << "[Application] Shutdown complete!\n"; 
+    std::cout << "[Application] Shutdown complete!\n";
 }
 
 void setViewport(GLFWwindow* window, int x, int y, int width, int height)
@@ -127,7 +127,16 @@ void serializeScene(char* buffer, int bufferSize)
 
 void patchEntity(Entity entity, const char* json)
 {
-    //world
+    JsonDocument document;
+    document.Parse(json);
+
+    if (document.HasParseError())
+    {
+        report(std::format("JSON parse error while trying to patch entity '{}'!", entity));
+        return;
+    }
+    
+    world.patchEntity(entity, document);
 }
 
 GLFWwindow* createWindow(HWND parent, int width, int height)
@@ -139,10 +148,10 @@ GLFWwindow* createWindow(HWND parent, int width, int height)
     {
         glfwWindowHint(glfw::Decorated, glfw::False);
     }
-    
+
     GLFWwindow* window = glfwCreateWindow(width, height, "Vulkan", nullptr, nullptr);
     glfwSwapInterval(1);
-    
+
     if (parent)
     {
         const auto hwnd = glfwGetWin32Window(window);

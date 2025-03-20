@@ -27,8 +27,39 @@ int main()
 
     performLoops(5);
 
+    // "components": {
+    //     "NameComponent": {
+    //         "name": "Viking house"
+    //     },
+    //     "TransformComponent": {
+    //         "position": [
+    //             0.0,
+    //             0.0,
+    //             0.0
+    //         ],
+    //         "rotation": [
+    //             0.0,
+    //             0.0,
+    //             0.0
+    //         ],
+    //         "scale": 2.0
+    //     }
+    // }
 
+    const char* patch = R"(
+{
+    "components": {
+        "NameComponent": {
+            "name": "WTF this works"
+        }
+    }
+})";
+    patchEntity(0, patch);
 
+    char buf[4096];
+    serializeScene(buf, sizeof(buf));
+    std::cout << buf;
+    
     // performLoops(10);
     // openProject("C:/Users/march/Documents/Mashi Projects/EmptyProject/project.ma");
     // performLoops(10);
@@ -36,7 +67,7 @@ int main()
     // performLoops(10);
     // openProject("C:/Users/march/Documents/Mashi Projects/EmptyProject/project.ma");
     
-    performLoops(5);
+    performLoops(10);
     engineShutdown(window);
     return 0;
 }
