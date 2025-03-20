@@ -1,18 +1,23 @@
-using System.Numerics;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Editor.GameProject;
 
-public class Component
+public class Component : ViewModelBase
 {
 }
 
 public class NameComponent : Component
 {
+    private string _name = string.Empty;
+
     [JsonPropertyName("name")]
-    public string Name { get; set; } = string.Empty;
+    public string Name
+    {
+        get => _name;
+        set => SetField(ref _name, value);
+    }
 }
 
 public struct Vector3(float x, float y, float z)
@@ -50,16 +55,34 @@ public class Vector3Converter : JsonConverter<Vector3>
     }
 }
 
+
+// ReSharper disable once UnusedType.Global
 public class TransformComponent : Component
 {
+    private Vector3 _position;
+    private Vector3 _rotation;
+    private float _scale;
+
     [JsonPropertyName("position")]
-    public Vector3 Position { get; set; }
+    public Vector3 Position
+    {
+        get => _position;
+        set => SetField(ref _position, value);
+    }
 
     [JsonPropertyName("rotation")]
-    public Vector3 Rotation { get; set; }
-    
+    public Vector3 Rotation
+    {
+        get => _rotation;
+        set => SetField(ref _rotation, value);
+    }
+
     [JsonPropertyName("scale")]
-    public float Scale { get; set; }
+    public float Scale
+    {
+        get => _scale;
+        set => SetField(ref _scale, value);
+    }
 }
 
 public class ModelComponent : Component

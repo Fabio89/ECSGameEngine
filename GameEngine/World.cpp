@@ -83,11 +83,54 @@ void World::loadScene(std::string_view path)
 {
     std::cout << "Loading scene: " << path << '\n';
     const JsonObject& doc = Json::fromFile(path);
-    loadScene(doc);
+    deserializeScene(doc);
     std::cout << "Scene loading complete\n";
 }
 
-void World::loadScene(const JsonObject& json)
+void World::unloadScene()
+{
+    m_renderManager.get().clear();
+    m_entities.clear();
+    m_archetypes.clear();
+    for (auto& system : m_systems)
+        system->clear();
+}
+
+[[nodiscard]]
+JsonObject World::serializeScene(Json::MemoryPoolAllocator<>& allocator) const
+{
+    JsonObject jsonScene{Json::kObjectType};
+    JsonObject jsonEntityArray{Json::kArrayType};
+
+    check(std::in_range<Json::SizeType>(m_entities.size()), "Truncating value of m_entities.size()!");
+    jsonEntityArray.Reserve(static_cast<Json::SizeType>(m_entities.size()), allocator);
+
+    for (auto entity : m_entities | std::views::keys)
+    {
+        JsonObject jsonEntity{Json::kObjectType};
+        JsonObject jsonComponentDict{Json::kObjectType};
+
+        auto components = getComponentTypesInEntity(entity);
+        check(std::in_range<Json::SizeType>(components.size()), "Truncating value of components.size()!");
+        jsonComponentDict.MemberReserve(static_cast<Json::SizeType>(components.size()), allocator);
+
+        for (auto componentType : components)
+        {
+            const ComponentBase& component = readComponent(entity, componentType);
+            const ComponentTypeBase& componentTypeInfo = *ComponentRegistry::get(componentType);
+            JsonObject jsonComponent = componentTypeInfo.serialize(component, allocator);
+            jsonComponentDict.AddMember(Json::GenericStringRef{componentTypeInfo.getName().data()}, jsonComponent, allocator);
+        }
+        jsonEntity.AddMember("id", entity, allocator);
+        jsonEntity.AddMember("components", jsonComponentDict, allocator);
+        jsonEntityArray.PushBack(jsonEntity, allocator);
+    }
+
+    jsonScene.AddMember("entities", jsonEntityArray, allocator);
+    return jsonScene;
+}
+
+void World::deserializeScene(const JsonObject& json)
 {
     unloadScene();
 
@@ -119,47 +162,21 @@ void World::loadScene(const JsonObject& json)
     }
 }
 
-[[nodiscard]]
-JsonObject World::serializeScene(Json::MemoryPoolAllocator<>& allocator) const
+void World::patchEntity(Entity entity, const JsonObject& json)
 {
-    JsonObject jsonScene{Json::kObjectType};
-    JsonObject jsonEntityArray{Json::kArrayType};
-    
-    check(std::in_range<Json::SizeType>(m_entities.size()), "Truncating value of m_entities.size()!");
-    jsonEntityArray.Reserve(static_cast<Json::SizeType>(m_entities.size()), allocator);
-    
-    for (auto entity : m_entities | std::views::keys)
-    {
-        JsonObject jsonEntity{Json::kObjectType};
-        JsonObject jsonComponentDict{Json::kObjectType};
-        
-        auto components = getComponentTypesInEntity(entity);
-        check(std::in_range<Json::SizeType>(components.size()), "Truncating value of components.size()!");
-        jsonComponentDict.MemberReserve(static_cast<Json::SizeType>(components.size()), allocator);
-        
-        for (auto componentType : components)
-        {
-            const ComponentBase& component = readComponent(entity, componentType);
-            const ComponentTypeBase& componentTypeInfo = *ComponentRegistry::get(componentType);
-            JsonObject jsonComponent = componentTypeInfo.serialize(component, allocator);
-            jsonComponentDict.AddMember(Json::GenericStringRef{ componentTypeInfo.getDisplayName().c_str()}, jsonComponent, allocator);
-        }
-
-        jsonEntity.AddMember("components", jsonComponentDict, allocator);
-        jsonEntityArray.PushBack(jsonEntity, allocator);
-    }
-    
-    jsonScene.AddMember("entities", jsonEntityArray, allocator);
-    return jsonScene;
-}
-
-void World::unloadScene()
-{
-    m_renderManager.get().clear();
-    m_entities.clear();
-    m_archetypes.clear();
-    for (auto& system : m_systems)
-        system->clear();
+    // if (auto components = json.FindMember("components"); components != json.MemberEnd() && components->value.IsObject())
+    // {
+    //     for (auto it = components->value.MemberBegin(); it != components->value.MemberEnd(); ++it)
+    //     {
+    //         const std::string& typeName = it->name.GetString();
+    //         const JsonObject& componentData = it->value.GetObject();
+    //
+    //         if (const ComponentTypeBase* componentType = ComponentRegistry::get(typeName))
+    //         {
+    //             componentType->editComponent(*this, entity);
+    //         }
+    //     }
+    // }
 }
 
 void World::addSystem(std::unique_ptr<System> system)

@@ -3,6 +3,8 @@ import :Guid;
 import :Serialization;
 import std;
 
+export using AssetTypeId = TypeId;
+
 export class AssetBase
 {
 public:
@@ -22,7 +24,7 @@ public:
 
     virtual ~AssetBase() = default;
 
-    virtual std::type_index getType() const = 0;
+    virtual AssetTypeId getType() const = 0;
 
 private:
     Guid m_id;
@@ -32,6 +34,8 @@ export template <typename T>
 class Asset final : public AssetBase
 {
 public:
+    inline static const AssetTypeId typeId = UniqueIdGenerator::TypeIdGenerator<T>::value;
+
     Asset(const JsonObject& serializedData)
         : AssetBase{serializedData},
           m_data{deserialize<T>(serializedData)}
@@ -39,7 +43,7 @@ public:
     }
 
     const T& getData() const { return m_data; }
-    std::type_index getType() const override { return typeid(Asset); }
+    AssetTypeId getType() const override { return typeId; }
 
 private:
     T m_data;
@@ -59,6 +63,6 @@ namespace AssetManager
     const T* findAsset(const Guid& guid)
     {
         auto it = std::ranges::find_if(g_loadedAssets, [&](auto&& asset) { return asset->getGuid() == guid; });
-        return it != g_loadedAssets.end() && (*it)->getType() == typeid(T) ? static_cast<const T*>(it->get()) : nullptr;
+        return it != g_loadedAssets.end() && (*it)->getType() == T::typeId ? static_cast<const T*>(it->get()) : nullptr;
     }
 };

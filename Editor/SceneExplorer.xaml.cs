@@ -1,8 +1,4 @@
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Text.Json;
 using System.Windows;
-using System.Windows.Controls;
 using Editor.GameProject;
 
 namespace Editor;
@@ -24,13 +20,11 @@ public partial class SceneExplorer
     public SceneExplorer()
     {
         InitializeComponent();
-        ProjectOpener.Opened += OnProjectOpened;
+        SceneManager.Instance.Loaded += OnSceneLoaded;
     }
 
-    private void OnProjectOpened()
+    private void OnSceneLoaded(Scene scene)
     {
-        var scene = EngineInterop.LoadScene();
-        
         foreach (var entity in scene.Entities)
         {
             SceneTreeView.Items.Add(new SceneItem(entity));

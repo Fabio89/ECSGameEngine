@@ -7,8 +7,9 @@
              Background="{StaticResource BackgroundColorPrimary}"
              BorderBrush="{StaticResource BackgroundColorSecondary}"
              BorderThickness="0,0,0,0"
-             HorizontalContentAlignment="Stretch">
-
+             HorizontalContentAlignment="Stretch"
+             >
+    
     <UserControl.Resources>
         <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <HierarchicalDataTemplate DataType="{x:Type local:PropertyViewModel}"
@@ -29,6 +30,7 @@
                     <TextBox DockPanel.Dock="Right"
                              Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                              Visibility="{Binding ShouldBeInlined, Converter={StaticResource BooleanToVisibilityConverter}}"
+                             TextChanged="TextBoxBase_OnTextChanged"
                              Margin="0,3,0,3"
                              Padding="0,0,4,0"
                              HorizontalContentAlignment="Right"

@@ -1,13 +1,14 @@
-using System.IO;
-
 namespace Editor.GameProject;
 
-public static class ProjectOpener
+public class ProjectOpener
 {
-    public static event Action Opened = delegate { };
-    public static string CurrentProjectPath { get; private set; } = string.Empty;
+    private static ProjectOpener? _instance;
+    public static ProjectOpener Instance => _instance ??= new ProjectOpener();
     
-    public static bool OpenProject(string path)
+    public event Action Opened = delegate { };
+    public string CurrentProjectPath { get; private set; } = string.Empty;
+    
+    public bool OpenProject(string path)
     {
         if (!Viewport.OpenProject(path)) return false;
         Console.WriteLine($"Opened project: '{path}'");
@@ -15,4 +16,6 @@ public static class ProjectOpener
         Opened.Invoke();
         return true;
     }
+    
+    private ProjectOpener() { }
 }

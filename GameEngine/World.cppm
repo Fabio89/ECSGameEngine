@@ -34,10 +34,12 @@ public:
     void removeEntity(Entity entity);
 
     void loadScene(std::string_view path);
-    void loadScene(const JsonObject& json);
-    JsonObject serializeScene(Json::MemoryPoolAllocator<>& allocator) const;
     void unloadScene();
+    JsonObject serializeScene(Json::MemoryPoolAllocator<>& allocator) const;
+    void deserializeScene(const JsonObject& json);
 
+    void patchEntity(Entity entity, const JsonObject& json);
+    
     template <ValidComponent T, typename... Args>
     void addComponent(Entity entity, Args&&... args)
     {
@@ -46,7 +48,7 @@ public:
 
         Archetype& oldArchetype = editOrCreateArchetype(signature);
 
-        signature.bitset.set(Component<T>::typeId.hash_code() % maxComponentsPerEntity);
+        signature.bitset.set(std::hash<ComponentTypeId>{}(Component<T>::typeId) % maxComponentsPerEntity);
 
         const bool usingExistingArchetype = m_archetypes.contains(signature);
 
@@ -97,7 +99,7 @@ public:
         {
             return readArchetype(it->second).readComponent(entity, componentType);
         }
-        fatalError(std::format("Couldn't find component: {}", componentType.name()));
+        fatalError(std::format("Couldn't find component with id: {}", componentType));
         static constexpr ComponentBase invalid{};
         return invalid;
     }

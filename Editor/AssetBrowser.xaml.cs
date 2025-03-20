@@ -43,7 +43,7 @@ public partial class AssetBrowser : UserControl
     public AssetBrowser()
     {
         InitializeComponent();
-        ProjectOpener.Opened += OnProjectOpened;
+        ProjectOpener.Instance.Opened += OnProjectOpened;
     }
 
     private void OnProjectOpened()
@@ -53,7 +53,7 @@ public partial class AssetBrowser : UserControl
 
     private void LoadFolders()
     {
-        var rootFolderPath = Path.GetDirectoryName(ProjectOpener.CurrentProjectPath);
+        var rootFolderPath = Path.GetDirectoryName(ProjectOpener.Instance.CurrentProjectPath);
         if (!Directory.Exists(rootFolderPath)) return;
         var rootFolder = new FolderItem(rootFolderPath);
         FolderTreeView.Items.Add(rootFolder);

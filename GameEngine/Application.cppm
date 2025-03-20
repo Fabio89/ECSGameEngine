@@ -35,3 +35,6 @@ void openProject(const char* path);
 
 export extern "C" __declspec(dllexport)
 void serializeScene(char* buffer, int bufferSize);
+
+export extern "C" __declspec(dllexport)
+void patchEntity(Entity entity, const char* json);

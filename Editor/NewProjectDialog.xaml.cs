@@ -1,12 +1,7 @@
 using System.Globalization;
-using System.Runtime.InteropServices;
-using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows;
-using Windows.Storage.Pickers;
-using ABI.Windows.Storage;
 using Editor.GameProject;
-using WinRT.Interop;
 
 namespace Editor;
 
@@ -54,6 +49,6 @@ public partial class NewProjectDialog
     {
         var project = ProjectCreator.CreateProject();
         if (!string.IsNullOrEmpty(project))
-            ProjectOpener.OpenProject(project);
+            ProjectOpener.Instance.OpenProject(project);
     }
 }

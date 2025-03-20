@@ -109,13 +109,25 @@ void serializeScene(char* buffer, int bufferSize)
     JsonDocument doc;
     doc.Swap(world.serializeScene(doc.GetAllocator()).Move());
 
-    Json::StringBuffer jsonBuffer;
+    Json::StringBuffer jsonBuffer{};
     Json::PrettyWriter writer{jsonBuffer};
     writer.SetMaxDecimalPlaces(Json::defaultFloatPrecision);
     doc.Accept(writer);
 
     log(std::format("Serialized scene:\n\n{}", jsonBuffer.GetString()));
-    std::memcpy(buffer, jsonBuffer.GetString(), bufferSize);
+    try
+    {
+        std::memcpy(buffer, jsonBuffer.GetString(), bufferSize);
+    }
+    catch (std::exception& e)
+    {
+        report(std::format("Crash in serializeScene std::memcpy! {}", e.what()));
+    }
+}
+
+void patchEntity(Entity entity, const char* json)
+{
+    //world
 }
 
 GLFWwindow* createWindow(HWND parent, int width, int height)

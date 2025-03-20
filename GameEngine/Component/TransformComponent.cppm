@@ -11,6 +11,12 @@ export struct TransformComponent : Component<TransformComponent>
     float scale{1.f};
 };
 
+template <>
+struct TypeTraits<TransformComponent>
+{
+    static constexpr auto name = "TransformComponent";
+};
+
 template<>
 JsonObject serialize(const TransformComponent& component, Json::MemoryPoolAllocator<>& allocator)
 {

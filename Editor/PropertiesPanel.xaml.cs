@@ -1,11 +1,9 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using Editor.GameProject;
 
 namespace Editor;
 
@@ -51,7 +49,7 @@ public partial class PropertyViewModel : ViewModelBase
         _propertyInfo = propertyInfo;
         if (propertyInfo != null)
         {
-            Name = PrettifyName(propertyInfo.Name);
+            Name = Utils.PrettifyName(propertyInfo.Name);
             _value = propertyInfo.GetValue(parentObject);
             PropertyType = propertyInfo.PropertyType;
             if (IsComplexType(PropertyType))
@@ -82,26 +80,19 @@ public partial class PropertyViewModel : ViewModelBase
             }
         }
     }
-
-    private static string PrettifyName(string name) => MyRegex().Replace(name, " $1"); // Turns "MyProperty" into "My Property"
-    
-    [GeneratedRegex("(\\B[A-Z])")]
-    private static partial Regex MyRegex();
 }
 
 public partial class PropertiesPanel : UserControl
 {
-    public static readonly DependencyProperty ViewModelProperty =
-        DependencyProperty.Register(nameof(ViewModel), typeof(ObjectDetailsViewModel), typeof(PropertiesPanel), new PropertyMetadata(null));
-    
-    public ObjectDetailsViewModel ViewModel
-    {
-        get => (ObjectDetailsViewModel)GetValue(ViewModelProperty);
-        set { SetValue(ViewModelProperty, value); DataContext = ViewModel; }
-    }
-
     public PropertiesPanel()
     {
         InitializeComponent();
+    }
+
+    private void TextBoxBase_OnTextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (sender is not TextBox textBox) return;
+        
+        Console.WriteLine($"Value changed: [{sender}] Data context: [{textBox.DataContext}]");
     }
 }

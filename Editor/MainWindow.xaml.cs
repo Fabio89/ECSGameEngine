@@ -1,9 +1,4 @@
-﻿using System.Runtime.InteropServices;
-using System.Windows;
-using System.Windows.Input;
-using System.Windows.Interop;
-using System.Windows.Media;
-using Editor.GameProject;
+﻿using Editor.GameProject;
 
 namespace Editor;
 
@@ -17,13 +12,19 @@ public partial class MainWindow
     {
         InitializeComponent();
         Viewport.EngineInitialised += OnEngineInitialised;
+        ProjectOpener.Instance.Opened += OnProjectOpened;
+    }
+
+    private void OnProjectOpened()
+    {
+        SceneManager.Instance.LoadCurrentScene();
     }
 
     private void OnEngineInitialised()
     {
         var settings = SettingsManager.LoadSettings();
 
-        if (settings.RecentProjects.Any(ProjectOpener.OpenProject))
+        if (settings.RecentProjects.Any(ProjectOpener.Instance.OpenProject))
         {
         }
     }

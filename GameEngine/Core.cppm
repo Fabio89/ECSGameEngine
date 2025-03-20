@@ -63,8 +63,24 @@ void fatalError(T&& message)
     std::abort();
 }
 
-export using Entity = size_t;
-export using ComponentTypeId = std::type_index;
+export using TypeId = size_t;
+export using Entity = TypeId;
+export using ComponentTypeId = TypeId;
+
+namespace UniqueIdGenerator
+{
+    TypeId generateUniqueId()
+    {
+        static TypeId id = 0;
+        return id++;
+    }
+
+    template <typename T>
+    struct TypeIdGenerator
+    {
+        inline static const ComponentTypeId value = generateUniqueId();
+    };
+}
 
 export template <typename T>
 concept ValidComponentData = true;
@@ -76,17 +92,20 @@ export struct ComponentBase
 export template <ValidComponentData T>
 struct Component : ComponentBase
 {
-    static const ComponentTypeId typeId;
+    inline static const ComponentTypeId typeId = UniqueIdGenerator::TypeIdGenerator<T>::value;
 };
 
 export template <typename T>
 concept ValidComponent = std::is_base_of_v<Component<T>, T>;
 
-template <ValidComponentData T>
-const ComponentTypeId Component<T>::typeId{typeid(T)};
+template <ValidComponent T>
+struct TypeTraits
+{
+    static constexpr const char* name = "Unknown";
+};
 
 export template <ValidComponent T>
-std::string getComponentName() { return T::typeId.name(); }
+constexpr const char* getComponentName() { return TypeTraits<T>::name; }
 
 // Archetype
 export class Archetype
@@ -109,7 +128,7 @@ public:
     [[nodiscard]] const T& readComponent(Entity entity, ComponentTypeId componentType) const;
 
     [[nodiscard]] const ComponentBase& readComponent(Entity entity, ComponentTypeId componentType) const;
-    
+
     void removeEntity(Entity entity);
 
     Archetype cloneForEntity(Entity entity)

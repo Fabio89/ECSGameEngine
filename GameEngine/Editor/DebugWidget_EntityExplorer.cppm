@@ -56,8 +56,7 @@ export namespace DebugWidgets
                         {
                             if (const ComponentTypeBase* type = ComponentRegistry::get(typeId))
                             {
-                                const std::string displayName = type->getDisplayName();
-                                if (Wrapper_ImGui::Selectable(displayName.c_str(), isSelected(entity, typeId)))
+                                if (Wrapper_ImGui::Selectable(type->getName().data(), isSelected(entity, typeId)))
                                 {
                                     m_currentlySelected.emplace(entity, typeId);
                                 }
@@ -102,8 +101,7 @@ export namespace DebugWidgets
             {
                 if (const ComponentTypeBase* componentType = ComponentRegistry::get(m_currentlySelected->second))
                 {
-                    const std::string displayName = componentType->getDisplayName();
-                    if (Wrapper_ImGui::TreeNode(displayName.c_str()))
+                    if (Wrapper_ImGui::TreeNode(componentType->getName().data()))
                     {
                         // Wrapper_ImGui::BulletText(std::format("Position: X: {}; Y: {}; Z: {}", transform.position.x, transform.position.y, transform.position.z).c_str());
                         // Wrapper_ImGui::BulletText(std::format("Rotation: X: {}; Y: {}; Z: {}", transform.rotation.x, transform.rotation.y, transform.rotation.z).c_str());

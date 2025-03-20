@@ -10,6 +10,12 @@ export struct NameComponent : Component<NameComponent>
 };
 
 template <>
+struct TypeTraits<NameComponent>
+{
+    static constexpr auto name = "NameComponent";
+};
+
+template <>
 JsonObject serialize(const NameComponent& thing, Json::MemoryPoolAllocator<>& allocator)
 {
     JsonObject json{Json::kObjectType};

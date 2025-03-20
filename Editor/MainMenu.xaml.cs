@@ -1,5 +1,4 @@
 using System.Windows;
-using System.Windows.Controls;
 using Editor.GameProject;
 
 namespace Editor;
@@ -24,7 +23,7 @@ public partial class MainMenu
             var result = await FilePicker.PickFileAsync([$"{Project.Extension}"]);
             if (result != null)
             {
-                ProjectOpener.OpenProject(result);
+                ProjectOpener.Instance.OpenProject(result);
             }
         }
         catch (Exception ex)

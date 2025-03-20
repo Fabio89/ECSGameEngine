@@ -7,13 +7,6 @@ namespace Editor;
 
 public static partial class EngineInterop
 {
-    private static readonly JsonSerializerOptions SerializerOptions = new()
-    {
-        Converters = { new EntityConverter(), new Vector3Converter() },
-        WriteIndented = true
-    };
-    private static readonly StringBuilder JsonBuffer = new(4096);
-    
     [DllImport("Engine.dll", EntryPoint = "getCoolestNumber", CallingConvention = CallingConvention.Cdecl)]
     public static extern int GetCoolestNumber();
 
@@ -36,14 +29,5 @@ public static partial class EngineInterop
     public static extern void OpenProject(string path);
     
     [DllImport("Engine.dll", EntryPoint = "serializeScene", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void SerializeScene(StringBuilder buffer, int bufferSize);
-
-    public static Scene LoadScene()
-    {
-        var buffer = JsonBuffer;
-        SerializeScene(buffer, buffer.Capacity);
-        var sceneStr = buffer.ToString(); 
-        var scene = JsonSerializer.Deserialize<Scene>(sceneStr, SerializerOptions);
-        return scene ?? new Scene();
-    }
+    public static extern void SerializeScene(StringBuilder buffer, int bufferSize);
 }

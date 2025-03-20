@@ -15,41 +15,21 @@ public:
     ComponentTypeBase& operator=(ComponentTypeBase&&) = delete;
 
     [[nodiscard]] virtual ComponentTypeId getTypeId() const = 0;
-    [[nodiscard]] virtual const std::string& getActualName() const = 0;
-    [[nodiscard]] virtual const std::string& getDisplayName() const = 0;
+    [[nodiscard]] virtual std::string_view getName() const = 0;
     virtual void createInstance(World& world, Entity entity, const JsonObject& data) const = 0;
     [[nodiscard]] virtual JsonObject serialize(const ComponentBase& thing, Json::MemoryPoolAllocator<>& allocator) const = 0;
+    [[nodiscard]] virtual ComponentBase& editComponent(World& world, Entity entity) const = 0;
 };
 
 export template<ValidComponent T>
 class ComponentType final : public ComponentTypeBase
 {
 public:
-    explicit ComponentType(std::string displayName) : m_displayName{std::move(displayName)}
-    {
-        const std::string actualName{typeid(T).name()};
-
-        const size_t endPos = actualName.find_last_not_of(' ');
-        size_t startPos = actualName.find_last_of(' ', endPos);
-        if (startPos == std::string::npos)
-            startPos = 0;
-
-        m_actualName = actualName.substr(startPos + 1, endPos - startPos);
-        if (m_displayName.empty())
-            m_displayName = m_actualName;
-
-        std::cout << "Registered component `" << m_actualName << "`" << std::endl;
-    }
-    
     [[nodiscard]] ComponentTypeId getTypeId() const override { return T::typeId; }
-    [[nodiscard]] const std::string& getActualName() const override { return m_actualName; }
-    [[nodiscard]] const std::string& getDisplayName() const override { return m_displayName; }
+    [[nodiscard]] std::string_view getName() const override { return getComponentName<T>(); }
     void createInstance(World& world, Entity entity, const JsonObject& json) const override { world.addComponent<T>(entity, ::deserialize<T>(json)); }
     [[nodiscard]] JsonObject serialize(const ComponentBase& thing, Json::MemoryPoolAllocator<>& allocator) const override { return ::serialize<T>(static_cast<const T&>(thing), allocator); }
-
-private:
-    std::string m_actualName;
-    std::string m_displayName;
+    [[nodiscard]] ComponentBase& editComponent(World& world, Entity entity) const override { return world.editComponent<T>(entity); }
 };
 
 namespace ComponentRegistry
@@ -61,12 +41,13 @@ namespace ComponentRegistry
     std::map<std::string, const ComponentTypeBase*> byName;
 
     export template<ValidComponent T>
-    void init(std::string displayName = {})
+    void init()
     {
         check(std::none_of(componentTypes.cbegin(), componentTypes.cend(), [](auto&& type) { return type->getTypeId() == T::typeId; }), "Tried to init components more than once!");
-        const std::unique_ptr<const ComponentTypeBase>& type = componentTypes.emplace_back(std::make_unique<ComponentType<T>>(std::move(displayName)));
+        const std::unique_ptr<const ComponentTypeBase>& type = componentTypes.emplace_back(std::make_unique<ComponentType<T>>());
         byId[type->getTypeId()] = type.get();
-        byName[type->getActualName()] = type.get();
+        byName[getComponentName<T>()] = type.get();
+        log(std::format("Registered component: {} (id={})", getComponentName<T>(), type->getTypeId()));
     }
 
     export const ComponentTypeBase* get(ComponentTypeId typeId)

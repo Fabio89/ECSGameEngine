@@ -42,18 +42,18 @@
         </ListBox.ItemContainerStyle>
         <ListBox.ItemTemplate>
             <DataTemplate>
-                <Expander IsExpanded="True"
-                          Padding="0,4,0,4"
-                          FontWeight="Bold"
-                          Header="{Binding ComponentName}"
-                          BorderBrush="{StaticResource BackgroundColorSecondary}"
-                          BorderThickness="0,1,0,1"
-                          >
-                    <local:PropertiesPanel ViewModel="{Binding}"
-                                           HorizontalContentAlignment="Stretch"
-                                           VerticalContentAlignment="Stretch"
-                                           HorizontalAlignment="Stretch"
-                                           VerticalAlignment="Stretch" />
+                <Expander
+                    IsExpanded="True"
+                    Padding="0,4,0,4"
+                    FontWeight="Bold"
+                    Header="{Binding ComponentName}"
+                    BorderBrush="{StaticResource BackgroundColorSecondary}"
+                    BorderThickness="0,1,0,1">
+                    <local:PropertiesPanel
+                        HorizontalContentAlignment="Stretch"
+                        VerticalContentAlignment="Stretch"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch" />
                 </Expander>
             </DataTemplate>
         </ListBox.ItemTemplate>

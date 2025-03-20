@@ -1,23 +1,24 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Reflection;
-using System.Text.RegularExpressions;
-using System.Windows;
-using System.Windows.Controls;
 using Editor.GameProject;
+using Component = Editor.GameProject.Component;
 
 namespace Editor;
 
-public class ComponentViewModel
+public class ComponentViewModel : ViewModelBase
 {
     public Component Component { get; set; }
     public string ComponentName { get; set; }
 
     public ObservableCollection<PropertyViewModel> Properties { get; set; }
 
+    public ComponentViewModel() : this(new Component()) {}
+    
     public ComponentViewModel(Component component)
     {
         Component = component;
-        ComponentName = component.GetType().Name;
+        ComponentName = Utils.PrettifyName(component.GetType().Name);
 
         Properties = new ObservableCollection<PropertyViewModel>
         (
@@ -25,66 +26,77 @@ public class ComponentViewModel
                 .Where(p => p is { CanRead: true, CanWrite: true })
                 .Select(p => new PropertyViewModel(component, p))
         );
+
+        foreach (var property in Properties)
+        {
+            property.PropertyChanged += OnPropertyChanged;
+        }
+    }
+
+    private void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (sender is not ViewModelBase vm || string.IsNullOrEmpty(e.PropertyName))
+            return;
+
+        var property = vm.GetType().GetProperty(e.PropertyName);
+        Console.WriteLine($"Component property changed: {sender.GetType().Name}.{e.PropertyName} = {property?.GetValue(vm)}");
     }
 }
 
 public class EntityViewModel : ViewModelBase
 {
-    private Entity? _selectedEntity;
+    private readonly Entity? _entity;
 
-    public Entity? SelectedEntity
+    public Entity? Entity
     {
-        get => _selectedEntity;
-        set
+        get => _entity;
+        private init
         {
-            SetField(ref _selectedEntity, value);
+            SetField(ref _entity, value);
             Components = value != null ? new ObservableCollection<ComponentViewModel>(value.Components.Values.Select(c => new ComponentViewModel(c))) : [];
-        }
-    }
 
-    public ObservableCollection<ComponentViewModel> Components { get; private set; } = [];
-}
-
-public class ObjectDetailsViewModel
-{
-    public ObservableCollection<PropertyViewModel> Properties { get; init; } = [];
-
-    public ObjectDetailsViewModel()
-    {
-    }
-
-    public ObjectDetailsViewModel(object obj)
-    {
-        LoadObject(obj);
-    }
-    
-    public void LoadObject(object obj)
-    {
-        Properties.Clear();
-        foreach (var prop in obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
-        {
-            if (prop is { CanRead: true, CanWrite: true })
+            foreach (var component in Components)
             {
-                Properties.Add(new PropertyViewModel(obj, prop));
+                component.Component.PropertyChanged += OnComponentPropertyChanged;
             }
         }
     }
+
+    public ObservableCollection<ComponentViewModel> Components { get; private init; } = [];
+
+    public EntityViewModel(Entity entity)
+    {
+        Entity = entity;
+    }
+    
+    private static void OnComponentPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        Console.WriteLine($"Component property changed: {((Component)sender!).GetType().Name}{e.PropertyName}");
+    }
 }
 
-public partial class DetailsPanel : UserControl
+public partial class DetailsPanel
 {
-    public EntityViewModel ViewModel { get; } = new();
+    private ObservableCollection<EntityViewModel> Entities { get; set; } = [];
+
+    private EntityViewModel? SelectedEntity { get; set; }
 
     public DetailsPanel()
     {
         InitializeComponent();
+
+        SceneManager.Instance.Loaded += OnSceneLoaded;
         EntitySelector.Instance.SelectionChanged += OnEntitySelectionChanged;
-        DataContext = ViewModel;
+    }
+
+    private void OnSceneLoaded(Scene scene)
+    {
+        Entities = new ObservableCollection<EntityViewModel>(scene.Entities.Select(x => new EntityViewModel(x)));
     }
 
     private void OnEntitySelectionChanged(Entity? obj)
     {
-        ViewModel.SelectedEntity = obj;
-        MyListBox.ItemsSource = ViewModel.Components;
+        SelectedEntity = Entities.First(x => x.Entity == obj);
+        MyListBox.ItemsSource = SelectedEntity.Components;
     }
 }
