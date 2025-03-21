@@ -22,6 +22,15 @@ struct TypeTraits<ModelComponent>
 };
 
 template <>
+JsonObject serialize(const ModelComponent& thing, Json::MemoryPoolAllocator<>& allocator)
+{
+    JsonObject json{Json::kObjectType};
+    json.AddMember("mesh", JsonObject{thing.mesh ? thing.mesh->getGuid().toString().data() : "", allocator}, allocator);
+    json.AddMember("texture", JsonObject{thing.texture ? thing.texture->getGuid().toString().data() : "", allocator}, allocator);
+    return json;
+}
+
+template <>
 ModelComponent deserialize(const JsonObject& serializedData)
 {
     const Guid meshGuid = Guid::createFromString(serializedData.FindMember("mesh")->value.GetString());

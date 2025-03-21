@@ -77,3 +77,18 @@ JsonDocument Json::fromFile(std::string_view path)
     }
     return doc;
 }
+
+void Json::toFile(const JsonDocument& document, std::string_view path)
+{
+    std::ofstream ofs{path.data()};
+    if (!ofs.is_open())
+    {
+        report(std::format("Failed to open file: '{}'", path));
+        return;
+    }
+
+    OStreamWrapper osw{ofs};
+    PrettyWriter writer{osw};
+    writer.SetMaxDecimalPlaces(defaultFloatPrecision);
+    document.Accept(writer);
+}

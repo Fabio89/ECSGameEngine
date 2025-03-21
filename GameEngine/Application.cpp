@@ -104,6 +104,11 @@ void openProject(const char* path)
     Project::open(path, world);
 }
 
+void saveCurrentProject()
+{
+    Project::saveToCurrent(world);
+}
+
 void serializeScene(char* buffer, int bufferSize)
 {
     JsonDocument doc;

@@ -12,6 +12,7 @@ export namespace Json
     std::optional<std::string> toString(const JsonObject& j, const char* key);
     JsonDocument fromString(std::string_view jsonStr);
     JsonDocument fromFile(std::string_view path);
+    void toFile(const JsonDocument& document, std::string_view path);
     constexpr int defaultFloatPrecision = 5;
 }
 

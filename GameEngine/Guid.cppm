@@ -21,6 +21,8 @@ public:
         return std::strong_ordering::greater;
     }
 
+    std::string toString() const { return to_string(m_impl); }
+
     friend std::ostream& operator<<(std::ostream& os, const Guid& guid)
     {
         os << guid.m_impl;

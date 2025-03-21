@@ -34,6 +34,9 @@ export extern "C" __declspec(dllexport)
 void openProject(const char* path);
 
 export extern "C" __declspec(dllexport)
+void saveCurrentProject();
+
+export extern "C" __declspec(dllexport)
 void serializeScene(char* buffer, int bufferSize);
 
 export extern "C" __declspec(dllexport)

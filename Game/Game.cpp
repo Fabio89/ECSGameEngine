@@ -68,6 +68,7 @@ int main()
     // openProject("C:/Users/march/Documents/Mashi Projects/EmptyProject/project.ma");
     
     performLoops(10);
+    saveCurrentProject();
     engineShutdown(window);
     return 0;
 }

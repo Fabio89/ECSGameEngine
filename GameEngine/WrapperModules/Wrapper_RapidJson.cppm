@@ -1,6 +1,7 @@
 module;
 #include "rapidjson/document.h"
 #include "rapidjson/istreamwrapper.h"
+#include "rapidjson/ostreamwrapper.h"
 #include "rapidjson/prettywriter.h"
 
 export module Wrapper.RapidJson;
@@ -22,8 +23,10 @@ export namespace Json
     using rapidjson::StringBuffer;
     using rapidjson::Writer;
     using rapidjson::PrettyWriter;
+
+    using rapidjson::IStreamWrapper;
+    using rapidjson::OStreamWrapper;
 }
 
 export using JsonDocument = rapidjson::Document;
 export using JsonObject = rapidjson::Value;
-export using rapidjson::IStreamWrapper;

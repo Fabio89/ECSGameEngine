@@ -19,3 +19,4 @@ export using boost::uuids::operator>=;
 export using boost::uuids::operator<<;
 export using boost::uuids::operator>>;
 export using boost::uuids::swap;
+export using boost::uuids::to_string;

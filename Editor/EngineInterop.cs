@@ -28,6 +28,12 @@ public static partial class EngineInterop
     [DllImport("Engine.dll", EntryPoint = "openProject", CallingConvention = CallingConvention.Cdecl)]
     public static extern void OpenProject(string path);
     
+    [DllImport("Engine.dll", EntryPoint = "saveCurrentProject", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void SaveCurrentProject();
+    
     [DllImport("Engine.dll", EntryPoint = "serializeScene", CallingConvention = CallingConvention.Cdecl)]
     public static extern void SerializeScene(StringBuilder buffer, int bufferSize);
+    
+    [DllImport("Engine.dll", EntryPoint = "patchEntity", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void PatchEntity(ulong entity, string json);
 }
