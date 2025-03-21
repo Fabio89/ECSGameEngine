@@ -21,4 +21,9 @@ public class ViewModelBase : INotifyPropertyChanged
         OnPropertyChanged(propertyName);
         return true;
     }
+
+    protected void TriggerPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        OnPropertyChanged(propertyName);
+    }
 }

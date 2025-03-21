@@ -35,11 +35,9 @@ public class ComponentViewModel : ViewModelBase
 
     private void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (sender is not ViewModelBase vm || string.IsNullOrEmpty(e.PropertyName))
-            return;
-
-        var property = vm.GetType().GetProperty(e.PropertyName);
-        Console.WriteLine($"Component property changed: {sender.GetType().Name}.{e.PropertyName} = {property?.GetValue(vm)}");
+        var property = Component.GetType().GetProperty(e.PropertyName!);
+        Console.WriteLine($"[ComponentViewModel] Component property changed: {Component.GetType().Name}.{e.PropertyName} = {property?.GetValue(Component)}");
+        TriggerPropertyChanged(e.PropertyName);
     }
 }
 
@@ -57,7 +55,7 @@ public class EntityViewModel : ViewModelBase
 
             foreach (var component in Components)
             {
-                component.Component.PropertyChanged += OnComponentPropertyChanged;
+                component.PropertyChanged += OnComponentPropertyChanged;
             }
         }
     }
@@ -71,7 +69,9 @@ public class EntityViewModel : ViewModelBase
     
     private static void OnComponentPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        Console.WriteLine($"Component property changed: {((Component)sender!).GetType().Name}{e.PropertyName}");
+        var component = ((ComponentViewModel)sender!).Component;
+        var property = component.GetType().GetProperty(e.PropertyName!);
+        Console.WriteLine($"[EntityViewModel] Component property changed: {component.GetType().Name}.{e.PropertyName} = {property?.GetValue(component)}");
     }
 }
 

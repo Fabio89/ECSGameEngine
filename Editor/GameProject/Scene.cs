@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -20,11 +21,13 @@ public class NameComponent : Component
     }
 }
 
-public struct Vector3(float x, float y, float z)
+public class Vector3(float x, float y, float z)
 {
     public float X { get; set; } = x;
     public float Y { get; set; } = y;
     public float Z { get; set; } = z;
+    
+    public override string ToString() => $"{X}, {Y}, {Z}";
 }
 
 public class Vector3Converter : JsonConverter<Vector3>
@@ -54,7 +57,6 @@ public class Vector3Converter : JsonConverter<Vector3>
         writer.WriteEndArray();
     }
 }
-
 
 // ReSharper disable once UnusedType.Global
 public class TransformComponent : Component
@@ -92,14 +94,12 @@ public class ModelComponent : Component
 
 public class Entity
 {
-    [JsonPropertyName("components")]
-    public Dictionary<string, Component> Components { get; set; } = [];
+    [JsonPropertyName("components")] public Dictionary<string, Component> Components { get; set; } = [];
 }
 
 public class Scene
 {
-    [JsonPropertyName("entities")]
-    public Entity[] Entities { get; set; } = [];
+    [JsonPropertyName("entities")] public Entity[] Entities { get; set; } = [];
 }
 
 // public class ComponentConverter : JsonConverter<Component>
@@ -140,7 +140,7 @@ public class EntityConverter : JsonConverter<Entity>
             var componentType = Type.GetType($"Editor.GameProject.{componentTypeName}, {Assembly.GetExecutingAssembly().FullName}");
             if (componentType == null)
                 throw new JsonException("Tried to parse a component with an unknown type: " + componentTypeName);
-            
+
             var componentJson = componentProperty.Value;
 
             var component = (Component?)JsonSerializer.Deserialize(componentJson.GetRawText(), componentType, options);
