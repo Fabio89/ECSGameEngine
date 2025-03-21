@@ -164,17 +164,21 @@ void World::deserializeScene(const JsonObject& json)
 
 void World::patchEntity(Entity entity, const JsonObject& json)
 {
-    if (auto components = json.FindMember("components"); components != json.MemberEnd() && components->value.IsObject())
+    if (!json.IsObject())
     {
-        for (auto it = components->value.MemberBegin(); it != components->value.MemberEnd(); ++it)
-        {
-            const std::string& typeName = it->name.GetString();
-            const JsonObject& componentData = it->value.GetObject();
+        log("Failed to patch entity!");
+        return;
+    }
     
-            if (const ComponentTypeBase* componentType = ComponentRegistry::get(typeName))
-            {
-                componentType->deserialize(*this, entity, componentData);
-            }
+    for (auto it = json.MemberBegin(); it != json.MemberEnd(); ++it)
+    {
+        const std::string& typeName = it->name.GetString();
+        const JsonObject& componentData = it->value.GetObject();
+
+        if (const ComponentTypeBase* componentType = ComponentRegistry::get(typeName))
+        {
+            componentType->deserialize(*this, entity, componentData);
+            log(std::format("Patched component: {}", componentType->getName()));
         }
     }
 }

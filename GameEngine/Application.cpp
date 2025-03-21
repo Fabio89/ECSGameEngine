@@ -132,12 +132,14 @@ void serializeScene(char* buffer, int bufferSize)
 
 void patchEntity(Entity entity, const char* json)
 {
+    log(std::format("Patching entity '{}' with:\n{}", entity, json));
+
     JsonDocument document;
     document.Parse(json);
 
     if (document.HasParseError())
     {
-        report(std::format("JSON parse error while trying to patch entity '{}'!", entity));
+        report(std::format("JSON parse error while trying to patch entity '{}'! Patch:\n{}", entity, json));
         return;
     }
     

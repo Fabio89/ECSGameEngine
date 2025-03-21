@@ -245,9 +245,10 @@ vk::PresentModeKHR RenderUtils::chooseSwapPresentMode(const std::vector<vk::Pres
 {
     check(!availablePresentModes.empty(), "No available present modes!");
 
-    if (auto it = std::ranges::find(availablePresentModes, vk::PresentModeKHR::eMailbox); it != availablePresentModes.
-        end())
-        return *it;
+    // Disabling Mailbox for now as it doesn't seem to wait for vertical sync and instead goes as fast as it can
+    // if (auto it = std::ranges::find(availablePresentModes, vk::PresentModeKHR::eMailbox); it != availablePresentModes.
+    //     end())
+    //     return *it;
 
     check(std::ranges::contains(availablePresentModes, vk::PresentModeKHR::eFifo), "Couldn't find required present mode: 'eFifo'");
     return vk::PresentModeKHR::eFifo;

@@ -5,7 +5,7 @@ using Editor.GameProject;
 
 namespace Editor;
 
-public static partial class EngineInterop
+public static partial class Engine
 {
     [DllImport("Engine.dll", EntryPoint = "getCoolestNumber", CallingConvention = CallingConvention.Cdecl)]
     public static extern int GetCoolestNumber();

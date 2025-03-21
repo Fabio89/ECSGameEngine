@@ -843,8 +843,7 @@ void RenderManager::pickPhysicalDevice()
         if (swapChainSupport.formats.empty() || swapChainSupport.presentModes.empty())
             return false;
 
-        const vk::PhysicalDeviceFeatures features = device.getFeatures();
-        if (!features.samplerAnisotropy)
+        if (const vk::PhysicalDeviceFeatures features = device.getFeatures(); !features.samplerAnisotropy)
             return false;
         return true;
     };

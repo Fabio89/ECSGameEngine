@@ -12,6 +12,36 @@
     
     <UserControl.Resources>
         <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+
+        <!-- Text Property -->
+        <DataTemplate x:Key="TextPropertyTemplate" DataType="{x:Type local:PropertyViewModel}">
+            <TextBox
+                     Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     Margin="0,3,0,3"
+                     Padding="0,0,4,0"
+                     HorizontalAlignment="Stretch"
+                     HorizontalContentAlignment="Right"
+                     VerticalContentAlignment="Center" />
+        </DataTemplate>
+
+        <!-- Number Property -->
+        <DataTemplate x:Key="NumberPropertyTemplate" DataType="{x:Type local:PropertyViewModel}">
+            <TextBox Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     HorizontalAlignment="Stretch"
+                     HorizontalContentAlignment="Right"
+                     VerticalContentAlignment="Center"/>
+        </DataTemplate>
+
+        <!-- Boolean Property -->
+        <DataTemplate x:Key="BooleanPropertyTemplate" DataType="{x:Type local:PropertyViewModel}">
+            <CheckBox IsChecked="{Binding Value, Mode=TwoWay}" />
+        </DataTemplate>
+        
+        <local:PropertyEditorTemplateSelector x:Key="PropertyEditorTemplateSelector"
+                                              TextTemplate="{StaticResource TextPropertyTemplate}"
+                                              NumberTemplate="{StaticResource NumberPropertyTemplate}"
+                                              BooleanTemplate="{StaticResource BooleanPropertyTemplate}" />
+        
         <HierarchicalDataTemplate DataType="{x:Type local:PropertyViewModel}"
                                   x:Key="PropertyTemplate"
                                   ItemsSource="{Binding Children}">
@@ -27,18 +57,15 @@
                                    HorizontalAlignment="Stretch"
                                    VerticalAlignment="Center" />
                     </Border>
-                    <TextBox DockPanel.Dock="Right"
-                             Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                             Visibility="{Binding ShouldBeInlined, Converter={StaticResource BooleanToVisibilityConverter}}"
-                             TextChanged="TextBoxBase_OnTextChanged"
-                             Margin="0,3,0,3"
-                             Padding="0,0,4,0"
-                             HorizontalContentAlignment="Right"
-                             VerticalContentAlignment="Center"
-                             Width="120" />
+                    <ContentPresenter DockPanel.Dock="Right"
+                                      Width="120"
+                                      Visibility="{Binding ShouldBeInlined, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                      Content="{Binding}"
+                                      ContentTemplateSelector="{StaticResource PropertyEditorTemplateSelector}" />
                 </DockPanel>
             </Border>
         </HierarchicalDataTemplate>
+        
     </UserControl.Resources>
 
     <TreeView BorderBrush="{StaticResource BackgroundColorBright}"

@@ -20,7 +20,7 @@ public partial class Viewport : UserControl
     {
         Window mainWindow = Window.GetWindow(this) ?? throw new InvalidOperationException("Could not find main window.");
         Point windowPosition = TransformToAncestor(mainWindow).Transform(new Point(0, 0));
-        EngineInterop.SetViewport(_glfwHwnd, (int)windowPosition.X, (int)windowPosition.Y, (int)ActualWidth, (int)ActualHeight);
+        Engine.SetViewport(_glfwHwnd, (int)windowPosition.X, (int)windowPosition.Y, (int)ActualWidth, (int)ActualHeight);
     }
 
     public Viewport()
@@ -40,7 +40,7 @@ public partial class Viewport : UserControl
 
     public static bool OpenProject(string path)
     {
-        EngineInterop.OpenProject(path);
+        Engine.OpenProject(path);
         return true;
     }
 
@@ -49,10 +49,10 @@ public partial class Viewport : UserControl
         if (_glfwHwnd == IntPtr.Zero)
             return;
 
-        var keepRunning = EngineInterop.EngineUpdate(_glfwHwnd, 1f);
+        var keepRunning = Engine.EngineUpdate(_glfwHwnd, 1f);
         if (!keepRunning)
         {
-            EngineInterop.EngineShutdown(_glfwHwnd);
+            Engine.EngineShutdown(_glfwHwnd);
             Shutdown();
         }
     }
@@ -76,14 +76,14 @@ public partial class Viewport : UserControl
 
         IntPtr parentHwnd = hwndSource.Handle;
 
-        _glfwHwnd = EngineInterop.CreateWindow(parentHwnd, (int)ActualWidth, (int)ActualHeight);
+        _glfwHwnd = Engine.CreateWindow(parentHwnd, (int)ActualWidth, (int)ActualHeight);
         if (_glfwHwnd == IntPtr.Zero)
         {
             MessageBox.Show("Failed to create GLFW window.");
         }
 
         UpdateViewportExtents();
-        EngineInterop.EngineInit(_glfwHwnd);
+        Engine.EngineInit(_glfwHwnd);
         CompositionTarget.Rendering += OnUpdate;
         EngineInitialised.Invoke();
     }
@@ -92,6 +92,6 @@ public partial class Viewport : UserControl
     {
         CompositionTarget.Rendering -= OnUpdate;
         if (_glfwHwnd != IntPtr.Zero)
-            EngineInterop.EngineShutdown(_glfwHwnd);
+            Engine.EngineShutdown(_glfwHwnd);
     }
 }

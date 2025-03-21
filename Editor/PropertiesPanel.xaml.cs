@@ -25,6 +25,28 @@ public class BooleanToVisibilityConverter : IValueConverter
     }
 }
 
+public class PropertyEditorTemplateSelector : DataTemplateSelector
+{
+    public DataTemplate? TextTemplate { get; set; }
+    public DataTemplate? NumberTemplate { get; set; }
+    public DataTemplate? BooleanTemplate { get; set; }
+
+    public override DataTemplate? SelectTemplate(object? item, DependencyObject container)
+    {
+        if (item is not PropertyViewModel property)
+            return base.SelectTemplate(item, container);
+        var type = property.PropertyType;
+        if (type == typeof(string))
+            return TextTemplate;
+        if (type == typeof(int) || type == typeof(float) || type == typeof(double))
+            return NumberTemplate;
+        if (type == typeof(bool))
+            return BooleanTemplate;
+        
+        return TextTemplate;
+    }
+}
+
 public class PropertyViewModel : ViewModelBase
 {
     public string Name { get; }
@@ -34,25 +56,33 @@ public class PropertyViewModel : ViewModelBase
         get => _propertyInfo.GetValue(_parentObject);
         set
         {
-            _propertyInfo.SetValue(_parentObject, Convert.ChangeType(value, _propertyInfo.PropertyType));
-
-            var type = value?.GetType();
-            _isComplexType = type == null || type != typeof(string) && (type.IsClass || (type is { IsValueType: true, IsPrimitive: false } && type != typeof(decimal)));
-            
-            _children = [];
-            if (_isComplexType && value != null)
+            try
             {
-                var properties = PropertyType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                    .Where(p => p is { CanRead: true, CanWrite: true } && p.Name != nameof(Value));
-                
-                foreach (var prop in properties)
+                var castedValue = Convert.ChangeType(value, _propertyInfo.PropertyType);
+                _propertyInfo.SetValue(_parentObject, castedValue);
+
+                var type = value?.GetType();
+                _isComplexType = type == null || type != typeof(string) && (type.IsClass || (type is { IsValueType: true, IsPrimitive: false } && type != typeof(decimal)));
+
+                _children = [];
+                if (_isComplexType && value != null)
                 {
-                    var childProperty = new PropertyViewModel(value, prop);
-                    childProperty.PropertyChanged += OnChildPropertyChanged;
-                    _children.Add(childProperty);
+                    var properties = PropertyType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                        .Where(p => p is { CanRead: true, CanWrite: true } && p.Name != nameof(Value));
+
+                    foreach (var prop in properties)
+                    {
+                        var childProperty = new PropertyViewModel(value, prop);
+                        childProperty.PropertyChanged += OnChildPropertyChanged;
+                        _children.Add(childProperty);
+                    }
                 }
+
+                TriggerPropertyChanged(_propertyInfo.Name);
             }
-            TriggerPropertyChanged(_propertyInfo.Name);
+            catch (FormatException)
+            {
+            }
         }
     }
     public bool ShouldBeInlined => !IsComplexType(PropertyType) || Value == null;
@@ -88,12 +118,5 @@ public partial class PropertiesPanel : UserControl
     public PropertiesPanel()
     {
         InitializeComponent();
-    }
-
-    private void TextBoxBase_OnTextChanged(object sender, TextChangedEventArgs e)
-    {
-        if (sender is not TextBox textBox) return;
-        
-        Console.WriteLine($"Value changed: [{sender}] Data context: [{textBox.DataContext}]");
     }
 }

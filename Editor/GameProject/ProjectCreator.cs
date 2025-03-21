@@ -97,7 +97,7 @@ public class ProjectCreator : ViewModelBase
 
             foreach (var templateFile in templateFiles)
             {
-                var template = Serialiser.Read<ProjectTemplate>(templateFile);
+                var template = Serialiser.ReadFromFile<ProjectTemplate>(templateFile);
                 if (template == null)
                 {
                     template = new ProjectTemplate
@@ -106,7 +106,7 @@ public class ProjectCreator : ViewModelBase
                         ProjectFile = "project.ma",
                         Folders = ["Content", "Code"]
                     };
-                    Serialiser.Write(template, templateFile);
+                    Serialiser.WriteToFile(template, templateFile);
                 }
 
                 template.IconPath = ConvertToFullPath("icon.png");

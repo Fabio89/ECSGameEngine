@@ -6,7 +6,7 @@ namespace Editor.Serialisation;
 
 public static class Serialiser
 {
-    public static void Write<T>(T obj, string path)
+    public static void WriteToFile<T>(T obj, string path)
     {
         try
         {
@@ -21,7 +21,7 @@ public static class Serialiser
         }
     }
     
-    public static T? Read<T>(string path) where T : class
+    public static T? ReadFromFile<T>(string path) where T : class
     {
         try
         {

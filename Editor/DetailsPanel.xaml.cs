@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Reflection;
+using System.Text.Json;
 using Editor.GameProject;
 using Component = Editor.GameProject.Component;
 
@@ -67,11 +68,15 @@ public class EntityViewModel : ViewModelBase
         Entity = entity;
     }
     
-    private static void OnComponentPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnComponentPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        var component = ((ComponentViewModel)sender!).Component;
+        var componentViewModel = (ComponentViewModel)sender!;
+        var component = componentViewModel.Component;
         var property = component.GetType().GetProperty(e.PropertyName!);
         Console.WriteLine($"[EntityViewModel] Component property changed: {component.GetType().Name}.{e.PropertyName} = {property?.GetValue(component)}");
+        var patch = Utils.Serialize(component, component.GetType());
+        patch = $"{{ \"{component.GetType().Name}\": {patch} }}";
+        Engine.PatchEntity(_entity!.Id, patch);
     }
 }
 
