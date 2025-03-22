@@ -3,45 +3,37 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:Editor"
+             xmlns:propertyEditors="clr-namespace:Editor.PropertyEditors"
              HorizontalAlignment="Stretch"
              Background="{StaticResource BackgroundColorPrimary}"
+             Foreground="{StaticResource TextColor}"
              BorderBrush="{StaticResource BackgroundColorSecondary}"
+             FontWeight="Normal"
              BorderThickness="0,0,0,0"
-             HorizontalContentAlignment="Stretch"
-             >
-    
+             HorizontalContentAlignment="Stretch">
+
     <UserControl.Resources>
         <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 
         <!-- Text Property -->
-        <DataTemplate x:Key="TextPropertyTemplate" DataType="{x:Type local:PropertyViewModel}">
-            <TextBox
-                     Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                     Margin="0,3,0,3"
-                     Padding="0,0,4,0"
-                     HorizontalAlignment="Stretch"
-                     HorizontalContentAlignment="Right"
-                     VerticalContentAlignment="Center" />
+        <DataTemplate x:Key="StringEditor">
+            <propertyEditors:StringEditor />
         </DataTemplate>
 
-        <!-- Number Property -->
-        <DataTemplate x:Key="NumberPropertyTemplate" DataType="{x:Type local:PropertyViewModel}">
-            <TextBox Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                     HorizontalAlignment="Stretch"
-                     HorizontalContentAlignment="Right"
-                     VerticalContentAlignment="Center"/>
+        <DataTemplate x:Key="NumberEditor">
+            <propertyEditors:NumberEditor />
         </DataTemplate>
 
         <!-- Boolean Property -->
         <DataTemplate x:Key="BooleanPropertyTemplate" DataType="{x:Type local:PropertyViewModel}">
             <CheckBox IsChecked="{Binding Value, Mode=TwoWay}" />
         </DataTemplate>
-        
+
         <local:PropertyEditorTemplateSelector x:Key="PropertyEditorTemplateSelector"
-                                              TextTemplate="{StaticResource TextPropertyTemplate}"
-                                              NumberTemplate="{StaticResource NumberPropertyTemplate}"
+                                              TextTemplate="{StaticResource StringEditor}"
+                                              NumberTemplate="{StaticResource NumberEditor}"
                                               BooleanTemplate="{StaticResource BooleanPropertyTemplate}" />
-        
+
         <HierarchicalDataTemplate DataType="{x:Type local:PropertyViewModel}"
                                   x:Key="PropertyTemplate"
                                   ItemsSource="{Binding Children}">
@@ -65,7 +57,7 @@
                 </DockPanel>
             </Border>
         </HierarchicalDataTemplate>
-        
+
     </UserControl.Resources>
 
     <TreeView BorderBrush="{StaticResource BackgroundColorBright}"

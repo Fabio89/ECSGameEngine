@@ -12,28 +12,22 @@
     <UserControl.Resources>
     </UserControl.Resources>
 
-    <!-- <Expander IsExpanded="True" HorizontalAlignment="Stretch" > -->
-    <!--     <Expander.Header > -->
-    <!--         <TextBlock Text="Details" FontWeight="Bold" Padding="6" /> -->
-    <!--     </Expander.Header> -->
-    <!--     <Expander.Content> -->
-    <!--         <ScrollViewer CanContentScroll="True" VerticalScrollBarVisibility="Visible" VerticalAlignment="Stretch"> -->
-    <!-- -->
-    <!--         </ScrollViewer> -->
-    <!--     </Expander.Content> -->
-    <!--     </Expander> -->
-
     <ListBox x:Name="MyListBox"
              ItemsSource="{Binding Components}"
-             Background="{StaticResource BackgroundColorPrimary}"
              Padding="0" Margin="0"
              BorderThickness="1,1,0,0"
              BorderBrush="{StaticResource BackgroundColorSecondary}"
+             Background="{StaticResource BackgroundColorPrimary}"
              HorizontalAlignment="Stretch"
              VerticalAlignment="Stretch"
+             Focusable="False"
              HorizontalContentAlignment="Stretch">
         <ListBox.ItemContainerStyle>
             <Style TargetType="ListBoxItem">
+                <Setter Property="IsTabStop" Value="False" />
+                <Setter Property="IsSelected" Value="False" />
+                <Setter Property="Focusable" Value="False" />
+                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
                 <Setter Property="Padding" Value="0" />
                 <Setter Property="Margin" Value="0" />
                 <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -42,18 +36,22 @@
         </ListBox.ItemContainerStyle>
         <ListBox.ItemTemplate>
             <DataTemplate>
-                <Expander
-                    IsExpanded="True"
-                    Padding="0,4,0,4"
-                    FontWeight="Bold"
-                    Header="{Binding ComponentName}"
-                    BorderBrush="{StaticResource BackgroundColorSecondary}"
-                    BorderThickness="0,1,0,1">
-                    <local:PropertiesPanel
-                        HorizontalContentAlignment="Stretch"
-                        VerticalContentAlignment="Stretch"
-                        HorizontalAlignment="Stretch"
-                        VerticalAlignment="Stretch" />
+                <Expander IsExpanded="True" HorizontalAlignment="Stretch" Focusable="False" FocusVisualStyle="{x:Null}">
+                    <Expander.Header>
+                        <Border Padding="0,4,0,4" HorizontalAlignment="Stretch" Focusable="False" FocusVisualStyle="{x:Null}">
+                            <TextBlock Focusable="False" FocusVisualStyle="{x:Null}"
+                                       Text="{Binding ComponentName}"
+                                       Foreground="{StaticResource TextColor}"
+                                       FontWeight="Bold"/>
+                        </Border>
+                    </Expander.Header>
+                    <Expander.Content>
+                        <local:PropertiesPanel
+                            HorizontalContentAlignment="Stretch"
+                            VerticalContentAlignment="Stretch"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch" />
+                    </Expander.Content>
                 </Expander>
             </DataTemplate>
         </ListBox.ItemTemplate>

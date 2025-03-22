@@ -4,6 +4,7 @@
              xmlns:local="clr-namespace:Editor"
              xmlns:ui="http://schemas.modernwpf.com/2019"
              xmlns:gameProject="clr-namespace:Editor.GameProject"
+             xmlns:propertyEditors="clr-namespace:Editor.PropertyEditors"
              StartupUri="MainWindow.xaml">
 
     <Application.Resources>
@@ -36,8 +37,21 @@
             <PathGeometry x:Key="TreeArrow" Figures="M0,0 L0,6 L6,0 z" />
             <SolidColorBrush x:Key="TreeViewItem.TreeArrow.Static.Fill" Color="#FFFFFFFF" />
             <SolidColorBrush x:Key="TreeViewItem.TreeArrow.Static.Stroke" Color="#FF818181" />
-
-
+            
+            <Style TargetType="TextBox">
+                <Setter Property="BorderBrush" Value="{StaticResource BackgroundColorSecondary}"></Setter>
+                <Setter Property="BorderThickness" Value="0"></Setter>
+                <Setter Property="Background" Value="{StaticResource TextBoxBackgroundColor}"></Setter>
+                <Setter Property="Foreground" Value="{StaticResource TextColor}"></Setter>
+                <Style.Triggers>
+                    <Trigger Property="Text" Value="">
+                        <Setter Property="UIElement.Visibility" Value="Collapsed" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+            
+            <Style TargetType="propertyEditors:ClickSelectTextBox" BasedOn="{StaticResource {x:Type TextBox}}" />
+                
             <Style x:Key="ExpandCollapseToggleStyle" TargetType="{x:Type ToggleButton}">
                 <Setter Property="Focusable" Value="False" />
                 <Setter Property="Width" Value="16" />
