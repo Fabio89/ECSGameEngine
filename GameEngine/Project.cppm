@@ -1,7 +1,7 @@
 export module Engine:Project;
-import :Core;
-import :Serialization;
+import :Ecs;
 import :World;
+import Serialization;
 import Wrapper.Windows;
 
 class Project

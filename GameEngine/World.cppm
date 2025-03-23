@@ -1,5 +1,5 @@
 export module Engine:World;
-import :Core;
+import :Ecs;
 import :Job;
 import :Render.IRenderManager;
 import :System;
@@ -28,7 +28,7 @@ export struct WorldCreateInfo
 export class World
 {
 public:
-    World(const WorldCreateInfo&);
+    explicit World(const WorldCreateInfo&);
 
     Entity createEntity();
     void removeEntity(Entity entity);
@@ -62,7 +62,7 @@ public:
             newArchetype = oldArchetype.cloneForEntity(entity);
             oldArchetype.removeEntity(entity);
         }
-        newArchetype.addComponent<T>(entity, T(std::forward<Args>(args)...));
+        newArchetype.addComponent<T>(entity, T{std::forward<Args>(args)...});
 
         if (oldArchetype.isEmpty())
         {

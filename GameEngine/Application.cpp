@@ -2,15 +2,38 @@ module Engine:Application;
 import :Application;
 import :Components;
 import :DebugWidget.EntityExplorer;
+import :Player;
 import :Project;
 import :Render.RenderManager;
 import :World;
+import Math;
 import Wrapper.RapidJson;
+
+bool shutdownRequested = false;
+std::atomic<bool> engineShuttingDown = false;
+RenderManager renderManager;
+std::thread renderThread;
+World world{{&renderManager}};
+Player player;
+std::vector<KeyEventCallback> keyEventCallbacks;
 
 void framebufferResizeCallback(GLFWwindow* window, [[maybe_unused]] int width, [[maybe_unused]] int height)
 {
-    auto renderManager = static_cast<RenderManager*>(glfwGetWindowUserPointer(window));
-    renderManager->updateFramebufferSize();
+    auto rm = static_cast<RenderManager*>(glfwGetWindowUserPointer(window));
+    rm->updateFramebufferSize();
+}
+
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    for (KeyEventCallback callback : keyEventCallbacks)
+    {
+        callback(key, action);
+    }
+}
+
+void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+{
+    keyCallback(window, button, 0, action, mods);
 }
 
 GLFWwindow* createWindow(HWND parent, int width, int height);
@@ -26,21 +49,38 @@ void addSystems(World& world)
     }
 }
 
-std::atomic<bool> shouldExit = false;
-RenderManager renderManager;
-std::thread renderThread;
-World world{{&renderManager}};
-
 void runRenderThread(GLFWwindow* window)
 {
     renderManager.init(window);
 
-    while (!shouldExit.load())
+    while (!engineShuttingDown.load())
     {
         renderManager.update();
     }
 
     renderManager.shutdown();
+}
+
+Entity ensureCamera()
+{
+    auto hasCamera = [](Entity entity) { return std::ranges::contains(world.getComponentTypesInEntity(entity), CameraComponent::typeId); };
+    auto entities = world.getEntitiesRange();
+    if (auto cameraEntityIt = std::ranges::find_if(entities, hasCamera); cameraEntityIt != entities.end())
+    {
+        return *cameraEntityIt;
+    }
+
+    const Entity camera = world.createEntity();
+    world.addComponent<CameraComponent>(camera, CameraComponent{.fov = 60.f});
+    world.addComponent<TransformComponent>(camera);
+
+    auto& transform = world.editComponent<TransformComponent>(camera);
+    transform.position = {2.f, 2.f, 2.f};
+    const Vec3 dir = normalize(-transform.position);
+    const Quat rot = rotation(forwardVector(), dir);
+    transform.rotation = rot;
+    
+    return camera;
 }
 
 void engineInit(GLFWwindow* window)
@@ -53,27 +93,40 @@ void engineInit(GLFWwindow* window)
 
     EngineComponents::init();
 
+    glfwSetKeyCallback(window, keyCallback);
+    glfwSetMouseButtonCallback(window, mouseButtonCallback);
+    
     addSystems<ModelSystem, TransformSystem>(world);
     // world.addDebugWidget<DebugWidgets::EntityExplorer>();
-    world.addDebugWidget<DebugWidgets::ImGuiDemo>();
+    //world.addDebugWidget<DebugWidgets::ImGuiDemo>();
 }
 
 bool engineUpdate(GLFWwindow* window, float deltaTime)
 {
-    if (glfwWindowShouldClose(window))
+    if (shutdownRequested || glfwWindowShouldClose(window))
     {
         engineShutdown(window);
         return false;
     }
 
     glfwPollEvents();
+
+    if (player.getMainCamera() != invalidId())
+    {
+        const auto& cameraTransform = world.readComponent<TransformComponent>(player.getMainCamera());
+        const auto& cameraSettings = world.readComponent<CameraComponent>(player.getMainCamera());
+        renderManager.setCameraTransform(cameraTransform.position, cameraTransform.rotation);
+        renderManager.setCameraFov(cameraSettings.fov);
+    }
+
     world.updateSystems(deltaTime);
+    
     return true;
 }
 
 void engineShutdown(GLFWwindow* window)
 {
-    if (shouldExit.exchange(true))
+    if (engineShuttingDown.exchange(true))
         return;
 
     std::cout << "[Application] Shutting down...\n";
@@ -99,9 +152,22 @@ void setViewport(GLFWwindow* window, int x, int y, int width, int height)
     }
 }
 
+void addKeyEventCallback(KeyEventCallback callback)
+{
+    keyEventCallbacks.push_back(callback);
+}
+
 void openProject(const char* path)
 {
     Project::open(path, world);
+
+    {
+        player.setMainCamera(world, ensureCamera());
+        const auto& cameraTransform = world.readComponent<TransformComponent>(player.getMainCamera());
+        const auto& cameraSettings = world.readComponent<CameraComponent>(player.getMainCamera());
+        renderManager.setCameraTransform(cameraTransform.position, cameraTransform.rotation);
+        renderManager.setCameraFov(cameraSettings.fov);
+    }
 }
 
 void saveCurrentProject()

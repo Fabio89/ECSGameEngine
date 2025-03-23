@@ -1,4 +1,4 @@
-export module Engine:Guid;
+export module Guid;
 import Wrapper.BoostUuid;
 import std;
 

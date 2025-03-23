@@ -4,7 +4,7 @@ import :Component.Name;
 import :Component.Model;
 import :Component.Transform;
 import :DebugWidget;
-import :Core;
+import :Ecs;
 import std;
 import Wrapper.ImGui;
 

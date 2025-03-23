@@ -4,7 +4,7 @@ module;
 #include <External/TextureLoading/stb_image.h>
 
 module Engine:Render.TextureLoading;
-import :Core;
+import :Ecs;
 import :Render.TextureLoading;
 import :Render.Utils;
 

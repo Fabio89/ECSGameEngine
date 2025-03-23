@@ -3,7 +3,7 @@ import :IDebugWidget;
 import :ImGui;
 import :Render.IRenderManager;
 import :Render.RenderObject;
-import :Math;
+import Math;
 import std;
 
 export class RenderManager final : public IRenderManager
@@ -24,7 +24,9 @@ public:
     
     void addDebugWidget(std::unique_ptr<IDebugWidget> widget) override;
     void addRenderObject(Entity entity, const MeshAsset* mesh, const TextureAsset* texture) override;
-    void setRenderObjectTransform(Entity entity, vec3 location, vec3 rotation, float scale = 1.f) override;
+    void setRenderObjectTransform(Entity entity, Vec3 location, Quat rotation, float scale = 1.f) override;
+    void setCameraTransform(Vec3 location, Quat rotation) override;
+    void setCameraFov(float fov) override;
 
     void updateFramebufferSize() { m_framebufferResized = true; }
     float getDeltaTime() const { return m_deltaTime; }

@@ -1,7 +1,8 @@
 export module Engine:ImGui;
 import :IDebugWidget;
-import :Render.Vulkan;
 import std;
+import Wrapper.Glfw;
+import Wrapper.Vulkan;
 
 export struct ImGuiInitInfo
 {

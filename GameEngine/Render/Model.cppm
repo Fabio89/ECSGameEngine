@@ -1,9 +1,10 @@
 export module Engine:Render.Model;
 import :AssetManager;
-import :Render.Vulkan;
-import :Serialization;
+import Serialization;
+import Math;
+import Wrapper.Vulkan;
 
-using IdType = size_t;
+using InstanceId = size_t;
 
 //------------------------------------------------------------------------------------------------------------------------
 // Vertex
@@ -11,8 +12,8 @@ using IdType = size_t;
 
 export struct Vertex
 {
-    vec3 pos;
-    vec2 uv;
+    Vec3 pos;
+    Vec2 uv;
 };
 
 bool operator==(const Vertex& a, const Vertex& b);
@@ -24,7 +25,7 @@ struct std::hash<Vertex> { size_t operator()(Vertex const& vertex) const noexcep
 // Texture
 //------------------------------------------------------------------------------------------------------------------------
 
-export using TextureId = IdType;
+export using TextureId = InstanceId;
 
 export struct TextureData
 {
@@ -40,7 +41,7 @@ TextureData deserialize(const JsonObject& serializedData);
 // Mesh
 //------------------------------------------------------------------------------------------------------------------------
 
-export using MeshId = IdType;
+export using MeshId = InstanceId;
 
 export struct MeshData
 {

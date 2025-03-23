@@ -1,8 +1,7 @@
 export module Engine:ComponentRegistry;
-import :Core;
-import :Serialization;
+import :Ecs;
 import :World;
-import std;
+import Serialization;
 
 export class ComponentTypeBase
 {

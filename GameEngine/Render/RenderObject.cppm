@@ -1,8 +1,7 @@
 export module Engine:Render.RenderObject;
-import :Core;
+import :Ecs;
 import :Render.Model;
 import :CoreTypes;
-import std;
 
 struct Texture
 {
@@ -25,9 +24,18 @@ struct Mesh
 
 struct UniformBufferObject
 {
-    mat4 model{};
-    mat4 view{};
-    mat4 proj{};
+    Mat4 model{};
+    Mat4 view{};
+    Mat4 proj{};
+};
+
+struct Camera
+{
+    Vec3 location{};
+    Quat rotation{};
+    float fov{60.f};
+    float nearPlane{0.1f};
+    float farPlane{10.0f};
 };
 
 struct RenderObject
@@ -35,8 +43,8 @@ struct RenderObject
     Entity entity{};
     Mesh mesh;
     Texture texture;
-    vec3 location{};
-    vec3 rotation{};
+    Vec3 location{};
+    Quat rotation{};
     float scale{1.f};
     std::vector<vk::Buffer> uniformBuffers;
     std::vector<vk::DeviceMemory> uniformBuffersMemory;
@@ -56,8 +64,8 @@ export namespace RenderMessages
     struct SetTransform
     {
         Entity entity;
-        vec3 location{};
-        vec3 rotation{};
+        Vec3 location{};
+        Quat rotation{};
         float scale{1.f};
     };
 }
@@ -81,8 +89,11 @@ public:
     void addCommand(RenderMessages::SetTransform command);
     void executePendingCommands();
     void addRenderObject(Entity entity, const MeshAsset& meshAsset, const TextureAsset& textureAsset);
-    void setObjectTransform(Entity entity, vec3 location = {}, vec3 rotation = {}, float scale = 1.f);
-    
+    void setObjectTransform(Entity entity, Vec3 location = {}, Quat rotation = {}, float scale = 1.f);
+    void setCameraTransform(Vec3 location = {}, Quat rotation = {});
+    void setCameraFov(float fov);
+    void setAspectRatio(float aspectRatio);
+
     const Mesh& addMesh(MeshData data, Guid guid);
     const Texture& addTexture(const TextureData& textureData, Guid guid);
 
@@ -91,15 +102,13 @@ public:
         vk::CommandBuffer commandBuffer,
         vk::Pipeline graphicsPipeline,
         vk::PipelineLayout pipelineLayout,
-        vk::Extent2D swapchainExtent,
         float deltaTime,
         uint32_t currentFrame
     );
 
 private:
     void updateDescriptorSets(const RenderObject& object) const;
-    static void updateUniformBuffer(RenderObject& object, vk::Extent2D swapchainExtent, uint32_t currentImage,
-                                    float deltaTime);
+    void updateUniformBuffer(RenderObject& object, uint32_t currentImage, float deltaTime);
 
     ThreadSafeQueue<RenderMessages::AddObject> m_addObjectCommands;
     ThreadSafeQueue<RenderMessages::SetTransform> m_setTransformCommands;
@@ -118,4 +127,8 @@ private:
     vk::DescriptorSetLayout m_descriptorSetLayout{};
     vk::Queue m_queue{};
     vk::CommandPool m_cmdPool{};
+    Camera m_camera{};
+    Mat4 m_view{};
+    Mat4 m_proj{};
+    float m_aspectRatio{1.f};
 };

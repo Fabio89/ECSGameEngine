@@ -1,5 +1,7 @@
 export module Engine:Render.Utils;
-import :Render.Vulkan;
+import Math;
+import Wrapper.Glfw;
+import Wrapper.Vulkan;
 import std;
 
 export namespace RenderUtils
@@ -14,7 +16,7 @@ export namespace RenderUtils
         vk::KHRSwapchainExtensionName
     };
 
-    uint32_t findMemoryType(vk::PhysicalDevice physicalDevice, uint32_t typeFilter, vk::MemoryPropertyFlags properties);
+    UInt32 findMemoryType(vk::PhysicalDevice physicalDevice, UInt32 typeFilter, vk::MemoryPropertyFlags properties);
 
     vk::CommandBuffer beginSingleTimeCommands(vk::Device device, vk::CommandPool commandPool);
     void endSingleTimeCommands(vk::Device device, vk::CommandBuffer buffer, vk::Queue queue, vk::CommandPool pool);
@@ -26,7 +28,7 @@ export namespace RenderUtils
         vk::DeviceSize size;
         vk::BufferUsageFlags usage;
         vk::MemoryPropertyFlags properties;
-        std::initializer_list<uint32_t> queueFamilyIndices;
+        std::initializer_list<UInt32> queueFamilyIndices;
     };
 
     [[nodiscard]] std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(const CreateBufferInfo& info);
@@ -53,9 +55,8 @@ export namespace RenderUtils
 
     void copyBuffer(vk::Device device, vk::CommandPool commandPool, vk::Queue queue, vk::DeviceSize size,
                     vk::Buffer srcBuffer, vk::Buffer dstBuffer);
-
-
-    [[nodiscard]] uint32_t findMemoryType(vk::PhysicalDevice physicalDevice, uint32_t typeFilter,
+    
+    [[nodiscard]] UInt32 findMemoryType(vk::PhysicalDevice physicalDevice, UInt32 typeFilter,
                                           vk::MemoryPropertyFlags properties);
 
     [[nodiscard]] std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(const CreateBufferInfo& info);

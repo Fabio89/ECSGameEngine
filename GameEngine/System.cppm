@@ -1,5 +1,5 @@
 export module Engine:System;
-import :Core;
+import :Ecs;
 import std;
 
 export class World;

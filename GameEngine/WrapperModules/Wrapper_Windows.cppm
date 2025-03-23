@@ -3,6 +3,7 @@ module;
 export module Wrapper.Windows;
 import std;
 
+export using ::HWND;
 export namespace Wrapper_Windows
 {
     std::string getModuleFileName()

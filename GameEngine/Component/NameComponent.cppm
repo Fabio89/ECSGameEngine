@@ -1,8 +1,8 @@
 export module Engine:Component.Name;
 import :ComponentRegistry;
-import :Core;
-import :Serialization;
+import :Ecs;
 import :World;
+import Serialization;
 
 export struct NameComponent : Component<NameComponent>
 {

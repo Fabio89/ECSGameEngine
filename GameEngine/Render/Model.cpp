@@ -89,8 +89,8 @@ MeshData deserialize(const JsonObject& serializedData)
         for (const auto& vertices = verticesJson->value.GetArray(); const JsonObject& vertex : vertices)
         {
             auto& [pos, uv] = data.vertices.emplace_back();
-            pos = Json::toVec3(vertex, "position").value_or(vec3{});
-            uv = Json::toVec2(vertex,"uv").value_or(vec2{});
+            pos = Json::toVec3(vertex, "position").value_or(Vec3{});
+            uv = Json::toVec2(vertex,"uv").value_or(Vec2{});
         }
 
         for (const auto& indices = indicesJson->value.GetArray(); const JsonObject& index : indices)

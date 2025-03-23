@@ -3,11 +3,11 @@ import :AssetManager;
 import :ComponentRegistry;
 import :Render.RenderManager;
 import :Render.Model;
-import :Core;
-import :Guid;
-import :Serialization;
+import :Ecs;
 import :System;
 import :World;
+import Guid;
+import Serialization;
 
 export struct ModelComponent : Component<ModelComponent>
 {

@@ -1,6 +1,6 @@
 export module Engine:Render.TextureLoading;
-import :Render.Vulkan;
 import :Render.Utils;
+import Wrapper.Vulkan;
 
 export namespace RenderUtils
 {

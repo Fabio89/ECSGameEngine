@@ -1,5 +1,5 @@
 module Engine:ImGui;
-import :Core;
+import :Ecs;
 import :ImGui;
 import :Render.QueueFamily;
 import Wrapper.ImGui;

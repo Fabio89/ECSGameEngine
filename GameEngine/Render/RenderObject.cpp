@@ -2,9 +2,8 @@ module Engine:Render.RenderObject;
 import :Project;
 import :Render.RenderObject;
 import :Render.TextureLoading;
-import :Render.Vulkan;
-import vulkan_hpp;
-import std.compat;
+import Math;
+import Wrapper.Glfw;
 
 void RenderObjectManager::init
 (
@@ -27,6 +26,9 @@ void RenderObjectManager::init
     m_objects.reserve(100);
     m_meshes.reserve(100);
     m_textures.reserve(100);
+
+    setCameraTransform(m_camera.location, m_camera.rotation);
+    setCameraFov(m_camera.fov);
 }
 
 const Texture& RenderObjectManager::addTexture(const TextureData& textureData, Guid guid)
@@ -113,27 +115,20 @@ void RenderObjectManager::updateDescriptorSets(const RenderObject& object) const
 }
 
 // ReSharper disable once CppParameterMayBeConstPtrOrRef
-void RenderObjectManager::updateUniformBuffer(RenderObject& object, vk::Extent2D swapchainExtent, uint32_t currentImage,
-                                              float deltaTime)
+void RenderObjectManager::updateUniformBuffer(RenderObject& object, uint32_t currentImage, float deltaTime)
 {
-    static float timeElapsed = 0.f;
+    const Mat4 translationMatrix = translate(Mat4{1.0f}, object.location);
+    const Mat4 rotationMatrix = mat4_cast(object.rotation);
+    const Mat4 scaleMatrix = scale(Mat4{1.0f}, Vec3{object.scale, object.scale, object.scale});
 
-    //rotate(mat4(1.0f), timeElapsed * radians(90.0f), vec3(0.0f, 0.0f, 1.0f))
     UniformBufferObject uniformBufferObject
     {
-        .model = rotate(mat4(1), radians(object.rotation.x), {1, 0, 0})
-        * rotate(mat4(1), radians(object.rotation.y), {0, 1, 0})
-        * rotate(mat4(1), radians(object.rotation.z), {0, 0, 1})
-        * translate(mat4(1), object.location)
-        * scale(mat4(1), vec3{object.scale, object.scale, object.scale}),
-        .view = lookAt(vec3(2.0f, 2.0f, 2.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 0.0f, 1.0f)),
-        .proj = perspective(radians(45.0f),
-                                 swapchainExtent.width / static_cast<float>(swapchainExtent.height), 0.1f, 10.0f),
+        .model = translationMatrix * rotationMatrix * scaleMatrix,
+        .view = m_view,
+        .proj = m_proj,
     };
-    uniformBufferObject.proj[1][1] *= -1;
 
-    memcpy(object.uniformBuffersMapped[currentImage], &uniformBufferObject, sizeof(uniformBufferObject));
-    timeElapsed += deltaTime;
+    std::memcpy(object.uniformBuffersMapped[currentImage], &uniformBufferObject, sizeof(uniformBufferObject));
 }
 
 const Mesh& RenderObjectManager::addMesh(MeshData data, Guid guid)
@@ -144,7 +139,7 @@ const Mesh& RenderObjectManager::addMesh(MeshData data, Guid guid)
         static const Mesh emptyMesh;
         return emptyMesh;
     }
-    
+
     Mesh& mesh = m_meshes.emplace_back();
     const RenderUtils::CreateDataBufferInfo vertexBufferInfo
     {
@@ -183,7 +178,7 @@ void RenderObjectManager::clear()
     m_setTransformCommands.clear();
     m_meshMap.clear();
     m_textureMap.clear();
-    
+
     for (const RenderObject& object : m_objects)
     {
         for (auto&& [buffer, memory] : std::views::zip(object.uniformBuffers, object.uniformBuffersMemory))
@@ -292,7 +287,7 @@ void RenderObjectManager::addRenderObject(Entity entity, const MeshAsset& meshAs
         || !check(texture, "Tried to add a render object with null texture!", ErrorType::Error)
         || !check(texture->image, "Tried to add a render object with empty texture!", ErrorType::Warning))
         return;
-    
+
     object.entity = entity;
     object.mesh = *mesh;
     object.texture = *texture;
@@ -332,7 +327,7 @@ void RenderObjectManager::addRenderObject(Entity entity, const MeshAsset& meshAs
     std::cout << "Added render object\n\tMesh: " << meshAsset.getGuid() << "\n\tTexture: " << textureAsset.getGuid() << std::endl;
 }
 
-void RenderObjectManager::setObjectTransform(Entity entity, vec3 location, vec3 rotation, float scale)
+void RenderObjectManager::setObjectTransform(Entity entity, Vec3 location, Quat rotation, float scale)
 {
     const auto it = std::ranges::find_if(m_objects, [&](auto&& object) { return object.entity == entity; });
     if (it != m_objects.end())
@@ -343,10 +338,36 @@ void RenderObjectManager::setObjectTransform(Entity entity, vec3 location, vec3 
     }
 }
 
-void RenderObjectManager::renderFrame(vk::CommandBuffer commandBuffer, vk::Pipeline graphicsPipeline,
-                                      vk::PipelineLayout pipelineLayout, vk::Extent2D swapchainExtent, float deltaTime,
-                                      uint32_t currentFrame)
+void RenderObjectManager::setCameraTransform(Vec3 location, Quat rotation)
 {
+    const Vec3 forward = normalize(forwardVector() * rotation);
+    m_camera.location = location;
+    m_camera.rotation = rotation;
+    m_view = lookAt(location, location + forward, upVector());
+}
+
+void RenderObjectManager::setCameraFov(float fov)
+{
+    m_camera.fov = fov;
+}
+
+void RenderObjectManager::setAspectRatio(float aspectRatio)
+{
+    m_aspectRatio = aspectRatio;
+}
+
+void RenderObjectManager::renderFrame
+(
+    vk::CommandBuffer commandBuffer,
+    vk::Pipeline graphicsPipeline,
+    vk::PipelineLayout pipelineLayout,
+    float deltaTime,
+    uint32_t currentFrame
+)
+{
+    m_proj = perspective(radians(m_camera.fov), m_aspectRatio, m_camera.nearPlane, m_camera.farPlane);
+    m_proj[1][1] *= -1;
+    
     for (RenderObject& object : m_objects)
     {
         commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
@@ -359,7 +380,7 @@ void RenderObjectManager::renderFrame(vk::CommandBuffer commandBuffer, vk::Pipel
         const vk::Buffer vertexBuffers[] = {object.mesh.vertexBuffer};
         constexpr vk::DeviceSize offsets[] = {0};
 
-        updateUniformBuffer(object, swapchainExtent, currentFrame, deltaTime);
+        updateUniformBuffer(object, currentFrame, deltaTime);
 
         commandBuffer.bindVertexBuffers(0, vertexBuffers, offsets);
         commandBuffer.bindIndexBuffer(object.mesh.indexBuffer, 0, MeshData::indexType);

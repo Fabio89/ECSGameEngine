@@ -30,13 +30,22 @@ void waitTillClosed()
     }
 }
 
+void OnKeyEvent(int key, int action)
+{
+    if (static_cast<KeyCode>(key) == KeyCode::A && static_cast<KeyAction>(action) == KeyAction::Press)
+    {
+        log("Pressed A");
+    }
+}
+
 int main()
 {
     window = createWindow(nullptr, 800, 600);
     engineInit(window);
     
     openProject("C:/Users/march/Documents/Mashi Projects/TestProject/project.ma");
-    
+
+    addKeyEventCallback(OnKeyEvent);
 
     // char buf[4096];
     // serializeScene(buf, sizeof(buf));
@@ -47,3 +56,4 @@ int main()
     engineShutdown(window);
     return 0;
 }
+

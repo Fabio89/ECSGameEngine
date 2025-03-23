@@ -1,5 +1,10 @@
 export module Engine:Application;
 import :Render.IRenderManager;
+import Wrapper.Glfw;
+import Wrapper.Windows;
+
+export using ::GLFWwindow;
+export using ::HWND;
 
 //------------------------------------------------------------------------------------------------------------------------
 // Application
@@ -25,6 +30,13 @@ void engineShutdown(GLFWwindow* window);
 
 export extern "C" __declspec(dllexport)
 void setViewport(GLFWwindow* window, int x, int y, int width, int height);
+
+//------------------------------------------------------------------------------------------------------------------------
+// Input
+//------------------------------------------------------------------------------------------------------------------------
+typedef void (*KeyEventCallback)(int key, int action);
+export extern "C" __declspec(dllexport)
+void addKeyEventCallback(KeyEventCallback callback);
 
 //------------------------------------------------------------------------------------------------------------------------
 // Project

@@ -1,8 +1,8 @@
 module Engine:World;
 import :AssetManager;
 import :Components;
-import :Serialization;
 import :System;
+import Serialization;
 
 template <typename T>
 void loadAssets(const JsonObject& json, const char* assetName)

@@ -1,8 +1,8 @@
 module Engine:Render.Utils;
-import :Core;
+import :Ecs;
 import :Render.Utils;
 import :Render.QueueFamily;
-import :Render.Vulkan;
+import Wrapper.Glfw;
 import std;
 
 [[nodiscard]] uint32_t RenderUtils::findMemoryType(vk::PhysicalDevice physicalDevice, uint32_t typeFilter,
@@ -120,7 +120,7 @@ std::tuple<vk::Buffer, vk::DeviceMemory> RenderUtils::createDataBuffer(const voi
     auto [stagingBuffer, stagingBufferMemory] = createBuffer(stagingBufferInfo);
 
     void* mapData = info.device.mapMemory(stagingBufferMemory, 0, size);
-    memcpy(mapData, data, size);
+    std::memcpy(mapData, data, size);
     info.device.unmapMemory(stagingBufferMemory);
 
     const CreateBufferInfo bufferInfo

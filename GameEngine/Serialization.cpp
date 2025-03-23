@@ -1,51 +1,77 @@
-module Engine:Serialization;
-import :Serialization;
+module Serialization;
+import Log;
+import Math;
 
-[[nodiscard]]
-JsonObject Json::fromVec2(vec3 v, MemoryPoolAllocator<> allocator)
+namespace Json
 {
-    JsonObject json{kArrayType};
-    json.PushBack(v.x, allocator);
-    json.PushBack(v.y, allocator);
-    return json;
+    template <typename T>
+    JsonObject fromVec(const T& v, MemoryPoolAllocator<>& allocator)
+    {
+        JsonObject json{kArrayType};
+        json.Reserve(T::length(), allocator);
+        for (int i = 0; i < T::length(); ++i)
+        {
+            json.PushBack(v[i], allocator);
+        }
+
+        return json;
+    }
+
+    template <typename T>
+    std::optional<T> toVec(const JsonObject& j, const char* key)
+    {
+        const auto it = j.FindMember(key);
+        if (it == j.MemberEnd())
+            return std::nullopt;
+
+        static constexpr SizeType length{T::length()};
+        const auto& array = it->value.GetArray();
+        if (array.Size() < length)
+            return std::nullopt;
+
+        T v;
+        for (int i = 0; i < length; ++i)
+        {
+            v[i] = array[i].GetFloat();
+        }
+        return v;
+    }
 }
 
 [[nodiscard]]
-std::optional<vec2> Json::toVec2(const JsonObject& j, const char* key)
+JsonObject Json::fromVec2(Vec2 v, MemoryPoolAllocator<>& allocator)
 {
-    const auto it = j.FindMember(key);
-    if (it == j.MemberEnd())
-        return std::nullopt;
-
-    const auto& array = it->value.GetArray();
-    if (array.Size() < 2)
-        return std::nullopt;
-
-    return vec2{array[0].GetFloat(), array[1].GetFloat()};
+    return fromVec(v, allocator);
 }
 
 [[nodiscard]]
-JsonObject Json::fromVec3(vec3 v, MemoryPoolAllocator<> allocator)
+std::optional<Vec2> Json::toVec2(const JsonObject& j, const char* key)
 {
-    JsonObject json{kArrayType};
-    json.PushBack(v.x, allocator);
-    json.PushBack(v.y, allocator);
-    json.PushBack(v.z, allocator);
-    return json;
+    return toVec<Vec2>(j, key);
 }
 
 [[nodiscard]]
-std::optional<vec3> Json::toVec3(const JsonObject& j, const char* key)
+JsonObject Json::fromVec3(Vec3 v, MemoryPoolAllocator<>& allocator)
 {
-    const auto it = j.FindMember(key);
-    if (it == j.MemberEnd())
-        return std::nullopt;
+    return fromVec(v, allocator);
+}
 
-    const auto& array = it->value.GetArray();
-    if (array.Size() < 3)
-        return std::nullopt;
+[[nodiscard]]
+std::optional<Vec3> Json::toVec3(const JsonObject& j, const char* key)
+{
+    return toVec<Vec3>(j, key);
+}
 
-    return vec3{array[0].GetFloat(), array[1].GetFloat(), array[2].GetFloat()};
+[[nodiscard]]
+JsonObject Json::fromQuat(Quat q, MemoryPoolAllocator<>& allocator)
+{
+    return fromVec(q, allocator);
+}
+
+[[nodiscard]]
+std::optional<Quat> Json::toQuat(const JsonObject& j, const char* key)
+{
+    return toVec<Quat>(j, key);
 }
 
 [[nodiscard]]

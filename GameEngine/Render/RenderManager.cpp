@@ -2,7 +2,7 @@ module;
 #include <cstddef>
 
 module Engine:Render.RenderManager;
-import :Core;
+import :Ecs;
 import :Render.RenderManager;
 import :Render.QueueFamily;
 import :Render.TextureLoading;
@@ -81,8 +81,16 @@ void RenderManager::init(GLFWwindow* window)
     };
     m_imguiHelper.init(m_window, imguiInfo);
 
-    m_renderObjectManager.init(m_device, m_physicalDevice, m_surface, m_descriptorPool, m_descriptorSetLayout,
-                       m_graphicsQueue, m_commandPool);
+    m_renderObjectManager.init
+    (
+        m_device,
+        m_physicalDevice,
+        m_surface,
+        m_descriptorPool,
+        m_descriptorSetLayout,
+        m_graphicsQueue,
+        m_commandPool
+    );
 
     m_initialised = true;
 }
@@ -161,7 +169,7 @@ void RenderManager::addRenderObject(Entity entity, const MeshAsset* mesh, const 
     });
 }
 
-void RenderManager::setRenderObjectTransform(Entity entity, vec3 location, vec3 rotation, float scale)
+void RenderManager::setRenderObjectTransform(Entity entity, Vec3 location, Quat rotation, float scale)
 {
     m_renderObjectManager.addCommand
     ({
@@ -170,6 +178,16 @@ void RenderManager::setRenderObjectTransform(Entity entity, vec3 location, vec3 
         .rotation = rotation,
         .scale = scale
     });
+}
+
+void RenderManager::setCameraTransform(Vec3 location, Quat rotation)
+{
+    m_renderObjectManager.setCameraTransform(location, rotation);
+}
+
+void RenderManager::setCameraFov(float fov)
+{
+    m_renderObjectManager.setCameraFov(fov);
 }
 
 void RenderManager::addDebugWidget(std::unique_ptr<IDebugWidget> widget)
@@ -367,6 +385,7 @@ void RenderManager::createSwapchain()
     m_swapChainImages = m_device.getSwapchainImagesKHR(m_swapChain);
     m_swapChainImageFormat = surfaceFormat.format;
     m_swapchainExtent = extent;
+    m_renderObjectManager.setAspectRatio(extent.width / static_cast<float>(extent.height));
 }
 
 void RenderManager::createImageViews()
@@ -956,8 +975,7 @@ void RenderManager::drawFrame(float deltaTime)
 
     commandBuffer.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
 
-    m_renderObjectManager.renderFrame(commandBuffer, m_graphicsPipeline, m_pipelineLayout, m_swapchainExtent, deltaTime,
-                              m_currentFrame);
+    m_renderObjectManager.renderFrame(commandBuffer, m_graphicsPipeline, m_pipelineLayout, deltaTime, m_currentFrame);
 
     m_imguiHelper.renderFrame(commandBuffer);
 

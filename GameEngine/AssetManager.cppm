@@ -1,7 +1,7 @@
 export module Engine:AssetManager;
-import :Guid;
-import :Serialization;
-import std;
+import :Ecs;
+import Guid;
+import Serialization;
 
 export using AssetTypeId = TypeId;
 
