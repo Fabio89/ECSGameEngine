@@ -1,6 +1,6 @@
 module Serialization;
+import Core;
 import Log;
-import Math;
 
 namespace Json
 {

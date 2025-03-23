@@ -1,9 +1,12 @@
-export module Engine:Render.RenderManager;
-import :IDebugWidget;
-import :ImGui;
-import :Render.IRenderManager;
-import :Render.RenderObject;
+export module Render.RenderManager;
+import CoreTypes;
+import Ecs;
+import ImGuiHelper;
 import Math;
+import Render.IRenderManager;
+import Render.Model;
+import Render.RenderObject;
+import Wrapper.Glfw;
 import std;
 
 export class RenderManager final : public IRenderManager
@@ -74,7 +77,7 @@ private:
     ImGuiHelper m_imguiHelper;
     DeltaTimeTracker m_deltaTime;
     std::atomic<bool> m_framebufferResized{};
-    uint32_t m_currentFrame{0};
+    UInt32 m_currentFrame{0};
     bool m_terminated{};
     
     static std::vector<const char*> getRequiredExtensions();

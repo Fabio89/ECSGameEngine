@@ -1,9 +1,8 @@
-export module Engine:Component.Transform;
-import :Render.RenderManager;
-import :System;
-import :World;
+export module Component.Transform;
 import Math;
 import Serialization;
+import System;
+import World;
 
 export struct TransformComponent : Component<TransformComponent>
 {
@@ -12,13 +11,21 @@ export struct TransformComponent : Component<TransformComponent>
     float scale{1.f};
 };
 
+export namespace TransformUtils
+{
+    Mat4 toMatrix(const TransformComponent& transform)
+    {
+        return Math::translate(Mat4{1.0f}, transform.position) * Math::mat4_cast(transform.rotation) * Math::scale(Mat4{1.0f}, Vec3{transform.scale});
+    }
+}
+
 template <>
 struct TypeTraits<TransformComponent>
 {
     static constexpr auto name = "TransformComponent";
 };
 
-template<>
+template <>
 JsonObject serialize(const TransformComponent& component, Json::MemoryPoolAllocator<>& allocator)
 {
     JsonObject json{Json::kObjectType};
@@ -33,7 +40,7 @@ TransformComponent deserialize(const JsonObject& data)
 {
     const Vec3 position = Json::toVec3(data, "position").value_or(Vec3{});
     const Quat rotation = Json::toQuat(data, "rotation").value_or(Quat{});
-    
+
     float scale{1.f};
     if (const auto it = data.FindMember("scale"); it != data.MemberEnd())
     {

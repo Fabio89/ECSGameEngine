@@ -1,10 +1,37 @@
+module;
+#include "rapidjson/document.h"
+#include "rapidjson/istreamwrapper.h"
+#include "rapidjson/ostreamwrapper.h"
+#include "rapidjson/prettywriter.h"
+
 export module Serialization;
-export import Wrapper.RapidJson;
 import Math;
 import std;
 
+export using JsonDocument = rapidjson::Document;
+export using JsonObject = rapidjson::Value;
+
 export namespace Json
 {
+    using rapidjson::MemoryPoolAllocator;
+    using rapidjson::SizeType;
+    using rapidjson::GenericStringRef;
+    
+    using rapidjson::kNullType;
+    using rapidjson::kFalseType;
+    using rapidjson::kTrueType;
+    using rapidjson::kObjectType;
+    using rapidjson::kArrayType;
+    using rapidjson::kStringType;
+    using rapidjson::kNumberType;
+
+    using rapidjson::StringBuffer;
+    using rapidjson::Writer;
+    using rapidjson::PrettyWriter;
+
+    using rapidjson::IStreamWrapper;
+    using rapidjson::OStreamWrapper;
+
     JsonObject fromVec2(Vec2 v, MemoryPoolAllocator<>& allocator);
     std::optional<Vec2> toVec2(const JsonObject& j, const char* key);
     JsonObject fromVec3(Vec3 v, MemoryPoolAllocator<>& allocator);

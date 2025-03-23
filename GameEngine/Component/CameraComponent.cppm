@@ -1,8 +1,7 @@
-export module Engine:Component.Camera;
-import :Render.RenderManager;
-import :System;
-import :World;
+export module Component.Camera;
 import Serialization;
+import System;
+import World;
 
 export struct CameraComponent : Component<CameraComponent>
 {

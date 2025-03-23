@@ -1,8 +1,9 @@
-export module Engine:World;
-import :Ecs;
-import :Job;
-import :Render.IRenderManager;
-import :System;
+export module World;
+export import Ecs;
+import DebugUI.IDebugWidget;
+import Render.IRenderManager;
+import Serialization;
+import std;
 
 export class World;
 
@@ -93,45 +94,13 @@ public:
         return invalid;
     }
 
-    [[nodiscard]] const ComponentBase& readComponent(Entity entity, ComponentTypeId componentType) const
-    {
-        if (auto it = m_entities.find(entity); it != m_entities.end())
-        {
-            return readArchetype(it->second).readComponent(entity, componentType);
-        }
-        fatalError(std::format("Couldn't find component with id: {}", componentType));
-        static constexpr ComponentBase invalid{};
-        return invalid;
-    }
+    const ComponentBase& readComponent(Entity entity, ComponentTypeId componentType) const;
 
-    [[nodiscard]] Archetype::ComponentRange getComponentTypesInEntity(Entity entity) const
-    {
-        if (auto it = m_entities.find(entity); it != m_entities.end())
-        {
-            return readArchetype(it->second).getComponentTypes();
-        }
-        fatalError(std::format("Couldn't find components for entity {}", entity));
-        static const Archetype::ComponentArrayMap emptyMap;
-        return emptyMap | std::views::keys;
-    }
+    Archetype::ComponentRange getComponentTypesInEntity(Entity entity) const;
 
     template <ValidComponent T>
     T& editComponent(Entity entity) { return const_cast<T&>(readComponent<T>(entity)); }
-
-    void addSystem(std::unique_ptr<System> system);
-
-    template <typename T>
-    void addSystem()
-    {
-        System* system = m_systems.emplace_back(std::make_unique<T>()).get();
-        observeOnComponentAdded([system, this](Entity entity, ComponentTypeId componentId)
-        {
-            system->onComponentAdded(*this, entity, componentId);
-        });
-    }
-
-    void updateSystems(float deltaTime);
-
+    
     template <typename T>
     void addDebugWidget() { addDebugWidget(std::make_unique<T>(*this)); }
 
@@ -153,6 +122,5 @@ private:
     Entity m_nextEntity = 0;
     std::unordered_map<Entity, EntitySignature> m_entities;
     std::unordered_map<EntitySignature, Archetype> m_archetypes;
-    std::vector<std::unique_ptr<System>> m_systems;
     std::reference_wrapper<IRenderManager> m_renderManager;
 };

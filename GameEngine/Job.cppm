@@ -1,4 +1,4 @@
-export module Engine:Job;
+export module Job;
 import std;
 
 export class JobSystem

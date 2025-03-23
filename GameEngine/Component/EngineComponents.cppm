@@ -1,14 +1,16 @@
-export module Engine:Components;
-import :ComponentRegistry;
-import :Component.Camera;
-import :Component.Model;
-import :Component.Name;
-import :Component.Transform;
+export module EngineComponents;
+export import Component.BoundingBox;
+export import Component.Camera;
+export import Component.Model;
+export import Component.Name;
+export import Component.Transform;
+export import ComponentRegistry;
 
 namespace EngineComponents
 {
     export void init()
     {
+        ComponentRegistry::init<BoundingBoxComponent>();
         ComponentRegistry::init<CameraComponent>();
         ComponentRegistry::init<ModelComponent>();
         ComponentRegistry::init<NameComponent>();

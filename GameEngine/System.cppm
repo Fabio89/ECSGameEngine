@@ -1,5 +1,5 @@
-export module Engine:System;
-import :Ecs;
+export module System;
+import Ecs;
 import std;
 
 export class World;
@@ -23,4 +23,17 @@ private:
 void System::clear()
 {
     m_updateFunctions.clear();
+}
+
+void System::update(float deltaTime)
+{
+    for (auto& func : m_updateFunctions)
+    {
+        func(deltaTime);
+    }
+}
+
+void System::addUpdateFunction(std::function<void(float)> func)
+{
+    m_updateFunctions.push_back(std::move(func));
 }

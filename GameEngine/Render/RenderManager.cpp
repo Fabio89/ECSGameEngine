@@ -1,12 +1,13 @@
 module;
 #include <cstddef>
 
-module Engine:Render.RenderManager;
-import :Ecs;
-import :Render.RenderManager;
-import :Render.QueueFamily;
-import :Render.TextureLoading;
-import :Render.Utils;
+module Render.RenderManager;
+import Ecs;
+import Render.Model;
+import Render.QueueFamily;
+import Render.TextureLoading;
+import Render.Utils;
+import Wrapper.Vulkan;
 import Wrapper.Windows;
 
 std::mutex updateLockMutex;
@@ -45,7 +46,7 @@ void RenderManager::init(GLFWwindow* window)
         vk::defaultDispatchLoaderDynamic.init();
 
         // Determine what API version is available
-        const uint32_t apiVersion = vk::enumerateInstanceVersion();
+        const UInt32 apiVersion = vk::enumerateInstanceVersion();
         std::cout << "Loader/Runtime support detected for Vulkan " << vk::apiVersionMajor(apiVersion) << "." <<
             vk::apiVersionMinor(apiVersion) << "\n";
 
@@ -216,7 +217,7 @@ void RenderManager::createInstance()
         .pNext = nullptr,
         .pApplicationInfo = &appInfo,
         .enabledLayerCount = 0,
-        .enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
+        .enabledExtensionCount = static_cast<UInt32>(extensions.size()),
         .ppEnabledExtensionNames = extensions.data(),
     };
 
@@ -224,7 +225,7 @@ void RenderManager::createInstance()
 
     if (vk::EnableValidationLayers)
     {
-        createInfo.enabledLayerCount = static_cast<uint32_t>(RenderUtils::ValidationLayers.size());
+        createInfo.enabledLayerCount = static_cast<UInt32>(RenderUtils::ValidationLayers.size());
         createInfo.ppEnabledLayerNames = RenderUtils::ValidationLayers.data();
         createInfo.pNext = &debugCreateInfo;
     }
@@ -249,9 +250,9 @@ void RenderManager::createLogicalDevice()
     queueCreateInfos.reserve(indices.size());
 
     auto indexRange = indices | std::views::transform([&](auto&& index) { return *index; });
-    std::set<std::optional<uint32_t>> uniqueQueueFamilies(indexRange.begin(), indexRange.end());
+    std::set<std::optional<UInt32>> uniqueQueueFamilies(indexRange.begin(), indexRange.end());
 
-    for (std::optional<uint32_t> queueFamily : uniqueQueueFamilies)
+    for (std::optional<UInt32> queueFamily : uniqueQueueFamilies)
     {
         check(queueFamily.has_value(), "failed to find a unique queue family!");
 
@@ -281,12 +282,12 @@ void RenderManager::createLogicalDevice()
     const vk::DeviceCreateInfo createInfo
     {
         .pNext = &descriptorIndexingFeatures,
-        .queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size()),
+        .queueCreateInfoCount = static_cast<UInt32>(queueCreateInfos.size()),
         .pQueueCreateInfos = queueCreateInfos.data(),
         .enabledLayerCount = [&]
         {
             if constexpr (vk::EnableValidationLayers)
-                return static_cast<uint32_t>(RenderUtils::ValidationLayers.size());
+                return static_cast<UInt32>(RenderUtils::ValidationLayers.size());
             else return 0;
         }(),
         .ppEnabledLayerNames = [&]
@@ -294,7 +295,7 @@ void RenderManager::createLogicalDevice()
             if constexpr (vk::EnableValidationLayers) return RenderUtils::ValidationLayers.data();
             else return nullptr;
         }(),
-        .enabledExtensionCount = static_cast<uint32_t>(RenderUtils::DeviceExtensions.size()),
+        .enabledExtensionCount = static_cast<UInt32>(RenderUtils::DeviceExtensions.size()),
         .ppEnabledExtensionNames = RenderUtils::DeviceExtensions.data(),
         .pEnabledFeatures = &deviceFeatures,
     };
@@ -336,7 +337,7 @@ void RenderManager::createSwapchain()
     const vk::PresentModeKHR presentMode = RenderUtils::chooseSwapPresentMode(swapChainSupport.presentModes);
     const vk::Extent2D extent = RenderUtils::chooseSwapExtent(swapChainSupport.capabilities, m_window);
 
-    uint32_t minImageCount = swapChainSupport.capabilities.minImageCount + 1;
+    UInt32 minImageCount = swapChainSupport.capabilities.minImageCount + 1;
 
     if (swapChainSupport.capabilities.maxImageCount > 0 && minImageCount > swapChainSupport.capabilities.maxImageCount)
     {
@@ -360,8 +361,8 @@ void RenderManager::createSwapchain()
     };
 
     const QueueFamilyIndices indices = QueueFamilyUtils::findQueueFamilies(m_physicalDevice, m_surface);
-    auto indicesRange = indices | std::views::transform([](std::optional<uint32_t> value) { return *value; });
-    const std::vector<uint32_t> queueFamilyIndices(indicesRange.begin(), indicesRange.end());
+    auto indicesRange = indices | std::views::transform([](std::optional<UInt32> value) { return *value; });
+    const std::vector<UInt32> queueFamilyIndices(indicesRange.begin(), indicesRange.end());
 
     if (indices.get(QueueFamilyType::Graphics) != indices.get(QueueFamilyType::Present))
     {
@@ -460,7 +461,7 @@ void RenderManager::createRenderPass()
 
     const vk::RenderPassCreateInfo renderPassInfo
     {
-        .attachmentCount = static_cast<uint32_t>(attachments.size()),
+        .attachmentCount = static_cast<UInt32>(attachments.size()),
         .pAttachments = attachments.data(),
         .subpassCount = 1,
         .pSubpasses = &subpass,
@@ -498,7 +499,7 @@ void RenderManager::createDescriptorSetLayout()
     static constexpr std::array bindings{layoutBinding, samplerLayoutBinding};
     static constexpr vk::DescriptorSetLayoutCreateInfo layoutInfo
     {
-        .bindingCount = static_cast<uint32_t>(bindings.size()),
+        .bindingCount = static_cast<UInt32>(bindings.size()),
         .pBindings = bindings.data(),
     };
 
@@ -541,7 +542,7 @@ void RenderManager::createGraphicsPipeline()
 
     const vk::PipelineDynamicStateCreateInfo dynamicStateInfo
     {
-        .dynamicStateCount = static_cast<uint32_t>(dynamicStates.size()),
+        .dynamicStateCount = static_cast<UInt32>(dynamicStates.size()),
         .pDynamicStates = dynamicStates.data(),
     };
 
@@ -574,7 +575,7 @@ void RenderManager::createGraphicsPipeline()
     {
         .vertexBindingDescriptionCount = 1,
         .pVertexBindingDescriptions = &bindingDescription, // Optional
-        .vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size()),
+        .vertexAttributeDescriptionCount = static_cast<UInt32>(attributeDescriptions.size()),
         .pVertexAttributeDescriptions = attributeDescriptions.data(), // Optional
     };
 
@@ -724,7 +725,7 @@ void RenderManager::createFramebuffers()
         const vk::FramebufferCreateInfo framebufferInfo
         {
             .renderPass = m_renderPass,
-            .attachmentCount = static_cast<uint32_t>(attachments.size()),
+            .attachmentCount = static_cast<UInt32>(attachments.size()),
             .pAttachments = attachments.data(),
             .width = m_swapchainExtent.width,
             .height = m_swapchainExtent.height,
@@ -790,7 +791,7 @@ void RenderManager::createCommandBuffers()
     {
         .commandPool = m_commandPool,
         .level = vk::CommandBufferLevel::ePrimary,
-        .commandBufferCount = static_cast<uint32_t>(MaxFramesInFlight),
+        .commandBufferCount = static_cast<UInt32>(MaxFramesInFlight),
     };
 
     m_commandBuffers = m_device.allocateCommandBuffers(allocInfo);
@@ -828,7 +829,7 @@ void RenderManager::createSyncObjects()
 
 void RenderManager::createDescriptorPool()
 {
-    static constexpr uint32_t count = MaxFramesInFlight;
+    static constexpr UInt32 count = MaxFramesInFlight;
     static constexpr std::array poolSizes
     {
         vk::DescriptorPoolSize{vk::DescriptorType::eUniformBuffer, count},
@@ -839,7 +840,7 @@ void RenderManager::createDescriptorPool()
     {
         .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
         .maxSets = 1000, // TODO figure this out
-        .poolSizeCount = static_cast<uint32_t>(poolSizes.size()),
+        .poolSizeCount = static_cast<UInt32>(poolSizes.size()),
         .pPoolSizes = poolSizes.data(),
     };
 
@@ -887,7 +888,7 @@ bool RenderManager::checkValidationLayerSupport()
 
     auto isLayerAvailable = [&](const char* layerName)
     {
-        auto matchesName = [&](const vk::LayerProperties& item) { return strcmp(layerName, item.layerName) == 0; };
+        auto matchesName = [&](const vk::LayerProperties& item) { return std::strcmp(layerName, item.layerName) == 0; };
         return std::ranges::any_of(availableLayers, matchesName);
     };
 
@@ -901,12 +902,12 @@ void RenderManager::drawFrame(float deltaTime)
     const vk::Semaphore renderFinishedSemaphore = m_renderFinishedSemaphores[m_currentFrame];
     const vk::CommandBuffer commandBuffer = m_commandBuffers[m_currentFrame];
 
-    if (m_device.waitForFences(1, &fence, vk::False, std::numeric_limits<uint64_t>::max()) != vk::Result::eSuccess)
+    if (m_device.waitForFences(1, &fence, vk::False, std::numeric_limits<UInt64>::max()) != vk::Result::eSuccess)
     {
         fatalError("failed to wait for fences!");
     }
 
-    const auto imageResult = m_device.acquireNextImageKHR(m_swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphore,
+    const auto imageResult = m_device.acquireNextImageKHR(m_swapChain, std::numeric_limits<UInt64>::max(), imageAvailableSemaphore,
                                                           nullptr);
 
     if (imageResult.result == vk::Result::eErrorOutOfDateKHR)
@@ -951,7 +952,7 @@ void RenderManager::drawFrame(float deltaTime)
             .offset = {0, 0},
             .extent = m_swapchainExtent,
         },
-        .clearValueCount = static_cast<uint32_t>(clearColor.size()),
+        .clearValueCount = static_cast<UInt32>(clearColor.size()),
         .pClearValues = clearColor.data(),
     };
 
@@ -1037,7 +1038,7 @@ void RenderManager::drawFrame(float deltaTime)
 
 std::vector<const char*> RenderManager::getRequiredExtensions()
 {
-    uint32_t glfwExtensionCount = 0;
+    UInt32 glfwExtensionCount = 0;
     const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
     std::vector extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);

@@ -2,9 +2,8 @@ module;
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <External/MeshLoading/tiny_obj_loader.h>
 
-module Engine:Render.Model;
-import :Project;
-import :Render.Model;
+module Render.Model;
+import Project;
 
 bool operator==(const Vertex& a, const Vertex& b)
 {

@@ -1,27 +1,10 @@
-export module Engine:Ecs;
+export module Ecs;
+export import Core;
 export import Log;
 import std;
 
-export using TypeId = size_t;
 export using Entity = TypeId;
 export using ComponentTypeId = TypeId;
-
-export constexpr TypeId invalidId() { return std::numeric_limits<TypeId>::max(); }
-
-namespace UniqueIdGenerator
-{
-    TypeId generateUniqueId()
-    {
-        static TypeId id = 0;
-        return id++;
-    }
-
-    template <typename T>
-    struct TypeIdGenerator
-    {
-        inline static const ComponentTypeId value = generateUniqueId();
-    };
-}
 
 export template <typename T>
 concept ValidComponentData = true;
@@ -39,7 +22,7 @@ struct Component : ComponentBase
 export template <typename T>
 concept ValidComponent = std::is_base_of_v<Component<T>, T>;
 
-template <ValidComponent T>
+export template <ValidComponent T>
 struct TypeTraits
 {
     static constexpr const char* name = "Unknown";
@@ -54,7 +37,7 @@ export class Archetype
     class ComponentArrayBase;
 
 public:
-    using ComponentArrayMap = std::map<ComponentTypeId, std::unique_ptr<ComponentArrayBase>>;
+    using ComponentArrayMap = std::unordered_map<ComponentTypeId, std::unique_ptr<ComponentArrayBase>>;
     using ComponentRange = std::ranges::elements_view<std::ranges::ref_view<const ComponentArrayMap>, 0>;
 
     [[nodiscard]] bool isEmpty() const { return m_componentArrays.empty(); }
@@ -146,11 +129,11 @@ private:
 
     private:
         std::vector<T> m_components;
-        std::map<Entity, size_t> m_entityToIndex;
-        std::map<size_t, Entity> m_indexToEntity;
+        std::unordered_map<Entity, size_t> m_entityToIndex;
+        std::unordered_map<size_t, Entity> m_indexToEntity;
     };
 
-    std::map<ComponentTypeId, std::unique_ptr<ComponentArrayBase>> m_componentArrays;
+    std::unordered_map<ComponentTypeId, std::unique_ptr<ComponentArrayBase>> m_componentArrays;
 };
 
 export using ArchetypeChangedCallback = std::function<void(Entity, ComponentTypeId)>;

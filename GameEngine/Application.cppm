@@ -1,5 +1,6 @@
-export module Engine:Application;
-import :Render.IRenderManager;
+export module Application;
+import Ecs;
+import Render.IRenderManager;
 import Wrapper.Glfw;
 import Wrapper.Windows;
 

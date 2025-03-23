@@ -3,10 +3,9 @@ module;
 #define STB_IMAGE_IMPLEMENTATION
 #include <External/TextureLoading/stb_image.h>
 
-module Engine:Render.TextureLoading;
-import :Ecs;
-import :Render.TextureLoading;
-import :Render.Utils;
+module Render.TextureLoading;
+import Render.Utils;
+import Log;
 
 // Create a Vulkan image
 [[nodiscard]] std::tuple<vk::Image, vk::DeviceMemory>
@@ -42,7 +41,7 @@ RenderUtils::createImage(vk::Device device,
     const vk::MemoryAllocateInfo allocInfo
     {
         .allocationSize = memRequirements.size,
-        .memoryTypeIndex = RenderUtils::findMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties)
+        .memoryTypeIndex = findMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties)
     };
 
     vk::DeviceMemory memory = device.allocateMemory(allocInfo);
@@ -104,12 +103,12 @@ RenderUtils::createTextureImage(const char* path, vk::Device device, vk::Physica
     auto&& [stagingBuffer, stagingBufferMemory] = createBuffer(bufferInfo);
 
     void* data = device.mapMemory(stagingBufferMemory, 0, imageSize);
-    memcpy(data, pixels, imageSize);
+    std::memcpy(data, pixels, imageSize);
     device.unmapMemory(stagingBufferMemory);
 
     stbi_image_free(pixels);
 
-    const vk::Extent2D imageExtent{static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight)};
+    const vk::Extent2D imageExtent{static_cast<UInt32>(texWidth), static_cast<UInt32>(texHeight)};
 
     auto result = createImage
     (

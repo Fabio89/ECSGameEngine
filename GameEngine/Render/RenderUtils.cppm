@@ -1,5 +1,5 @@
-export module Engine:Render.Utils;
-import Math;
+export module Render.Utils;
+import Core;
 import Wrapper.Glfw;
 import Wrapper.Vulkan;
 import std;

@@ -1,8 +1,9 @@
-export module Engine:Render.Model;
-import :AssetManager;
-import Serialization;
+export module Render.Model;
+import AssetManager;
 import Math;
+import Serialization;
 import Wrapper.Vulkan;
+import std;
 
 using InstanceId = size_t;
 
@@ -46,7 +47,7 @@ export using MeshId = InstanceId;
 export struct MeshData
 {
     std::vector<Vertex> vertices;
-    std::vector<uint32_t> indices;
+    std::vector<UInt32> indices;
 
     static constexpr auto indexType{vk::IndexType::eUint32};
 };

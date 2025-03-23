@@ -1,7 +1,6 @@
-module Engine:ImGui;
-import :Ecs;
-import :ImGui;
-import :Render.QueueFamily;
+module ImGuiHelper;
+import Ecs;
+import Render.QueueFamily;
 import Wrapper.ImGui;
 
 void ImGuiHelper::init(GLFWwindow* window, const ImGuiInitInfo& initInfo)
@@ -33,8 +32,8 @@ void ImGuiHelper::init(GLFWwindow* window, const ImGuiInitInfo& initInfo)
     static constexpr vk::DescriptorPoolCreateInfo imguiPoolInfo
     {
         .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-        .maxSets = static_cast<uint32_t>(MaxFramesInFlight),
-        .poolSizeCount = static_cast<uint32_t>(imguiPoolSizes.size()),
+        .maxSets = static_cast<UInt32>(MaxFramesInFlight),
+        .poolSizeCount = static_cast<UInt32>(imguiPoolSizes.size()),
         .pPoolSizes = imguiPoolSizes.data(),
     };
 
@@ -51,7 +50,7 @@ void ImGuiHelper::init(GLFWwindow* window, const ImGuiInitInfo& initInfo)
         .DescriptorPool = m_descriptorPool,
         .RenderPass = initInfo.renderPass,
         .MinImageCount = 2,
-        .ImageCount = static_cast<uint32_t>(initInfo.imageCount),
+        .ImageCount = static_cast<UInt32>(initInfo.imageCount),
         .MSAASamples = Wrapper_ImGui::VK_SAMPLE_COUNT_1_BIT,
         .PipelineCache = initInfo.pipelineCache,
         .Subpass = 0,

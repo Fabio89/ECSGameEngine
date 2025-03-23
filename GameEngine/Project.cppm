@@ -1,10 +1,10 @@
-export module Engine:Project;
-import :Ecs;
-import :World;
+export module Project;
 import Serialization;
+import World;
 import Wrapper.Windows;
+import std;
 
-class Project
+export class Project
 {
 public:
     static void open(std::string path, World& world);
@@ -15,13 +15,13 @@ private:
     inline static std::string currentProjectPath;
 };
 
-void Project::open(std::string path, World& world)
+export void Project::open(std::string path, World& world)
 {
     currentProjectPath = std::move(path);
     world.loadScene(currentProjectPath);
 }
 
-void Project::saveToCurrent(const World& world)
+export void Project::saveToCurrent(const World& world)
 {
     if (!check(!currentProjectPath.empty(), "Can't save current project as none is open!"))
         return;
@@ -35,7 +35,7 @@ void Project::saveToCurrent(const World& world)
     Json::toFile(doc, currentProjectPath);
 }
 
-std::string Project::getContentRoot()
+export std::string Project::getContentRoot()
 {
     JsonDocument doc = Json::fromFile(currentProjectPath);
     if (doc.IsObject())

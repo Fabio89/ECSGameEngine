@@ -1,7 +1,7 @@
-export module Engine:CoreTypes;
+export module CoreTypes;
 import std;
 
-class DeltaTimeTracker
+export class DeltaTimeTracker
 {
 public:
     operator float() const { return getDeltaTime(); }

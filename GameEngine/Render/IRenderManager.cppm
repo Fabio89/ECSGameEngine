@@ -1,7 +1,8 @@
-export module Engine:Render.IRenderManager;
-import :Ecs;
-import :IDebugWidget;
-import :Render.Model;
+export module Render.IRenderManager;
+import Ecs;
+import DebugUI.IDebugWidget;
+import Math;
+import Render.Model;
 import Wrapper.Glfw;
 import std;
 

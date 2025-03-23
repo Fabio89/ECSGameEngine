@@ -1,13 +1,14 @@
-module Engine:Application;
-import :Application;
-import :Components;
-import :DebugWidget.EntityExplorer;
-import :Player;
-import :Project;
-import :Render.RenderManager;
-import :World;
+module Application;
+import DebugWidget.EntityExplorer;
+import EngineComponents;
 import Math;
-import Wrapper.RapidJson;
+import Player;
+import Project;
+import Render.RenderManager;
+import Serialization;
+import System;
+import World;
+import std;
 
 bool shutdownRequested = false;
 std::atomic<bool> engineShuttingDown = false;
@@ -16,6 +17,7 @@ std::thread renderThread;
 World world{{&renderManager}};
 Player player;
 std::vector<KeyEventCallback> keyEventCallbacks;
+std::vector<std::unique_ptr<System>> systems;
 
 void framebufferResizeCallback(GLFWwindow* window, [[maybe_unused]] int width, [[maybe_unused]] int height)
 {
@@ -38,10 +40,25 @@ void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 
 GLFWwindow* createWindow(HWND parent, int width, int height);
 
+void addSystem(std::unique_ptr<System> system)
+{
+    System* systemPtr = systems.emplace_back(std::move(system)).get();
+    world.observeOnComponentAdded([systemPtr](Entity entity, ComponentTypeId componentId)
+    {
+        systemPtr->onComponentAdded(world, entity, componentId);
+    });
+}
+
+template <typename T>
+void addSystem()
+{
+    addSystem(std::make_unique<T>());
+}
+
 template <typename T, typename... T_Systems>
 void addSystems(World& world)
 {
-    world.addSystem<T>();
+    addSystem<T>();
 
     if constexpr (sizeof...(T_Systems) > 0)
     {
@@ -63,7 +80,7 @@ void runRenderThread(GLFWwindow* window)
 
 Entity ensureCamera()
 {
-    auto hasCamera = [](Entity entity) { return std::ranges::contains(world.getComponentTypesInEntity(entity), CameraComponent::typeId); };
+    auto hasCamera = [](Entity entity) -> bool { return std::ranges::contains(world.getComponentTypesInEntity(entity), CameraComponent::typeId); };
     auto entities = world.getEntitiesRange();
     if (auto cameraEntityIt = std::ranges::find_if(entities, hasCamera); cameraEntityIt != entities.end())
     {
@@ -76,8 +93,8 @@ Entity ensureCamera()
 
     auto& transform = world.editComponent<TransformComponent>(camera);
     transform.position = {2.f, 2.f, 2.f};
-    const Vec3 dir = normalize(-transform.position);
-    const Quat rot = rotation(forwardVector(), dir);
+    const Vec3 dir = Math::normalize(-transform.position);
+    const Quat rot = Math::rotation(forwardVector(), dir);
     transform.rotation = rot;
     
     return camera;
@@ -119,7 +136,10 @@ bool engineUpdate(GLFWwindow* window, float deltaTime)
         renderManager.setCameraFov(cameraSettings.fov);
     }
 
-    world.updateSystems(deltaTime);
+    for (auto& system : systems)
+    {
+        system->update(deltaTime);
+    }
     
     return true;
 }
@@ -159,6 +179,9 @@ void addKeyEventCallback(KeyEventCallback callback)
 
 void openProject(const char* path)
 {
+    for (auto& system : systems)
+        system->clear();
+    
     Project::open(path, world);
 
     {
@@ -186,14 +209,7 @@ void serializeScene(char* buffer, int bufferSize)
     doc.Accept(writer);
 
     log(std::format("Serialized scene:\n\n{}", jsonBuffer.GetString()));
-    try
-    {
-        std::memcpy(buffer, jsonBuffer.GetString(), bufferSize);
-    }
-    catch (std::exception& e)
-    {
-        report(std::format("Crash in serializeScene std::memcpy! {}", e.what()));
-    }
+    std::memcpy(buffer, jsonBuffer.GetString(), bufferSize);
 }
 
 void patchEntity(Entity entity, const char* json)

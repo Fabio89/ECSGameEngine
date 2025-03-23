@@ -1,4 +1,4 @@
-export module Engine:Render.QueueFamily;
+export module Render.QueueFamily;
 import vulkan_hpp;
 import std;
 import std.compat;

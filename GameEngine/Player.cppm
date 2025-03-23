@@ -1,8 +1,9 @@
-export module Engine:Player;
-import :Ecs;
-import :World;
-import :Component.Camera;
-import :Component.Transform;
+export module Player;
+import Component.Camera;
+import Component.Transform;
+import Ecs;
+import World;
+import std;
 
 export class Player
 {

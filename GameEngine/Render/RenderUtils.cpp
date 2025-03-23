@@ -1,16 +1,13 @@
-module Engine:Render.Utils;
-import :Ecs;
-import :Render.Utils;
-import :Render.QueueFamily;
-import Wrapper.Glfw;
-import std;
+module Render.Utils;
+import Log;
+import Render.QueueFamily;
 
-[[nodiscard]] uint32_t RenderUtils::findMemoryType(vk::PhysicalDevice physicalDevice, uint32_t typeFilter,
+[[nodiscard]] UInt32 RenderUtils::findMemoryType(vk::PhysicalDevice physicalDevice, UInt32 typeFilter,
                                                    vk::MemoryPropertyFlags properties)
 {
     vk::PhysicalDeviceMemoryProperties memProperties = physicalDevice.getMemoryProperties();
 
-    for (uint32_t i = 0; i < memProperties.memoryTypeCount; ++i)
+    for (UInt32 i = 0; i < memProperties.memoryTypeCount; ++i)
     {
         if ((typeFilter & (1 << i))
             && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
@@ -68,7 +65,7 @@ std::tuple<vk::Buffer, vk::DeviceMemory> RenderUtils::createBuffer(const CreateB
         .sharingMode = info.queueFamilyIndices.size() > 1u
                            ? vk::SharingMode::eConcurrent
                            : vk::SharingMode::eExclusive,
-        .queueFamilyIndexCount = static_cast<uint32_t>(info.queueFamilyIndices.size()),
+        .queueFamilyIndexCount = static_cast<UInt32>(info.queueFamilyIndices.size()),
         .pQueueFamilyIndices = info.queueFamilyIndices.begin()
     };
 
@@ -163,7 +160,7 @@ bool RenderUtils::checkDeviceExtensionSupport(vk::PhysicalDevice device)
     {
         auto matchesRequiredName = [&](vk::ExtensionProperties availableExt)
         {
-            return strcmp(availableExt.extensionName, requiredExtName) == 0;
+            return std::strcmp(availableExt.extensionName, requiredExtName) == 0;
         };
         return std::ranges::any_of(availableExtensions, matchesRequiredName);
     };
@@ -256,7 +253,7 @@ vk::PresentModeKHR RenderUtils::chooseSwapPresentMode(const std::vector<vk::Pres
 
 vk::Extent2D RenderUtils::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities, GLFWwindow* window)
 {
-    if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
+    if (capabilities.currentExtent.width != std::numeric_limits<UInt32>::max())
     {
         return capabilities.currentExtent;
     }
@@ -266,8 +263,8 @@ vk::Extent2D RenderUtils::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& cap
 
     vk::Extent2D actualExtent
     {
-        static_cast<uint32_t>(width),
-        static_cast<uint32_t>(height)
+        static_cast<UInt32>(width),
+        static_cast<UInt32>(height)
     };
 
     actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width,
@@ -301,7 +298,7 @@ vk::ShaderModule RenderUtils::createShaderModule(const std::vector<char>& code, 
     const vk::ShaderModuleCreateInfo createInfo
     {
         .codeSize = code.size(),
-        .pCode = reinterpret_cast<const uint32_t*>(code.data()),
+        .pCode = reinterpret_cast<const UInt32*>(code.data()),
     };
 
     return device.createShaderModule(createInfo, nullptr);

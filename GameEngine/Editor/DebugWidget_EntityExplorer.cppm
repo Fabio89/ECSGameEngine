@@ -1,12 +1,12 @@
-export module Engine:DebugWidget.EntityExplorer;
-import :ComponentRegistry;
-import :Component.Name;
-import :Component.Model;
-import :Component.Transform;
-import :DebugWidget;
-import :Ecs;
-import std;
+export module DebugWidget.EntityExplorer;
+import Component.Name;
+import Component.Model;
+import Component.Transform;
+import ComponentRegistry;
+import DebugUI.DebugWidget;
+import World;
 import Wrapper.ImGui;
+import std;
 
 export namespace DebugWidgets
 {

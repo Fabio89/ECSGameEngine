@@ -1,6 +1,6 @@
-export module Engine:DebugWidget;
-import :IDebugWidget;
-import :World;
+export module DebugUI.DebugWidget;
+import DebugUI.IDebugWidget;
+import World;
 
 export class DebugWidget : public IDebugWidget
 {

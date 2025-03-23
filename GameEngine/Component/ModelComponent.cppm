@@ -1,13 +1,10 @@
-export module Engine:Component.Model;
-import :AssetManager;
-import :ComponentRegistry;
-import :Render.RenderManager;
-import :Render.Model;
-import :Ecs;
-import :System;
-import :World;
+export module Component.Model;
+import AssetManager;
 import Guid;
+import Render.Model;
 import Serialization;
+import System;
+import World;
 
 export struct ModelComponent : Component<ModelComponent>
 {

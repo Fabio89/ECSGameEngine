@@ -1,8 +1,7 @@
-module Engine:World;
-import :AssetManager;
-import :Components;
-import :System;
-import Serialization;
+module World;
+import AssetManager;
+import ComponentRegistry;
+import Render.Model;
 
 template <typename T>
 void loadAssets(const JsonObject& json, const char* assetName)
@@ -17,19 +16,6 @@ void loadAssets(const JsonObject& json, const char* assetName)
             AssetManager::loadAsset<T>(element);
         }
     }
-}
-
-void System::update(float deltaTime)
-{
-    for (auto& func : m_updateFunctions)
-    {
-        func(deltaTime);
-    }
-}
-
-void System::addUpdateFunction(std::function<void(float)> func)
-{
-    m_updateFunctions.push_back(std::move(func));
 }
 
 World::World(const WorldCreateInfo& info)
@@ -92,8 +78,6 @@ void World::unloadScene()
     m_renderManager.get().clear();
     m_entities.clear();
     m_archetypes.clear();
-    for (auto& system : m_systems)
-        system->clear();
 }
 
 [[nodiscard]]
@@ -183,21 +167,28 @@ void World::patchEntity(Entity entity, const JsonObject& json)
     }
 }
 
-void World::addSystem(std::unique_ptr<System> system)
+[[nodiscard]] 
+const ComponentBase& World::readComponent(Entity entity, ComponentTypeId componentType) const
 {
-    System* systemPtr = m_systems.emplace_back(std::move(system)).get();
-    observeOnComponentAdded([&](Entity entity, ComponentTypeId componentId)
+    if (auto it = m_entities.find(entity); it != m_entities.end())
     {
-        systemPtr->onComponentAdded(*this, entity, componentId);
-    });
+        return readArchetype(it->second).readComponent(entity, componentType);
+    }
+    fatalError(std::format("Couldn't find component with id: {}", componentType));
+    static constexpr ComponentBase invalid{};
+    return invalid;
 }
 
-void World::updateSystems(float deltaTime)
+[[nodiscard]]
+Archetype::ComponentRange World::getComponentTypesInEntity(Entity entity) const
 {
-    for (auto& system : m_systems)
+    if (auto it = m_entities.find(entity); it != m_entities.end())
     {
-        system->update(deltaTime);
+        return readArchetype(it->second).getComponentTypes();
     }
+    fatalError(std::format("Couldn't find components for entity {}", entity));
+    static const Archetype::ComponentArrayMap emptyMap;
+    return emptyMap | std::views::keys;
 }
 
 ArchetypeChangedObserverHandle World::observeOnComponentAdded(ArchetypeChangedCallback observer)

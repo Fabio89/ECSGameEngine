@@ -1,7 +1,11 @@
-export module Engine:Render.RenderObject;
-import :Ecs;
-import :Render.Model;
-import :CoreTypes;
+export module Render.RenderObject;
+import CoreTypes;
+import Ecs;
+import Guid;
+import Math;
+import Render.Model;
+import Wrapper.Vulkan;
+import std;
 
 struct Texture
 {
@@ -103,12 +107,12 @@ public:
         vk::Pipeline graphicsPipeline,
         vk::PipelineLayout pipelineLayout,
         float deltaTime,
-        uint32_t currentFrame
+        UInt32 currentFrame
     );
 
 private:
     void updateDescriptorSets(const RenderObject& object) const;
-    void updateUniformBuffer(RenderObject& object, uint32_t currentImage, float deltaTime);
+    void updateUniformBuffer(RenderObject& object, UInt32 currentImage, float deltaTime);
 
     ThreadSafeQueue<RenderMessages::AddObject> m_addObjectCommands;
     ThreadSafeQueue<RenderMessages::SetTransform> m_setTransformCommands;

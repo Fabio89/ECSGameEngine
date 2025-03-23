@@ -1,9 +1,7 @@
-module Engine:Render.RenderObject;
-import :Project;
-import :Render.RenderObject;
-import :Render.TextureLoading;
-import Math;
-import Wrapper.Glfw;
+module Render.RenderObject;
+import Project;
+import Render.TextureLoading;
+import Render.Utils;
 
 void RenderObjectManager::init
 (
@@ -56,7 +54,7 @@ const Texture& RenderObjectManager::addTexture(const TextureData& textureData, G
 void RenderObjectManager::updateDescriptorSets(const RenderObject& object) const
 {
     const bool hasTexture = object.texture.image;
-    const uint32_t descriptorWriteCount = static_cast<uint32_t>(hasTexture) + 1;
+    const UInt32 descriptorWriteCount = static_cast<UInt32>(hasTexture) + 1;
 
     for (size_t i = 0; i < MaxFramesInFlight; i++)
     {
@@ -115,11 +113,11 @@ void RenderObjectManager::updateDescriptorSets(const RenderObject& object) const
 }
 
 // ReSharper disable once CppParameterMayBeConstPtrOrRef
-void RenderObjectManager::updateUniformBuffer(RenderObject& object, uint32_t currentImage, float deltaTime)
+void RenderObjectManager::updateUniformBuffer(RenderObject& object, UInt32 currentImage, float deltaTime)
 {
-    const Mat4 translationMatrix = translate(Mat4{1.0f}, object.location);
-    const Mat4 rotationMatrix = mat4_cast(object.rotation);
-    const Mat4 scaleMatrix = scale(Mat4{1.0f}, Vec3{object.scale, object.scale, object.scale});
+    const Mat4 translationMatrix = Math::translate(Mat4{1.0f}, object.location);
+    const Mat4 rotationMatrix = Math::mat4_cast(object.rotation);
+    const Mat4 scaleMatrix = Math::scale(Mat4{1.0f}, Vec3{object.scale, object.scale, object.scale});
 
     UniformBufferObject uniformBufferObject
     {
@@ -187,8 +185,8 @@ void RenderObjectManager::clear()
             m_device.freeMemory(memory);
         }
 
-        check(std::in_range<uint32_t>(object.descriptorSets.size()), "Truncating value of object.descriptorSets.size() when freeing descriptor sets!");
-        auto result = m_device.freeDescriptorSets(m_descriptorPool, static_cast<uint32_t>(object.descriptorSets.size()), object.descriptorSets.data());
+        check(std::in_range<UInt32>(object.descriptorSets.size()), "Truncating value of object.descriptorSets.size() when freeing descriptor sets!");
+        auto result = m_device.freeDescriptorSets(m_descriptorPool, static_cast<UInt32>(object.descriptorSets.size()), object.descriptorSets.data());
         check(result == vk::Result::eSuccess, "[RenderObjectManager::clear] Failed to free descriptor sets!");
     }
     m_objects.clear();
@@ -317,7 +315,7 @@ void RenderObjectManager::addRenderObject(Entity entity, const MeshAsset& meshAs
     const vk::DescriptorSetAllocateInfo allocInfo
     {
         .descriptorPool = m_descriptorPool,
-        .descriptorSetCount = static_cast<uint32_t>(layouts.size()),
+        .descriptorSetCount = static_cast<UInt32>(layouts.size()),
         .pSetLayouts = layouts.data(),
     };
 
@@ -340,10 +338,10 @@ void RenderObjectManager::setObjectTransform(Entity entity, Vec3 location, Quat 
 
 void RenderObjectManager::setCameraTransform(Vec3 location, Quat rotation)
 {
-    const Vec3 forward = normalize(forwardVector() * rotation);
+    const Vec3 forward = Math::normalize(forwardVector() * rotation);
     m_camera.location = location;
     m_camera.rotation = rotation;
-    m_view = lookAt(location, location + forward, upVector());
+    m_view = Math::lookAt(location, location + forward, upVector());
 }
 
 void RenderObjectManager::setCameraFov(float fov)
@@ -362,10 +360,10 @@ void RenderObjectManager::renderFrame
     vk::Pipeline graphicsPipeline,
     vk::PipelineLayout pipelineLayout,
     float deltaTime,
-    uint32_t currentFrame
+    UInt32 currentFrame
 )
 {
-    m_proj = perspective(radians(m_camera.fov), m_aspectRatio, m_camera.nearPlane, m_camera.farPlane);
+    m_proj = Math::perspective(Math::radians(m_camera.fov), m_aspectRatio, m_camera.nearPlane, m_camera.farPlane);
     m_proj[1][1] *= -1;
     
     for (RenderObject& object : m_objects)
@@ -384,6 +382,6 @@ void RenderObjectManager::renderFrame
 
         commandBuffer.bindVertexBuffers(0, vertexBuffers, offsets);
         commandBuffer.bindIndexBuffer(object.mesh.indexBuffer, 0, MeshData::indexType);
-        commandBuffer.drawIndexed(static_cast<uint32_t>(object.mesh.data.indices.size()), 1, 0, 0, 0);
+        commandBuffer.drawIndexed(static_cast<UInt32>(object.mesh.data.indices.size()), 1, 0, 0, 0);
     }
 }

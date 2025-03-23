@@ -1,5 +1,5 @@
 export module Math;
-import std;
+export import Core;
 import <glm/gtc/quaternion.hpp>;
 
 using glm::qualifier;
@@ -9,17 +9,10 @@ using glm::mat;
 
 export using Vec2 = glm::vec2;
 export using Vec3 = glm::vec3;
+export using Vec4 = glm::vec4;
 export using IVec2 = glm::ivec2;
 export using Quat = glm::quat;
 export using Mat4 = glm::mat4;
-export using Int8 = std::int8_t;
-export using Int16 = std::int16_t;
-export using Int32 = std::int32_t;
-export using Int64 = std::int64_t;
-export using UInt8 = std::uint8_t;
-export using UInt16 = std::uint16_t;
-export using UInt32 = std::uint32_t;
-export using UInt64 = std::uint64_t;
 
 export using glm::operator==;
 export using glm::operator!=;
@@ -28,20 +21,27 @@ export using glm::operator/;
 export using glm::operator+;
 export using glm::operator-;
 
-export using glm::radians;
-export using glm::lookAt;
-export using glm::perspective;
-export using glm::rotate;
-export using glm::translate;
-export using glm::scale;
-export using glm::normalize;
-export using glm::eulerAngles;
-export using glm::epsilonEqual;
-export using glm::epsilon;
-export using glm::distance;
-export using glm::mat4_cast;
-export using glm::cross;
-export using glm::dot;
+export namespace Math
+{
+	using glm::min;
+	using glm::max;
+	using glm::radians;
+	using glm::lookAt;
+	using glm::perspective;
+	using glm::rotate;
+	using glm::translate;
+	using glm::scale;
+	using glm::normalize;
+	using glm::eulerAngles;
+	using glm::epsilonEqual;
+	using glm::epsilon;
+	using glm::distance;
+	using glm::mat4_cast;
+	using glm::cross;
+	using glm::dot;
+	
+	Quat rotation(Vec3 origin, Vec3 destination);
+}
 
 export constexpr Vec3 forwardVector() { return {1.0f, 0.0f, 0.0f}; }
 export constexpr Vec3 rightVector() { return {0.0f, 1.0f, 0.0f}; }
@@ -72,7 +72,7 @@ size_t hash_value(const vec<3, T, Q>& v)
 	return seed;
 }
 
-export Quat rotation(Vec3 origin, Vec3 destination)
+Quat Math::rotation(Vec3 origin, Vec3 destination)
 {
 	// Normalize both the origin and destination vectors
 	Vec3 normalizedOrigin = normalize(origin);
