@@ -19,6 +19,7 @@ module;
 
 export module Math;
 export import Core;
+import Log;
 
 using glm::qualifier;
 using glm::vec;
@@ -49,9 +50,10 @@ export namespace Math
     using glm::length;
     using glm::radians;
     using glm::degrees;
-    // using glm::pitch;
-    // using glm::yaw;
-    // using glm::roll;
+    using glm::angleAxis;
+    using glm::pitch;
+    using glm::yaw;
+    using glm::roll;
     using glm::lookAt;
     using glm::perspective;
     using glm::translate;
@@ -75,36 +77,37 @@ export namespace Math
 
     using glm::rotation;
 
-    template<typename T, qualifier Q>
-    GLM_FUNC_QUALIFIER T pitch(qua<T, Q> const& q)
-    {
-        // Corrected Pitch (rotation around X-axis)
-        T sinp = 2 * (q.w * q.x - q.y * q.z);
-
-        // Small numerical inaccuracies can cause near-zero deviations, force these to zero:
-        if (std::abs(sinp) < static_cast<T>(1e-6)) {
-            return static_cast<T>(0); // Explicitly treat no X-axis rotation as zero
-        }
-
-        // Otherwise, safely compute pitch using arcsine:
-        return static_cast<T>(asin(clamp(sinp, static_cast<T>(-1), static_cast<T>(1))));
-    }
-
-
-
-
-    template<typename T, qualifier Q>
-    GLM_FUNC_QUALIFIER T yaw(qua<T, Q> const& q)
-    {
-        // Yaw (rotation around Y-axis)
-        return static_cast<T>(atan2(2 * (q.w * q.y + q.z * q.x), 1 - 2 * (q.y * q.y + q.x * q.x)));
-    }
-
-    template<typename T, qualifier Q>
-    GLM_FUNC_QUALIFIER T roll(qua<T, Q> const& q)
-    {
-        return static_cast<T>(atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.z * q.z + q.x * q.x)));
-    }
+    // template<typename T, qualifier Q>
+    // GLM_FUNC_QUALIFIER T pitch(qua<T, Q> const& q)
+    // {
+    //     log("Using pitch");
+    //     // Corrected Pitch (rotation around X-axis)
+    //     T sinp = 2 * (q.w * q.x - q.y * q.z);
+    //
+    //     // Small numerical inaccuracies can cause near-zero deviations, force these to zero:
+    //     if (std::abs(sinp) < static_cast<T>(1e-6)) {
+    //         return static_cast<T>(0); // Explicitly treat no X-axis rotation as zero
+    //     }
+    //
+    //     // Otherwise, safely compute pitch using arcsine:
+    //     return static_cast<T>(asin(clamp(sinp, static_cast<T>(-1), static_cast<T>(1))));
+    // }
+    //
+    //
+    //
+    //
+    // template<typename T, qualifier Q>
+    // GLM_FUNC_QUALIFIER T yaw(qua<T, Q> const& q)
+    // { log("Using yaw");
+    //     // Yaw (rotation around Y-axis)
+    //     return static_cast<T>(atan2(2 * (q.w * q.y + q.z * q.x), 1 - 2 * (q.y * q.y + q.x * q.x)));
+    // }
+    //
+    // template<typename T, qualifier Q>
+    // GLM_FUNC_QUALIFIER T roll(qua<T, Q> const& q)
+    // {log("Using roll");
+    //     return static_cast<T>(atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.z * q.z + q.x * q.x)));
+    // }
 
 
 

@@ -34,50 +34,55 @@ void waitTillClosed()
     }
 }
 
+Vec2 lastCursorPosition;
 
 void onUpdate(float deltaTime)
 {
     float speed = 3.0f * deltaTime;
+    float rotationSpeed = 10000.0f * deltaTime;
+    
     float xMovement = (static_cast<int>(Input::isKeyDown(KeyCode::D)) - static_cast<int>(Input::isKeyDown(KeyCode::A))) * speed;
     float yMovement = (static_cast<int>(Input::isKeyDown(KeyCode::E)) - static_cast<int>(Input::isKeyDown(KeyCode::Q))) * speed;
     float zMovement = (static_cast<int>(Input::isKeyDown(KeyCode::W)) - static_cast<int>(Input::isKeyDown(KeyCode::S))) * speed;
 
-    if (xMovement != 0 || yMovement != 0 || zMovement != 0)
+    float dYaw = 0;
+    float dPitch = 0;
+
+    if (Input::isKeyDown(KeyCode::MouseButtonRight))
+    {
+        Input::setCursorMode(window, CursorMode::Disabled);
+        const Vec2 cursorPosition = Input::getCursorPosition(window);
+        if (cursorPosition.x != lastCursorPosition.x)
+        {
+            dYaw = rotationSpeed * deltaTime * (cursorPosition.x - lastCursorPosition.x );
+            dPitch = rotationSpeed * deltaTime * (cursorPosition.y - lastCursorPosition.y);
+        }
+    }
+    else
+    {
+        Input::setCursorMode(window, CursorMode::Normal);
+    }
+    lastCursorPosition = Input::getCursorPosition(window);
+
+    //if (xMovement != 0 || yMovement != 0 || zMovement != 0)
     {
         auto cameraEntity = getPlayer().getMainCamera();
         
         auto& transform = editComponent2<TransformComponent>(cameraEntity);
-        // const Vec3 forward = TransformUtils::forward(transform);
-        // const Vec3 right = TransformUtils::right(transform);
-        // const Vec3 up = TransformUtils::up(transform);
-
-        Vec3 euler = Math::eulerAngles(transform.rotation); // Converts quaternion to pitch (X), yaw (Y), roll (Z)
-
-        float pitch = Math::degrees(Math::pitch(transform.rotation));
-        float yaw = Math::degrees(Math::yaw(transform.rotation));
-        float roll = Math::degrees(Math::roll(transform.rotation));  
-
-        log(std::format("Yaw: {}, Pitch: {}, Roll: {}", yaw, pitch, roll));
-        float pitchRadians = Math::radians(pitch);
-        float yawRadians = Math::radians(yaw);
+        const Vec3 forward = TransformUtils::forward(transform);
+        const Vec3 right = TransformUtils::right(transform);
+        const Vec3 up = TransformUtils::up(transform);
         
-        // Forward vector (Z forward in your system)
-        Vec3 forward = Math::normalize(Vec3(
-            cos(pitchRadians) * sin(yawRadians), // X component (negative for left-handed yaw)
-            -sin(pitchRadians),                   // Y component
-            cos(pitchRadians) * cos(yawRadians)  // Z component
-        ));
-
-        
-        // Right vector (perpendicular to forward, X right in your system)
-        Vec3 right = Math::normalize(Math::cross(Vec3(0.0f, 1.0f, 0.0f), forward));
-        
-        // Up vector (always Y up in your system)
-        Vec3 up = -Math::normalize(Math::cross(right, forward));
-
-
         transform.position += right * xMovement + up * yMovement + forward * zMovement;
 
+        Quat yawQuat = Math::angleAxis(dYaw, Vec3(0.0f, 1.0f, 0.0f));
+        Quat pitchQuat = Math::angleAxis(dPitch, right);
+
+        Quat combinedQuat = Math::normalize(yawQuat * pitchQuat);
+
+        // Apply the combined rotation to the transform orientation
+        transform.rotation = Math::normalize(combinedQuat * transform.rotation);
+        
         //log(std::format("Camera position: {}, {}, {}", transform.position.x, transform.position.y, transform.position.z));
     }
 }

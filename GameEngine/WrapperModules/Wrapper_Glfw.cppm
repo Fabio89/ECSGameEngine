@@ -34,6 +34,8 @@ export using ::glfwSetMouseButtonCallback;
 export using ::glfwSetCursorPosCallback;
 export using ::glfwSetScrollCallback;
 export using ::glfwGetCursorPos;
+export using ::glfwGetInputMode;
+export using ::glfwSetInputMode;
 
 export enum GetWindowLongOption
 {
@@ -43,6 +45,23 @@ export enum GetWindowLongOption
 export enum WindowStyle
 {
     WS_Child = WS_CHILD
+};
+
+export enum class CursorMode
+{
+    Normal = GLFW_CURSOR_NORMAL,
+    Hidden = GLFW_CURSOR_HIDDEN,
+    Disabled = GLFW_CURSOR_DISABLED,
+    Captured = GLFW_CURSOR_CAPTURED,
+};
+
+export enum class InputMode
+{
+    Cursor = GLFW_CURSOR,
+    StickyKeys = GLFW_STICKY_KEYS,
+    StickyMouseButtons = GLFW_STICKY_MOUSE_BUTTONS,
+    LockKeyMods = GLFW_LOCK_KEY_MODS,
+    RawMouseMotion = GLFW_RAW_MOUSE_MOTION
 };
 
 export namespace glfw

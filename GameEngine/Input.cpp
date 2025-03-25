@@ -1,4 +1,5 @@
 module Input;
+import Wrapper.Glfw;
 import std;
 
 namespace Input
@@ -46,6 +47,11 @@ bool Input::isKeyJustPressed(KeyCode key)
 bool Input::isKeyJustReleased(KeyCode key)
 {
     return justReleasedKeys[static_cast<int>(key)];
+}
+
+void Input::setCursorMode(GLFWwindow* window, CursorMode mode)
+{
+    glfwSetInputMode(window, static_cast<int>(InputMode::Cursor), static_cast<int>(mode));
 }
 
 void Input::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)

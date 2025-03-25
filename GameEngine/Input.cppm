@@ -4,6 +4,7 @@ import Wrapper.Glfw;
 
 export using ::KeyCode;
 export using ::KeyAction;
+export using ::CursorMode;
 
 export namespace Input
 {
@@ -18,6 +19,9 @@ export namespace Input
 
     __declspec(dllexport)
     bool isKeyJustReleased(KeyCode key);
+
+    __declspec(dllexport)
+    void setCursorMode(GLFWwindow* window, CursorMode mode);
 
     void init(GLFWwindow* window);
     using KeyEventCallback = void(*)(KeyCode key, KeyAction action);
