@@ -68,6 +68,9 @@ void patchEntity(Entity entity, const char* json);
 //------------------------------------------------------------------------------------------------------------------------
 // DEBUG -TEMPORARY
 //------------------------------------------------------------------------------------------------------------------------
+export extern "C" __declspec(dllexport)
+void updateDebugCamera(GLFWwindow* window, float deltaTime);
+
 export __declspec(dllexport)
 World& getWorld();
 
@@ -78,7 +81,7 @@ export __declspec(dllexport)
 ComponentBase& editComponent(Entity entity, ComponentTypeId typeId);
 
 export template<ValidComponent T>
-T& editComponent2(Entity entity)
+T& editComponent(Entity entity)
 {
     return reinterpret_cast<T&>(editComponent(entity, T::typeId()));
 }

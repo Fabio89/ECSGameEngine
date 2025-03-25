@@ -2,14 +2,13 @@ module;
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_FORCE_LEFT_HANDED
 #define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/quaternion.hpp>
-#include <glm/ext/matrix_transform.hpp>
-#include <glm/ext/quaternion_double.hpp>
-#include <glm/ext/quaternion_float.hpp>
 #include <glm/glm.hpp>
+#include <glm/ext/quaternion_double_precision.hpp> // won't compile without this
 #include <glm/gtc/quaternion.hpp>
-#include <glm/gtx//dual_quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/dual_quaternion.hpp>
 #include <glm/gtx/euler_angles.hpp>
+#include <glm/ext/matrix_transform.hpp>
 #include <glm/gtx/norm.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/string_cast.hpp>
@@ -77,6 +76,9 @@ export namespace Math
 
     using glm::rotation;
 
+    using glm::lerp;
+    using glm::slerp;
+    using glm::smoothstep;
     // template<typename T, qualifier Q>
     // GLM_FUNC_QUALIFIER T pitch(qua<T, Q> const& q)
     // {

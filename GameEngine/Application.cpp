@@ -2,6 +2,7 @@ module Application;
 import DebugWidget.EntityExplorer;
 import EngineComponents;
 import EngineSystems;
+import Feature.DebugFlyCamera;
 import Input;
 import Math;
 import Physics;
@@ -84,9 +85,10 @@ bool engineUpdate(GLFWwindow* window, float deltaTime)
         return false;
     }
 
-    glfwPollEvents();
-
     EngineSystems::update(world, player, deltaTime);
+    
+    Input::postUpdate(window, deltaTime);
+    glfwPollEvents();
 
     return true;
 }
@@ -191,6 +193,11 @@ Player& getPlayer()
 ComponentBase& editComponent(Entity entity, ComponentTypeId typeId)
 {
     return const_cast<ComponentBase&>(world.readComponent(entity, typeId));
+}
+
+void updateDebugCamera(GLFWwindow* window, float deltaTime)
+{
+    DebugCamera::update(window, world, player, deltaTime);
 }
 
 GLFWwindow* createWindow(HWND parent, int width, int height)

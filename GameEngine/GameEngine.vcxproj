@@ -141,40 +141,42 @@
         <ClCompile Include="Core.cppm" />
         <ClCompile Include="CoreTypes.cppm"/>
         <ClCompile Include="Ecs.cpp" />
+        <ClCompile Include="Features\DebugFlyCamera.cpp" />
+        <ClCompile Include="Features\DebugFlyCamera.cppm" />
         <ClCompile Include="Input.cpp" />
-        <ClCompile Include="Log.cppm"/>
-        <ClCompile Include="Input.cppm"/>
+        <ClCompile Include="Log.cppm" />
+        <ClCompile Include="Input.cppm" />
         <ClCompile Include="Math.cpp" />
         <ClCompile Include="Physics.cpp" />
         <ClCompile Include="Physics.cppm" />
-        <ClCompile Include="Player.cppm"/>
-        <ClCompile Include="Project.cppm"/>
-        <ClCompile Include="Ecs.cppm"/>
-        <ClCompile Include="Editor\DebugWidget.cppm"/>
-        <ClCompile Include="Editor\DebugWidget_EntityExplorer.cppm"/>
-        <ClCompile Include="Editor\IDebugWidget.cppm"/>
-        <ClCompile Include="Editor\ImGui.cpp"/>
-        <ClCompile Include="Editor\ImGui.cppm"/>
-        <ClCompile Include="Engine.cppm"/>
-        <ClCompile Include="Application.cpp"/>
-        <ClCompile Include="ExternalModules\vulkan.cppm"/>
-        <ClCompile Include="Guid.cppm"/>
-        <ClCompile Include="Job.cppm"/>
-        <ClCompile Include="Math.cppm"/>
-        <ClCompile Include="Render\IRenderManager.cppm"/>
-        <ClCompile Include="Render\Model.cpp"/>
-        <ClCompile Include="Render\Model.cppm"/>
-        <ClCompile Include="Render\QueueFamily\QueueFamily.cppm"/>
-        <ClCompile Include="Render\RenderManager.cpp"/>
-        <ClCompile Include="Render\RenderManager.cppm"/>
-        <ClCompile Include="Render\RenderObject.cpp"/>
-        <ClCompile Include="Render\RenderObject.cppm"/>
-        <ClCompile Include="Render\RenderUtils.cpp"/>
-        <ClCompile Include="Render\RenderUtils.cppm"/>
-        <ClCompile Include="Render\TextureLoading.cpp"/>
-        <ClCompile Include="Render\TextureLoading.cppm"/>
-        <ClCompile Include="Serialization.cpp"/>
-        <ClCompile Include="Serialization.cppm"/>
+        <ClCompile Include="Player.cppm" />
+        <ClCompile Include="Project.cppm" />
+        <ClCompile Include="Ecs.cppm" />
+        <ClCompile Include="Editor\DebugWidget.cppm" />
+        <ClCompile Include="Editor\DebugWidget_EntityExplorer.cppm" />
+        <ClCompile Include="Editor\IDebugWidget.cppm" />
+        <ClCompile Include="Editor\ImGui.cpp" />
+        <ClCompile Include="Editor\ImGui.cppm" />
+        <ClCompile Include="Engine.cppm" />
+        <ClCompile Include="Application.cpp" />
+        <ClCompile Include="ExternalModules\vulkan.cppm" />
+        <ClCompile Include="Guid.cppm" />
+        <ClCompile Include="Job.cppm" />
+        <ClCompile Include="Math.cppm" />
+        <ClCompile Include="Render\IRenderManager.cppm" />
+        <ClCompile Include="Render\Model.cpp" />
+        <ClCompile Include="Render\Model.cppm" />
+        <ClCompile Include="Render\QueueFamily\QueueFamily.cppm" />
+        <ClCompile Include="Render\RenderManager.cpp" />
+        <ClCompile Include="Render\RenderManager.cppm" />
+        <ClCompile Include="Render\RenderObject.cpp" />
+        <ClCompile Include="Render\RenderObject.cppm" />
+        <ClCompile Include="Render\RenderUtils.cpp" />
+        <ClCompile Include="Render\RenderUtils.cppm" />
+        <ClCompile Include="Render\TextureLoading.cpp" />
+        <ClCompile Include="Render\TextureLoading.cppm" />
+        <ClCompile Include="Serialization.cpp" />
+        <ClCompile Include="Serialization.cppm" />
         <ClCompile Include="System\System_BoundingBox.cppm" />
         <ClCompile Include="System\System_Camera.cppm" />
         <ClCompile Include="System\EngineSystems.cppm" />
@@ -261,22 +263,22 @@
           <LinkCompiled>true</LinkCompiled>
         </ClCompile>
         <ClCompile Include="System\System_Transform.cppm" />
-        <ClCompile Include="World.cpp"/>
-        <ClCompile Include="World.cppm"/>
-        <ClCompile Include="WrapperModules\Wrapper_Glfw.cppm"/>
-        <ClCompile Include="WrapperModules\Wrapper_Vulkan.cppm"/>
-        <ClCompile Include="WrapperModules\Wrapper_Windows.cppm"/>
-        <ClCompile Include="WrapperModules\Wrapper_BoostUuid.cppm"/>
-        <ClCompile Include="WrapperModules\Wrapper_ImGui.cppm"/>
+        <ClCompile Include="World.cpp" />
+        <ClCompile Include="World.cppm" />
+        <ClCompile Include="WrapperModules\Wrapper_Glfw.cppm" />
+        <ClCompile Include="WrapperModules\Wrapper_Vulkan.cppm" />
+        <ClCompile Include="WrapperModules\Wrapper_Windows.cppm" />
+        <ClCompile Include="WrapperModules\Wrapper_BoostUuid.cppm" />
+        <ClCompile Include="WrapperModules\Wrapper_ImGui.cppm" />
     </ItemGroup>
     <ItemGroup>
-        <None Include="Render\Shaders\Shader.frag"/>
-        <None Include="Render\Shaders\Shader.vert"/>
+        <None Include="Render\Shaders\Shader.frag" />
+        <None Include="Render\Shaders\Shader.vert" />
     </ItemGroup>
     <ItemGroup>
-        <ClCompile Include="External\Json\json.hpp"/>
-        <ClInclude Include="External\MeshLoading\tiny_obj_loader.h"/>
-        <ClInclude Include="External\TextureLoading\stb_image.h"/>
+        <ClCompile Include="External\Json\json.hpp" />
+        <ClInclude Include="External\MeshLoading\tiny_obj_loader.h" />
+        <ClInclude Include="External\TextureLoading\stb_image.h" />
     </ItemGroup>
     <ItemGroup>
       <Content Include="Render\Shaders\LineShader.frag" />

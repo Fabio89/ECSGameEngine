@@ -9,6 +9,7 @@ import vulkan_hpp;
 import std;
 
 export using ::GLFWwindow;
+export using ::GLFWcursor;
 export using ::glfwGetFramebufferSize;
 export using ::glfwInit;
 export using ::glfwWindowHint;
@@ -34,8 +35,24 @@ export using ::glfwSetMouseButtonCallback;
 export using ::glfwSetCursorPosCallback;
 export using ::glfwSetScrollCallback;
 export using ::glfwGetCursorPos;
+export using ::glfwSetCursor;
+export using ::glfwCreateStandardCursor;
+export using ::glfwDestroyCursor;
 export using ::glfwGetInputMode;
 export using ::glfwSetInputMode;
+
+export enum class CursorType
+{
+    Arrow = GLFW_ARROW_CURSOR,
+    IBeam = GLFW_IBEAM_CURSOR,
+    Crosshair = GLFW_CROSSHAIR_CURSOR,
+    PointingHand = GLFW_POINTING_HAND_CURSOR,
+    ResizeEW = GLFW_RESIZE_EW_CURSOR,
+    ResizeNS = GLFW_RESIZE_NS_CURSOR,
+    ResizeNWSE = GLFW_RESIZE_NWSE_CURSOR,
+    ResizeNESW = GLFW_RESIZE_NESW_CURSOR,
+    ResizeAll = GLFW_RESIZE_ALL_CURSOR
+};
 
 export enum GetWindowLongOption
 {

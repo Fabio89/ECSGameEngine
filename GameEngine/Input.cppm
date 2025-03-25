@@ -5,6 +5,7 @@ import Wrapper.Glfw;
 export using ::KeyCode;
 export using ::KeyAction;
 export using ::CursorMode;
+export using ::CursorType;
 
 export namespace Input
 {
@@ -23,7 +24,12 @@ export namespace Input
     __declspec(dllexport)
     void setCursorMode(GLFWwindow* window, CursorMode mode);
 
+    __declspec(dllexport)
+    void setCursorType(GLFWwindow* window, CursorType type);
+    
     void init(GLFWwindow* window);
+    void shutdown();
+    void postUpdate(GLFWwindow* window, float deltaTime);
     using KeyEventCallback = void(*)(KeyCode key, KeyAction action);
     void addKeyEventCallback(KeyEventCallback callback);
 }

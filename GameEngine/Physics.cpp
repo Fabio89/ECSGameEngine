@@ -52,7 +52,6 @@ Ray Physics::rayFromScreenPosition(const World& world, const Player& player, Vec
     // Step 2: Convert from clip space to view space
     Mat4 projInverse = Math::inverse(camera.projectionMatrix);
     Vec4 rayView = projInverse * rayClip;
-    rayView.z = -1.0f; // Set forward direction in view space
     rayView.w = 0.0f; // Ensure direction vector
     Vec3 rayViewDirection = Vec3(rayView); // Normalize to create direction
 

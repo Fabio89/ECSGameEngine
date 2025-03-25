@@ -34,56 +34,14 @@ void waitTillClosed()
     }
 }
 
-Vec2 lastCursorPosition;
-
 void onUpdate(float deltaTime)
 {
-    float speed = 3.0f * deltaTime;
-    float rotationSpeed = 10000.0f * deltaTime;
-    
-    float xMovement = (static_cast<int>(Input::isKeyDown(KeyCode::D)) - static_cast<int>(Input::isKeyDown(KeyCode::A))) * speed;
-    float yMovement = (static_cast<int>(Input::isKeyDown(KeyCode::E)) - static_cast<int>(Input::isKeyDown(KeyCode::Q))) * speed;
-    float zMovement = (static_cast<int>(Input::isKeyDown(KeyCode::W)) - static_cast<int>(Input::isKeyDown(KeyCode::S))) * speed;
+    updateDebugCamera(window, deltaTime);
 
-    float dYaw = 0;
-    float dPitch = 0;
-
-    if (Input::isKeyDown(KeyCode::MouseButtonRight))
+    if (Input::isKeyJustPressed(KeyCode::MouseButtonLeft))
     {
-        Input::setCursorMode(window, CursorMode::Disabled);
-        const Vec2 cursorPosition = Input::getCursorPosition(window);
-        if (cursorPosition.x != lastCursorPosition.x)
-        {
-            dYaw = rotationSpeed * deltaTime * (cursorPosition.x - lastCursorPosition.x );
-            dPitch = rotationSpeed * deltaTime * (cursorPosition.y - lastCursorPosition.y);
-        }
-    }
-    else
-    {
-        Input::setCursorMode(window, CursorMode::Normal);
-    }
-    lastCursorPosition = Input::getCursorPosition(window);
-
-    //if (xMovement != 0 || yMovement != 0 || zMovement != 0)
-    {
-        auto cameraEntity = getPlayer().getMainCamera();
-        
-        auto& transform = editComponent2<TransformComponent>(cameraEntity);
-        const Vec3 forward = TransformUtils::forward(transform);
-        const Vec3 right = TransformUtils::right(transform);
-        const Vec3 up = TransformUtils::up(transform);
-        
-        transform.position += right * xMovement + up * yMovement + forward * zMovement;
-
-        Quat yawQuat = Math::angleAxis(dYaw, Vec3(0.0f, 1.0f, 0.0f));
-        Quat pitchQuat = Math::angleAxis(dPitch, right);
-
-        Quat combinedQuat = Math::normalize(yawQuat * pitchQuat);
-
-        // Apply the combined rotation to the transform orientation
-        transform.rotation = Math::normalize(combinedQuat * transform.rotation);
-        
-        //log(std::format("Camera position: {}, {}, {}", transform.position.x, transform.position.y, transform.position.z));
+        const Ray ray = Physics::rayFromScreenPosition(getWorld(), getPlayer(), getCursorPosition(window));
+        Physics::lineTrace(getWorld(), ray);
     }
 }
 

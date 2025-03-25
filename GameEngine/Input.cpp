@@ -1,4 +1,5 @@
 module Input;
+import Log;
 import Wrapper.Glfw;
 import std;
 
@@ -9,6 +10,7 @@ namespace Input
     std::bitset<KeyCodeCount> heldKeys{};
     std::bitset<KeyCodeCount> justPressedKeys{};
     std::bitset<KeyCodeCount> justReleasedKeys{};
+    std::unordered_map<CursorType, GLFWcursor*> cursorTypes;
 
     void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
     void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
@@ -18,6 +20,21 @@ void Input::init(GLFWwindow* window)
 {
     glfwSetKeyCallback(window, keyCallback);
     glfwSetMouseButtonCallback(window, mouseButtonCallback);
+}
+
+void Input::shutdown()
+{
+    for (GLFWcursor* cursorType : cursorTypes | std::views::values)
+    {
+        glfwDestroyCursor(cursorType);
+    }
+    cursorTypes.clear();
+}
+
+void Input::postUpdate(GLFWwindow* window, float deltaTime)
+{
+    justPressedKeys.reset();
+    justReleasedKeys.reset();
 }
 
 void Input::addKeyEventCallback(KeyEventCallback callback)
@@ -54,6 +71,23 @@ void Input::setCursorMode(GLFWwindow* window, CursorMode mode)
     glfwSetInputMode(window, static_cast<int>(InputMode::Cursor), static_cast<int>(mode));
 }
 
+void Input::setCursorType(GLFWwindow* window, CursorType type)
+{
+    log(std::format("Set cursor type: {}", static_cast<int>(type)));
+    
+    GLFWcursor* cursor;
+    if (auto it = cursorTypes.find(type); it != cursorTypes.end())
+    {
+        cursor = it->second;
+    }
+    else
+    {
+        cursor = glfwCreateStandardCursor(static_cast<int>(type));
+        cursorTypes[type] = cursor;
+    }
+    glfwSetCursor(window, cursor);
+}
+
 void Input::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     const KeyCode keyCode = static_cast<KeyCode>(key);
@@ -67,6 +101,10 @@ void Input::keyCallback(GLFWwindow* window, int key, int scancode, int action, i
     heldKeys[key] = keyAction == KeyAction::Press || keyAction == KeyAction::Repeat;
     justPressedKeys[key] = keyAction == KeyAction::Press;
     justReleasedKeys[key] = keyAction == KeyAction::Release;
+
+    std::string keyActionStr = keyAction == KeyAction::Press ? "Press" : keyAction == KeyAction::Release ? "Release" : "Repeat";
+    
+    log(std::format("Key: {}, Action: {}", static_cast<int>(keyCode), keyActionStr));
 }
 
 void Input::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
