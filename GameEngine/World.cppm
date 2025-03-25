@@ -26,7 +26,7 @@ export struct WorldCreateInfo
     IRenderManager* renderManager{};
 };
 
-export class World
+class World
 {
 public:
     explicit World(const WorldCreateInfo&);
@@ -49,7 +49,7 @@ public:
 
         Archetype& oldArchetype = editOrCreateArchetype(signature);
 
-        signature.bitset.set(std::hash<ComponentTypeId>{}(Component<T>::typeId) % maxComponentsPerEntity);
+        signature.bitset.set(std::hash<ComponentTypeId>{}(Component<T>::typeId()) % maxComponentsPerEntity);
 
         const bool usingExistingArchetype = m_archetypes.contains(signature);
 
@@ -72,14 +72,14 @@ public:
 
         for (auto& callback : m_archetypeChangeObservers | std::views::values)
         {
-            callback(entity, Component<T>::typeId);
+            callback(entity, Component<T>::typeId());
         }
     }
 
     template <ValidComponent T>
     [[nodiscard]] const T& readComponent(Entity entity) const
     {
-        return readComponent<T>(entity, Component<T>::typeId);
+        return readComponent<T>(entity, Component<T>::typeId());
     }
 
     template <ValidComponent T>

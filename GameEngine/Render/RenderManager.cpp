@@ -40,7 +40,7 @@ void RenderManager::init(GLFWwindow* window)
     check(window, "[RenderManager] Can't initialise without a window!");
 
     m_window = window;
-    
+
     // Init Vulkan
     {
         vk::defaultDispatchLoaderDynamic.init();
@@ -61,6 +61,7 @@ void RenderManager::init(GLFWwindow* window)
         createRenderPass();
         createDescriptorSetLayout();
         createGraphicsPipeline();
+        createLinePipeline();
         createCommandPool();
         createDepthResources();
         createFramebuffers();
@@ -100,9 +101,9 @@ void RenderManager::update()
 {
     if (updatesBlocked.load())
         return;
-    
+
     std::lock_guard lock{updateLockMutex};
-    
+
     m_graphicsQueue.waitIdle(); // TODO: Optimization target. Explore VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT.
     m_renderObjectManager.executePendingCommands();
     drawFrame(m_deltaTime.update());
@@ -125,6 +126,7 @@ void RenderManager::shutdown()
     m_device.destroyCommandPool(m_commandPool);
     m_device.destroyCommandPool(m_transferCommandPool);
     m_device.destroyPipeline(m_graphicsPipeline);
+    m_device.destroyPipeline(m_linePipeline);
     m_device.destroyPipelineLayout(m_pipelineLayout);
     m_device.destroyRenderPass(m_renderPass);
 
@@ -152,7 +154,7 @@ void RenderManager::clear()
 
     if (!m_initialised)
         return;
-    
+
     updatesBlocked = true;
 
     m_device.waitIdle();
@@ -181,14 +183,14 @@ void RenderManager::setRenderObjectTransform(Entity entity, Vec3 location, Quat 
     });
 }
 
-void RenderManager::setCameraTransform(Vec3 location, Quat rotation)
+void RenderManager::setDebugRenderObject(Entity entity, const std::vector<Vec3>& vertices)
 {
-    m_renderObjectManager.setCameraTransform(location, rotation);
+    m_renderObjectManager.addCommand(RenderMessages::SetDebugObject{.entity = entity, .vertices = vertices});
 }
 
-void RenderManager::setCameraFov(float fov)
+void RenderManager::setCamera(const Camera& camera)
 {
-    m_renderObjectManager.setCameraFov(fov);
+    m_renderObjectManager.setCamera(camera);
 }
 
 void RenderManager::addDebugWidget(std::unique_ptr<IDebugWidget> widget)
@@ -266,6 +268,7 @@ void RenderManager::createLogicalDevice()
 
     constexpr vk::PhysicalDeviceFeatures deviceFeatures
     {
+        .fillModeNonSolid = vk::True,
         .samplerAnisotropy = vk::True,
     };
 
@@ -330,8 +333,7 @@ void RenderManager::recreateSwapchain()
 
 void RenderManager::createSwapchain()
 {
-    const RenderUtils::SwapChainSupportDetails swapChainSupport = RenderUtils::querySwapChainSupport(
-        m_physicalDevice, m_surface);
+    const RenderUtils::SwapChainSupportDetails swapChainSupport = RenderUtils::querySwapChainSupport(m_physicalDevice, m_surface);
 
     const vk::SurfaceFormatKHR surfaceFormat = RenderUtils::chooseSwapSurfaceFormat(swapChainSupport.formats);
     const vk::PresentModeKHR presentMode = RenderUtils::chooseSwapPresentMode(swapChainSupport.presentModes);
@@ -386,7 +388,6 @@ void RenderManager::createSwapchain()
     m_swapChainImages = m_device.getSwapchainImagesKHR(m_swapChain);
     m_swapChainImageFormat = surfaceFormat.format;
     m_swapchainExtent = extent;
-    m_renderObjectManager.setAspectRatio(extent.width / static_cast<float>(extent.height));
 }
 
 void RenderManager::createImageViews()
@@ -615,7 +616,7 @@ void RenderManager::createGraphicsPipeline()
         .rasterizerDiscardEnable = vk::False,
         .polygonMode = vk::PolygonMode::eFill,
         .cullMode = vk::CullModeFlagBits::eBack,
-        .frontFace = vk::FrontFace::eCounterClockwise,
+        .frontFace = vk::FrontFace::eClockwise,
         .depthBiasEnable = vk::False,
         .depthBiasConstantFactor = 0.0f, // Optional
         .depthBiasClamp = 0.0f, // Optional
@@ -712,6 +713,180 @@ void RenderManager::createGraphicsPipeline()
 
     m_device.destroyShaderModule(fragShaderModule, nullptr);
     m_device.destroyShaderModule(vertShaderModule, nullptr);
+}
+
+void RenderManager::createLinePipeline()
+{
+    // Load shaders
+    auto vertShaderCode = RenderUtils::readFile(getExecutableRoot() + "Shaders/line_vert.spv");
+    auto fragShaderCode = RenderUtils::readFile(getExecutableRoot() + "Shaders/line_frag.spv");
+    vk::ShaderModule vertShaderModule = RenderUtils::createShaderModule(vertShaderCode, m_device);
+    vk::ShaderModule fragShaderModule = RenderUtils::createShaderModule(fragShaderCode, m_device);
+
+    const vk::PipelineShaderStageCreateInfo vertShaderStageInfo
+    {
+        .stage = vk::ShaderStageFlagBits::eVertex,
+        .module = vertShaderModule,
+        .pName = "main",
+    };
+
+    const vk::PipelineShaderStageCreateInfo fragShaderStageInfo
+    {
+        .stage = vk::ShaderStageFlagBits::eFragment,
+        .module = fragShaderModule,
+        .pName = "main",
+    };
+
+    vk::PipelineShaderStageCreateInfo shaderStages[]{vertShaderStageInfo, fragShaderStageInfo};
+
+    // Rasterization for lines
+    vk::PipelineRasterizationStateCreateInfo rasterizerInfo
+    {
+        .polygonMode = vk::PolygonMode::eLine,
+        .cullMode = vk::CullModeFlagBits::eNone,
+        .lineWidth = 1.0f,
+    };
+
+    // Disable depth writes for debugging lines
+    vk::PipelineDepthStencilStateCreateInfo depthStencil
+    {
+        .depthTestEnable = vk::False,
+        .depthWriteEnable = vk::False,
+        .depthCompareOp = vk::CompareOp::eLess,
+    };
+
+    // Multisampling (optional)
+    vk::PipelineMultisampleStateCreateInfo multisamplingInfo
+    {
+        .rasterizationSamples = vk::SampleCountFlagBits::e1,
+    };
+
+    static constexpr vk::VertexInputBindingDescription bindingDescription
+    {
+        .binding = 0,
+        .stride = sizeof(LineVertex),
+        .inputRate = vk::VertexInputRate::eVertex,
+    };
+
+    static constexpr std::array attributeDescriptions
+    {
+        vk::VertexInputAttributeDescription
+        {
+            .location = 0,
+            .binding = 0,
+            .format = vk::Format::eR32G32B32Sfloat,
+            .offset = offsetof(LineVertex, pos),
+        },
+        vk::VertexInputAttributeDescription
+        {
+            .location = 1,
+            .binding = 0,
+            .format = vk::Format::eR32G32B32Sfloat,
+            .offset = offsetof(LineVertex, color),
+        },
+    };
+
+    // Vertex input (reuse your format or customize as needed)
+    vk::PipelineVertexInputStateCreateInfo vertexInputInfo{
+        .vertexBindingDescriptionCount = 1,
+        .pVertexBindingDescriptions = &bindingDescription,
+        .vertexAttributeDescriptionCount = static_cast<UInt32>(attributeDescriptions.size()),
+        .pVertexAttributeDescriptions = attributeDescriptions.data(),
+    };
+
+    const std::vector dynamicStates
+    {
+        vk::DynamicState::eViewport,
+        vk::DynamicState::eScissor,
+    };
+
+    const vk::PipelineDynamicStateCreateInfo dynamicStateInfo
+    {
+        .dynamicStateCount = static_cast<UInt32>(dynamicStates.size()),
+        .pDynamicStates = dynamicStates.data(),
+    };
+
+    const vk::Viewport viewport
+    {
+        .x = 0,
+        .y = 0,
+        .width = static_cast<float>(m_swapchainExtent.width),
+        .height = static_cast<float>(m_swapchainExtent.height),
+        .minDepth = 0.0f,
+        .maxDepth = 1.0f,
+    };
+
+    const vk::Rect2D scissor
+    {
+        .offset = {0, 0},
+        .extent = m_swapchainExtent,
+    };
+
+    const vk::PipelineViewportStateCreateInfo viewportStateInfo
+    {
+        .viewportCount = 1,
+        .pViewports = &viewport,
+        .scissorCount = 1,
+        .pScissors = &scissor
+    };
+
+    static constexpr vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo
+    {
+        .topology = vk::PrimitiveTopology::eLineList,
+        .primitiveRestartEnable = vk::False,
+    };
+
+    static constexpr vk::PipelineColorBlendAttachmentState colorBlendAttachment
+    {
+        .blendEnable = vk::False,
+        .srcColorBlendFactor = vk::BlendFactor::eOne, // Optional
+        .dstColorBlendFactor = vk::BlendFactor::eZero, // Optional
+        .colorBlendOp = vk::BlendOp::eAdd, // Optional
+        .srcAlphaBlendFactor = vk::BlendFactor::eOne, // Optional
+        .dstAlphaBlendFactor = vk::BlendFactor::eZero, // Optional
+        .alphaBlendOp = vk::BlendOp::eAdd, // Optional
+        .colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+        vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
+    };
+
+    static constexpr vk::PipelineColorBlendStateCreateInfo colorBlendingInfo
+    {
+        .logicOpEnable = vk::False,
+        .logicOp = vk::LogicOp::eCopy, // Optional
+        .attachmentCount = 1,
+        .pAttachments = &colorBlendAttachment,
+        .blendConstants = std::array{0.f, 0.f, 0.f, 0.f}
+    };
+
+    // Build the pipeline
+    const vk::GraphicsPipelineCreateInfo pipelineInfo
+    {
+        .stageCount = 2,
+        .pStages = shaderStages,
+        .pVertexInputState = &vertexInputInfo,
+        .pInputAssemblyState = &inputAssemblyInfo,
+        .pViewportState = &viewportStateInfo,
+        .pRasterizationState = &rasterizerInfo,
+        .pMultisampleState = &multisamplingInfo,
+        .pDepthStencilState = &depthStencil,
+        .pColorBlendState = &colorBlendingInfo,
+        .pDynamicState = &dynamicStateInfo,
+        .layout = m_pipelineLayout,
+        .renderPass = m_renderPass,
+        .subpass = 0,
+        .basePipelineHandle = nullptr,
+        .basePipelineIndex = -1,
+    };
+
+    auto result = m_device.createGraphicsPipeline(m_pipelineCache, pipelineInfo);
+
+    if (result.result != vk::Result::eSuccess)
+        fatalError("Failed to create line rendering pipeline!");
+
+    m_device.destroyShaderModule(vertShaderModule);
+    m_device.destroyShaderModule(fragShaderModule);
+
+    m_linePipeline = result.value;
 }
 
 void RenderManager::createFramebuffers()
@@ -977,6 +1152,8 @@ void RenderManager::drawFrame(float deltaTime)
     commandBuffer.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
 
     m_renderObjectManager.renderFrame(commandBuffer, m_graphicsPipeline, m_pipelineLayout, deltaTime, m_currentFrame);
+
+    m_renderObjectManager.renderLineFrame(commandBuffer, m_linePipeline, m_pipelineLayout, deltaTime, m_currentFrame);
 
     m_imguiHelper.renderFrame(commandBuffer);
 

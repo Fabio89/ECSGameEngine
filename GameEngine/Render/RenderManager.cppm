@@ -28,8 +28,9 @@ public:
     void addDebugWidget(std::unique_ptr<IDebugWidget> widget) override;
     void addRenderObject(Entity entity, const MeshAsset* mesh, const TextureAsset* texture) override;
     void setRenderObjectTransform(Entity entity, Vec3 location, Quat rotation, float scale = 1.f) override;
-    void setCameraTransform(Vec3 location, Quat rotation) override;
-    void setCameraFov(float fov) override;
+    void setDebugRenderObject(Entity entity, const std::vector<Vec3>& vertices) override;
+    void setCamera(const Camera& camera) override;
+    float getAspectRatio() const override { return m_swapchainExtent.height > 0 ? m_swapchainExtent.width / static_cast<float>(m_swapchainExtent.height) : 1.f; }
 
     void updateFramebufferSize() { m_framebufferResized = true; }
     float getDeltaTime() const { return m_deltaTime; }
@@ -50,6 +51,7 @@ private:
     vk::DescriptorSetLayout m_descriptorSetLayout{};
     vk::PipelineLayout m_pipelineLayout{};
     vk::Pipeline m_graphicsPipeline{};
+    vk::Pipeline m_linePipeline{};
 
     vk::CommandPool m_commandPool{};
     vk::CommandPool m_transferCommandPool{};
@@ -97,6 +99,7 @@ private:
     void createRenderPass();
     void createDescriptorSetLayout();
     void createGraphicsPipeline();
+    void createLinePipeline();
     void createCommandPool();
     void createCommandBuffers();
     void createSyncObjects();

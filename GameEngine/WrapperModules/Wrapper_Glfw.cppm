@@ -14,6 +14,7 @@ export using ::glfwInit;
 export using ::glfwWindowHint;
 export using ::glfwCreateWindow;
 export using ::glfwSetWindowPos;
+export using ::glfwGetWindowSize;
 export using ::glfwSetWindowSize;
 export using ::glfwSetWindowUserPointer;
 export using ::glfwSetFramebufferSizeCallback;
@@ -32,6 +33,7 @@ export using ::glfwSetKeyCallback;
 export using ::glfwSetMouseButtonCallback;
 export using ::glfwSetCursorPosCallback;
 export using ::glfwSetScrollCallback;
+export using ::glfwGetCursorPos;
 
 export enum GetWindowLongOption
 {
@@ -194,6 +196,7 @@ export enum class KeyCode
     RightSuper = 347,
     Menu = 348,
 };
+export constexpr int KeyCodeCount = static_cast<int>(KeyCode::Menu) + 1;
 
 export enum class KeyAction
 {

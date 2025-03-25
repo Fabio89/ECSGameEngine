@@ -20,14 +20,19 @@ public:
     virtual void deserialize(World& world, Entity entity, const JsonObject& json) const = 0;
 };
 
-export template<ValidComponent T>
+export template <ValidComponent T>
 class ComponentType final : public ComponentTypeBase
 {
 public:
-    [[nodiscard]] ComponentTypeId getTypeId() const override { return T::typeId; }
+    [[nodiscard]] ComponentTypeId getTypeId() const override { return T::typeId(); }
     [[nodiscard]] std::string_view getName() const override { return getComponentName<T>(); }
     void createInstance(World& world, Entity entity, const JsonObject& json) const override { world.addComponent<T>(entity, ::deserialize<T>(json)); }
-    [[nodiscard]] JsonObject serialize(const ComponentBase& component, Json::MemoryPoolAllocator<>& allocator) const override { return ::serialize<T>(static_cast<const T&>(component), allocator); }
+
+    [[nodiscard]] JsonObject serialize(const ComponentBase& component, Json::MemoryPoolAllocator<>& allocator) const override
+    {
+        return ::serialize<T>(static_cast<const T&>(component), allocator);
+    }
+
     void deserialize(World& world, Entity entity, const JsonObject& json) const override { world.editComponent<T>(entity) = ::deserialize<T>(json); }
 };
 
@@ -36,19 +41,19 @@ namespace ComponentRegistry
     using ComponentCreateFunc = std::function<void(World&, Entity, const JsonObject&)>;
 
     std::vector<std::unique_ptr<const ComponentTypeBase>> componentTypes;
-    std::map<ComponentTypeId, const ComponentTypeBase*> byId;
-    std::map<std::string, const ComponentTypeBase*> byName;
+    std::unordered_map<ComponentTypeId, const ComponentTypeBase*> byId;
+    std::unordered_map<std::string, const ComponentTypeBase*> byName;
 
-    export template<ValidComponent T>
+    export template <ValidComponent T>
     void init()
     {
-        check(std::none_of(componentTypes.cbegin(), componentTypes.cend(), [](auto&& type) { return type->getTypeId() == T::typeId; }), "Tried to init components more than once!");
+        check(std::ranges::none_of(componentTypes, [](auto&& type) { return type->getTypeId() == T::typeId(); }), "Tried to init components more than once!");
         const std::unique_ptr<const ComponentTypeBase>& type = componentTypes.emplace_back(std::make_unique<ComponentType<T>>());
         byId[type->getTypeId()] = type.get();
         byName[getComponentName<T>()] = type.get();
         log(std::format("Registered component: {} (id={})", getComponentName<T>(), type->getTypeId()));
     }
-
+    
     export const ComponentTypeBase* get(ComponentTypeId typeId)
     {
         auto it = byId.find(typeId);

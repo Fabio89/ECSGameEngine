@@ -1,6 +1,24 @@
+module;
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#define GLM_FORCE_LEFT_HANDED
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/quaternion_double.hpp>
+#include <glm/ext/quaternion_float.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx//dual_quaternion.hpp>
+#include <glm/gtx/euler_angles.hpp>
+#include <glm/gtx/norm.hpp>
+#include <glm/gtx/rotate_vector.hpp>
+#include <glm/gtx/string_cast.hpp>
+#include <glm/gtx/transform.hpp>
+
+#include "json.hpp"
+
 export module Math;
 export import Core;
-import <glm/gtc/quaternion.hpp>;
 
 using glm::qualifier;
 using glm::vec;
@@ -23,84 +41,103 @@ export using glm::operator-;
 
 export namespace Math
 {
-	using glm::min;
-	using glm::max;
-	using glm::radians;
-	using glm::lookAt;
-	using glm::perspective;
-	using glm::rotate;
-	using glm::translate;
-	using glm::scale;
-	using glm::normalize;
-	using glm::eulerAngles;
-	using glm::epsilonEqual;
-	using glm::epsilon;
-	using glm::distance;
-	using glm::mat4_cast;
-	using glm::cross;
-	using glm::dot;
-	
-	Quat rotation(Vec3 origin, Vec3 destination);
+    using glm::all;
+    using glm::equal;
+    using glm::min;
+    using glm::max;
+    using glm::clamp;
+    using glm::length;
+    using glm::radians;
+    using glm::degrees;
+    // using glm::pitch;
+    // using glm::yaw;
+    // using glm::roll;
+    using glm::lookAt;
+    using glm::perspective;
+    using glm::translate;
+    using glm::rotate;
+    using glm::scale;
+    using glm::normalize;
+    using glm::eulerAngles;
+    using glm::epsilonEqual;
+    using glm::epsilon;
+    using glm::distance;
+    using glm::mat4_cast;
+    using glm::sin;
+    using glm::cos;
+    using glm::tan;
+    using glm::asin;
+    using glm::acos;
+    using glm::atan;
+    using glm::cross;
+    using glm::dot;
+    using glm::inverse;
+
+    using glm::rotation;
+
+    template<typename T, qualifier Q>
+    GLM_FUNC_QUALIFIER T pitch(qua<T, Q> const& q)
+    {
+        // Corrected Pitch (rotation around X-axis)
+        T sinp = 2 * (q.w * q.x - q.y * q.z);
+
+        // Small numerical inaccuracies can cause near-zero deviations, force these to zero:
+        if (std::abs(sinp) < static_cast<T>(1e-6)) {
+            return static_cast<T>(0); // Explicitly treat no X-axis rotation as zero
+        }
+
+        // Otherwise, safely compute pitch using arcsine:
+        return static_cast<T>(asin(clamp(sinp, static_cast<T>(-1), static_cast<T>(1))));
+    }
+
+
+
+
+    template<typename T, qualifier Q>
+    GLM_FUNC_QUALIFIER T yaw(qua<T, Q> const& q)
+    {
+        // Yaw (rotation around Y-axis)
+        return static_cast<T>(atan2(2 * (q.w * q.y + q.z * q.x), 1 - 2 * (q.y * q.y + q.x * q.x)));
+    }
+
+    template<typename T, qualifier Q>
+    GLM_FUNC_QUALIFIER T roll(qua<T, Q> const& q)
+    {
+        return static_cast<T>(atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.z * q.z + q.x * q.x)));
+    }
+
+
+
+
+
+
 }
 
-export constexpr Vec3 forwardVector() { return {1.0f, 0.0f, 0.0f}; }
-export constexpr Vec3 rightVector() { return {0.0f, 1.0f, 0.0f}; }
-export constexpr Vec3 upVector() { return {0.0f, 0.0f, 1.0f}; }
+export constexpr Vec3 forwardVector() { return { 0.0f, 0.0f, 1.0f }; }
+export constexpr Vec3 rightVector() { return {1.0f, 0.0f, 0.0f}; }
+export constexpr Vec3 upVector() { return {0.0f, 1.0f, 0.0f}; }
 
-export inline void hash_combine(size_t &seed, size_t hash)
+export inline void hash_combine(size_t& seed, size_t hash)
 {
-	hash += 0x9e3779b9 + (seed << 6) + (seed >> 2);
-	seed ^= hash;
+    hash += 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    seed ^= hash;
 }
 
-export template<typename T, qualifier Q>
+export template <typename T, qualifier Q>
 size_t hash_value(const vec<2, T, Q>& v)
 {
-	auto hasher = std::hash<T>{};
-	auto seed = hasher(v.x);
-	hash_combine(seed, hasher(v.y));
-	return seed;
+    auto hasher = std::hash<T>{};
+    auto seed = hasher(v.x);
+    hash_combine(seed, hasher(v.y));
+    return seed;
 }
 
-export template<typename T, qualifier Q>
+export template <typename T, qualifier Q>
 size_t hash_value(const vec<3, T, Q>& v)
 {
-	auto hasher = std::hash<T>{};
-	auto seed = hasher(v.x);
-	hash_combine(seed, hasher(v.y));
-	hash_combine(seed, hasher(v.z));
-	return seed;
-}
-
-Quat Math::rotation(Vec3 origin, Vec3 destination)
-{
-	// Normalize both the origin and destination vectors
-	Vec3 normalizedOrigin = normalize(origin);
-	Vec3 normalizedDestination = normalize(destination);
-
-	// Calculate the axis of rotation (cross product)
-	Vec3 axis = cross(normalizedOrigin, normalizedDestination);
-
-	// If the cross product is nearly zero, the vectors are either the same or opposite
-	float angle = dot(normalizedOrigin, normalizedDestination);
-
-	// Clamp the dot product to avoid floating point errors resulting in NaNs for angle
-	angle = glm::clamp(angle, -1.0f, 1.0f);
-
-	// Get the angle of rotation in radians
-	float theta = glm::acos(angle);
-
-	// If the angle is very small, no rotation is needed, return identity quaternion
-	if (glm::length(axis) < 0.001f) {
-		return Quat(1.f, 0.f, 0.f, 0.f); // Identity quaternion
-	}
-
-	// Normalize the axis of rotation
-	axis = normalize(axis);
-
-	// Calculate the quaternion
-	float halfTheta = theta * 0.5f;
-	float sinHalfTheta = glm::sin(halfTheta);
-
-	return Quat(glm::cos(halfTheta), -axis.x * sinHalfTheta, -axis.y * sinHalfTheta, -axis.z * sinHalfTheta);
+    auto hasher = std::hash<T>{};
+    auto seed = hasher(v.x);
+    hash_combine(seed, hasher(v.y));
+    hash_combine(seed, hasher(v.z));
+    return seed;
 }

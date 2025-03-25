@@ -3,7 +3,6 @@ import AssetManager;
 import Guid;
 import Render.Model;
 import Serialization;
-import System;
 import World;
 
 export struct ModelComponent : Component<ModelComponent>
@@ -39,16 +38,3 @@ ModelComponent deserialize(const JsonObject& serializedData)
         .texture = AssetManager::findAsset<TextureAsset>(textureGuid)
     };
 }
-
-export class ModelSystem : public System
-{
-public:
-    void onComponentAdded(World& world, Entity entity, ComponentTypeId componentType) override
-    {
-        if (componentType == ModelComponent::typeId)
-        {
-            const ModelComponent& model = world.readComponent<ModelComponent>(entity);
-            world.getRenderManager().addRenderObject(entity, model.mesh, model.texture);
-        }
-    }
-};

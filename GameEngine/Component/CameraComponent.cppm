@@ -1,11 +1,15 @@
 export module Component.Camera;
+import Math;
 import Serialization;
-import System;
 import World;
 
 export struct CameraComponent : Component<CameraComponent>
 {
     float fov{60.f};
+    float nearPlane{0.1f};
+    float farPlane{100.f};
+    Mat4 projectionMatrix;
+    Mat4 viewMatrix;
 };
 
 template <>

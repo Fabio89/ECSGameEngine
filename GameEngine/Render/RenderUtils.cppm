@@ -44,40 +44,36 @@ export namespace RenderUtils
     };
 
     template <typename T>
-    concept bufferable_data = requires { typename T::value_type; }
+    concept BufferableData = requires { typename T::value_type; }
         && requires(const T& t) { { t.data() } -> std::convertible_to<const void*>; }
         && requires(const T& t) { { t.size() } -> std::integral; };
 
-    template <bufferable_data T>
+    template <BufferableData T>
     std::tuple<vk::Buffer, vk::DeviceMemory> createDataBuffer(const T& range, const CreateDataBufferInfo& info);
-    std::tuple<vk::Buffer, vk::DeviceMemory> createDataBuffer(const void* data, vk::DeviceSize size,
-                                                              const CreateDataBufferInfo& info);
+    std::tuple<vk::Buffer, vk::DeviceMemory> createDataBuffer(const void* data, vk::DeviceSize size, const CreateDataBufferInfo& info);
 
-    void copyBuffer(vk::Device device, vk::CommandPool commandPool, vk::Queue queue, vk::DeviceSize size,
-                    vk::Buffer srcBuffer, vk::Buffer dstBuffer);
+    template <BufferableData T>
+    void updateBuffer(const T& range, vk::Device device, vk::DeviceMemory bufferMemory);
     
-    [[nodiscard]] UInt32 findMemoryType(vk::PhysicalDevice physicalDevice, UInt32 typeFilter,
-                                          vk::MemoryPropertyFlags properties);
+    void copyBuffer(vk::Device device, vk::CommandPool commandPool, vk::Queue queue, vk::DeviceSize size, vk::Buffer srcBuffer, vk::Buffer dstBuffer);
+
+    [[nodiscard]] UInt32 findMemoryType(vk::PhysicalDevice physicalDevice, UInt32 typeFilter, vk::MemoryPropertyFlags properties);
 
     [[nodiscard]] std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(const CreateBufferInfo& info);
 
-    template <bufferable_data T>
-    [[nodiscard]] std::tuple<vk::Buffer, vk::DeviceMemory> createDataBuffer(
-        const T& range, const CreateDataBufferInfo& info)
+    template <BufferableData T>
+    [[nodiscard]] std::tuple<vk::Buffer, vk::DeviceMemory> createDataBuffer(const T& range, const CreateDataBufferInfo& info)
     {
-        return createDataBuffer(range.data(),
-                                sizeof(std::remove_reference<decltype(range)>::type::value_type) * range.size(), info);
+        return createDataBuffer(range.data(), sizeof(std::remove_reference_t<decltype(range)>::value_type) * range.size(), info);
     }
 
     bool checkDeviceExtensionSupport(vk::PhysicalDevice device);
 
     [[nodiscard]] vk::DebugUtilsMessengerCreateInfoEXT newDebugUtilsMessengerCreateInfo();
 
-    void createDebugUtilsMessenger(vk::Instance instance, vk::DebugUtilsMessengerEXT* pDebugMessenger,
-                                   const vk::AllocationCallbacks* pAllocator);
+    void createDebugUtilsMessenger(vk::Instance instance, vk::DebugUtilsMessengerEXT* pDebugMessenger, const vk::AllocationCallbacks* pAllocator);
 
-    void destroyDebugUtilsMessenger(vk::Instance instance, vk::DebugUtilsMessengerEXT debugMessenger,
-                                    const vk::AllocationCallbacks* pAllocator);
+    void destroyDebugUtilsMessenger(vk::Instance instance, vk::DebugUtilsMessengerEXT debugMessenger, const vk::AllocationCallbacks* pAllocator);
 
     struct SwapChainSupportDetails
     {
@@ -96,15 +92,12 @@ export namespace RenderUtils
     std::vector<char> readFile(const std::string& filename);
     vk::ShaderModule createShaderModule(const std::vector<char>& code, vk::Device device);
 
-    void transitionImageLayout(vk::Device device, vk::Queue commandQueue, vk::CommandPool commandPool, vk::Image image,
-                               vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
+    void transitionImageLayout(vk::Device device, vk::Queue commandQueue, vk::CommandPool commandPool, vk::Image image, vk::Format format, vk::ImageLayout oldLayout,
+                               vk::ImageLayout newLayout);
 
-    void copyBufferToImage(vk::Device device, vk::Queue commandQueue, vk::CommandPool commandPool, vk::Buffer buffer,
-                           vk::Image image,
-                           vk::Extent2D extent);
+    void copyBufferToImage(vk::Device device, vk::Queue commandQueue, vk::CommandPool commandPool, vk::Buffer buffer, vk::Image image, vk::Extent2D extent);
 
-    vk::Format findSupportedFormat(vk::PhysicalDevice physicalDevice, const std::vector<vk::Format>& candidates,
-                                   vk::ImageTiling tiling, vk::FormatFeatureFlags features);
+    vk::Format findSupportedFormat(vk::PhysicalDevice physicalDevice, const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features);
 
     vk::Format findDepthFormat(vk::PhysicalDevice physicalDevice);
 
@@ -112,4 +105,14 @@ export namespace RenderUtils
     {
         return format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint;
     }
+}
+
+template <RenderUtils::BufferableData T>
+void RenderUtils::updateBuffer(const T& range, vk::Device device, vk::DeviceMemory bufferMemory)
+{
+    void* data;
+    const size_t bufferSize = sizeof(std::remove_reference_t<decltype(range)>::value_type) * range.size();
+    if (device.mapMemory(bufferMemory, 0, bufferSize, {}, &data) == vk::Result::eSuccess)
+        std::memcpy(data, range.data(), bufferSize);        
+    device.unmapMemory(bufferMemory);
 }

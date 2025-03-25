@@ -24,9 +24,6 @@ void RenderObjectManager::init
     m_objects.reserve(100);
     m_meshes.reserve(100);
     m_textures.reserve(100);
-
-    setCameraTransform(m_camera.location, m_camera.rotation);
-    setCameraFov(m_camera.fov);
 }
 
 const Texture& RenderObjectManager::addTexture(const TextureData& textureData, Guid guid)
@@ -117,13 +114,36 @@ void RenderObjectManager::updateUniformBuffer(RenderObject& object, UInt32 curre
 {
     const Mat4 translationMatrix = Math::translate(Mat4{1.0f}, object.location);
     const Mat4 rotationMatrix = Math::mat4_cast(object.rotation);
+    // Mat4 adjustedMatrix = Mat4(1.0f);   // Identity
+    // adjustedMatrix[0] = rotationMatrix[2];        // Z becomes X
+    // adjustedMatrix[1] = rotationMatrix[1];        // X becomes Y
+    // adjustedMatrix[2] = rotationMatrix[0];        // Y becomes Z
+
+    
     const Mat4 scaleMatrix = Math::scale(Mat4{1.0f}, Vec3{object.scale, object.scale, object.scale});
 
     UniformBufferObject uniformBufferObject
     {
         .model = translationMatrix * rotationMatrix * scaleMatrix,
-        .view = m_view,
-        .proj = m_proj,
+        .view = m_camera.view,
+        .proj = m_camera.proj,
+    };
+
+    std::memcpy(object.uniformBuffersMapped[currentImage], &uniformBufferObject, sizeof(uniformBufferObject));
+}
+
+void RenderObjectManager::updateUniformBuffer(DebugRenderObject& object, UInt32 currentImage, float deltaTime)
+{
+    auto& worldObject = *std::ranges::find_if(m_objects, [&](auto&& obj) {return obj.entity == object.entity;});
+    const Mat4 translationMatrix = Math::translate(Mat4{1.0f}, worldObject.location);
+    const Mat4 rotationMatrix = Math::mat4_cast(worldObject.rotation);
+    const Mat4 scaleMatrix = Math::scale(Mat4{1.0f}, Vec3{worldObject.scale, worldObject.scale, worldObject.scale});
+    
+    UniformBufferObject uniformBufferObject
+    {
+        .model = Mat4{1},// translationMatrix * rotationMatrix * scaleMatrix,
+        .view = m_camera.view,
+        .proj = m_camera.proj,
     };
 
     std::memcpy(object.uniformBuffersMapped[currentImage], &uniformBufferObject, sizeof(uniformBufferObject));
@@ -173,6 +193,7 @@ const Mesh& RenderObjectManager::addMesh(MeshData data, Guid guid)
 void RenderObjectManager::clear()
 {
     m_addObjectCommands.clear();
+    m_setDebugObjectCommands.clear();
     m_setTransformCommands.clear();
     m_meshMap.clear();
     m_textureMap.clear();
@@ -190,6 +211,22 @@ void RenderObjectManager::clear()
         check(result == vk::Result::eSuccess, "[RenderObjectManager::clear] Failed to free descriptor sets!");
     }
     m_objects.clear();
+
+    for (const DebugRenderObject& debugObject : m_debugObjects)
+    {
+        for (auto&& [buffer, memory] : std::views::zip(debugObject.uniformBuffers, debugObject.uniformBuffersMemory))
+        {
+            m_device.destroyBuffer(buffer);
+            m_device.freeMemory(memory);
+        }
+        m_device.destroyBuffer(debugObject.vertexBuffer);
+        m_device.freeMemory(debugObject.vertexBufferMemory);
+        
+        check(std::in_range<UInt32>(debugObject.descriptorSets.size()), "Truncating value of object.descriptorSets.size() when freeing descriptor sets!");
+        auto result = m_device.freeDescriptorSets(m_descriptorPool, static_cast<UInt32>(debugObject.descriptorSets.size()), debugObject.descriptorSets.data());
+        check(result == vk::Result::eSuccess, "[RenderObjectManager::clear] Failed to free descriptor sets!");
+    }
+    m_debugObjects.clear();
 
     for (const Mesh& mesh : m_meshes)
     {
@@ -220,6 +257,11 @@ void RenderObjectManager::addCommand(RenderMessages::SetTransform command)
     m_setTransformCommands.push(std::move(command));
 }
 
+void RenderObjectManager::addCommand(RenderMessages::SetDebugObject command)
+{
+    m_setDebugObjectCommands.push(std::move(command));
+}
+
 void RenderObjectManager::executePendingCommands()
 {
     {
@@ -237,6 +279,15 @@ void RenderObjectManager::executePendingCommands()
         {
             setObjectTransform(cmd->entity, cmd->location, cmd->rotation, cmd->scale);
             cmd = m_setTransformCommands.tryPop();
+        }
+    }
+
+    {
+        auto cmd = m_setDebugObjectCommands.tryPop();
+        while (cmd.has_value())
+        {
+            setDebugRenderObject(cmd->entity, cmd->vertices);
+            cmd = m_setDebugObjectCommands.tryPop();
         }
     }
 }
@@ -336,22 +387,74 @@ void RenderObjectManager::setObjectTransform(Entity entity, Vec3 location, Quat 
     }
 }
 
-void RenderObjectManager::setCameraTransform(Vec3 location, Quat rotation)
+void RenderObjectManager::setDebugRenderObject(Entity entity, const std::vector<Vec3>& vertices)
 {
-    const Vec3 forward = Math::normalize(forwardVector() * rotation);
-    m_camera.location = location;
-    m_camera.rotation = rotation;
-    m_view = Math::lookAt(location, location + forward, upVector());
+    auto it = std::ranges::find_if(m_debugObjects, [&](const DebugRenderObject& object) { return object.entity == entity; });
+    if (it != m_debugObjects.end())
+    {
+        it->vertices = std::vector<LineVertex>(vertices.size());
+        std::ranges::transform(vertices, it->vertices.begin(), [](const Vec3& pos) { return LineVertex{pos}; });
+        return;
+    }
+
+    DebugRenderObject object;
+
+    const RenderUtils::CreateDataBufferInfo vertexBufferInfo
+    {
+        .device = m_device,
+        .physicalDevice = m_physicalDevice,
+        .surface = m_surface,
+        .usageType = vk::BufferUsageFlagBits::eVertexBuffer,
+        .transferQueue = m_queue,
+        .transferCommandPool = m_cmdPool,
+    };
+
+    object.entity = entity;
+    object.vertices = std::vector<LineVertex>(vertices.size());
+    std::ranges::transform(vertices, object.vertices.begin(), [](auto&& pos) { return LineVertex{pos}; });
+    object.uniformBuffers = std::vector<vk::Buffer>(MaxFramesInFlight);
+    object.uniformBuffersMemory = std::vector<vk::DeviceMemory>(MaxFramesInFlight);
+    object.uniformBuffersMapped = std::vector<void*>(MaxFramesInFlight);
+
+    std::tie(object.vertexBuffer, object.vertexBufferMemory) = createDataBuffer(object.vertices, vertexBufferInfo);
+
+    static constexpr vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
+
+    const RenderUtils::CreateBufferInfo bufferInfo
+    {
+        .device = m_device,
+        .physicalDevice = m_physicalDevice,
+        .size = bufferSize,
+        .usage = vk::BufferUsageFlagBits::eUniformBuffer,
+        .properties = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+    };
+
+    auto bufferRange = std::views::zip(object.uniformBuffers, object.uniformBuffersMemory, object.uniformBuffersMapped);
+
+    for (auto&& [buffer, memory, mapped] : bufferRange)
+    {
+        std::tie(buffer, memory) = createBuffer(bufferInfo);
+        if (m_device.mapMemory(memory, 0, bufferSize, {}, &mapped) != vk::Result::eSuccess)
+            return;
+    }
+
+    std::vector layouts(MaxFramesInFlight, m_descriptorSetLayout);
+    const vk::DescriptorSetAllocateInfo allocInfo
+    {
+        .descriptorPool = m_descriptorPool,
+        .descriptorSetCount = static_cast<UInt32>(layouts.size()),
+        .pSetLayouts = layouts.data(),
+    };
+
+    object.descriptorSets = m_device.allocateDescriptorSets(allocInfo);
+
+    m_debugObjects.emplace_back(std::move(object));
+    log(std::format("Added debug render object for entity '{}'", entity));
 }
 
-void RenderObjectManager::setCameraFov(float fov)
+void RenderObjectManager::setCamera(const Camera& camera)
 {
-    m_camera.fov = fov;
-}
-
-void RenderObjectManager::setAspectRatio(float aspectRatio)
-{
-    m_aspectRatio = aspectRatio;
+    m_camera = std::move(camera);
 }
 
 void RenderObjectManager::renderFrame
@@ -363,9 +466,6 @@ void RenderObjectManager::renderFrame
     UInt32 currentFrame
 )
 {
-    m_proj = Math::perspective(Math::radians(m_camera.fov), m_aspectRatio, m_camera.nearPlane, m_camera.farPlane);
-    m_proj[1][1] *= -1;
-    
     for (RenderObject& object : m_objects)
     {
         commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
@@ -383,5 +483,61 @@ void RenderObjectManager::renderFrame
         commandBuffer.bindVertexBuffers(0, vertexBuffers, offsets);
         commandBuffer.bindIndexBuffer(object.mesh.indexBuffer, 0, MeshData::indexType);
         commandBuffer.drawIndexed(static_cast<UInt32>(object.mesh.data.indices.size()), 1, 0, 0, 0);
+    }
+}
+
+void RenderObjectManager::updateLineDescriptorSets(const DebugRenderObject& object) const
+{
+    for (size_t i = 0; i < MaxFramesInFlight; i++)
+    {
+        const vk::DescriptorBufferInfo vertexBufferInfo
+        {
+            .buffer = object.uniformBuffers[i],
+            .offset = 0,
+            .range = sizeof(UniformBufferObject),
+        };
+        
+        std::vector descriptorWrites
+        {
+            vk::WriteDescriptorSet
+            {
+                .dstSet = object.descriptorSets[i],
+                .dstBinding = 0,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = vk::DescriptorType::eUniformBuffer,
+                .pBufferInfo = &vertexBufferInfo,
+            }
+        };
+
+        m_device.updateDescriptorSets
+        (
+            static_cast<UInt32>(descriptorWrites.size()),
+            descriptorWrites.data(),
+            0,
+            nullptr
+        );
+    }
+}
+
+void RenderObjectManager::renderLineFrame(vk::CommandBuffer commandBuffer, vk::Pipeline graphicsPipeline, vk::PipelineLayout pipelineLayout, float deltaTime, UInt32 currentFrame)
+{
+    for (DebugRenderObject& object : m_debugObjects)
+    {
+        RenderUtils::updateBuffer(object.vertices, m_device, object.vertexBufferMemory);
+        
+        commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
+
+        updateLineDescriptorSets(object);
+
+        commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1,
+                                         &object.descriptorSets[currentFrame], 0, nullptr);
+
+        const vk::Buffer vertexBuffers[] = {object.vertexBuffer};
+        constexpr vk::DeviceSize offsets[] = {0};
+
+        updateUniformBuffer(object, currentFrame, deltaTime);
+        commandBuffer.bindVertexBuffers(0, vertexBuffers, offsets);
+        commandBuffer.draw(static_cast<UInt32>(object.vertices.size()), 1, 0, 0);
     }
 }

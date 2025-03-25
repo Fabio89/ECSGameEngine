@@ -52,7 +52,7 @@ export namespace DebugWidgets
                 {
                     for (ComponentTypeId typeId : world.getComponentTypesInEntity(entity))
                     {
-                        if (typeId != NameComponent::typeId)
+                        if (typeId != NameComponent::typeId())
                         {
                             if (const ComponentTypeBase* type = ComponentRegistry::get(typeId))
                             {

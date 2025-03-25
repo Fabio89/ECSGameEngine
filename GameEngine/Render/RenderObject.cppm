@@ -3,6 +3,7 @@ import CoreTypes;
 import Ecs;
 import Guid;
 import Math;
+import Render.IRenderManager;
 import Render.Model;
 import Wrapper.Vulkan;
 import std;
@@ -33,15 +34,6 @@ struct UniformBufferObject
     Mat4 proj{};
 };
 
-struct Camera
-{
-    Vec3 location{};
-    Quat rotation{};
-    float fov{60.f};
-    float nearPlane{0.1f};
-    float farPlane{10.0f};
-};
-
 struct RenderObject
 {
     Entity entity{};
@@ -56,6 +48,18 @@ struct RenderObject
     std::vector<vk::DescriptorSet> descriptorSets;
 };
 
+struct DebugRenderObject
+{
+    Entity entity{};
+    vk::Buffer vertexBuffer{};
+    vk::DeviceMemory vertexBufferMemory{};
+    std::vector<LineVertex> vertices;
+    std::vector<vk::Buffer> uniformBuffers;
+    std::vector<vk::DeviceMemory> uniformBuffersMemory;
+    std::vector<void*> uniformBuffersMapped;
+    std::vector<vk::DescriptorSet> descriptorSets;
+};
+
 export namespace RenderMessages
 {
     struct AddObject
@@ -63,6 +67,12 @@ export namespace RenderMessages
         Entity entity;
         const MeshAsset* mesh{};
         const TextureAsset* texture{};
+    };
+
+    struct SetDebugObject
+    {
+        Entity entity;
+        std::vector<Vec3> vertices;
     };
 
     struct SetTransform
@@ -91,12 +101,9 @@ public:
     void clear();
     void addCommand(RenderMessages::AddObject command);
     void addCommand(RenderMessages::SetTransform command);
+    void addCommand(RenderMessages::SetDebugObject command);
     void executePendingCommands();
-    void addRenderObject(Entity entity, const MeshAsset& meshAsset, const TextureAsset& textureAsset);
-    void setObjectTransform(Entity entity, Vec3 location = {}, Quat rotation = {}, float scale = 1.f);
-    void setCameraTransform(Vec3 location = {}, Quat rotation = {});
-    void setCameraFov(float fov);
-    void setAspectRatio(float aspectRatio);
+    void setCamera(const Camera& camera);
 
     const Mesh& addMesh(MeshData data, Guid guid);
     const Texture& addTexture(const TextureData& textureData, Guid guid);
@@ -110,14 +117,30 @@ public:
         UInt32 currentFrame
     );
 
+    void renderLineFrame
+    (
+        vk::CommandBuffer commandBuffer,
+        vk::Pipeline graphicsPipeline,
+        vk::PipelineLayout pipelineLayout,
+        float deltaTime,
+        UInt32 currentFrame
+    );
+
 private:
+    void addRenderObject(Entity entity, const MeshAsset& meshAsset, const TextureAsset& textureAsset);
+    void setObjectTransform(Entity entity, Vec3 location = {}, Quat rotation = {}, float scale = 1.f);
+    void setDebugRenderObject(Entity entity, const std::vector<Vec3>& vertices);
     void updateDescriptorSets(const RenderObject& object) const;
     void updateUniformBuffer(RenderObject& object, UInt32 currentImage, float deltaTime);
+    void updateUniformBuffer(DebugRenderObject& object, UInt32 currentImage, float deltaTime);
+    void updateLineDescriptorSets(const DebugRenderObject& object) const;
 
     ThreadSafeQueue<RenderMessages::AddObject> m_addObjectCommands;
     ThreadSafeQueue<RenderMessages::SetTransform> m_setTransformCommands;
+    ThreadSafeQueue<RenderMessages::SetDebugObject> m_setDebugObjectCommands;
 
     std::vector<RenderObject> m_objects;
+    std::vector<DebugRenderObject> m_debugObjects;
     std::vector<Mesh> m_meshes;
     std::vector<Texture> m_textures;
 
@@ -132,7 +155,4 @@ private:
     vk::Queue m_queue{};
     vk::CommandPool m_cmdPool{};
     Camera m_camera{};
-    Mat4 m_view{};
-    Mat4 m_proj{};
-    float m_aspectRatio{1.f};
 };

@@ -10,7 +10,7 @@ export class Player
 public:
     void setMainCamera(const World& world, Entity camera)
     {
-        if (std::ranges::contains(world.getComponentTypesInEntity(camera), CameraComponent::typeId))
+        if (std::ranges::contains(world.getComponentTypesInEntity(camera), CameraComponent::typeId()))
         {
             m_mainCamera = camera;
             log(std::format("Assigned camera entity '{}' as main camera", camera));

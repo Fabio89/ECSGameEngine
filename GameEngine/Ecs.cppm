@@ -16,7 +16,7 @@ export struct ComponentBase
 export template <ValidComponentData T>
 struct Component : ComponentBase
 {
-    inline static const ComponentTypeId typeId = UniqueIdGenerator::TypeIdGenerator<T>::value;
+    inline static consteval ComponentTypeId typeId();
 };
 
 export template <typename T>
@@ -25,11 +25,32 @@ concept ValidComponent = std::is_base_of_v<Component<T>, T>;
 export template <ValidComponent T>
 struct TypeTraits
 {
-    static constexpr const char* name = "Unknown";
+    inline static constexpr const char* name = "Unknown";
 };
 
 export template <ValidComponent T>
 constexpr const char* getComponentName() { return TypeTraits<T>::name; }
+
+// General hash function
+consteval size_t hash_fnv1a(std::string_view str) {
+    size_t hash = 2166136261u;
+    for (char c : str) {
+        hash ^= static_cast<size_t>(c);
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+template <typename T>
+consteval size_t getTypeHash() {
+    return hash_fnv1a(__FUNCSIG__); // Use __PRETTY_FUNCTION__ (or __FUNCSIG__ on MSVC)
+}
+
+template <ValidComponentData T>
+consteval ComponentTypeId Component<T>::typeId()
+{
+    return getTypeHash<T>();
+}
 
 // Archetype
 export class Archetype
@@ -198,7 +219,7 @@ T& Archetype::ComponentArray<T>::get(Entity entity)
 template <ValidComponent T>
 void Archetype::addComponent(Entity entity, T component)
 {
-    auto& arr = m_componentArrays[Component<T>::typeId];
+    auto& arr = m_componentArrays[Component<T>::typeId()];
     if (!arr)
         arr = std::make_unique<ComponentArray<T>>();
 
@@ -208,7 +229,7 @@ void Archetype::addComponent(Entity entity, T component)
 template <ValidComponent T>
 const T& Archetype::readComponent(Entity entity) const
 {
-    return readComponent<T>(entity, Component<T>::typeId);
+    return readComponent<T>(entity, Component<T>::typeId());
 }
 
 template <ValidComponent T>
@@ -249,16 +270,3 @@ void Archetype::removeEntity(Entity entity)
         m_componentArrays.erase(index);
     }
 }
-
-// const ComponentBase& Archetype::readComponent(Entity entity, ComponentTypeId componentType) const
-// {
-//     if (auto it = m_componentArrays.find(componentType); it != m_componentArrays.end())
-//     {
-//         ComponentArrayBase* componentArray = it->second.get();
-//         return componentArray->get(entity);
-//     }
-//
-//     struct InvalidComponent : Component<InvalidComponent> {};
-//     static const InvalidComponent invalid{};
-//     return invalid;  
-// }

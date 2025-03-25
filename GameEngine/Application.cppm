@@ -1,5 +1,10 @@
 export module Application;
+import ComponentRegistry;
 import Ecs;
+import Input;
+import Math;
+import Player;
+import World;
 import Render.IRenderManager;
 import Wrapper.Glfw;
 import Wrapper.Windows;
@@ -35,9 +40,14 @@ void setViewport(GLFWwindow* window, int x, int y, int width, int height);
 //------------------------------------------------------------------------------------------------------------------------
 // Input
 //------------------------------------------------------------------------------------------------------------------------
-typedef void (*KeyEventCallback)(int key, int action);
 export extern "C" __declspec(dllexport)
-void addKeyEventCallback(KeyEventCallback callback);
+void addKeyEventCallback(Input::KeyEventCallback callback);
+
+export extern "C" __declspec(dllexport)
+Entity getEntityUnderCursor(GLFWwindow* window);
+
+export __declspec(dllexport)
+Vec2 getCursorPosition(GLFWwindow* window);
 
 //------------------------------------------------------------------------------------------------------------------------
 // Project
@@ -54,3 +64,21 @@ void serializeScene(char* buffer, int bufferSize);
 
 export extern "C" __declspec(dllexport)
 void patchEntity(Entity entity, const char* json);
+
+//------------------------------------------------------------------------------------------------------------------------
+// DEBUG -TEMPORARY
+//------------------------------------------------------------------------------------------------------------------------
+export __declspec(dllexport)
+World& getWorld();
+
+export __declspec(dllexport)
+Player& getPlayer();
+
+export __declspec(dllexport)
+ComponentBase& editComponent(Entity entity, ComponentTypeId typeId);
+
+export template<ValidComponent T>
+T& editComponent2(Entity entity)
+{
+    return reinterpret_cast<T&>(editComponent(entity, T::typeId()));
+}

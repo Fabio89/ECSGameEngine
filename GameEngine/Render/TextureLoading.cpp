@@ -4,6 +4,7 @@ module;
 #include <External/TextureLoading/stb_image.h>
 
 module Render.TextureLoading;
+import Core;
 import Render.Utils;
 import Log;
 
@@ -124,15 +125,11 @@ RenderUtils::createTextureImage(const char* path, vk::Device device, vk::Physica
     const auto image = std::get<vk::Image>(result);
 
     constexpr auto format = vk::Format::eR8G8B8A8Srgb;
-    transitionImageLayout(device, commandQueue, commandPool,
-                          image, format, vk::ImageLayout::eUndefined,
-                          vk::ImageLayout::eTransferDstOptimal);
+    transitionImageLayout(device, commandQueue, commandPool, image, format, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
 
     copyBufferToImage(device, commandQueue, commandPool, stagingBuffer, image, imageExtent);
 
-    transitionImageLayout(device, commandQueue, commandPool,
-                          image, format, vk::ImageLayout::eTransferDstOptimal,
-                          vk::ImageLayout::eShaderReadOnlyOptimal);
+    transitionImageLayout(device, commandQueue, commandPool, image, format, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 
     device.destroyBuffer(stagingBuffer);
     device.freeMemory(stagingBufferMemory);

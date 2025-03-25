@@ -1,4 +1,5 @@
 export module Core;
+import Log;
 import std;
 
 export using Int8 = std::int8_t;
@@ -15,14 +16,16 @@ export constexpr TypeId invalidId() { return std::numeric_limits<TypeId>::max();
 
 export namespace UniqueIdGenerator
 {
+    __declspec(dllexport)
     TypeId generateUniqueId()
     {
         static TypeId id = 0;
+        log(std::format("Generated unique id: {}", id));
         return id++;
     }
 
     template <typename T>
-    struct TypeIdGenerator
+    struct __declspec(dllexport) TypeIdGenerator
     {
         inline static const TypeId value = generateUniqueId();
     };

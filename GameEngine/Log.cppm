@@ -15,7 +15,7 @@ export enum class ErrorType
 export template <typename T>
 void log(T&& message)
 {
-    std::cout << message << '\n';
+    std::cout << message << std::endl;
 }
 
 export template <typename T>
@@ -24,13 +24,13 @@ void print(T&& message, ErrorType type)
     switch (type)
     {
     case ErrorType::Warning:
-        std::cerr << logColorYellow << "Warning: " << message << logColorReset << '\n';
+        std::cerr << logColorYellow << "Warning: " << message << logColorReset << std::endl;
         break;
     case ErrorType::Error:
-        std::cerr << logColorRed << "Error: " << message << logColorReset << '\n';
+        std::cerr << logColorRed << "Error: " << message << logColorReset << std::endl;
         break;
     case ErrorType::FatalError:
-        std::cerr << logColorRed << "Fatal Error: " << message << logColorReset << '\n';
+        std::cerr << logColorRed << "Fatal Error: " << message << logColorReset << std::endl;
         break;
     }
 }

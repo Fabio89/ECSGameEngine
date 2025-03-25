@@ -17,6 +17,12 @@ export struct Vertex
     Vec2 uv;
 };
 
+export struct LineVertex
+{
+    Vec3 pos;
+    Vec3 color{1, 1, 1};
+};
+
 bool operator==(const Vertex& a, const Vertex& b);
 
 template <>

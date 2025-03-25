@@ -1,12 +1,14 @@
 module Application;
 import DebugWidget.EntityExplorer;
 import EngineComponents;
+import EngineSystems;
+import Input;
 import Math;
+import Physics;
 import Player;
 import Project;
 import Render.RenderManager;
 import Serialization;
-import System;
 import World;
 import std;
 
@@ -16,8 +18,6 @@ RenderManager renderManager;
 std::thread renderThread;
 World world{{&renderManager}};
 Player player;
-std::vector<KeyEventCallback> keyEventCallbacks;
-std::vector<std::unique_ptr<System>> systems;
 
 void framebufferResizeCallback(GLFWwindow* window, [[maybe_unused]] int width, [[maybe_unused]] int height)
 {
@@ -25,46 +25,7 @@ void framebufferResizeCallback(GLFWwindow* window, [[maybe_unused]] int width, [
     rm->updateFramebufferSize();
 }
 
-void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    for (KeyEventCallback callback : keyEventCallbacks)
-    {
-        callback(key, action);
-    }
-}
-
-void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
-{
-    keyCallback(window, button, 0, action, mods);
-}
-
 GLFWwindow* createWindow(HWND parent, int width, int height);
-
-void addSystem(std::unique_ptr<System> system)
-{
-    System* systemPtr = systems.emplace_back(std::move(system)).get();
-    world.observeOnComponentAdded([systemPtr](Entity entity, ComponentTypeId componentId)
-    {
-        systemPtr->onComponentAdded(world, entity, componentId);
-    });
-}
-
-template <typename T>
-void addSystem()
-{
-    addSystem(std::make_unique<T>());
-}
-
-template <typename T, typename... T_Systems>
-void addSystems(World& world)
-{
-    addSystem<T>();
-
-    if constexpr (sizeof...(T_Systems) > 0)
-    {
-        addSystems<T_Systems...>(world);
-    }
-}
 
 void runRenderThread(GLFWwindow* window)
 {
@@ -80,7 +41,7 @@ void runRenderThread(GLFWwindow* window)
 
 Entity ensureCamera()
 {
-    auto hasCamera = [](Entity entity) -> bool { return std::ranges::contains(world.getComponentTypesInEntity(entity), CameraComponent::typeId); };
+    auto hasCamera = [](Entity entity) -> bool { return std::ranges::contains(world.getComponentTypesInEntity(entity), CameraComponent::typeId()); };
     auto entities = world.getEntitiesRange();
     if (auto cameraEntityIt = std::ranges::find_if(entities, hasCamera); cameraEntityIt != entities.end())
     {
@@ -96,7 +57,7 @@ Entity ensureCamera()
     const Vec3 dir = Math::normalize(-transform.position);
     const Quat rot = Math::rotation(forwardVector(), dir);
     transform.rotation = rot;
-    
+
     return camera;
 }
 
@@ -108,12 +69,9 @@ void engineInit(GLFWwindow* window)
         window
     };
 
+    Input::init(window);
     EngineComponents::init();
-
-    glfwSetKeyCallback(window, keyCallback);
-    glfwSetMouseButtonCallback(window, mouseButtonCallback);
-    
-    addSystems<ModelSystem, TransformSystem>(world);
+    EngineSystems::init(world);
     // world.addDebugWidget<DebugWidgets::EntityExplorer>();
     //world.addDebugWidget<DebugWidgets::ImGuiDemo>();
 }
@@ -128,19 +86,8 @@ bool engineUpdate(GLFWwindow* window, float deltaTime)
 
     glfwPollEvents();
 
-    if (player.getMainCamera() != invalidId())
-    {
-        const auto& cameraTransform = world.readComponent<TransformComponent>(player.getMainCamera());
-        const auto& cameraSettings = world.readComponent<CameraComponent>(player.getMainCamera());
-        renderManager.setCameraTransform(cameraTransform.position, cameraTransform.rotation);
-        renderManager.setCameraFov(cameraSettings.fov);
-    }
+    EngineSystems::update(world, player, deltaTime);
 
-    for (auto& system : systems)
-    {
-        system->update(deltaTime);
-    }
-    
     return true;
 }
 
@@ -172,25 +119,28 @@ void setViewport(GLFWwindow* window, int x, int y, int width, int height)
     }
 }
 
-void addKeyEventCallback(KeyEventCallback callback)
+void addKeyEventCallback(Input::KeyEventCallback callback)
 {
-    keyEventCallbacks.push_back(callback);
+    Input::addKeyEventCallback(reinterpret_cast<Input::KeyEventCallback>(callback));
+}
+
+Entity getEntityUnderCursor(GLFWwindow* window)
+{
+    return Physics::lineTrace(world, Physics::rayFromScreenPosition(world, player, getCursorPosition(window)));
+}
+
+Vec2 getCursorPosition(GLFWwindow* window)
+{
+    return Input::getCursorPosition(window);
 }
 
 void openProject(const char* path)
 {
-    for (auto& system : systems)
-        system->clear();
-    
+    EngineSystems::reset();
+
     Project::open(path, world);
 
-    {
-        player.setMainCamera(world, ensureCamera());
-        const auto& cameraTransform = world.readComponent<TransformComponent>(player.getMainCamera());
-        const auto& cameraSettings = world.readComponent<CameraComponent>(player.getMainCamera());
-        renderManager.setCameraTransform(cameraTransform.position, cameraTransform.rotation);
-        renderManager.setCameraFov(cameraSettings.fov);
-    }
+    player.setMainCamera(world, ensureCamera());
 }
 
 void saveCurrentProject()
@@ -224,8 +174,23 @@ void patchEntity(Entity entity, const char* json)
         report(std::format("JSON parse error while trying to patch entity '{}'! Patch:\n{}", entity, json));
         return;
     }
-    
+
     world.patchEntity(entity, document);
+}
+
+World& getWorld()
+{
+    return world;
+}
+
+Player& getPlayer()
+{
+    return player;
+}
+
+ComponentBase& editComponent(Entity entity, ComponentTypeId typeId)
+{
+    return const_cast<ComponentBase&>(world.readComponent(entity, typeId));
 }
 
 GLFWwindow* createWindow(HWND parent, int width, int height)
