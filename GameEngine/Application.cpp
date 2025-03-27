@@ -42,7 +42,7 @@ void runRenderThread(GLFWwindow* window)
 
 Entity ensureCamera()
 {
-    auto hasCamera = [](Entity entity) -> bool { return std::ranges::contains(world.getComponentTypesInEntity(entity), CameraComponent::typeId()); };
+    auto hasCamera = [](Entity entity) { return world.hasComponent<CameraComponent>(entity); };
     auto entities = world.getEntitiesRange();
     if (auto cameraEntityIt = std::ranges::find_if(entities, hasCamera); cameraEntityIt != entities.end())
     {

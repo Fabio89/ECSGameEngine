@@ -14,7 +14,7 @@ export class System_Camera final : public System
         Entity cameraEntity = player.getMainCamera();
         if (cameraEntity != invalidId())
         {
-            check(std::ranges::contains(world.getComponentTypesInEntity(cameraEntity), CameraComponent::typeId()), "Main camera doesn't have a camera component...??");
+            check(world.hasComponent<CameraComponent>(cameraEntity), "Main camera doesn't have a camera component...??");
             const TransformComponent& transform = world.readComponent<TransformComponent>(cameraEntity);
             CameraComponent& camera = world.editComponent<CameraComponent>(cameraEntity);
 

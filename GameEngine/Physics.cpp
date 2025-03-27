@@ -14,20 +14,16 @@ Entity Physics::lineTrace(const World& world, const Ray& ray)
 {
     float closestHit = std::numeric_limits<float>::max();
     Entity hitEntity = invalidId();
-    
-    for (Entity entity : world.getEntitiesRange())
+
+    for (auto&& [entity, aabb] : world.view<BoundingBoxComponent>())
     {
-        if (std::ranges::contains(world.getComponentTypesInEntity(entity), BoundingBoxComponent::typeId()))
+        float tClosest;
+        if (rayIntersectsAABB(ray, aabb.minWorld, aabb.maxWorld, tClosest))
         {
-            const BoundingBoxComponent& aabb = world.readComponent<BoundingBoxComponent>(entity);
-            float tClosest;
-            if (rayIntersectsAABB(ray, aabb.minWorld, aabb.maxWorld, tClosest))
+            if (tClosest < closestHit)
             {
-                if (tClosest < closestHit)
-                {
-                    closestHit = tClosest;
-                    hitEntity = entity;
-                }
+                closestHit = tClosest;
+                hitEntity = entity;
             }
         }
     }
@@ -38,7 +34,7 @@ Entity Physics::lineTrace(const World& world, const Ray& ray)
 Ray Physics::rayFromScreenPosition(const World& world, const Player& player, Vec2 screenPosition)
 {
     const Entity cameraEntity = player.getMainCamera();
-    if (cameraEntity == invalidId() || !std::ranges::contains(world.getComponentTypesInEntity(cameraEntity), CameraComponent::typeId()))
+    if (cameraEntity == invalidId() || !world.hasComponent<CameraComponent>(cameraEntity))
         return {};
 
     const CameraComponent& camera = world.readComponent<CameraComponent>(cameraEntity);

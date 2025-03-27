@@ -174,7 +174,7 @@ void World::patchEntity(Entity entity, const JsonObject& json)
         log("Failed to patch entity!");
         return;
     }
-    
+
     for (auto it = json.MemberBegin(); it != json.MemberEnd(); ++it)
     {
         const std::string& typeName = it->name.GetString();
@@ -188,7 +188,17 @@ void World::patchEntity(Entity entity, const JsonObject& json)
     }
 }
 
-[[nodiscard]] 
+bool World::hasComponent(Entity entity, ComponentTypeId componentTypeId) const
+{
+    if (auto it = m_entities.find(entity); it != m_entities.end())
+    {
+        return std::ranges::contains(readArchetype(it->second).getComponentTypes(), componentTypeId);
+    }
+    report("A component was requested for an entity that doesn't exist");
+    return false;
+}
+
+[[nodiscard]]
 const ComponentBase& World::readComponent(Entity entity, ComponentTypeId componentType) const
 {
     if (auto it = m_entities.find(entity); it != m_entities.end())

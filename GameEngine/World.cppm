@@ -45,6 +45,10 @@ public:
     template <ValidComponent T, typename... Args>
     void addComponent(Entity entity, Args&&... args);
 
+    template<ValidComponent T>
+    bool hasComponent(Entity entity) const;
+    bool hasComponent(Entity entity, ComponentTypeId componentTypeId) const;
+    
     template <ValidComponent T>
     const T& readComponent(Entity entity) const;
 
@@ -122,6 +126,17 @@ void World::addComponent(Entity entity, Args&&... args)
     {
         callback(entity, Component<T>::typeId());
     }
+}
+
+template <ValidComponent T>
+bool World::hasComponent(Entity entity) const
+{
+    if (auto it = m_entities.find(entity); it != m_entities.end())
+    {
+        return readArchetype(it->second).matches<T>();
+    }
+    report("A component was requested for an entity that doesn't exist");
+    return false;
 }
 
 template <ValidComponent T>
