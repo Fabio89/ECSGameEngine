@@ -1,160 +1,55 @@
 export module Ecs;
 export import Core;
 export import Log;
+import ComponentArray;
 import std;
 
-export using Entity = TypeId;
-export using ComponentTypeId = TypeId;
-
-export template <typename T>
-concept ValidComponentData = true;
-
-export struct ComponentBase
-{
-};
-
-export template <ValidComponentData T>
-struct Component : ComponentBase
-{
-    inline static consteval ComponentTypeId typeId();
-};
-
-export template <typename T>
-concept ValidComponent = std::is_base_of_v<Component<T>, T>;
-
-export template <ValidComponent T>
-struct TypeTraits
-{
-    inline static constexpr const char* name = "Unknown";
-};
-
-export template <ValidComponent T>
-constexpr const char* getComponentName() { return TypeTraits<T>::name; }
-
-// General hash function
-consteval size_t hash_fnv1a(std::string_view str) {
-    size_t hash = 2166136261u;
-    for (char c : str) {
-        hash ^= static_cast<size_t>(c);
-        hash *= 16777619u;
-    }
-    return hash;
-}
-
-template <typename T>
-consteval size_t getTypeHash() {
-    return hash_fnv1a(__FUNCSIG__); // Use __PRETTY_FUNCTION__ (or __FUNCSIG__ on MSVC)
-}
-
-template <ValidComponentData T>
-consteval ComponentTypeId Component<T>::typeId()
-{
-    return getTypeHash<T>();
-}
-
+//------------------------------------------------------------------------------------------------------------------------
 // Archetype
+//------------------------------------------------------------------------------------------------------------------------
 export class Archetype
 {
-    class ComponentArrayBase;
-
 public:
     using ComponentArrayMap = std::unordered_map<ComponentTypeId, std::unique_ptr<ComponentArrayBase>>;
     using ComponentRange = std::ranges::elements_view<std::ranges::ref_view<const ComponentArrayMap>, 0>;
 
-    [[nodiscard]] bool isEmpty() const { return m_componentArrays.empty(); }
+    bool isEmpty() const;
 
     template <ValidComponent T>
     void addComponent(Entity entity, T component);
 
     template <ValidComponent T>
-    [[nodiscard]] const T& readComponent(Entity entity) const;
+    const T& readComponent(Entity entity) const;
 
-    template <ValidComponent T>
-    [[nodiscard]] const T& readComponent(Entity entity, ComponentTypeId componentType) const;
-
-    [[nodiscard]] const ComponentBase& readComponent(Entity entity, ComponentTypeId componentType) const;
+    const ComponentBase& readComponent(Entity entity, ComponentTypeId componentType) const;
 
     void removeEntity(Entity entity);
 
-    Archetype cloneForEntity(Entity entity)
-    {
-        Archetype newArchetype;
-        for (const auto& [componentType, componentArray] : m_componentArrays)
-        {
-            newArchetype.m_componentArrays[componentType] = componentArray->cloneForEntity(entity);
-        }
-        return newArchetype;
-    }
+    Archetype cloneForEntity(Entity entity);
 
-    void steal(Archetype& other, Entity entity)
-    {
-        for (auto& [componentType, componentArray] : other.m_componentArrays)
-        {
-            m_componentArrays[componentType]->steal(*componentArray, entity);
-        }
-    }
+    void steal(Archetype& other, Entity entity);
 
-    [[nodiscard]] ComponentRange getComponentTypes() const { return m_componentArrays | std::views::keys; }
+    ComponentRange getComponentTypes() const { return m_componentArrays | std::views::keys; }
+
+    template <ValidComponent... Components>
+    bool matches() const;
+
+    template <ValidComponent ... Components>
+    std::generator<std::tuple<Entity, const Components&...>> view() const;
+
+    template <ValidComponent ... Components>
+    std::generator<std::tuple<Entity, Components&...>> view();
 
 private:
-    class ComponentArrayBase
-    {
-    public:
-        ComponentArrayBase() = default;
-        ComponentArrayBase(const ComponentArrayBase&) = delete;
-        ComponentArrayBase(ComponentArrayBase&&) = delete;
-        ComponentArrayBase& operator=(const ComponentArrayBase&) = delete;
-        ComponentArrayBase& operator=(ComponentArrayBase&&) = delete;
-        virtual ~ComponentArrayBase() = default;
-
-        virtual void steal(ComponentArrayBase& other, Entity entity) = 0;
-        virtual void remove(Entity entity) = 0;
-        [[nodiscard]] virtual bool isEmpty() const = 0;
-        virtual std::unique_ptr<ComponentArrayBase> cloneForEntity(Entity entity) = 0;
-        [[nodiscard]] virtual const ComponentBase& get(Entity entity) const = 0;
-        [[nodiscard]] virtual ComponentBase& get(Entity entity) = 0;
-    };
-
     template <ValidComponent T>
-    class ComponentArray final : public ComponentArrayBase
-    {
-    public:
-        [[nodiscard]] bool isEmpty() const override { return m_components.empty(); }
-
-        void insert(Entity entity, T component);
-
-        void remove(Entity entity) override;
-
-        std::unique_ptr<ComponentArrayBase> cloneForEntity(Entity entity) override
-        {
-            const size_t index = m_entityToIndex.find(entity)->second;
-            auto componentArray = std::make_unique<ComponentArray>();
-            componentArray->m_components = {m_components.at(index)};
-            componentArray->m_entityToIndex[entity] = 0;
-            componentArray->m_indexToEntity[0] = entity;
-            return componentArray;
-        }
-
-        void steal(ComponentArrayBase& other, Entity entity) override
-        {
-            ComponentArray& otherComponentArray = static_cast<ComponentArray&>(other);
-
-            m_components.push_back(otherComponentArray.m_components.at(otherComponentArray.m_entityToIndex[entity]));
-            m_entityToIndex[entity] = m_components.size() - 1;
-            m_indexToEntity[m_components.size() - 1] = entity;
-            other.remove(entity);
-        }
-
-        [[nodiscard]] const T& get(Entity entity) const override;
-        [[nodiscard]] T& get(Entity entity) override;
-
-    private:
-        std::vector<T> m_components;
-        std::unordered_map<Entity, size_t> m_entityToIndex;
-        std::unordered_map<size_t, Entity> m_indexToEntity;
-    };
+    const ComponentArray<T>& getComponentArray() { return static_cast<const ComponentArray<T>&>(*m_componentArrays.at(T::typeId())); }
 
     std::unordered_map<ComponentTypeId, std::unique_ptr<ComponentArrayBase>> m_componentArrays;
+    std::unordered_map<Entity, size_t> m_entityToIndex;
+    std::vector<Entity> m_indexToEntity;
+
+    template <ValidComponent ... Components>
+    class ViewIterator;
 };
 
 export using ArchetypeChangedCallback = std::function<void(Entity, ComponentTypeId)>;
@@ -166,107 +61,199 @@ export ArchetypeChangedObserverHandle generateArchetypeObserverHandle()
     return ++lastValue;
 }
 
-// Definitions
+//------------------------------------------------------------------------------------------------------------------------
+// Archetype - Implementation
+//------------------------------------------------------------------------------------------------------------------------
 
-template <ValidComponent T>
-void Archetype::ComponentArray<T>::insert(Entity entity, T component)
+template <ValidComponent ... Components>
+class Archetype::ViewIterator
 {
-    if (m_entityToIndex.contains(entity))
-    {
-        const size_t index = m_entityToIndex[entity];
-        m_components[index] = component;
-    }
-    else
-    {
-        const size_t index = m_components.size();
-        m_components.push_back(component);
-        m_entityToIndex[entity] = index;
-        m_indexToEntity[index] = entity;
-    }
+public:
+    ViewIterator(const Archetype* archetype, size_t index);
+
+    // Dereference to get the current entity and its components
+    auto operator*() const;
+
+    // Move to the next valid entity
+    ViewIterator& operator++();
+
+    bool operator!=(const ViewIterator& other) const;
+
+private:
+    const Archetype* m_archetype;
+    size_t m_index;
+};
+
+template <ValidComponent ... Components>
+Archetype::ViewIterator<Components...>::ViewIterator(const Archetype* archetype, size_t index)
+    : m_archetype(archetype), m_index(index)
+{
 }
 
-template <ValidComponent T>
-void Archetype::ComponentArray<T>::remove(Entity entity)
+template <ValidComponent ... Components>
+auto Archetype::ViewIterator<Components...>::operator*() const
 {
-    const size_t index = m_entityToIndex[entity];
-    const size_t lastIndex = m_components.size() - 1;
-    m_components[index] = m_components[lastIndex];
-    const Entity lastEntity = m_indexToEntity[lastIndex];
-    m_entityToIndex[lastEntity] = index;
-    m_indexToEntity[index] = lastEntity;
-    m_components.pop_back();
-    m_entityToIndex.erase(entity);
-    m_indexToEntity.erase(lastIndex);
+    Entity entity = m_archetype->m_indexToEntity[m_index];
+    return std::tuple<Entity, const Components&...>(entity, m_archetype->readComponent<Components>(entity)...);
 }
 
-template <ValidComponent T>
-const T& Archetype::ComponentArray<T>::get(Entity entity) const
+template <ValidComponent ... Components>
+Archetype::ViewIterator<Components...>& Archetype::ViewIterator<Components...>::operator++()
 {
-    if (auto indexIt = m_entityToIndex.find(entity); indexIt != m_entityToIndex.end())
+    do
     {
-        return m_components.at(indexIt->second);
+        ++m_index;
     }
-    static const T invalid{};
-    return invalid;
+    while (m_index < m_archetype->m_indexToEntity.size() && !m_archetype->matches<Components...>());
+    return *this;
 }
 
-template <ValidComponent T>
-T& Archetype::ComponentArray<T>::get(Entity entity)
+template <ValidComponent ... Components>
+bool Archetype::ViewIterator<Components...>::operator!=(const ViewIterator& other) const
 {
-    return const_cast<T&>(std::as_const(*this).get(entity));
+    return m_index != other.m_index;
 }
 
 template <ValidComponent T>
 void Archetype::addComponent(Entity entity, T component)
 {
-    auto& arr = m_componentArrays[Component<T>::typeId()];
+    auto& arr = m_componentArrays[T::typeId()];
     if (!arr)
         arr = std::make_unique<ComponentArray<T>>();
 
-    static_cast<ComponentArray<T>*>(arr.get())->insert(entity, component);
-}
-
-template <ValidComponent T>
-const T& Archetype::readComponent(Entity entity) const
-{
-    return readComponent<T>(entity, Component<T>::typeId());
-}
-
-template <ValidComponent T>
-const T& Archetype::readComponent(Entity entity, ComponentTypeId componentType) const
-{
-    if (auto it = m_componentArrays.find(componentType); it != m_componentArrays.end())
+    size_t index;
+    if (auto it = m_entityToIndex.find(entity); it != m_entityToIndex.end())
     {
-        return static_cast<const ComponentArray<T>*>(it->second.get())->get(entity);
+        index = it->second;
     }
+    else
+    {
+        index = m_indexToEntity.size();
+        m_entityToIndex.insert_or_assign(entity, index);
+        m_indexToEntity.push_back(entity);
+    }
+    static_cast<ComponentArray<T>&>(*arr).insert(index, component);
+}
+
+template <ValidComponent T>
+[[nodiscard]] const T& Archetype::readComponent(Entity entity) const
+{
+    if (auto indexIt = m_entityToIndex.find(entity); indexIt != m_entityToIndex.end())
+    {
+        if (auto it = m_componentArrays.find(T::typeId()); it != m_componentArrays.end())
+        {
+            return static_cast<const ComponentArray<T>&>(*it->second).get(indexIt->second);
+        }
+    }
+
     static const T invalid{};
     return invalid;
 }
 
-const ComponentBase& Archetype::readComponent(Entity entity, ComponentTypeId componentType) const
+template <ValidComponent ... Components>
+[[nodiscard]] bool Archetype::matches() const
 {
-    if (auto it = m_componentArrays.find(componentType); it != m_componentArrays.end())
+    return (... && (m_componentArrays.contains(Components::typeId())));
+}
+
+template <ValidComponent ... Components>
+std::generator<std::tuple<Entity, const Components&...>> Archetype::view() const
+{
+    for (Entity entity : m_indexToEntity)
     {
-        return it->second.get()->get(entity);
+        co_yield std::tuple<Entity, const Components&...>(entity, readComponent<Components>(entity)...);
     }
+}
+
+template <ValidComponent ... Components>
+std::generator<std::tuple<Entity, Components&...>> Archetype::view()
+{
+    for (Entity entity : m_indexToEntity)
+    {
+        co_yield std::tuple<Entity, Components&...>(entity, const_cast<Components&>(readComponent<Components>(entity))...);
+    }
+}
+
+[[nodiscard]] bool Archetype::isEmpty() const
+{
+    return m_componentArrays.empty();
+}
+
+[[nodiscard]] const ComponentBase& Archetype::readComponent(Entity entity, ComponentTypeId componentType) const
+{
+    if (auto indexIt = m_entityToIndex.find(entity); indexIt != m_entityToIndex.end())
+    {
+        if (auto it = m_componentArrays.find(componentType); it != m_componentArrays.end())
+        {
+            return it->second->get(indexIt->second);
+        }
+    }
+
     static constexpr ComponentBase invalid{};
     return invalid;
 }
 
 void Archetype::removeEntity(Entity entity)
 {
-    std::vector<ComponentTypeId> toRemove;
-    for (auto& pair : m_componentArrays)
+    if (auto indexIt = m_entityToIndex.find(entity); indexIt != m_entityToIndex.end())
     {
-        pair.second->remove(entity);
-        if (pair.second->isEmpty())
+        const size_t indexToRemove = indexIt->second;
+        const size_t lastEntityIndex = m_indexToEntity.size() - 1;
+        const Entity entityToSwapFor = m_indexToEntity.back();
+        m_entityToIndex.erase(entity);
+        m_entityToIndex[entityToSwapFor] = indexToRemove;
+        m_indexToEntity[indexToRemove] = entityToSwapFor;
+
+        for (auto& componentArray : m_componentArrays | std::views::values)
         {
-            toRemove.push_back(pair.first);
+            // Swap the entity we want to remove with the last item in the array
+            componentArray->move(lastEntityIndex, indexToRemove);
+        }
+    }
+}
+
+[[nodiscard]] Archetype Archetype::cloneForEntity(Entity entity)
+{
+    Archetype newArchetype;
+    if (auto indexIt = m_entityToIndex.find(entity); indexIt != m_entityToIndex.end())
+    {
+        newArchetype.m_entityToIndex[entity] = indexIt->second;
+        newArchetype.m_indexToEntity.push_back(entity);
+
+        for (const auto& [componentType, componentArray] : m_componentArrays)
+        {
+            newArchetype.m_componentArrays[componentType] = componentArray->cloneForIndex(indexIt->second);
         }
     }
 
-    for (ComponentTypeId index : toRemove)
+    return newArchetype;
+}
+
+void Archetype::steal(Archetype& other, Entity entity)
+{
+    if (m_entityToIndex.contains(entity))
     {
-        m_componentArrays.erase(index);
+        report(std::format("Entity {} already exists in archetype", entity));
+        return;
+    }
+
+    if (auto fromIndexIt = other.m_entityToIndex.find(entity); fromIndexIt != other.m_entityToIndex.end())
+    {
+        const size_t indexToRemoveFromOther = fromIndexIt->second;
+        const size_t toIndex = m_entityToIndex[entity] = m_indexToEntity.size();
+        m_indexToEntity.push_back(entity);
+
+        const Entity entityToSwapFor = other.m_indexToEntity.back();
+        const size_t otherArchetypeLastEntityIndex = other.m_indexToEntity.size() - 1;
+        other.m_entityToIndex.erase(fromIndexIt);
+        other.m_entityToIndex[entityToSwapFor] = indexToRemoveFromOther;
+        other.m_indexToEntity[indexToRemoveFromOther] = entityToSwapFor;
+        other.m_indexToEntity.pop_back();
+
+        for (auto& [componentType, componentArray] : other.m_componentArrays)
+        {
+            m_componentArrays[componentType]->copy(*componentArray, indexToRemoveFromOther, toIndex);
+            componentArray->move(otherArchetypeLastEntityIndex, indexToRemoveFromOther);
+        }
     }
 }

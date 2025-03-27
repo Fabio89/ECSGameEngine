@@ -4,24 +4,25 @@ import System;
 
 export class System_Transform final : public System
 {
-public:
     void onComponentAdded(World& world, Entity entity, ComponentTypeId componentType) override
     {
         if (componentType == TransformComponent::typeId())
         {
-            updateRenderTransform(world, entity);
-
-            addUpdateFunction([&world, entity](float)
-            {
-                updateRenderTransform(world, entity);
-            });
+            const auto& component = world.readComponent<TransformComponent>(entity);
+            updateRenderTransform(world, entity, component);
         }
     }
 
-private:
-    static void updateRenderTransform(World& world, Entity entity)
+    void onUpdate(World& world, [[maybe_unused]] Player& player, [[maybe_unused]] float deltaTime) override
     {
-        const auto& component = world.readComponent<TransformComponent>(entity);
-        world.getRenderManager().setRenderObjectTransform(entity, component.position, component.rotation, component.scale);
+        for (auto&& [entity, transform] : world.view<TransformComponent>())
+        {
+            updateRenderTransform(world, entity, transform);
+        }
+    }
+
+    static void updateRenderTransform(World& world, Entity entity, const TransformComponent& transform)
+    {
+        world.getRenderManager().setRenderObjectTransform(entity, transform.position, transform.rotation, transform.scale);
     }
 };

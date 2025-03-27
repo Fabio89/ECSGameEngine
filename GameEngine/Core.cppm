@@ -31,3 +31,59 @@ export namespace UniqueIdGenerator
     };
 }
 
+// General hash function
+consteval size_t hash_fnv1a(std::string_view str)
+{
+    size_t hash = 2166136261u;
+    for (char c : str)
+    {
+        hash ^= static_cast<size_t>(c);
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+export template <typename T>
+consteval size_t getTypeHash()
+{
+    return hash_fnv1a(__FUNCSIG__); // Use __PRETTY_FUNCTION__ (or __FUNCSIG__ on MSVC)
+}
+
+export using Entity = TypeId;
+
+//------------------------------------------------------------------------------------------------------------------------
+// Component
+//------------------------------------------------------------------------------------------------------------------------
+
+export using ComponentTypeId = TypeId;
+
+export template <typename T>
+concept ValidComponentData = true;
+
+export struct ComponentBase
+{
+};
+
+export template <ValidComponentData T>
+struct Component : ComponentBase
+{
+    static consteval ComponentTypeId typeId();
+};
+
+export template <typename T>
+concept ValidComponent = std::is_base_of_v<Component<T>, T>;
+
+export template <ValidComponent T>
+struct TypeTraits
+{
+    static constexpr const char* name = "Unknown";
+};
+
+export template <ValidComponent T>
+constexpr const char* getComponentName() { return TypeTraits<T>::name; }
+
+template <ValidComponentData T>
+consteval ComponentTypeId Component<T>::typeId()
+{
+    return getTypeHash<T>();
+}

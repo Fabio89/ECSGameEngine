@@ -1,8 +1,10 @@
 module;
+// ReSharper disable CppWrongIncludesOrder
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_FORCE_LEFT_HANDED
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
+// ReSharper disable once CppUnusedIncludeDirective
 #include <glm/ext/quaternion_double_precision.hpp> // won't compile without this
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -13,8 +15,7 @@ module;
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <glm/gtx/transform.hpp>
-
-#include "json.hpp"
+// ReSharper restore CppWrongIncludesOrder
 
 export module Math;
 export import Core;

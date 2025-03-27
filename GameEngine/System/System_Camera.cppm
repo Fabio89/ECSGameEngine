@@ -7,8 +7,7 @@ import std;
 
 export class System_Camera final : public System
 {
-private:
-    void onUpdate(World& world, Player& player, float deltaTime) override
+    void onUpdate(World& world, Player& player, [[maybe_unused]] float deltaTime) override
     {
         const float aspectRatio = world.getRenderManager().getAspectRatio();
 

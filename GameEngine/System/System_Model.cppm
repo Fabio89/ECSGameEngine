@@ -4,7 +4,6 @@ import System;
 
 export class System_Model final : public System
 {
-public:
     void onComponentAdded(World& world, Entity entity, ComponentTypeId componentType) override
     {
         if (componentType == ModelComponent::typeId())

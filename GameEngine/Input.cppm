@@ -29,7 +29,7 @@ export namespace Input
     
     void init(GLFWwindow* window);
     void shutdown();
-    void postUpdate(GLFWwindow* window, float deltaTime);
+    void postUpdate();
     using KeyEventCallback = void(*)(KeyCode key, KeyAction action);
     void addKeyEventCallback(KeyEventCallback callback);
 }

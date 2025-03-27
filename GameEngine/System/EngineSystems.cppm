@@ -41,8 +41,6 @@ void EngineSystems::update(World& world, Player& player, float deltaTime)
 
 void EngineSystems::reset()
 {
-    for (auto& system : systems)
-        system->clear();
 }
 
 void EngineSystems::addSystem(World& world, std::unique_ptr<System> system)
@@ -50,7 +48,7 @@ void EngineSystems::addSystem(World& world, std::unique_ptr<System> system)
     System* systemPtr = systems.emplace_back(std::move(system)).get();
     world.observeOnComponentAdded([&world, systemPtr](Entity entity, ComponentTypeId componentId)
     {
-        systemPtr->onComponentAdded(world, entity, componentId);
+        systemPtr->notifyComponentAdded(world, entity, componentId);
     });
 }
 

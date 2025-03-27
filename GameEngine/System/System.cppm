@@ -15,33 +15,27 @@ public:
     System& operator=(System&&) noexcept = delete;
     
     void update(World& world, Player& player, float deltaTime);
-    void addUpdateFunction(std::function<void(float)> func);
-    void clear();
-    
-    virtual void onComponentAdded(World&, Entity, ComponentTypeId)
-    {
-    }
+    void notifyComponentAdded(World&, Entity, ComponentTypeId);
 
 private:
-    virtual void onUpdate(World& world, Player& player, float deltaTime) {}
-    std::vector<std::function<void(float)>> m_updateFunctions;
+    virtual void onComponentAdded(World& world, Entity entity, ComponentTypeId componentTypeId);
+    virtual void onUpdate(World& world, Player& player, float deltaTime);
 };
-
-void System::clear()
-{
-    m_updateFunctions.clear();
-}
 
 void System::update(World& world, Player& player, float deltaTime)
 {
-    for (auto& func : m_updateFunctions)
-    {
-        func(deltaTime);
-    }
     onUpdate(world, player, deltaTime);
 }
 
-void System::addUpdateFunction(std::function<void(float)> func)
+void System::notifyComponentAdded(World& world, Entity entity, ComponentTypeId componentTypeId)
 {
-    m_updateFunctions.push_back(std::move(func));
+    onComponentAdded(world, entity, componentTypeId);
+}
+
+void System::onComponentAdded([[maybe_unused]] World& world, [[maybe_unused]] Entity entity, [[maybe_unused]] ComponentTypeId componentTypeId)
+{
+}
+
+void System::onUpdate([[maybe_unused]] World& world, [[maybe_unused]] Player& player, [[maybe_unused]] float deltaTime)
+{
 }

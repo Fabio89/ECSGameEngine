@@ -110,16 +110,10 @@ void RenderObjectManager::updateDescriptorSets(const RenderObject& object) const
 }
 
 // ReSharper disable once CppParameterMayBeConstPtrOrRef
-void RenderObjectManager::updateUniformBuffer(RenderObject& object, UInt32 currentImage, float deltaTime)
+void RenderObjectManager::updateUniformBuffer(RenderObject& object, UInt32 currentImage)
 {
     const Mat4 translationMatrix = Math::translate(Mat4{1.0f}, object.location);
     const Mat4 rotationMatrix = Math::mat4_cast(object.rotation);
-    // Mat4 adjustedMatrix = Mat4(1.0f);   // Identity
-    // adjustedMatrix[0] = rotationMatrix[2];        // Z becomes X
-    // adjustedMatrix[1] = rotationMatrix[1];        // X becomes Y
-    // adjustedMatrix[2] = rotationMatrix[0];        // Y becomes Z
-
-    
     const Mat4 scaleMatrix = Math::scale(Mat4{1.0f}, Vec3{object.scale, object.scale, object.scale});
 
     UniformBufferObject uniformBufferObject
@@ -132,7 +126,7 @@ void RenderObjectManager::updateUniformBuffer(RenderObject& object, UInt32 curre
     std::memcpy(object.uniformBuffersMapped[currentImage], &uniformBufferObject, sizeof(uniformBufferObject));
 }
 
-void RenderObjectManager::updateUniformBuffer(DebugRenderObject& object, UInt32 currentImage, float deltaTime)
+void RenderObjectManager::updateUniformBuffer(LineRenderObject& object, UInt32 currentImage)
 {
     auto& worldObject = *std::ranges::find_if(m_objects, [&](auto&& obj) {return obj.entity == object.entity;});
     const Mat4 translationMatrix = Math::translate(Mat4{1.0f}, worldObject.location);
@@ -141,7 +135,7 @@ void RenderObjectManager::updateUniformBuffer(DebugRenderObject& object, UInt32 
     
     UniformBufferObject uniformBufferObject
     {
-        .model = Mat4{1},// translationMatrix * rotationMatrix * scaleMatrix,
+        .model = translationMatrix * rotationMatrix * scaleMatrix,
         .view = m_camera.view,
         .proj = m_camera.proj,
     };
@@ -193,7 +187,7 @@ const Mesh& RenderObjectManager::addMesh(MeshData data, Guid guid)
 void RenderObjectManager::clear()
 {
     m_addObjectCommands.clear();
-    m_setDebugObjectCommands.clear();
+    m_addLineObjectCommands.clear();
     m_setTransformCommands.clear();
     m_meshMap.clear();
     m_textureMap.clear();
@@ -212,7 +206,7 @@ void RenderObjectManager::clear()
     }
     m_objects.clear();
 
-    for (const DebugRenderObject& debugObject : m_debugObjects)
+    for (const LineRenderObject& debugObject : m_lineObjects)
     {
         for (auto&& [buffer, memory] : std::views::zip(debugObject.uniformBuffers, debugObject.uniformBuffersMemory))
         {
@@ -226,7 +220,7 @@ void RenderObjectManager::clear()
         auto result = m_device.freeDescriptorSets(m_descriptorPool, static_cast<UInt32>(debugObject.descriptorSets.size()), debugObject.descriptorSets.data());
         check(result == vk::Result::eSuccess, "[RenderObjectManager::clear] Failed to free descriptor sets!");
     }
-    m_debugObjects.clear();
+    m_lineObjects.clear();
 
     for (const Mesh& mesh : m_meshes)
     {
@@ -257,9 +251,9 @@ void RenderObjectManager::addCommand(RenderMessages::SetTransform command)
     m_setTransformCommands.push(std::move(command));
 }
 
-void RenderObjectManager::addCommand(RenderMessages::SetDebugObject command)
+void RenderObjectManager::addCommand(RenderMessages::AddLineObject command)
 {
-    m_setDebugObjectCommands.push(std::move(command));
+    m_addLineObjectCommands.push(std::move(command));
 }
 
 void RenderObjectManager::executePendingCommands()
@@ -268,7 +262,7 @@ void RenderObjectManager::executePendingCommands()
         auto cmd = m_addObjectCommands.tryPop();
         while (cmd.has_value())
         {
-            addRenderObject(cmd->entity, *cmd->mesh, *cmd->texture);
+            addRenderObject(cmd->entity, cmd->mesh, cmd->texture);
             cmd = m_addObjectCommands.tryPop();
         }
     }
@@ -283,25 +277,25 @@ void RenderObjectManager::executePendingCommands()
     }
 
     {
-        auto cmd = m_setDebugObjectCommands.tryPop();
+        auto cmd = m_addLineObjectCommands.tryPop();
         while (cmd.has_value())
         {
-            setDebugRenderObject(cmd->entity, cmd->vertices);
-            cmd = m_setDebugObjectCommands.tryPop();
+            addLineRenderObject(cmd->entity, std::move(cmd->vertices));
+            cmd = m_addLineObjectCommands.tryPop();
         }
     }
 }
 
-void RenderObjectManager::addRenderObject(Entity entity, const MeshAsset& meshAsset, const TextureAsset& textureAsset)
+void RenderObjectManager::addRenderObject(Entity entity, const MeshAsset* meshAsset, const TextureAsset* textureAsset)
 {
     RenderObject object;
     static constexpr vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
 
     const Mesh* mesh;
     {
-        if (const auto idIt = m_meshMap.find(meshAsset.getGuid()); idIt == m_meshMap.end())
+        if (const auto idIt = m_meshMap.find(meshAsset->getGuid()); idIt == m_meshMap.end())
         {
-            mesh = &addMesh(meshAsset.getData(), meshAsset.getGuid());
+            mesh = &addMesh(meshAsset->getData(), meshAsset->getGuid());
         }
         else if (const auto it = std::ranges::find_if(m_meshes, [id = idIt->second](auto&& element) { return element.id == id; }); it != m_meshes.end())
         {
@@ -314,32 +308,36 @@ void RenderObjectManager::addRenderObject(Entity entity, const MeshAsset& meshAs
         }
     }
 
-    const Texture* texture;
+    if (textureAsset)
     {
-        if (const auto idIt = m_textureMap.find(textureAsset.getGuid()); idIt == m_textureMap.end())
+        const Texture* texture;
         {
-            texture = &addTexture(textureAsset.getData(), textureAsset.getGuid());
+            if (const auto idIt = m_textureMap.find(textureAsset->getGuid()); idIt == m_textureMap.end())
+            {
+                texture = &addTexture(textureAsset->getData(), textureAsset->getGuid());
+            }
+            else if (const auto it = std::ranges::find_if(m_textures, [id = idIt->second](auto&& element) { return element.id == id; }); it != m_textures.end())
+            {
+                texture = &*it;
+            }
+            else
+            {
+                fatalError("Tried to add a render object with invalid texture even if one was specified!");
+                return;
+            }
         }
-        else if (const auto it = std::ranges::find_if(m_textures, [id = idIt->second](auto&& element) { return element.id == id; }); it != m_textures.end())
-        {
-            texture = &*it;
-        }
-        else
-        {
-            fatalError("Tried to add a render object with invalid texture!");
-            return;
-        }
+        object.texture = *texture;
     }
 
     if (!check(mesh, "Tried to add a render object with null mesh!", ErrorType::Error)
         || !check(!mesh->data.vertices.empty(), "Tried to add a render object with empty mesh!", ErrorType::Warning)
-        || !check(texture, "Tried to add a render object with null texture!", ErrorType::Error)
-        || !check(texture->image, "Tried to add a render object with empty texture!", ErrorType::Warning))
+        // || !check(texture, "Tried to add a render object with null texture!", ErrorType::Error)
+        // || !check(texture->image, "Tried to add a render object with empty texture!", ErrorType::Warning)
+        )
         return;
 
     object.entity = entity;
     object.mesh = *mesh;
-    object.texture = *texture;
     object.uniformBuffers = std::vector<vk::Buffer>(MaxFramesInFlight);
     object.uniformBuffersMemory = std::vector<vk::DeviceMemory>(MaxFramesInFlight);
     object.uniformBuffersMapped = std::vector<void*>(MaxFramesInFlight);
@@ -373,7 +371,9 @@ void RenderObjectManager::addRenderObject(Entity entity, const MeshAsset& meshAs
     object.descriptorSets = m_device.allocateDescriptorSets(allocInfo);
 
     m_objects.emplace_back(std::move(object));
-    std::cout << "Added render object\n\tMesh: " << meshAsset.getGuid() << "\n\tTexture: " << textureAsset.getGuid() << std::endl;
+    std::cout << "Added render object\n\tMesh: " << meshAsset->getGuid() << std::endl;
+    if (textureAsset)
+        std::cout << "Texture: " << textureAsset->getGuid() << std::endl;
 }
 
 void RenderObjectManager::setObjectTransform(Entity entity, Vec3 location, Quat rotation, float scale)
@@ -387,17 +387,11 @@ void RenderObjectManager::setObjectTransform(Entity entity, Vec3 location, Quat 
     }
 }
 
-void RenderObjectManager::setDebugRenderObject(Entity entity, const std::vector<Vec3>& vertices)
+void RenderObjectManager::addLineRenderObject(Entity entity, std::vector<LineVertex>&& vertices)
 {
-    auto it = std::ranges::find_if(m_debugObjects, [&](const DebugRenderObject& object) { return object.entity == entity; });
-    if (it != m_debugObjects.end())
-    {
-        it->vertices = std::vector<LineVertex>(vertices.size());
-        std::ranges::transform(vertices, it->vertices.begin(), [](const Vec3& pos) { return LineVertex{pos}; });
-        return;
-    }
+    check(!std::ranges::any_of(m_lineObjects, [&](const LineRenderObject& object) { return object.entity == entity; }), "Added a line render object more than once!");
 
-    DebugRenderObject object;
+    LineRenderObject object;
 
     const RenderUtils::CreateDataBufferInfo vertexBufferInfo
     {
@@ -410,8 +404,7 @@ void RenderObjectManager::setDebugRenderObject(Entity entity, const std::vector<
     };
 
     object.entity = entity;
-    object.vertices = std::vector<LineVertex>(vertices.size());
-    std::ranges::transform(vertices, object.vertices.begin(), [](auto&& pos) { return LineVertex{pos}; });
+    object.vertices = std::move(vertices);
     object.uniformBuffers = std::vector<vk::Buffer>(MaxFramesInFlight);
     object.uniformBuffersMemory = std::vector<vk::DeviceMemory>(MaxFramesInFlight);
     object.uniformBuffersMapped = std::vector<void*>(MaxFramesInFlight);
@@ -448,7 +441,7 @@ void RenderObjectManager::setDebugRenderObject(Entity entity, const std::vector<
 
     object.descriptorSets = m_device.allocateDescriptorSets(allocInfo);
 
-    m_debugObjects.emplace_back(std::move(object));
+    m_lineObjects.emplace_back(std::move(object));
     log(std::format("Added debug render object for entity '{}'", entity));
 }
 
@@ -460,16 +453,12 @@ void RenderObjectManager::setCamera(const Camera& camera)
 void RenderObjectManager::renderFrame
 (
     vk::CommandBuffer commandBuffer,
-    vk::Pipeline graphicsPipeline,
     vk::PipelineLayout pipelineLayout,
-    float deltaTime,
     UInt32 currentFrame
 )
 {
     for (RenderObject& object : m_objects)
     {
-        commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
-
         updateDescriptorSets(object);
 
         commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1,
@@ -478,7 +467,7 @@ void RenderObjectManager::renderFrame
         const vk::Buffer vertexBuffers[] = {object.mesh.vertexBuffer};
         constexpr vk::DeviceSize offsets[] = {0};
 
-        updateUniformBuffer(object, currentFrame, deltaTime);
+        updateUniformBuffer(object, currentFrame);
 
         commandBuffer.bindVertexBuffers(0, vertexBuffers, offsets);
         commandBuffer.bindIndexBuffer(object.mesh.indexBuffer, 0, MeshData::indexType);
@@ -486,7 +475,7 @@ void RenderObjectManager::renderFrame
     }
 }
 
-void RenderObjectManager::updateLineDescriptorSets(const DebugRenderObject& object) const
+void RenderObjectManager::updateLineDescriptorSets(const LineRenderObject& object) const
 {
     for (size_t i = 0; i < MaxFramesInFlight; i++)
     {
@@ -520,14 +509,12 @@ void RenderObjectManager::updateLineDescriptorSets(const DebugRenderObject& obje
     }
 }
 
-void RenderObjectManager::renderLineFrame(vk::CommandBuffer commandBuffer, vk::Pipeline graphicsPipeline, vk::PipelineLayout pipelineLayout, float deltaTime, UInt32 currentFrame)
+void RenderObjectManager::renderLineFrame(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout, UInt32 currentFrame)
 {
-    for (DebugRenderObject& object : m_debugObjects)
+    for (LineRenderObject& object : m_lineObjects)
     {
         RenderUtils::updateBuffer(object.vertices, m_device, object.vertexBufferMemory);
         
-        commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
-
         updateLineDescriptorSets(object);
 
         commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1,
@@ -536,7 +523,7 @@ void RenderObjectManager::renderLineFrame(vk::CommandBuffer commandBuffer, vk::P
         const vk::Buffer vertexBuffers[] = {object.vertexBuffer};
         constexpr vk::DeviceSize offsets[] = {0};
 
-        updateUniformBuffer(object, currentFrame, deltaTime);
+        updateUniformBuffer(object, currentFrame);
         commandBuffer.bindVertexBuffers(0, vertexBuffers, offsets);
         commandBuffer.draw(static_cast<UInt32>(object.vertices.size()), 1, 0, 0);
     }

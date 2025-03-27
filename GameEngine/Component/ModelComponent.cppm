@@ -4,6 +4,7 @@ import Guid;
 import Render.Model;
 import Serialization;
 import World;
+import std;
 
 export struct ModelComponent : Component<ModelComponent>
 {
@@ -30,11 +31,17 @@ template <>
 ModelComponent deserialize(const JsonObject& serializedData)
 {
     const Guid meshGuid = Guid::createFromString(serializedData.FindMember("mesh")->value.GetString());
-    const Guid textureGuid = Guid::createFromString(serializedData.FindMember("texture")->value.GetString());
+    const MeshAsset* mesh = AssetManager::findAsset<MeshAsset>(meshGuid);
 
-    return
+    const TextureAsset* texture = nullptr;
+    if (auto it = serializedData.FindMember("texture"); it != serializedData.MemberEnd())
     {
-        .mesh = AssetManager::findAsset<MeshAsset>(meshGuid),
-        .texture = AssetManager::findAsset<TextureAsset>(textureGuid)
-    };
+        if (std::string idString = it->value.GetString(); !idString.empty())
+        {
+            const Guid textureGuid = Guid::createFromString(std::move(idString));
+            texture = AssetManager::findAsset<TextureAsset>(textureGuid);
+        }
+    }
+
+    return {.mesh = mesh, .texture = texture};
 }

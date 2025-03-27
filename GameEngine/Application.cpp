@@ -87,7 +87,7 @@ bool engineUpdate(GLFWwindow* window, float deltaTime)
 
     EngineSystems::update(world, player, deltaTime);
     
-    Input::postUpdate(window, deltaTime);
+    Input::postUpdate();
     glfwPollEvents();
 
     return true;

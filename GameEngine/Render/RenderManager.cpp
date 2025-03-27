@@ -9,6 +9,7 @@ import Render.TextureLoading;
 import Render.Utils;
 import Wrapper.Vulkan;
 import Wrapper.Windows;
+import std;
 
 std::mutex updateLockMutex;
 std::atomic updatesBlocked{false};
@@ -106,7 +107,8 @@ void RenderManager::update()
 
     m_graphicsQueue.waitIdle(); // TODO: Optimization target. Explore VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT.
     m_renderObjectManager.executePendingCommands();
-    drawFrame(m_deltaTime.update());
+    m_deltaTime.update();
+    drawFrame();
 }
 
 void RenderManager::shutdown()
@@ -183,9 +185,9 @@ void RenderManager::setRenderObjectTransform(Entity entity, Vec3 location, Quat 
     });
 }
 
-void RenderManager::setDebugRenderObject(Entity entity, const std::vector<Vec3>& vertices)
+void RenderManager::setDebugRenderObject(Entity entity, const std::vector<LineVertex>& vertices)
 {
-    m_renderObjectManager.addCommand(RenderMessages::SetDebugObject{.entity = entity, .vertices = vertices});
+    m_renderObjectManager.addCommand(RenderMessages::AddLineObject{.entity = entity, .vertices = vertices});
 }
 
 void RenderManager::setCamera(const Camera& camera)
@@ -782,7 +784,7 @@ void RenderManager::createLinePipeline()
             .location = 1,
             .binding = 0,
             .format = vk::Format::eR32G32B32Sfloat,
-            .offset = offsetof(LineVertex, color),
+            .offset = offsetof(LineVertex, colour),
         },
     };
 
@@ -1070,7 +1072,7 @@ bool RenderManager::checkValidationLayerSupport()
     return std::ranges::all_of(RenderUtils::ValidationLayers, isLayerAvailable);
 }
 
-void RenderManager::drawFrame(float deltaTime)
+void RenderManager::drawFrame()
 {
     const vk::Fence fence = m_inFlightFences[m_currentFrame];
     const vk::Semaphore imageAvailableSemaphore = m_imageAvailableSemaphores[m_currentFrame];
@@ -1151,9 +1153,11 @@ void RenderManager::drawFrame(float deltaTime)
 
     commandBuffer.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
 
-    m_renderObjectManager.renderFrame(commandBuffer, m_graphicsPipeline, m_pipelineLayout, deltaTime, m_currentFrame);
+    commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_graphicsPipeline);
+    m_renderObjectManager.renderFrame(commandBuffer, m_pipelineLayout, m_currentFrame);
 
-    m_renderObjectManager.renderLineFrame(commandBuffer, m_linePipeline, m_pipelineLayout, deltaTime, m_currentFrame);
+    commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_linePipeline);
+    m_renderObjectManager.renderLineFrame(commandBuffer, m_pipelineLayout, m_currentFrame);
 
     m_imguiHelper.renderFrame(commandBuffer);
 

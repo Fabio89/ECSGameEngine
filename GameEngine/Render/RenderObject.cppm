@@ -48,12 +48,12 @@ struct RenderObject
     std::vector<vk::DescriptorSet> descriptorSets;
 };
 
-struct DebugRenderObject
+struct LineRenderObject
 {
     Entity entity{};
+    std::vector<LineVertex> vertices;
     vk::Buffer vertexBuffer{};
     vk::DeviceMemory vertexBufferMemory{};
-    std::vector<LineVertex> vertices;
     std::vector<vk::Buffer> uniformBuffers;
     std::vector<vk::DeviceMemory> uniformBuffersMemory;
     std::vector<void*> uniformBuffersMapped;
@@ -69,10 +69,10 @@ export namespace RenderMessages
         const TextureAsset* texture{};
     };
 
-    struct SetDebugObject
+    struct AddLineObject
     {
         Entity entity;
-        std::vector<Vec3> vertices;
+        std::vector<LineVertex> vertices;
     };
 
     struct SetTransform
@@ -101,7 +101,7 @@ public:
     void clear();
     void addCommand(RenderMessages::AddObject command);
     void addCommand(RenderMessages::SetTransform command);
-    void addCommand(RenderMessages::SetDebugObject command);
+    void addCommand(RenderMessages::AddLineObject command);
     void executePendingCommands();
     void setCamera(const Camera& camera);
 
@@ -111,36 +111,32 @@ public:
     void renderFrame
     (
         vk::CommandBuffer commandBuffer,
-        vk::Pipeline graphicsPipeline,
         vk::PipelineLayout pipelineLayout,
-        float deltaTime,
         UInt32 currentFrame
     );
 
     void renderLineFrame
     (
         vk::CommandBuffer commandBuffer,
-        vk::Pipeline graphicsPipeline,
         vk::PipelineLayout pipelineLayout,
-        float deltaTime,
         UInt32 currentFrame
     );
 
 private:
-    void addRenderObject(Entity entity, const MeshAsset& meshAsset, const TextureAsset& textureAsset);
+    void addRenderObject(Entity entity, const MeshAsset* meshAsset, const TextureAsset* textureAsset);
     void setObjectTransform(Entity entity, Vec3 location = {}, Quat rotation = {}, float scale = 1.f);
-    void setDebugRenderObject(Entity entity, const std::vector<Vec3>& vertices);
+    void addLineRenderObject(Entity entity, std::vector<LineVertex>&& vertices);
     void updateDescriptorSets(const RenderObject& object) const;
-    void updateUniformBuffer(RenderObject& object, UInt32 currentImage, float deltaTime);
-    void updateUniformBuffer(DebugRenderObject& object, UInt32 currentImage, float deltaTime);
-    void updateLineDescriptorSets(const DebugRenderObject& object) const;
+    void updateUniformBuffer(RenderObject& object, UInt32 currentImage);
+    void updateUniformBuffer(LineRenderObject& object, UInt32 currentImage);
+    void updateLineDescriptorSets(const LineRenderObject& object) const;
 
     ThreadSafeQueue<RenderMessages::AddObject> m_addObjectCommands;
+    ThreadSafeQueue<RenderMessages::AddLineObject> m_addLineObjectCommands;
     ThreadSafeQueue<RenderMessages::SetTransform> m_setTransformCommands;
-    ThreadSafeQueue<RenderMessages::SetDebugObject> m_setDebugObjectCommands;
 
     std::vector<RenderObject> m_objects;
-    std::vector<DebugRenderObject> m_debugObjects;
+    std::vector<LineRenderObject> m_lineObjects;
     std::vector<Mesh> m_meshes;
     std::vector<Texture> m_textures;
 

@@ -31,7 +31,7 @@ void Input::shutdown()
     cursorTypes.clear();
 }
 
-void Input::postUpdate(GLFWwindow* window, float deltaTime)
+void Input::postUpdate()
 {
     justPressedKeys.reset();
     justReleasedKeys.reset();
@@ -74,7 +74,7 @@ void Input::setCursorMode(GLFWwindow* window, CursorMode mode)
 void Input::setCursorType(GLFWwindow* window, CursorType type)
 {
     log(std::format("Set cursor type: {}", static_cast<int>(type)));
-    
+
     GLFWcursor* cursor;
     if (auto it = cursorTypes.find(type); it != cursorTypes.end())
     {
@@ -88,11 +88,11 @@ void Input::setCursorType(GLFWwindow* window, CursorType type)
     glfwSetCursor(window, cursor);
 }
 
-void Input::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+void Input::keyCallback([[maybe_unused]] GLFWwindow* window, int key, [[maybe_unused]] int scancode, int action, [[maybe_unused]] int mods)
 {
     const KeyCode keyCode = static_cast<KeyCode>(key);
     const KeyAction keyAction = static_cast<KeyAction>(action);
-    
+
     for (KeyEventCallback callback : keyEventCallbacks)
     {
         callback(keyCode, keyAction);
@@ -103,7 +103,7 @@ void Input::keyCallback(GLFWwindow* window, int key, int scancode, int action, i
     justReleasedKeys[key] = keyAction == KeyAction::Release;
 
     std::string keyActionStr = keyAction == KeyAction::Press ? "Press" : keyAction == KeyAction::Release ? "Release" : "Repeat";
-    
+
     log(std::format("Key: {}, Action: {}", static_cast<int>(keyCode), keyActionStr));
 }
 

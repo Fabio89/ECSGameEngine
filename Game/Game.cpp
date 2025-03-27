@@ -1,4 +1,5 @@
 import Engine;
+import ComponentArray;
 import std;
 import <chrono>;
 
@@ -45,12 +46,15 @@ void onUpdate(float deltaTime)
     }
 }
 
+ComponentArray<TransformComponent> transforms;
+
 int main()
 {
     window = createWindow(nullptr, 800, 600);
     engineInit(window);
 
     openProject("C:/Users/march/Documents/Mashi Projects/TestProject/project.ma");
+
     
     // char buf[4096];
     // serializeScene(buf, sizeof(buf));
