@@ -1,6 +1,5 @@
 export module ComponentArray;
 import Core;
-import std;
 
 export class ComponentArrayBase;
 

@@ -1,5 +1,4 @@
 module ImGuiHelper;
-import Ecs;
 import Render.QueueFamily;
 import Wrapper.ImGui;
 

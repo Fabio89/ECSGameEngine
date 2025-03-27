@@ -1,8 +1,8 @@
 export module ImGuiHelper;
 export import DebugUI.IDebugWidget;
+import Core;
 import Wrapper.Glfw;
 import Wrapper.Vulkan;
-import std;
 
 export struct ImGuiInitInfo
 {

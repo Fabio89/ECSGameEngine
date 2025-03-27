@@ -1,5 +1,5 @@
 module Feature.DebugFlyCamera;
-import std;
+import Core;
 
 Vec2 lastCursorPosition;
 

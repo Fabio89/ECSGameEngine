@@ -1,10 +1,9 @@
 export module Component.Model;
+import Core;
 import AssetManager;
 import Guid;
 import Render.Model;
 import Serialization;
-import World;
-import std;
 
 export struct ModelComponent : Component<ModelComponent>
 {

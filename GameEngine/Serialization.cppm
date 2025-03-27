@@ -5,8 +5,8 @@ module;
 #include "rapidjson/prettywriter.h"
 
 export module Serialization;
+import Core;
 import Math;
-import std;
 
 export using JsonDocument = rapidjson::Document;
 export using JsonObject = rapidjson::Value;

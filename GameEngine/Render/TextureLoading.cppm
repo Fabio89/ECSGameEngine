@@ -1,6 +1,6 @@
 export module Render.TextureLoading;
+import Core;
 import Wrapper.Vulkan;
-import std;
 
 export namespace RenderUtils
 {

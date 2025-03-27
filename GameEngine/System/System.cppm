@@ -1,8 +1,7 @@
 export module System;
-import Ecs;
+export import Core;
 export import Player;
 export import World;
-import std;
 
 export class System
 {

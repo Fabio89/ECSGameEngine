@@ -1,6 +1,6 @@
 export module Guid;
+import Core;
 import Wrapper.BoostUuid;
-import std;
 
 export class Guid
 {

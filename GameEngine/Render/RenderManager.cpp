@@ -2,14 +2,13 @@ module;
 #include <cstddef>
 
 module Render.RenderManager;
-import Ecs;
+import Core;
 import Render.Model;
 import Render.QueueFamily;
 import Render.TextureLoading;
 import Render.Utils;
 import Wrapper.Vulkan;
 import Wrapper.Windows;
-import std;
 
 std::mutex updateLockMutex;
 std::atomic updatesBlocked{false};
@@ -752,7 +751,7 @@ void RenderManager::createLinePipeline()
     // Disable depth writes for debugging lines
     vk::PipelineDepthStencilStateCreateInfo depthStencil
     {
-        .depthTestEnable = vk::False,
+        .depthTestEnable = vk::True,
         .depthWriteEnable = vk::False,
         .depthCompareOp = vk::CompareOp::eLess,
     };

@@ -1,6 +1,6 @@
 export module Render.QueueFamily;
+import Core;
 import vulkan_hpp;
-import std;
 import std.compat;
 
 export enum class QueueFamilyType : size_t

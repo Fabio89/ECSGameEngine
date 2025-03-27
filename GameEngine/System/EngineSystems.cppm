@@ -1,10 +1,9 @@
 export module EngineSystems;
-export import System;
+import System;
 export import System.BoundingBox;
 export import System.Camera;
 export import System.Model;
 export import System.Transform;
-import std;
 
 namespace EngineSystems
 {

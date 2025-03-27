@@ -4,7 +4,6 @@ import Component.Transform;
 import Math;
 import Render.Model;
 import System;
-import std;
 
 std::vector<LineVertex> generateAABBVertices(const Vec3& min, const Vec3& max)
 {

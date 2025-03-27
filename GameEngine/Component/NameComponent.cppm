@@ -1,7 +1,6 @@
 export module Component.Name;
+import Core;
 import Serialization;
-import World;
-import std;
 
 export struct NameComponent : Component<NameComponent>
 {

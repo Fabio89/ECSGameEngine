@@ -1,7 +1,6 @@
 module Input;
-import Log;
+import Core;
 import Wrapper.Glfw;
-import std;
 
 namespace Input
 {

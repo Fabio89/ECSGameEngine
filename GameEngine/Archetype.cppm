@@ -1,8 +1,7 @@
-export module Ecs;
+export module Archetype;
 export import Core;
 export import Log;
 import ComponentArray;
-import std;
 
 //------------------------------------------------------------------------------------------------------------------------
 // Archetype

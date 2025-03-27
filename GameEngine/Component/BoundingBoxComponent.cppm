@@ -1,9 +1,8 @@
 export module Component.BoundingBox;
 import Component.Transform;
+import Core;
 import Math;
 import Serialization;
-import World;
-import std;
 
 export struct BoundingBoxComponent : Component<BoundingBoxComponent>
 {

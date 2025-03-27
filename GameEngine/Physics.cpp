@@ -3,7 +3,7 @@ import Component.BoundingBox;
 import Component.Camera;
 import Component.Name;
 import Component.Transform;
-import std;
+import Core;
 
 namespace Physics
 {

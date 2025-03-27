@@ -3,11 +3,6 @@ import AssetManager;
 import ComponentRegistry;
 import Render.Model;
 
-
-import Component.Transform;
-import Component.BoundingBox;
-import Component.Model;
-
 template <typename T>
 void loadAssets(const JsonObject& json, const char* assetName)
 {
@@ -154,17 +149,6 @@ void World::deserializeScene(const JsonObject& json)
             }
         }
     }
-
-    for (auto& archetype : m_archetypes | std::views::values)
-    {
-        if (archetype.matches<TransformComponent, ModelComponent, BoundingBoxComponent>())
-        {
-            for (auto [entity, transform, model, boundingBox] : archetype.view<TransformComponent, ModelComponent, BoundingBoxComponent>())
-            {
-            }
-        }
-    }
-    // log(std::format("Entity {} is model/transform/aabb: {}", entity));
 }
 
 void World::patchEntity(Entity entity, const JsonObject& json)

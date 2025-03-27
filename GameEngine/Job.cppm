@@ -1,5 +1,5 @@
 export module Job;
-import std;
+import Core;
 
 export class JobSystem
 {

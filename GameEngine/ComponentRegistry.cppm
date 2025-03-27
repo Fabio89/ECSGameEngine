@@ -1,7 +1,7 @@
 export module ComponentRegistry;
+import Core;
 import World;
 import Serialization;
-import std;
 
 export class ComponentTypeBase
 {

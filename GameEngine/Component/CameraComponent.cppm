@@ -1,7 +1,7 @@
 export module Component.Camera;
+import Core;
 import Math;
 import Serialization;
-import World;
 
 export struct CameraComponent : Component<CameraComponent>
 {

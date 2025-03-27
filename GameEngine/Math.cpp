@@ -1,5 +1,5 @@
 module Math;
-import std;
+import Core;
 
 // Quat Math::rotation(Vec3 origin, Vec3 destination)
 // {

@@ -11,7 +11,6 @@ import Project;
 import Render.RenderManager;
 import Serialization;
 import World;
-import std;
 
 bool shutdownRequested = false;
 std::atomic<bool> engineShuttingDown = false;

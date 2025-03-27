@@ -1,7 +1,7 @@
 export module Component.Transform;
+import Core;
 import Math;
 import Serialization;
-import World;
 
 export struct TransformComponent : Component<TransformComponent>
 {

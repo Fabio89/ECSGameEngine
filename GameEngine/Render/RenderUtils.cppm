@@ -2,7 +2,6 @@ export module Render.Utils;
 import Core;
 import Wrapper.Glfw;
 import Wrapper.Vulkan;
-import std;
 
 export namespace RenderUtils
 {

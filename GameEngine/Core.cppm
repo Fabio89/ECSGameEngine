@@ -1,6 +1,6 @@
 export module Core;
-import Log;
-import std;
+export import Log;
+export import std;
 
 export using Int8 = std::int8_t;
 export using Int16 = std::int16_t;

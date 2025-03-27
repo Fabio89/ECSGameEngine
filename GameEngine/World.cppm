@@ -1,9 +1,9 @@
 export module World;
-export import Ecs;
+import Archetype;
+import Core;
 import DebugUI.IDebugWidget;
 import Render.IRenderManager;
 import Serialization;
-import std;
 
 static constexpr int maxComponentsPerEntity = 64;
 

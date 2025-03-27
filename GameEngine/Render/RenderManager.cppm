@@ -1,13 +1,12 @@
 export module Render.RenderManager;
+import Core;
 import CoreTypes;
-import Ecs;
 import ImGuiHelper;
 import Math;
 import Render.IRenderManager;
 import Render.Model;
 import Render.RenderObject;
 import Wrapper.Glfw;
-import std;
 
 export class RenderManager final : public IRenderManager
 {

@@ -1,6 +1,6 @@
 export module Application;
 import ComponentRegistry;
-import Ecs;
+import Core;
 import Input;
 import Math;
 import Player;

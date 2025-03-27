@@ -141,7 +141,7 @@
         <ClCompile Include="Component\TransformComponent.cppm"/>
         <ClCompile Include="Core.cppm" />
         <ClCompile Include="CoreTypes.cppm"/>
-        <ClCompile Include="Ecs.cpp" />
+        <ClCompile Include="Archetype.cpp" />
         <ClCompile Include="Features\DebugFlyCamera.cpp" />
         <ClCompile Include="Features\DebugFlyCamera.cppm" />
         <ClCompile Include="Input.cpp" />
@@ -152,7 +152,7 @@
         <ClCompile Include="Physics.cppm" />
         <ClCompile Include="Player.cppm" />
         <ClCompile Include="Project.cppm" />
-        <ClCompile Include="Ecs.cppm" />
+        <ClCompile Include="Archetype.cppm" />
         <ClCompile Include="Editor\DebugWidget.cppm" />
         <ClCompile Include="Editor\DebugWidget_EntityExplorer.cppm" />
         <ClCompile Include="Editor\IDebugWidget.cppm" />

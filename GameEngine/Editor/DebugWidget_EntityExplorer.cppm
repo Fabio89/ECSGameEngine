@@ -1,4 +1,5 @@
 export module DebugWidget.EntityExplorer;
+import Core;
 import Component.Name;
 import Component.Model;
 import Component.Transform;
@@ -6,7 +7,6 @@ import ComponentRegistry;
 import DebugUI.DebugWidget;
 import World;
 import Wrapper.ImGui;
-import std;
 
 export namespace DebugWidgets
 {

@@ -3,7 +3,6 @@ import Component.Camera;
 import Component.Transform;
 import Math;
 import System;
-import std;
 
 export class System_Camera final : public System
 {

@@ -1,10 +1,9 @@
 export module Render.IRenderManager;
-import Ecs;
+import Core;
 import DebugUI.IDebugWidget;
 import Math;
 import Render.Model;
 import Wrapper.Glfw;
-import std;
 
 export struct Camera
 {
