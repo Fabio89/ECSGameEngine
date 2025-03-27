@@ -41,14 +41,14 @@ public:
     void deserializeScene(const JsonObject& json);
 
     void patchEntity(Entity entity, const JsonObject& json);
-    
-    template <ValidComponent T, typename... Args>
-    void addComponent(Entity entity, Args&&... args);
 
-    template<ValidComponent T>
+    template <ValidComponent T, typename... Args>
+    T& addComponent(Entity entity, Args&&... args);
+
+    template <ValidComponent T>
     bool hasComponent(Entity entity) const;
     bool hasComponent(Entity entity, ComponentTypeId componentTypeId) const;
-    
+
     template <ValidComponent T>
     const T& readComponent(Entity entity) const;
 
@@ -58,7 +58,7 @@ public:
 
     template <ValidComponent T>
     T& editComponent(Entity entity) { return const_cast<T&>(readComponent<T>(entity)); }
-    
+
     template <typename T>
     void addDebugWidget() { addDebugWidget(std::make_unique<T>(*this)); }
 
@@ -67,21 +67,23 @@ public:
 
     auto getEntitiesRange() const { return m_entities | std::views::keys; }
 
-    template <ValidComponent ... Components>
-    std::generator<std::tuple<Entity, const Components&...>> view() const;
+    template <ValidComponent First, ValidComponent ... Rest>
+    std::generator<std::tuple<Entity, const First&, const Rest&...>> view() const;
 
-    template <ValidComponent ... Components>
-    std::generator<std::tuple<Entity, Components&...>> view();
-    
+    template <ValidComponent First, ValidComponent ... Rest>
+    std::generator<std::tuple<Entity, First&, Rest&...>> view();
+
     const IRenderManager& getRenderManager() const { return m_renderManager.get(); }
     IRenderManager& getRenderManager() { return m_renderManager.get(); }
+
+    void printArchetypeStatus();
 
 private:
     void addDebugWidget(std::unique_ptr<IDebugWidget> widget);
     const Archetype& readArchetype(const EntitySignature& signature) const;
     Archetype& editArchetype(const EntitySignature& signature);
     Archetype& editOrCreateArchetype(const EntitySignature& signature);
-    
+
     std::unordered_map<ArchetypeChangedObserverHandle, ArchetypeChangedCallback> m_archetypeChangeObservers;
     Entity m_nextEntity = 0;
     std::unordered_map<Entity, EntitySignature> m_entities;
@@ -92,16 +94,15 @@ private:
 //------------------------------------------------------------------------------------------------------------------------
 // World - Implementation
 //------------------------------------------------------------------------------------------------------------------------
-
-template <ValidComponent T, typename ... Args>
-void World::addComponent(Entity entity, Args&&... args)
+template <ValidComponent T, typename... Args>
+T& World::addComponent(Entity entity, Args&&... args)
 {
     EntitySignature& signature = m_entities[entity];
     const EntitySignature oldSignature = signature;
+    
+    Archetype& oldArchetype = m_archetypes[oldSignature];
 
-    Archetype& oldArchetype = editOrCreateArchetype(signature);
-
-    signature.bitset.set(std::hash<ComponentTypeId>{}(Component<T>::typeId()) % maxComponentsPerEntity);
+    signature.bitset.set(std::hash<ComponentTypeId>{}(T::typeId()) % maxComponentsPerEntity);
 
     const bool usingExistingArchetype = m_archetypes.contains(signature);
 
@@ -115,17 +116,20 @@ void World::addComponent(Entity entity, Args&&... args)
         newArchetype = oldArchetype.cloneForEntity(entity);
         oldArchetype.removeEntity(entity);
     }
-    newArchetype.addComponent<T>(entity, T{std::forward<Args>(args)...});
 
     if (oldArchetype.isEmpty())
     {
         m_archetypes.erase(oldSignature);
     }
+    
+    T& addedComponent = newArchetype.addComponent<T>(entity, T{std::forward<Args>(args)...});
+    log(std::format("Added component {} to entity {}", getComponentName<T>(), entity));
 
     for (auto& callback : m_archetypeChangeObservers | std::views::values)
     {
-        callback(entity, Component<T>::typeId());
+        callback(entity, T::typeId());
     }
+    return addedComponent;
 }
 
 template <ValidComponent T>
@@ -151,14 +155,14 @@ template <ValidComponent T>
     return invalid;
 }
 
-template <ValidComponent ... Components>
-std::generator<std::tuple<Entity, const Components&...>> World::view() const
+template <ValidComponent First, ValidComponent ... Rest>
+std::generator<std::tuple<Entity, const First&, const Rest&...>> World::view() const
 {
     for (auto& archetype : m_archetypes | std::views::values)
     {
-        if (archetype.matches<Components...>())
+        if (archetype.matches<First, Rest...>())
         {
-            for (auto&& entityComponents : archetype.view<Components...>())
+            for (auto&& entityComponents : archetype.view<First, Rest...>())
             {
                 co_yield entityComponents;
             }
@@ -166,17 +170,17 @@ std::generator<std::tuple<Entity, const Components&...>> World::view() const
     }
 }
 
-template <ValidComponent ... Components>
-std::generator<std::tuple<Entity, Components&...>> World::view()
+template <ValidComponent First, ValidComponent ... Rest>
+std::generator<std::tuple<Entity, First&, Rest&...>> World::view()
 {
     for (auto& archetype : m_archetypes | std::views::values)
     {
-        if (archetype.matches<Components...>())
+        if (archetype.matches<First, Rest...>())
         {
-            for (auto&& entityComponents : archetype.view<Components...>())
+            for (auto&& entityComponents : archetype.view<First, Rest...>())
             {
                 co_yield entityComponents;
             }
         }
-    }   
+    }
 }

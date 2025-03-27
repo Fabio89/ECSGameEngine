@@ -75,6 +75,9 @@ export __declspec(dllexport)
 World& getWorld();
 
 export __declspec(dllexport)
+void printArchetypeStatus();
+
+export __declspec(dllexport)
 Player& getPlayer();
 
 export __declspec(dllexport)

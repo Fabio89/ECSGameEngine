@@ -184,7 +184,7 @@ void RenderManager::setRenderObjectTransform(Entity entity, Vec3 location, Quat 
     });
 }
 
-void RenderManager::setDebugRenderObject(Entity entity, const std::vector<LineVertex>& vertices)
+void RenderManager::setLineRenderObject(Entity entity, const std::vector<LineVertex>& vertices)
 {
     m_renderObjectManager.addCommand(RenderMessages::AddLineObject{.entity = entity, .vertices = vertices});
 }
@@ -751,7 +751,7 @@ void RenderManager::createLinePipeline()
     // Disable depth writes for debugging lines
     vk::PipelineDepthStencilStateCreateInfo depthStencil
     {
-        .depthTestEnable = vk::True,
+        .depthTestEnable = vk::False,
         .depthWriteEnable = vk::False,
         .depthCompareOp = vk::CompareOp::eLess,
     };

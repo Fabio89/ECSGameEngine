@@ -112,13 +112,9 @@ void RenderObjectManager::updateDescriptorSets(const RenderObject& object) const
 // ReSharper disable once CppParameterMayBeConstPtrOrRef
 void RenderObjectManager::updateUniformBuffer(RenderObject& object, UInt32 currentImage)
 {
-    const Mat4 translationMatrix = Math::translate(Mat4{1.0f}, object.location);
-    const Mat4 rotationMatrix = Math::mat4_cast(object.rotation);
-    const Mat4 scaleMatrix = Math::scale(Mat4{1.0f}, Vec3{object.scale, object.scale, object.scale});
-
     UniformBufferObject uniformBufferObject
     {
-        .model = translationMatrix * rotationMatrix * scaleMatrix,
+        .model = object.model,
         .view = m_camera.view,
         .proj = m_camera.proj,
     };
@@ -128,14 +124,9 @@ void RenderObjectManager::updateUniformBuffer(RenderObject& object, UInt32 curre
 
 void RenderObjectManager::updateUniformBuffer(LineRenderObject& object, UInt32 currentImage)
 {
-    auto& worldObject = *std::ranges::find_if(m_objects, [&](auto&& obj) {return obj.entity == object.entity;});
-    const Mat4 translationMatrix = Math::translate(Mat4{1.0f}, worldObject.location);
-    const Mat4 rotationMatrix = Math::mat4_cast(worldObject.rotation);
-    const Mat4 scaleMatrix = Math::scale(Mat4{1.0f}, Vec3{worldObject.scale, worldObject.scale, worldObject.scale});
-    
     UniformBufferObject uniformBufferObject
     {
-        .model = translationMatrix * rotationMatrix * scaleMatrix,
+        .model = object.model,
         .view = m_camera.view,
         .proj = m_camera.proj,
     };
@@ -376,14 +367,26 @@ void RenderObjectManager::addRenderObject(Entity entity, const MeshAsset* meshAs
         std::cout << "Texture: " << textureAsset->getGuid() << std::endl;
 }
 
+Mat4 buildModelMatrix(const Vec3& translation, const Quat& rotation, const Vec3& scale)
+{
+    const Mat4 translationMatrix = Math::translate(Mat4{1.0f}, translation);
+    const Mat4 rotationMatrix = Math::mat4_cast(rotation);
+    const Mat4 scaleMatrix = Math::scale(Mat4{1.0f}, scale);
+    return translationMatrix * rotationMatrix * scaleMatrix;
+}
+
 void RenderObjectManager::setObjectTransform(Entity entity, Vec3 location, Quat rotation, float scale)
 {
-    const auto it = std::ranges::find_if(m_objects, [&](auto&& object) { return object.entity == entity; });
-    if (it != m_objects.end())
+    if (const auto it = std::ranges::find_if(m_objects,
+        [&](auto&& object) { return object.entity == entity; }); it != m_objects.end())
     {
-        it->location = location;
-        it->rotation = rotation;
-        it->scale = scale;
+        it->model = buildModelMatrix(location, rotation, Vec3{scale, scale, scale});
+    }
+
+    if (const auto it = std::ranges::find_if(m_lineObjects,
+        [&](auto&& object){ return object.entity == entity; }); it != m_lineObjects.end())
+    {
+        it->model = buildModelMatrix(location, rotation, Vec3{scale, scale, scale});
     }
 }
 

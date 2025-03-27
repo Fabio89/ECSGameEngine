@@ -16,6 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		CMakeLists.txt = CMakeLists.txt
 		GameEngine\Render\Shaders\compile.bat = GameEngine\Render\Shaders\compile.bat
 		vcpkg.json = vcpkg.json
+		..\..\Users\march\Documents\Mashi Projects\TestProject\project.ma = ..\..\Users\march\Documents\Mashi Projects\TestProject\project.ma
 	EndProjectSection
 EndProject
 Global

@@ -1,5 +1,6 @@
 import Engine;
 import ComponentArray;
+import Feature.Gizmos;
 import std;
 import <chrono>;
 
@@ -55,12 +56,28 @@ int main()
 
     openProject("C:/Users/march/Documents/Mashi Projects/TestProject/project.ma");
 
-    
+
     // char buf[4096];
     // serializeScene(buf, sizeof(buf));
     // std::cout << buf;
 
+    std::vector<Entity> entities;
+    for (Entity entity : getWorld().getEntitiesRange())
+    {
+        entities.push_back(entity);
+    }
+    for (Entity entity : entities)
+    {
+        
+    }
 
+    for (auto&& [entity, model] : getWorld().view<ModelComponent>())
+    {
+        EditorUtils::createTranslationGizmo(getWorld(), entity);
+    }
+
+    printArchetypeStatus();
+    
     waitTillClosed();
     engineShutdown(window);
     return 0;

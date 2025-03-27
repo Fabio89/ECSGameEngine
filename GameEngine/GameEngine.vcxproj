@@ -136,6 +136,7 @@
         <ClCompile Include="Component\BoundingBoxComponent.cppm"/>
         <ClCompile Include="Component\CameraComponent.cppm"/>
         <ClCompile Include="Component\EngineComponents.cppm"/>
+        <ClCompile Include="Component\LineRenderComponent.cppm" />
         <ClCompile Include="Component\ModelComponent.cppm"/>
         <ClCompile Include="Component\NameComponent.cppm"/>
         <ClCompile Include="Component\TransformComponent.cppm"/>
@@ -144,6 +145,7 @@
         <ClCompile Include="Archetype.cpp" />
         <ClCompile Include="Features\DebugFlyCamera.cpp" />
         <ClCompile Include="Features\DebugFlyCamera.cppm" />
+        <ClCompile Include="Features\Gizmos.cppm" />
         <ClCompile Include="Input.cpp" />
         <ClCompile Include="Log.cppm" />
         <ClCompile Include="Input.cppm" />
@@ -181,6 +183,7 @@
         <ClCompile Include="System\System_BoundingBox.cppm" />
         <ClCompile Include="System\System_Camera.cppm" />
         <ClCompile Include="System\EngineSystems.cppm" />
+        <ClCompile Include="System\System_LineRender.cppm" />
         <ClCompile Include="System\System_Model.cppm" />
         <ClCompile Include="System\System.cppm" />
         <ClCompile Include="System\System_Transform.cppm" />

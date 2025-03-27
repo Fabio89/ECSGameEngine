@@ -1,6 +1,7 @@
 module World;
 import AssetManager;
 import ComponentRegistry;
+import Component.Name;
 import Render.Model;
 
 template <typename T>
@@ -28,6 +29,35 @@ Entity World::createEntity()
     Entity entity = m_nextEntity++;
     m_entities.try_emplace(entity);
     return entity;
+}
+
+void World::printArchetypeStatus()
+{
+    for (const Archetype& archetype : m_archetypes | std::views::values)
+    {
+        std::string archetypeStr = "Archetype [";
+
+        auto componentTypes = archetype.getComponentTypes();
+        auto lastComponentTypeIt = std::prev(componentTypes.end());
+        for (auto it = componentTypes.begin(); it != componentTypes.end(); ++it)
+        {
+            archetypeStr += ComponentRegistry::get(*it)->getName();
+            if (it != lastComponentTypeIt)
+            {
+                archetypeStr += " | ";
+            }
+        }
+        archetypeStr += "]\nEntities: ";
+
+        auto entities = archetype.view();
+        for (auto&& [entity] : archetype.view())
+        {
+            std::string entityName = hasComponent<NameComponent>(entity) ? std::format("'{}'", readComponent<NameComponent>(entity).name) : std::format("'{}'", entity);
+            archetypeStr += entityName + " ";
+        }
+        archetypeStr += "\n";
+        log(archetypeStr);
+    }
 }
 
 void World::addDebugWidget(std::unique_ptr<IDebugWidget> widget)

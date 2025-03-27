@@ -38,9 +38,7 @@ struct RenderObject
     Entity entity{};
     Mesh mesh;
     Texture texture;
-    Vec3 location{};
-    Quat rotation{};
-    float scale{1.f};
+    Mat4 model{1};
     std::vector<vk::Buffer> uniformBuffers;
     std::vector<vk::DeviceMemory> uniformBuffersMemory;
     std::vector<void*> uniformBuffersMapped;
@@ -50,6 +48,7 @@ struct RenderObject
 struct LineRenderObject
 {
     Entity entity{};
+    Mat4 model{1};
     std::vector<LineVertex> vertices;
     vk::Buffer vertexBuffer{};
     vk::DeviceMemory vertexBufferMemory{};

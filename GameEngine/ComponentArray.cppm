@@ -27,7 +27,7 @@ template <ValidComponent T>
 class ComponentArray final : public ComponentArrayBase
 {
 public:
-    void insert(size_t index, T component);
+    T& insert(size_t index, T&& component);
     
     std::unique_ptr<ComponentArrayBase> cloneForIndex(Entity index) override;
 
@@ -42,9 +42,9 @@ private:
 };
 
 template <ValidComponent T>
-void ComponentArray<T>::insert(size_t index, T component)
+T& ComponentArray<T>::insert(size_t index, T&& component)
 {
-    m_components.at(index) = component;
+    return m_components.at(index) = std::forward<T>(component);
 }
 
 template <ValidComponent T>

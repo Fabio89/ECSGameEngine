@@ -159,7 +159,7 @@ void serializeScene(char* buffer, int bufferSize)
     writer.SetMaxDecimalPlaces(Json::defaultFloatPrecision);
     doc.Accept(writer);
 
-    log(std::format("Serialized scene:\n\n{}", jsonBuffer.GetString()));
+    // log(std::format("Serialized scene:\n\n{}", jsonBuffer.GetString()));
     std::memcpy(buffer, jsonBuffer.GetString(), bufferSize);
 }
 
@@ -182,6 +182,11 @@ void patchEntity(Entity entity, const char* json)
 World& getWorld()
 {
     return world;
+}
+
+void printArchetypeStatus()
+{
+    world.printArchetypeStatus();
 }
 
 Player& getPlayer()

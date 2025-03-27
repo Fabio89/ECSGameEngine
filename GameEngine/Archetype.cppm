@@ -15,7 +15,7 @@ public:
     bool isEmpty() const;
 
     template <ValidComponent T>
-    void addComponent(Entity entity, T component);
+    T& addComponent(Entity entity, T&& component);
 
     template <ValidComponent T>
     const T& readComponent(Entity entity) const;
@@ -114,7 +114,7 @@ bool Archetype::ViewIterator<Components...>::operator!=(const ViewIterator& othe
 }
 
 template <ValidComponent T>
-void Archetype::addComponent(Entity entity, T component)
+T& Archetype::addComponent(Entity entity, T&& component)
 {
     auto& arr = m_componentArrays[T::typeId()];
     if (!arr)
@@ -131,7 +131,7 @@ void Archetype::addComponent(Entity entity, T component)
         m_entityToIndex.insert_or_assign(entity, index);
         m_indexToEntity.push_back(entity);
     }
-    static_cast<ComponentArray<T>&>(*arr).insert(index, component);
+    return static_cast<ComponentArray<T>&>(*arr).insert(index, std::forward<T>(component));
 }
 
 template <ValidComponent T>
@@ -175,7 +175,7 @@ std::generator<std::tuple<Entity, Components&...>> Archetype::view()
 
 [[nodiscard]] bool Archetype::isEmpty() const
 {
-    return m_componentArrays.empty();
+    return m_entityToIndex.empty();
 }
 
 [[nodiscard]] const ComponentBase& Archetype::readComponent(Entity entity, ComponentTypeId componentType) const
@@ -197,17 +197,20 @@ void Archetype::removeEntity(Entity entity)
     if (auto indexIt = m_entityToIndex.find(entity); indexIt != m_entityToIndex.end())
     {
         const size_t indexToRemove = indexIt->second;
-        const size_t lastEntityIndex = m_indexToEntity.size() - 1;
         const Entity entityToSwapFor = m_indexToEntity.back();
         m_entityToIndex.erase(entity);
-        m_entityToIndex[entityToSwapFor] = indexToRemove;
-        m_indexToEntity[indexToRemove] = entityToSwapFor;
 
-        for (auto& componentArray : m_componentArrays | std::views::values)
+        if (const size_t lastEntityIndex = m_indexToEntity.size() - 1; lastEntityIndex > indexToRemove)
         {
-            // Swap the entity we want to remove with the last item in the array
-            componentArray->move(lastEntityIndex, indexToRemove);
+            m_entityToIndex[entityToSwapFor] = indexToRemove;
+            m_indexToEntity[indexToRemove] = entityToSwapFor;
+            for (auto& componentArray : m_componentArrays | std::views::values)
+            {
+                // Swap the entity we want to remove with the last item in the array
+                componentArray->move(lastEntityIndex, indexToRemove);
+            }
         }
+        m_indexToEntity.pop_back();
     }
 }
 
@@ -245,8 +248,11 @@ void Archetype::steal(Archetype& other, Entity entity)
         const Entity entityToSwapFor = other.m_indexToEntity.back();
         const size_t otherArchetypeLastEntityIndex = other.m_indexToEntity.size() - 1;
         other.m_entityToIndex.erase(fromIndexIt);
-        other.m_entityToIndex[entityToSwapFor] = indexToRemoveFromOther;
-        other.m_indexToEntity[indexToRemoveFromOther] = entityToSwapFor;
+        if (entityToSwapFor != entity)
+        {
+            other.m_entityToIndex[entityToSwapFor] = indexToRemoveFromOther;
+            other.m_indexToEntity[indexToRemoveFromOther] = entityToSwapFor;
+        }
         other.m_indexToEntity.pop_back();
 
         for (auto& [componentType, componentArray] : other.m_componentArrays)

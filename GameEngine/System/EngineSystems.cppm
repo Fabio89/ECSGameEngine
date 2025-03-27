@@ -2,6 +2,7 @@ export module EngineSystems;
 import System;
 export import System.BoundingBox;
 export import System.Camera;
+export import System.LineRender;
 export import System.Model;
 export import System.Transform;
 
@@ -27,6 +28,7 @@ export void EngineSystems::init(World& world)
     addSystems<
         System_BoundingBox,
         System_Camera,
+        System_LineRender,
         System_Model,
         System_Transform
     >(world);

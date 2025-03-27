@@ -20,7 +20,7 @@ export struct IRenderManager
     virtual bool hasBeenInitialized() const = 0;
     virtual void clear() = 0;
     virtual void addDebugWidget(std::unique_ptr<IDebugWidget> widget) = 0;
-    virtual void setDebugRenderObject(Entity entity, const std::vector<LineVertex>& vertices) = 0;
+    virtual void setLineRenderObject(Entity entity, const std::vector<LineVertex>& vertices) = 0;
     virtual void addRenderObject(Entity entity, const MeshAsset* mesh, const TextureAsset* texture) = 0;
     virtual void setRenderObjectTransform(Entity entity, Vec3 location, Quat rotation, float scale = 1.f) = 0;
     virtual void setCamera(const Camera& camera) = 0;
