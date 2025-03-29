@@ -6,10 +6,10 @@ export class System_Model final : public System
 {
     void onComponentAdded(World& world, Entity entity, ComponentTypeId componentType) override
     {
-        if (componentType == ModelComponent::typeId())
+        if (componentType == getComponentType<ModelComponent>())
         {
             const ModelComponent& model = world.readComponent<ModelComponent>(entity);
-            world.getRenderManager().addRenderObject(entity, model.mesh, model.texture);
+            world.getRenderManager().addCommand(RenderCommands::AddObject{entity, model.mesh, model.texture});
         }
     }
 };

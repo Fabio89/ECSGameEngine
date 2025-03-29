@@ -51,18 +51,18 @@ private:
 
 namespace AssetManager
 {
-    std::vector<std::unique_ptr<AssetBase>> g_loadedAssets;
+    std::vector<std::unique_ptr<AssetBase>> loadedAssets;
 
     export template <typename T>
     const T* loadAsset(const JsonObject& serializedData)
     {
-        return static_cast<const T*>(g_loadedAssets.emplace_back(std::make_unique<T>(serializedData)).get());
+        return static_cast<const T*>(loadedAssets.emplace_back(std::make_unique<T>(serializedData)).get());
     }
 
     export template <typename T>
     const T* findAsset(const Guid& guid)
     {
-        auto it = std::ranges::find_if(g_loadedAssets, [&](auto&& asset) { return asset->getGuid() == guid; });
-        return it != g_loadedAssets.end() && (*it)->getType() == T::typeId ? static_cast<const T*>(it->get()) : nullptr;
+        auto it = std::ranges::find_if(loadedAssets, [&](auto&& asset) { return asset->getGuid() == guid; });
+        return it != loadedAssets.end() && (*it)->getType() == T::typeId ? static_cast<const T*>(it->get()) : nullptr;
     }
 };

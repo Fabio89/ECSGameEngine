@@ -14,10 +14,10 @@ public:
 
     bool isEmpty() const;
 
-    template <ValidComponent T>
+    template <ValidComponentData T>
     T& addComponent(Entity entity, T&& component);
 
-    template <ValidComponent T>
+    template <ValidComponentData T>
     const T& readComponent(Entity entity) const;
 
     const ComponentBase& readComponent(Entity entity, ComponentTypeId componentType) const;
@@ -30,24 +30,24 @@ public:
 
     ComponentRange getComponentTypes() const { return m_componentArrays | std::views::keys; }
 
-    template <ValidComponent... Components>
+    template <ValidComponentData... Components>
     bool matches() const;
 
-    template <ValidComponent ... Components>
+    template <ValidComponentData ... Components>
     std::generator<std::tuple<Entity, const Components&...>> view() const;
 
-    template <ValidComponent ... Components>
+    template <ValidComponentData ... Components>
     std::generator<std::tuple<Entity, Components&...>> view();
 
 private:
-    template <ValidComponent T>
-    const ComponentArray<T>& getComponentArray() { return static_cast<const ComponentArray<T>&>(*m_componentArrays.at(T::typeId())); }
+    template <ValidComponentData T>
+    const ComponentArray<T>& getComponentArray() { return static_cast<const ComponentArray<T>&>(*m_componentArrays.at(Component<T>::typeId())); }
 
     std::unordered_map<ComponentTypeId, std::unique_ptr<ComponentArrayBase>> m_componentArrays;
     std::unordered_map<Entity, size_t> m_entityToIndex;
     std::vector<Entity> m_indexToEntity;
 
-    template <ValidComponent ... Components>
+    template <ValidComponentData ... Components>
     class ViewIterator;
 };
 
@@ -64,7 +64,7 @@ export ArchetypeChangedObserverHandle generateArchetypeObserverHandle()
 // Archetype - Implementation
 //------------------------------------------------------------------------------------------------------------------------
 
-template <ValidComponent ... Components>
+template <ValidComponentData ... Components>
 class Archetype::ViewIterator
 {
 public:
@@ -83,20 +83,20 @@ private:
     size_t m_index;
 };
 
-template <ValidComponent ... Components>
+template <ValidComponentData ... Components>
 Archetype::ViewIterator<Components...>::ViewIterator(const Archetype* archetype, size_t index)
     : m_archetype(archetype), m_index(index)
 {
 }
 
-template <ValidComponent ... Components>
+template <ValidComponentData ... Components>
 auto Archetype::ViewIterator<Components...>::operator*() const
 {
     Entity entity = m_archetype->m_indexToEntity[m_index];
     return std::tuple<Entity, const Components&...>(entity, m_archetype->readComponent<Components>(entity)...);
 }
 
-template <ValidComponent ... Components>
+template <ValidComponentData ... Components>
 Archetype::ViewIterator<Components...>& Archetype::ViewIterator<Components...>::operator++()
 {
     do
@@ -107,16 +107,16 @@ Archetype::ViewIterator<Components...>& Archetype::ViewIterator<Components...>::
     return *this;
 }
 
-template <ValidComponent ... Components>
+template <ValidComponentData ... Components>
 bool Archetype::ViewIterator<Components...>::operator!=(const ViewIterator& other) const
 {
     return m_index != other.m_index;
 }
 
-template <ValidComponent T>
+template <ValidComponentData T>
 T& Archetype::addComponent(Entity entity, T&& component)
 {
-    auto& arr = m_componentArrays[T::typeId()];
+    auto& arr = m_componentArrays[Component<T>::typeId()];
     if (!arr)
         arr = std::make_unique<ComponentArray<T>>();
 
@@ -134,14 +134,14 @@ T& Archetype::addComponent(Entity entity, T&& component)
     return static_cast<ComponentArray<T>&>(*arr).insert(index, std::forward<T>(component));
 }
 
-template <ValidComponent T>
+template <ValidComponentData T>
 [[nodiscard]] const T& Archetype::readComponent(Entity entity) const
 {
     if (auto indexIt = m_entityToIndex.find(entity); indexIt != m_entityToIndex.end())
     {
-        if (auto it = m_componentArrays.find(T::typeId()); it != m_componentArrays.end())
+        if (auto it = m_componentArrays.find(Component<T>::typeId()); it != m_componentArrays.end())
         {
-            return static_cast<const ComponentArray<T>&>(*it->second).get(indexIt->second);
+            return static_cast<const ComponentArray<T>&>(*it->second).get(indexIt->second).data;
         }
     }
 
@@ -149,13 +149,13 @@ template <ValidComponent T>
     return invalid;
 }
 
-template <ValidComponent ... Components>
+template <ValidComponentData ... Components>
 [[nodiscard]] bool Archetype::matches() const
 {
-    return (... && (m_componentArrays.contains(Components::typeId())));
+    return (... && (m_componentArrays.contains(Component<Components>::typeId())));
 }
 
-template <ValidComponent ... Components>
+template <ValidComponentData ... Components>
 std::generator<std::tuple<Entity, const Components&...>> Archetype::view() const
 {
     for (Entity entity : m_indexToEntity)
@@ -164,7 +164,7 @@ std::generator<std::tuple<Entity, const Components&...>> Archetype::view() const
     }
 }
 
-template <ValidComponent ... Components>
+template <ValidComponentData ... Components>
 std::generator<std::tuple<Entity, Components&...>> Archetype::view()
 {
     for (Entity entity : m_indexToEntity)

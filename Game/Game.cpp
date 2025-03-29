@@ -1,6 +1,6 @@
 import Engine;
 import ComponentArray;
-import Feature.Gizmos;
+import EditorBridge;
 import std;
 import <chrono>;
 
@@ -38,13 +38,7 @@ void waitTillClosed()
 
 void onUpdate(float deltaTime)
 {
-    updateDebugCamera(window, deltaTime);
-
-    if (Input::isKeyJustPressed(KeyCode::MouseButtonLeft))
-    {
-        const Ray ray = Physics::rayFromScreenPosition(getWorld(), getPlayer(), getCursorPosition(window));
-        Physics::lineTrace(getWorld(), ray);
-    }
+    editorUpdate(window, deltaTime);
 }
 
 ComponentArray<TransformComponent> transforms;
@@ -53,9 +47,8 @@ int main()
 {
     window = createWindow(nullptr, 800, 600);
     engineInit(window);
-
     openProject("C:/Users/march/Documents/Mashi Projects/TestProject/project.ma");
-
+    editorInit();
 
     // char buf[4096];
     // serializeScene(buf, sizeof(buf));
@@ -69,11 +62,6 @@ int main()
     for (Entity entity : entities)
     {
         
-    }
-
-    for (auto&& [entity, model] : getWorld().view<ModelComponent>())
-    {
-        EditorUtils::createTranslationGizmo(getWorld(), entity);
     }
 
     printArchetypeStatus();

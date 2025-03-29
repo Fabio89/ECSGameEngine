@@ -17,7 +17,7 @@ namespace EngineSystems
     template <typename T>
     void addSystem(World& world);
 
-    template <typename T, typename... T_Systems>
+    template <typename T, typename... TSystems>
     void addSystems(World& world);
 
     std::vector<std::unique_ptr<System>> systems;
@@ -59,13 +59,13 @@ void EngineSystems::addSystem(World& world)
     addSystem(world, std::make_unique<T>());
 }
 
-template <typename T, typename... T_Systems>
+template <typename T, typename... TSystems>
 void EngineSystems::addSystems(World& world)
 {
     addSystem<T>(world);
 
-    if constexpr (sizeof...(T_Systems) > 0)
+    if constexpr (sizeof...(TSystems) > 0)
     {
-        addSystems<T_Systems...>(world);
+        addSystems<TSystems...>(world);
     }
 }

@@ -1,7 +1,8 @@
-module Feature.DebugFlyCamera;
+module Editor.Camera;
 import Core;
 
 Vec2 lastCursorPosition;
+bool isActive{};
 
 void updateCameraTransform(GLFWwindow* window, World& world, Entity camera, float deltaTime, bool allowRotation)
 {
@@ -40,21 +41,32 @@ void updateCameraTransform(GLFWwindow* window, World& world, Entity camera, floa
 
 float rotationCooldown = delayBeforeDrag;
 
-void DebugCamera::update(GLFWwindow* window, World& world, const Player& player, float deltaTime)
+void EditorCamera::setActive(GLFWwindow* window, bool active)
 {
-    if (Input::isKeyDown(KeyCode::MouseButtonRight))
+    if (active != isActive)
     {
-        Input::setCursorMode(window, CursorMode::Disabled);
-        rotationCooldown = Math::max(rotationCooldown - deltaTime, 0.f);
-
-        if (auto cameraEntity = player.getMainCamera(); cameraEntity != invalidId())
-            updateCameraTransform(window, world, cameraEntity, deltaTime, rotationCooldown == 0.f);
+        isActive = active;
+        if (active)
+        {
+            Input::setCursorMode(window, CursorMode::Disabled);
+        }
+        else
+        {
+            rotationCooldown = delayBeforeDrag;
+            Input::setCursorMode(window, CursorMode::Normal);
+        }
     }
-    else
-    {
-        rotationCooldown = delayBeforeDrag;
-        Input::setCursorMode(window, CursorMode::Normal);
-    }
+}
 
+void EditorCamera::update(GLFWwindow* window, World& world, const Player& player, float deltaTime)
+{
+    if (!isActive)
+        return;
+    
+    rotationCooldown = Math::max(rotationCooldown - deltaTime, 0.f);
+
+    if (auto cameraEntity = player.getMainCamera(); cameraEntity != invalidId())
+        updateCameraTransform(window, world, cameraEntity, deltaTime, rotationCooldown == 0.f);
+    
     lastCursorPosition = Input::getCursorPosition(window);
 }

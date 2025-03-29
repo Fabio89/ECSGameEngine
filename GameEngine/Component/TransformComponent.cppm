@@ -3,7 +3,7 @@ import Core;
 import Math;
 import Serialization;
 
-export struct TransformComponent : Component<TransformComponent>
+export struct TransformComponent
 {
     Vec3 position;
     Quat rotation;

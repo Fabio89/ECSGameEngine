@@ -3,7 +3,7 @@ import Core;
 
 export class ComponentArrayBase;
 
-export template <ValidComponent T>
+export template <ValidComponentData T>
 class ComponentArray;
 
 class ComponentArrayBase
@@ -23,7 +23,7 @@ public:
     virtual ComponentBase& get(size_t index) = 0;
 };
 
-template <ValidComponent T>
+template <ValidComponentData T>
 class ComponentArray final : public ComponentArrayBase
 {
 public:
@@ -34,27 +34,27 @@ public:
     void copy(ComponentArrayBase& other, size_t indexFrom, size_t indexTo) override;
     void move(size_t fromIndex, size_t toIndex) override;
 
-    const T& get(size_t index) const override;
-    T& get(size_t index) override;
+    const Component<T>& get(size_t index) const override;
+    Component<T>& get(size_t index) override;
 
 private:
-    std::vector<T> m_components = std::vector<T>(100, {});
+    std::vector<Component<T>> m_components = std::vector<Component<T>>(100, {});
 };
 
-template <ValidComponent T>
+template <ValidComponentData T>
 T& ComponentArray<T>::insert(size_t index, T&& component)
 {
-    return m_components.at(index) = std::forward<T>(component);
+    return m_components.at(index).data = std::forward<T>(component);
 }
 
-template <ValidComponent T>
+template <ValidComponentData T>
 void ComponentArray<T>::move(size_t fromIndex, size_t toIndex)
 {
     m_components[toIndex] = std::move(m_components[fromIndex]);
     m_components[fromIndex] = {};
 }
 
-template <ValidComponent T>
+template <ValidComponentData T>
 [[nodiscard]] std::unique_ptr<ComponentArrayBase> ComponentArray<T>::cloneForIndex(size_t index)
 {
     auto componentArray = std::make_unique<ComponentArray>();
@@ -62,27 +62,27 @@ template <ValidComponent T>
     return componentArray;
 }
 
-template <ValidComponent T>
+template <ValidComponentData T>
 void ComponentArray<T>::copy(ComponentArrayBase& other, size_t indexFrom, size_t indexTo)
 {
     ComponentArray& otherComponentArray = static_cast<ComponentArray&>(other);
     m_components.at(indexTo) = otherComponentArray.m_components.at(indexFrom);
 }
 
-template <ValidComponent T>
-[[nodiscard]] const T& ComponentArray<T>::get(size_t index) const
+template <ValidComponentData T>
+[[nodiscard]] const Component<T>& ComponentArray<T>::get(size_t index) const
 {
     return m_components.at(index);
 }
 
-template <ValidComponent T>
-[[nodiscard]] T& ComponentArray<T>::get(size_t index)
+template <ValidComponentData T>
+[[nodiscard]] Component<T>& ComponentArray<T>::get(size_t index)
 {
-    return const_cast<T&>(std::as_const(*this).get(index));
+    return const_cast<Component<T>&>(std::as_const(*this).get(index));
 }
 
-template <ValidComponent ... Components>
+template <ValidComponentData ... Components>
 constexpr bool containsType(ComponentTypeId id)
 {
-    return (... || (Components::typeId() == id));
+    return (... || (Component<Components>::typeId() == id));
 }

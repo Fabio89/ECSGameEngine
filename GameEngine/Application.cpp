@@ -2,7 +2,7 @@ module Application;
 import DebugWidget.EntityExplorer;
 import EngineComponents;
 import EngineSystems;
-import Feature.DebugFlyCamera;
+import Editor.Camera;
 import Input;
 import Math;
 import Physics;
@@ -201,7 +201,7 @@ ComponentBase& editComponent(Entity entity, ComponentTypeId typeId)
 
 void updateDebugCamera(GLFWwindow* window, float deltaTime)
 {
-    DebugCamera::update(window, world, player, deltaTime);
+    EditorCamera::update(window, world, player, deltaTime);
 }
 
 GLFWwindow* createWindow(HWND parent, int width, int height)

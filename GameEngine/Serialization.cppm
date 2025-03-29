@@ -45,8 +45,8 @@ export namespace Json
     constexpr int defaultFloatPrecision = 5;
 }
 
-export template <typename T>
+export template <ValidComponentData T>
 JsonObject serialize(const T&, Json::MemoryPoolAllocator<>&) { return {}; }
 
-export template <typename T> 
+export template <ValidComponentData T> 
 T deserialize(const JsonObject&) { return T{}; }

@@ -68,19 +68,23 @@ export template <ValidComponentData T>
 struct Component : ComponentBase
 {
     static consteval ComponentTypeId typeId();
+    T data;
 };
 
 export template <typename T>
 concept ValidComponent = std::is_base_of_v<Component<T>, T>;
 
-export template <ValidComponent T>
+export template <ValidComponentData T>
 struct TypeTraits
 {
     static constexpr const char* name = "Unknown";
 };
 
-export template <ValidComponent T>
+export template <ValidComponentData T>
 constexpr const char* getComponentName() { return TypeTraits<T>::name; }
+
+export template <ValidComponentData T>
+constexpr ComponentTypeId getComponentType() { return Component<T>::typeId(); }
 
 template <ValidComponentData T>
 consteval ComponentTypeId Component<T>::typeId()

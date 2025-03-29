@@ -2,7 +2,7 @@ export module Component.LineRender;
 import Core;
 import Render.Model;
 
-export struct LineRenderComponent : Component<LineRenderComponent>
+export struct LineRenderComponent
 {
     Entity parent;
     std::vector<LineVertex> vertices;

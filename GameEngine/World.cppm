@@ -2,7 +2,7 @@ export module World;
 import Archetype;
 import Core;
 import DebugUI.IDebugWidget;
-import Render.IRenderManager;
+import Render.RenderManager;
 import Serialization;
 
 static constexpr int maxComponentsPerEntity = 64;
@@ -21,7 +21,7 @@ struct std::hash<EntitySignature>
 
 export struct WorldCreateInfo
 {
-    IRenderManager* renderManager{};
+    RenderManager* renderManager{};
 };
 
 //------------------------------------------------------------------------------------------------------------------------
@@ -42,21 +42,24 @@ public:
 
     void patchEntity(Entity entity, const JsonObject& json);
 
-    template <ValidComponent T, typename... Args>
+    template <ValidComponentData T, typename... Args>
     T& addComponent(Entity entity, Args&&... args);
 
-    template <ValidComponent T>
+    template <ValidComponentData T>
+    T& addComponent(Entity entity, T&& args);
+
+    template <ValidComponentData T>
     bool hasComponent(Entity entity) const;
     bool hasComponent(Entity entity, ComponentTypeId componentTypeId) const;
 
-    template <ValidComponent T>
+    template <ValidComponentData T>
     const T& readComponent(Entity entity) const;
 
     const ComponentBase& readComponent(Entity entity, ComponentTypeId componentType) const;
 
     Archetype::ComponentRange getComponentTypesInEntity(Entity entity) const;
 
-    template <ValidComponent T>
+    template <ValidComponentData T>
     T& editComponent(Entity entity) { return const_cast<T&>(readComponent<T>(entity)); }
 
     template <typename T>
@@ -67,14 +70,14 @@ public:
 
     auto getEntitiesRange() const { return m_entities | std::views::keys; }
 
-    template <ValidComponent First, ValidComponent ... Rest>
+    template <ValidComponentData First, ValidComponentData ... Rest>
     std::generator<std::tuple<Entity, const First&, const Rest&...>> view() const;
 
-    template <ValidComponent First, ValidComponent ... Rest>
+    template <ValidComponentData First, ValidComponentData ... Rest>
     std::generator<std::tuple<Entity, First&, Rest&...>> view();
 
-    const IRenderManager& getRenderManager() const { return m_renderManager.get(); }
-    IRenderManager& getRenderManager() { return m_renderManager.get(); }
+    const RenderManager& getRenderManager() const { return m_renderManager.get(); }
+    RenderManager& getRenderManager() { return m_renderManager.get(); }
 
     void printArchetypeStatus();
 
@@ -88,21 +91,21 @@ private:
     Entity m_nextEntity = 0;
     std::unordered_map<Entity, EntitySignature> m_entities;
     std::unordered_map<EntitySignature, Archetype> m_archetypes;
-    std::reference_wrapper<IRenderManager> m_renderManager;
+    std::reference_wrapper<RenderManager> m_renderManager;
 };
 
 //------------------------------------------------------------------------------------------------------------------------
 // World - Implementation
 //------------------------------------------------------------------------------------------------------------------------
-template <ValidComponent T, typename... Args>
+template <ValidComponentData T, typename... Args>
 T& World::addComponent(Entity entity, Args&&... args)
 {
     EntitySignature& signature = m_entities[entity];
     const EntitySignature oldSignature = signature;
-    
+
     Archetype& oldArchetype = m_archetypes[oldSignature];
 
-    signature.bitset.set(std::hash<ComponentTypeId>{}(T::typeId()) % maxComponentsPerEntity);
+    signature.bitset.set(std::hash<ComponentTypeId>{}(Component<T>::typeId()) % maxComponentsPerEntity);
 
     const bool usingExistingArchetype = m_archetypes.contains(signature);
 
@@ -121,18 +124,24 @@ T& World::addComponent(Entity entity, Args&&... args)
     {
         m_archetypes.erase(oldSignature);
     }
-    
+
     T& addedComponent = newArchetype.addComponent<T>(entity, T{std::forward<Args>(args)...});
     log(std::format("Added component {} to entity {}", getComponentName<T>(), entity));
 
     for (auto& callback : m_archetypeChangeObservers | std::views::values)
     {
-        callback(entity, T::typeId());
+        callback(entity, Component<T>::typeId());
     }
     return addedComponent;
 }
 
-template <ValidComponent T>
+template <ValidComponentData T>
+T& World::addComponent(Entity entity, T&& args)
+{
+    return addComponent<T, T>(entity, std::forward<T>(args));
+}
+
+template <ValidComponentData T>
 bool World::hasComponent(Entity entity) const
 {
     if (auto it = m_entities.find(entity); it != m_entities.end())
@@ -143,7 +152,7 @@ bool World::hasComponent(Entity entity) const
     return false;
 }
 
-template <ValidComponent T>
+template <ValidComponentData T>
 [[nodiscard]] const T& World::readComponent(Entity entity) const
 {
     if (auto it = m_entities.find(entity); it != m_entities.end())
@@ -155,7 +164,7 @@ template <ValidComponent T>
     return invalid;
 }
 
-template <ValidComponent First, ValidComponent ... Rest>
+template <ValidComponentData First, ValidComponentData ... Rest>
 std::generator<std::tuple<Entity, const First&, const Rest&...>> World::view() const
 {
     for (auto& archetype : m_archetypes | std::views::values)
@@ -170,7 +179,7 @@ std::generator<std::tuple<Entity, const First&, const Rest&...>> World::view() c
     }
 }
 
-template <ValidComponent First, ValidComponent ... Rest>
+template <ValidComponentData First, ValidComponentData ... Rest>
 std::generator<std::tuple<Entity, First&, Rest&...>> World::view()
 {
     for (auto& archetype : m_archetypes | std::views::values)

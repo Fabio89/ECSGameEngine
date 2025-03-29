@@ -2,21 +2,28 @@ module World;
 import AssetManager;
 import ComponentRegistry;
 import Component.Name;
+import Component.Tags;
 import Render.Model;
 
 template <typename T>
-void loadAssets(const JsonObject& json, const char* assetName)
+std::vector<const T*> loadAssets(const JsonObject& json, const char* assetName)
 {
-    if (!json.IsObject())
-        return;
+    std::vector<const T*> loadedAssets;
 
-    if (auto assets = json.FindMember(assetName); assets != json.MemberEnd())
+    if (json.IsObject())
     {
-        for (const JsonObject& element : assets->value.GetArray())
+        if (const auto assets = json.FindMember(assetName); assets != json.MemberEnd())
         {
-            AssetManager::loadAsset<T>(element);
+            loadedAssets.reserve(assets->value.Size());
+            for (const JsonObject& element : assets->value.GetArray())
+            {
+                if (const T* asset = AssetManager::loadAsset<T>(element))
+                    loadedAssets.push_back(asset);
+            }
         }
     }
+
+    return loadedAssets;
 }
 
 World::World(const WorldCreateInfo& info)
@@ -26,7 +33,7 @@ World::World(const WorldCreateInfo& info)
 
 Entity World::createEntity()
 {
-    Entity entity = m_nextEntity++;
+    const Entity entity = m_nextEntity++;
     m_entities.try_emplace(entity);
     return entity;
 }
@@ -126,6 +133,9 @@ JsonObject World::serializeScene(Json::MemoryPoolAllocator<>& allocator) const
 
     for (auto entity : m_entities | std::views::keys)
     {
+        if (hasComponent<TagsComponent>(entity) && std::ranges::contains(readComponent<TagsComponent>(entity).tags, Tag::notEditable))
+            continue;
+        
         JsonObject jsonEntity{Json::kObjectType};
         JsonObject jsonComponentDict{Json::kObjectType};
 
@@ -156,9 +166,15 @@ void World::deserializeScene(const JsonObject& json)
     if (!json.IsObject())
         return;
 
-    loadAssets<MeshAsset>(json, "meshes");
-    loadAssets<TextureAsset>(json, "textures");
-
+    for (const MeshAsset* mesh : loadAssets<MeshAsset>(json, "meshes"))
+    {
+        m_renderManager.get().addCommand(RenderCommands::AddMesh{mesh->getGuid(), mesh->getData()});
+    }
+    for (const TextureAsset* texture : loadAssets<TextureAsset>(json, "textures"))
+    {
+        m_renderManager.get().addCommand(RenderCommands::AddTexture{texture->getGuid(), texture->getData()});
+    }
+    
     if (auto entities = json.FindMember("entities"); entities != json.MemberEnd())
     {
         for (const JsonObject& entityJson : entities->value.GetArray())

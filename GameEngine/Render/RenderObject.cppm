@@ -3,9 +3,14 @@ import Core;
 import CoreTypes;
 import Guid;
 import Math;
-import Render.IRenderManager;
 import Render.Model;
 import Wrapper.Vulkan;
+
+export struct Camera
+{
+    Mat4 view{};
+    Mat4 proj{};
+};
 
 struct Texture
 {
@@ -26,6 +31,14 @@ struct Mesh
     vk::DeviceMemory indexBufferMemory{};
 };
 
+struct LineMesh
+{
+    MeshId id{};
+    std::vector<LineVertex> vertices;
+    vk::Buffer vertexBuffer{};
+    vk::DeviceMemory vertexBufferMemory{};
+};
+
 struct UniformBufferObject
 {
     Mat4 model{};
@@ -36,8 +49,9 @@ struct UniformBufferObject
 struct RenderObject
 {
     Entity entity{};
-    Mesh mesh;
-    Texture texture;
+    bool visible{true};
+    MeshId mesh{invalidId()};
+    TextureId texture{invalidId()};
     Mat4 model{1};
     std::vector<vk::Buffer> uniformBuffers;
     std::vector<vk::DeviceMemory> uniformBuffersMemory;
@@ -48,6 +62,7 @@ struct RenderObject
 struct LineRenderObject
 {
     Entity entity{};
+    bool visible{true};
     Mat4 model{1};
     std::vector<LineVertex> vertices;
     vk::Buffer vertexBuffer{};
@@ -57,30 +72,6 @@ struct LineRenderObject
     std::vector<void*> uniformBuffersMapped;
     std::vector<vk::DescriptorSet> descriptorSets;
 };
-
-export namespace RenderMessages
-{
-    struct AddObject
-    {
-        Entity entity;
-        const MeshAsset* mesh{};
-        const TextureAsset* texture{};
-    };
-
-    struct AddLineObject
-    {
-        Entity entity;
-        std::vector<LineVertex> vertices;
-    };
-
-    struct SetTransform
-    {
-        Entity entity;
-        Vec3 location{};
-        Quat rotation{};
-        float scale{1.f};
-    };
-}
 
 export class RenderObjectManager
 {
@@ -97,15 +88,15 @@ public:
     );
 
     void clear();
-    void addCommand(RenderMessages::AddObject command);
-    void addCommand(RenderMessages::SetTransform command);
-    void addCommand(RenderMessages::AddLineObject command);
-    void executePendingCommands();
     void setCamera(const Camera& camera);
 
-    const Mesh& addMesh(MeshData data, Guid guid);
-    const Texture& addTexture(const TextureData& textureData, Guid guid);
-
+    void addMesh(MeshData&& data, Guid guid);
+    void addTexture(TextureData&& textureData, Guid guid);
+    void addRenderObject(Entity entity, Guid meshAsset, Guid textureAsset);
+    void setObjectTransform(Entity entity, Vec3 location = {}, Quat rotation = {}, float scale = 1.f);
+    void addLineRenderObject(Entity entity, std::vector<LineVertex>&& vertices);
+    void setObjectVisibility(Entity entity, bool visible);
+    
     void renderFrame
     (
         vk::CommandBuffer commandBuffer,
@@ -121,17 +112,10 @@ public:
     );
 
 private:
-    void addRenderObject(Entity entity, const MeshAsset* meshAsset, const TextureAsset* textureAsset);
-    void setObjectTransform(Entity entity, Vec3 location = {}, Quat rotation = {}, float scale = 1.f);
-    void addLineRenderObject(Entity entity, std::vector<LineVertex>&& vertices);
     void updateDescriptorSets(const RenderObject& object) const;
     void updateUniformBuffer(RenderObject& object, UInt32 currentImage);
     void updateUniformBuffer(LineRenderObject& object, UInt32 currentImage);
     void updateLineDescriptorSets(const LineRenderObject& object) const;
-
-    ThreadSafeQueue<RenderMessages::AddObject> m_addObjectCommands;
-    ThreadSafeQueue<RenderMessages::AddLineObject> m_addLineObjectCommands;
-    ThreadSafeQueue<RenderMessages::SetTransform> m_setTransformCommands;
 
     std::vector<RenderObject> m_objects;
     std::vector<LineRenderObject> m_lineObjects;

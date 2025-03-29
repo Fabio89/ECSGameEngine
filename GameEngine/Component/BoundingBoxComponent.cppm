@@ -4,7 +4,7 @@ import Core;
 import Math;
 import Serialization;
 
-export struct BoundingBoxComponent : Component<BoundingBoxComponent>
+export struct BoundingBoxComponent
 {
     Vec3 minLocal;
     Vec3 maxLocal;

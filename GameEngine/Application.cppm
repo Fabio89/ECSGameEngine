@@ -5,7 +5,7 @@ import Input;
 import Math;
 import Player;
 import World;
-import Render.IRenderManager;
+import Render.RenderManager;
 import Wrapper.Glfw;
 import Wrapper.Windows;
 
@@ -68,9 +68,6 @@ void patchEntity(Entity entity, const char* json);
 //------------------------------------------------------------------------------------------------------------------------
 // DEBUG -TEMPORARY
 //------------------------------------------------------------------------------------------------------------------------
-export extern "C" __declspec(dllexport)
-void updateDebugCamera(GLFWwindow* window, float deltaTime);
-
 export __declspec(dllexport)
 World& getWorld();
 
@@ -83,8 +80,8 @@ Player& getPlayer();
 export __declspec(dllexport)
 ComponentBase& editComponent(Entity entity, ComponentTypeId typeId);
 
-export template<ValidComponent T>
+export template<ValidComponentData T>
 T& editComponent(Entity entity)
 {
-    return reinterpret_cast<T&>(editComponent(entity, T::typeId()));
+    return reinterpret_cast<T&>(editComponent(entity, Component<T>::typeId()));
 }

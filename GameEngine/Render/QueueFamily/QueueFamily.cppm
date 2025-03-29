@@ -1,7 +1,6 @@
 export module Render.QueueFamily;
 import Core;
 import vulkan_hpp;
-import std.compat;
 
 export enum class QueueFamilyType : size_t
 {
@@ -13,15 +12,15 @@ export enum class QueueFamilyType : size_t
 
 export class QueueFamilyIndices
 {
-	std::vector<std::optional<uint32_t>> m_families;
+	std::vector<std::optional<UInt32>> m_families;
 
 public:
 	QueueFamilyIndices();
 
 	int size() const;
 
-	const std::optional<uint32_t>& get(QueueFamilyType type) const;
-	std::optional<uint32_t>& get(QueueFamilyType type);
+	const std::optional<UInt32>& get(QueueFamilyType type) const;
+	std::optional<UInt32>& get(QueueFamilyType type);
 
 	using Iterator = decltype(m_families)::iterator;
 	Iterator begin() { return m_families.begin(); }
@@ -47,12 +46,12 @@ int QueueFamilyIndices::size() const
 	return static_cast<int>(m_families.size());
 }
 
-const std::optional<uint32_t>& QueueFamilyIndices::get(QueueFamilyType type) const
+const std::optional<UInt32>& QueueFamilyIndices::get(QueueFamilyType type) const
 {
 	return m_families.at(static_cast<size_t>(type));
 }
 
-std::optional<uint32_t>& QueueFamilyIndices::get(QueueFamilyType type)
+std::optional<UInt32>& QueueFamilyIndices::get(QueueFamilyType type)
 {
 	return m_families.at(static_cast<size_t>(type));
 }
@@ -68,7 +67,7 @@ QueueFamilyIndices QueueFamilyUtils::findQueueFamilies(vk::PhysicalDevice device
 
 	std::vector<vk::QueueFamilyProperties> queueFamilies = device.getQueueFamilyProperties();
 
-	for (uint32_t i = 0; i < queueFamilies.size(); ++i)
+	for (UInt32 i = 0; i < queueFamilies.size(); ++i)
 	{
 		const vk::QueueFamilyProperties& family = queueFamilies[i];
 		if ((family.queueFlags & vk::QueueFlagBits::eGraphics))
@@ -88,7 +87,7 @@ QueueFamilyIndices QueueFamilyUtils::findQueueFamilies(vk::PhysicalDevice device
 	auto isGraphicsFamily = [](const vk::QueueFamilyProperties& family) { return !!(family.queueFlags & vk::QueueFlagBits::eGraphics); };
 	if (auto it = std::ranges::find_if(queueFamilies, isGraphicsFamily); it != queueFamilies.end())
 	{
-		indices.get(QueueFamilyType::Graphics) = static_cast<uint32_t>(it - queueFamilies.begin());
+		indices.get(QueueFamilyType::Graphics) = static_cast<UInt32>(it - queueFamilies.begin());
 	}
 
 	return indices;

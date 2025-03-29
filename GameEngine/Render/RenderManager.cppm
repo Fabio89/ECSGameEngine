@@ -1,42 +1,48 @@
 export module Render.RenderManager;
+export import Render.Commands;
 import Core;
 import CoreTypes;
+import Guid;
 import ImGuiHelper;
 import Math;
-import Render.IRenderManager;
 import Render.Model;
 import Render.RenderObject;
 import Wrapper.Glfw;
 
-export class RenderManager final : public IRenderManager
+export class RenderManager
 {
 public:
     RenderManager() = default;
-    ~RenderManager() override;
+    ~RenderManager();
     RenderManager(const RenderManager&) = delete;
     RenderManager(RenderManager&&) = delete;
     RenderManager& operator=(const RenderManager&) = delete;
     RenderManager& operator=(RenderManager&&) = delete;
 
-    bool hasBeenInitialized() const override { return m_initialised; }
-    void init(GLFWwindow* window) override;
-    void update() override;
-    void shutdown() override;
-    void clear() override;
-    
-    void addDebugWidget(std::unique_ptr<IDebugWidget> widget) override;
-    void addRenderObject(Entity entity, const MeshAsset* mesh, const TextureAsset* texture) override;
-    void setRenderObjectTransform(Entity entity, Vec3 location, Quat rotation, float scale = 1.f) override;
-    void setLineRenderObject(Entity entity, const std::vector<LineVertex>& vertices) override;
-    void setCamera(const Camera& camera) override;
-    float getAspectRatio() const override { return m_swapchainExtent.height > 0 ? m_swapchainExtent.width / static_cast<float>(m_swapchainExtent.height) : 1.f; }
+    bool hasBeenInitialized() const { return m_initialised; }
+    void init(GLFWwindow* window);
+    void update();
+    void shutdown();
+    void clear();
+
+    template <typename T>
+    void addCommand(T&& command);
+
+    void addDebugWidget(std::unique_ptr<IDebugWidget> widget);
+    void setCamera(const Camera& camera);
+    float getAspectRatio() const { return m_swapchainExtent.height > 0 ? m_swapchainExtent.width / static_cast<float>(m_swapchainExtent.height) : 1.f; }
 
     void updateFramebufferSize() { m_framebufferResized = true; }
     float getDeltaTime() const { return m_deltaTime; }
-    
+
 private:
+    class RenderCommandBase;
+    template <typename T>
+    class RenderCommand;
+
     bool m_initialised{};
     RenderObjectManager m_renderObjectManager;
+    ThreadSafeQueue<std::unique_ptr<RenderCommandBase>> m_commands;
     GLFWwindow* m_window{};
     vk::Instance m_instance{};
     vk::PhysicalDevice m_physicalDevice{};
@@ -80,7 +86,7 @@ private:
     std::atomic<bool> m_framebufferResized{};
     UInt32 m_currentFrame{0};
     bool m_terminated{};
-    
+
     static std::vector<const char*> getRequiredExtensions();
 
     void createInstance();
@@ -106,4 +112,85 @@ private:
     void pickPhysicalDevice();
     [[nodiscard]] static bool checkValidationLayerSupport();
     void drawFrame();
+
+    template <typename T>
+    void processCommand(T&& command);
 };
+
+class RenderManager::RenderCommandBase
+{
+public:
+    RenderCommandBase() = default;
+    virtual ~RenderCommandBase() = default;
+    RenderCommandBase(const RenderCommandBase&) = default;
+    RenderCommandBase& operator=(const RenderCommandBase&) = default;
+    RenderCommandBase(RenderCommandBase&&) = default;
+    RenderCommandBase& operator=(RenderCommandBase&&) = default;
+
+    virtual void process()
+    {
+    }
+};
+
+template <typename T>
+class RenderManager::RenderCommand : public RenderCommandBase
+{
+public:
+    using RenderCommandBase::RenderCommandBase;
+
+    RenderCommand(RenderManager* renderManager, const T& data) : m_renderManager{renderManager}, m_data{std::forward<T>(data)}
+    {
+    }
+
+    RenderCommand(RenderManager* renderManager, T&& data) : m_renderManager{renderManager}, m_data{std::forward<T>(data)}
+    {
+    }
+
+    void process() final { m_renderManager->processCommand<T>(std::forward<T>(m_data)); }
+
+private:
+    RenderManager* m_renderManager{};
+    T m_data;
+};
+
+template <typename T>
+void RenderManager::addCommand(T&& command)
+{
+    m_commands.push(std::make_unique<RenderCommand<T>>(this, std::forward<T>(command)));
+}
+
+template <>
+void RenderManager::processCommand(RenderCommands::AddMesh&& cmd)
+{
+    m_renderObjectManager.addMesh(std::move(cmd.data), cmd.guid);
+}
+
+template <>
+void RenderManager::processCommand(RenderCommands::AddTexture&& cmd)
+{
+    m_renderObjectManager.addTexture(std::move(cmd.data), cmd.guid);
+}
+
+template <>
+void RenderManager::processCommand(RenderCommands::AddObject&& cmd)
+{
+    m_renderObjectManager.addRenderObject(cmd.entity, cmd.mesh, cmd.texture);
+}
+
+template <>
+void RenderManager::processCommand(RenderCommands::AddLineObject&& cmd)
+{
+    m_renderObjectManager.addLineRenderObject(cmd.entity, std::move(cmd.vertices));
+}
+
+template <>
+void RenderManager::processCommand(RenderCommands::SetTransform&& cmd)
+{
+    m_renderObjectManager.setObjectTransform(cmd.entity, cmd.location, cmd.rotation, cmd.scale);
+}
+
+template <>
+void RenderManager::processCommand(RenderCommands::SetObjectVisibility&& cmd)
+{
+    m_renderObjectManager.setObjectVisibility(cmd.entity, cmd.visible);
+}

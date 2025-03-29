@@ -7,10 +7,15 @@ export class System_LineRender final : public System
 {
     void onComponentAdded(World& world, Entity entity, ComponentTypeId componentType) override
     {
-        if (componentType == LineRenderComponent::typeId())
+        if (componentType == getComponentType<LineRenderComponent>())
         {
             const auto& component = world.readComponent<LineRenderComponent>(entity);
-            world.getRenderManager().setLineRenderObject(entity, component.vertices);
+            world.getRenderManager().addCommand(RenderCommands::AddLineObject{entity, component.vertices});
+            if (component.parent != invalidId() && world.hasComponent<TransformComponent>(entity) && world.hasComponent<TransformComponent>(component.parent))
+            {
+                const auto& transform = world.editComponent<TransformComponent>(entity) = world.readComponent<TransformComponent>(component.parent);
+                world.getRenderManager().addCommand(RenderCommands::SetTransform{entity, transform.position, transform.rotation, transform.scale});
+            }
         }
     }
 

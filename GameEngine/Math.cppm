@@ -65,6 +65,8 @@ export namespace Math
     using glm::epsilon;
     using glm::distance;
     using glm::mat4_cast;
+    using glm::pi;
+    using glm::half_pi;
     using glm::sin;
     using glm::cos;
     using glm::tan;

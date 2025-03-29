@@ -3,6 +3,7 @@ module;
 
 module Render.RenderManager;
 import Core;
+import Guid;
 import Render.Model;
 import Render.QueueFamily;
 import Render.TextureLoading;
@@ -105,7 +106,14 @@ void RenderManager::update()
     std::lock_guard lock{updateLockMutex};
 
     m_graphicsQueue.waitIdle(); // TODO: Optimization target. Explore VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT.
-    m_renderObjectManager.executePendingCommands();
+
+    auto cmd = m_commands.tryPop();
+    while (cmd.has_value())
+    {
+        cmd->get()->process();
+        cmd = m_commands.tryPop();
+    }
+    
     m_deltaTime.update();
     drawFrame();
 }
@@ -161,32 +169,6 @@ void RenderManager::clear()
     m_device.waitIdle();
     m_renderObjectManager.clear();
     updatesBlocked = false;
-}
-
-void RenderManager::addRenderObject(Entity entity, const MeshAsset* mesh, const TextureAsset* texture)
-{
-    m_renderObjectManager.addCommand
-    ({
-        .entity = entity,
-        .mesh = mesh,
-        .texture = texture
-    });
-}
-
-void RenderManager::setRenderObjectTransform(Entity entity, Vec3 location, Quat rotation, float scale)
-{
-    m_renderObjectManager.addCommand
-    ({
-        .entity = entity,
-        .location = location,
-        .rotation = rotation,
-        .scale = scale
-    });
-}
-
-void RenderManager::setLineRenderObject(Entity entity, const std::vector<LineVertex>& vertices)
-{
-    m_renderObjectManager.addCommand(RenderMessages::AddLineObject{.entity = entity, .vertices = vertices});
 }
 
 void RenderManager::setCamera(const Camera& camera)

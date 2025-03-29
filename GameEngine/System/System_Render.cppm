@@ -1,12 +1,18 @@
-export module System.Transform;
+export module System.Render;
+import Component.Model;
 import Component.Transform;
 import System;
 
-export class System_Transform final : public System
+export class System_Render final : public System
 {
     void onComponentAdded(World& world, Entity entity, ComponentTypeId componentType) override
     {
-        if (componentType == getComponentType<TransformComponent>())
+        if (componentType == getComponentType<ModelComponent>())
+        {
+            const auto& component = world.readComponent<ModelComponent>(entity);
+            world.getRenderManager().addCommand(RenderCommands::AddObject{entity, component.mesh, component.texture});
+        }
+        else if (componentType == getComponentType<TransformComponent>())
         {
             const auto& component = world.readComponent<TransformComponent>(entity);
             updateRenderTransform(world, entity, component);

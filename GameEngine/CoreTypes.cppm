@@ -23,10 +23,10 @@ export template <typename T>
 class ThreadSafeQueue
 {
 public:
-    void push(const T& item)
+    void push(T item)
     {
         std::lock_guard lock{m_mutex};
-        m_queue.push(item);
+        m_queue.emplace(std::move(item));
         m_condition.notify_one();
     }
 

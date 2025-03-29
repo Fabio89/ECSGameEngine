@@ -1,42 +1,8 @@
 export module System.BoundingBox;
 import Component.BoundingBox;
-import Component.LineRender;
-import Component.Name;
 import Component.Transform;
 import Math;
-import Render.Model;
 import System;
-
-constexpr std::vector<LineVertex> generateAABBVertices(const Vec3& min, const Vec3& max)
-{
-    std::vector<Vec3> vertices =
-    {
-        // Bottom face (4 lines)
-        {min.x, min.y, min.z}, {max.x, min.y, min.z},
-        {max.x, min.y, min.z}, {max.x, max.y, min.z},
-        {max.x, max.y, min.z}, {min.x, max.y, min.z},
-        {min.x, max.y, min.z}, {min.x, min.y, min.z},
-
-        // Top face (4 lines)
-        {min.x, min.y, max.z}, {max.x, min.y, max.z},
-        {max.x, min.y, max.z}, {max.x, max.y, max.z},
-        {max.x, max.y, max.z}, {min.x, max.y, max.z},
-        {min.x, max.y, max.z}, {min.x, min.y, max.z},
-
-        // Vertical lines (4 lines)
-        {min.x, min.y, min.z}, {min.x, min.y, max.z},
-        {max.x, min.y, min.z}, {max.x, min.y, max.z},
-        {max.x, max.y, min.z}, {max.x, max.y, max.z},
-        {min.x, max.y, min.z}, {min.x, max.y, max.z}
-    };
-
-    std::vector<LineVertex> lineVertices;
-    std::ranges::transform(vertices, std::back_inserter(lineVertices), [](const Vec3& pos)
-    {
-        return LineVertex{pos, Vec3{1.0f, 0.75f, 0.0f}};
-    });
-    return lineVertices;
-}
 
 constexpr std::vector<Vec3> computeCorners(const BoundingBoxComponent& aabb)
 {
@@ -77,15 +43,11 @@ export class System_BoundingBox final : public System
 {
     void onComponentAdded(World& world, Entity entity, ComponentTypeId componentType) override
     {
-        if (componentType == BoundingBoxComponent::typeId())
+        if (componentType == getComponentType<BoundingBoxComponent>())
         {
             auto& aabb = world.editComponent<BoundingBoxComponent>(entity);
             const auto& transform = world.readComponent<TransformComponent>(entity);
             computeWorldCorners(aabb, transform);
-            Entity aabbGizmo = world.createEntity();
-            world.addComponent<NameComponent>(aabbGizmo, NameComponent{.name = "BoundingBoxGizmo"});
-            world.addComponent<TransformComponent>(aabbGizmo, transform);
-            world.addComponent<LineRenderComponent>(aabbGizmo, LineRenderComponent{.parent = entity, .vertices = generateAABBVertices(aabb.minLocal, aabb.maxLocal)});
         }
     }
 

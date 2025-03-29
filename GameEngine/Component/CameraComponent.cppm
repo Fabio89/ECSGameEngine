@@ -3,7 +3,7 @@ import Core;
 import Math;
 import Serialization;
 
-export struct CameraComponent : Component<CameraComponent>
+export struct CameraComponent
 {
     float fov{60.f};
     float nearPlane{0.1f};
