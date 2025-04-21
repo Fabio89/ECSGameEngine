@@ -3,7 +3,7 @@ import Log;
 import Render.QueueFamily;
 
 [[nodiscard]] UInt32 RenderUtils::findMemoryType(vk::PhysicalDevice physicalDevice, UInt32 typeFilter,
-                                                   vk::MemoryPropertyFlags properties)
+                                                 vk::MemoryPropertyFlags properties)
 {
     vk::PhysicalDeviceMemoryProperties memProperties = physicalDevice.getMemoryProperties();
 
@@ -26,7 +26,7 @@ vk::CommandBuffer RenderUtils::beginSingleTimeCommands(vk::Device device, vk::Co
     {
         .commandPool = commandPool,
         .level = vk::CommandBufferLevel::ePrimary,
-        .commandBufferCount = 1,
+        .commandBufferCount = 1u,
     };
 
     const vk::CommandBuffer commandBuffer = *device.allocateCommandBuffers(allocInfo).begin();
@@ -191,7 +191,7 @@ vk::DebugUtilsMessengerCreateInfoEXT RenderUtils::newDebugUtilsMessengerCreateIn
         vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError,
         .messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
         vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
-        .pfnUserCallback = reinterpret_cast<PFN_vkDebugUtilsMessengerCallbackEXT>(debugCallback),
+        .pfnUserCallback = reinterpret_cast<vk::PFN_DebugUtilsMessengerCallbackEXT>(debugCallback),
     };
 
     return info;
@@ -406,9 +406,9 @@ void RenderUtils::copyBufferToImage(vk::Device device, vk::Queue commandQueue, v
 
     const vk::BufferImageCopy region
     {
-        .bufferOffset = 0,
-        .bufferRowLength = 0,
-        .bufferImageHeight = 0,
+        .bufferOffset = 0u,
+        .bufferRowLength = 0u,
+        .bufferImageHeight = 0u,
         .imageSubresource
         {
             .aspectMask = vk::ImageAspectFlagBits::eColor,
@@ -456,4 +456,39 @@ vk::Format RenderUtils::findDepthFormat(vk::PhysicalDevice physicalDevice)
         vk::ImageTiling::eOptimal,
         vk::FormatFeatureFlagBits::eDepthStencilAttachment
     );
+}
+
+void RenderUtils::transitionImageLayout
+(
+    vk::CommandBuffer cmd,
+    vk::Image image,
+    vk::ImageLayout oldLayout,
+    vk::ImageLayout newLayout,
+    vk::AccessFlags srcAccessMask,
+    vk::AccessFlags dstAccessMask,
+    vk::PipelineStageFlags srcStage,
+    vk::PipelineStageFlags dstStage,
+    vk::ImageAspectFlags aspectMask
+)
+{
+    const vk::ImageMemoryBarrier barrier
+    {
+        .srcAccessMask = srcAccessMask,
+        .dstAccessMask = dstAccessMask,
+        .oldLayout = oldLayout,
+        .newLayout = newLayout,
+        .srcQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .dstQueueFamilyIndex = vk::QueueFamilyIgnored,
+        .image = image,
+        .subresourceRange =
+        {
+            .aspectMask = aspectMask,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+        }
+    };
+
+    cmd.pipelineBarrier(srcStage, dstStage, {}, nullptr, nullptr, barrier);
 }

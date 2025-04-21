@@ -19,7 +19,7 @@ export struct ImGuiInitInfo
 export class ImGuiHelper
 {
 public:
-    static constexpr bool enabled = true;
+    static constexpr bool enabled = false;
     void init(GLFWwindow* window, const ImGuiInitInfo& initInfo);
 
     template <typename T>

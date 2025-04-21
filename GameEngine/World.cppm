@@ -2,6 +2,7 @@ export module World;
 import Archetype;
 import Core;
 import DebugUI.IDebugWidget;
+import Guid;
 import Render.RenderManager;
 import Serialization;
 

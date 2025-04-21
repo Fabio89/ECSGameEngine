@@ -14,14 +14,11 @@ export namespace RenderUtils
                 vk::ImageTiling tiling,
                 vk::ImageUsageFlags usage);
 
-    [[nodiscard]] vk::ImageView createImageView(vk::Device device, vk::Image image, vk::Format format,
-                                                vk::ImageAspectFlags aspectFlags = vk::ImageAspectFlagBits::eColor);
+    [[nodiscard]] vk::ImageView createImageView(vk::Device device, vk::Image image, vk::Format format, vk::ImageAspectFlags aspectFlags = vk::ImageAspectFlagBits::eColor);
 
     // Create a Vulkan image from the specified file
     [[nodiscard]] std::tuple<vk::Image, vk::DeviceMemory>
-    createTextureImage(const char* path, vk::Device device, vk::PhysicalDevice physicalDevice, vk::Queue commandQueue,
-                       vk::CommandPool
-                       commandPool);
+    createTextureImage(const char* path, vk::Device device, vk::PhysicalDevice physicalDevice, vk::Queue commandQueue, vk::CommandPool commandPool);
 
     [[nodiscard]] vk::ImageView createTextureImageView(vk::Device device, vk::Image image);
 

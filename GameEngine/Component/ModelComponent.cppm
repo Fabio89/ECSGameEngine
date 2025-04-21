@@ -18,11 +18,11 @@ struct TypeTraits<ModelComponent>
 };
 
 template <>
-JsonObject serialize(const ModelComponent& thing, Json::MemoryPoolAllocator<>& allocator)
+JsonObject serialize(const ModelComponent& component, Json::MemoryPoolAllocator<>& allocator)
 {
     JsonObject json{Json::kObjectType};
-    json.AddMember("mesh", JsonObject{thing.mesh.toString().data(), allocator}, allocator);
-    json.AddMember("texture", JsonObject{thing.texture.toString().data(), allocator}, allocator);
+    json.AddMember("mesh", JsonObject{component.mesh.toString().data(), allocator}, allocator);
+    json.AddMember("texture", JsonObject{component.texture.toString().data(), allocator}, allocator);
     return json;
 }
 

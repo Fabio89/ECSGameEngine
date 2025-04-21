@@ -1,10 +1,9 @@
-module;
-#include <cstddef>
-
 module Render.RenderManager;
 import Core;
 import Guid;
 import Render.Model;
+import Render.Pipeline.Line;
+import Render.Pipeline.MeshWithTexture;
 import Render.QueueFamily;
 import Render.TextureLoading;
 import Render.Utils;
@@ -14,15 +13,159 @@ import Wrapper.Windows;
 std::mutex updateLockMutex;
 std::atomic updatesBlocked{false};
 
-const std::string& getExecutableRoot()
+[[nodiscard]]
+vk::PipelineLayout createPipelineLayout(vk::Device device, vk::DescriptorSetLayout descriptorSetLayout)
 {
-    static const std::string exeRoot = []
+    const vk::PipelineLayoutCreateInfo pipelineLayoutInfo
     {
-        const auto moduleName = Wrapper_Windows::getModuleFileName();
-        const auto pos = moduleName.find_last_of("\\/") + 1;
-        return std::filesystem::canonical(moduleName.substr(0, pos)).generic_string() + "/";
-    }();
-    return exeRoot;
+        .setLayoutCount = 1,
+        .pSetLayouts = &descriptorSetLayout,
+        .pushConstantRangeCount = 0, // Optional
+        .pPushConstantRanges = nullptr, // Optional
+    };
+
+    const vk::PipelineLayout pipelineLayout = device.createPipelineLayout(pipelineLayoutInfo, nullptr);
+    if (!pipelineLayout)
+    {
+        fatalError("failed to create pipeline layout!");
+    }
+    return pipelineLayout;
+}
+
+[[nodiscard]]
+vk::RenderPass createRenderPass(vk::Device device, vk::PhysicalDevice physicalDevice, vk::Format swapChainImageFormat)
+{
+    const vk::AttachmentDescription colorAttachment
+    {
+        .format = swapChainImageFormat,
+        .samples = vk::SampleCountFlagBits::e1,
+        .loadOp = vk::AttachmentLoadOp::eClear,
+        .storeOp = vk::AttachmentStoreOp::eStore,
+        .stencilLoadOp = vk::AttachmentLoadOp::eDontCare,
+        .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+        .initialLayout = vk::ImageLayout::eUndefined,
+        .finalLayout = vk::ImageLayout::ePresentSrcKHR,
+    };
+
+    static constexpr vk::AttachmentReference colorAttachmentRef
+    {
+        .attachment = 0,
+        .layout = vk::ImageLayout::eColorAttachmentOptimal,
+    };
+
+    const vk::AttachmentDescription depthAttachment
+    {
+        .format = RenderUtils::findDepthFormat(physicalDevice),
+        .samples = vk::SampleCountFlagBits::e1,
+        .loadOp = vk::AttachmentLoadOp::eClear,
+        .storeOp = vk::AttachmentStoreOp::eDontCare,
+        .stencilLoadOp = vk::AttachmentLoadOp::eDontCare,
+        .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+        .initialLayout = vk::ImageLayout::eUndefined,
+        .finalLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal
+    };
+
+    static constexpr vk::AttachmentReference depthAttachmentRef
+    {
+        .attachment = 1,
+        .layout = vk::ImageLayout::eDepthStencilAttachmentOptimal
+    };
+
+    static constexpr vk::SubpassDescription subpass
+    {
+        .pipelineBindPoint = vk::PipelineBindPoint::eGraphics,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &colorAttachmentRef,
+        .pDepthStencilAttachment = &depthAttachmentRef
+    };
+
+    static constexpr vk::SubpassDependency dependency
+    {
+        .srcSubpass = vk::SubpassExternal,
+        .dstSubpass = 0,
+        .srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput |
+        vk::PipelineStageFlagBits::eEarlyFragmentTests,
+        .dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput |
+        vk::PipelineStageFlagBits::eEarlyFragmentTests,
+        .srcAccessMask = {},
+        .dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
+    };
+
+    const std::array attachments = {colorAttachment, depthAttachment};
+
+    const vk::RenderPassCreateInfo renderPassInfo
+    {
+        .attachmentCount = static_cast<UInt32>(attachments.size()),
+        .pAttachments = attachments.data(),
+        .subpassCount = 1,
+        .pSubpasses = &subpass,
+        .dependencyCount = 1,
+        .pDependencies = &dependency
+    };
+
+    const vk::RenderPass renderPass = device.createRenderPass(renderPassInfo, nullptr);
+    if (!renderPass)
+    {
+        fatalError("failed to create render pass!");
+    }
+    return renderPass;
+}
+
+[[nodiscard]]
+vk::DescriptorSetLayout createDescriptorSetLayout(vk::Device device)
+{
+    static constexpr vk::DescriptorSetLayoutBinding layoutBinding
+    {
+        .binding = 0,
+        .descriptorType = vk::DescriptorType::eUniformBuffer,
+        .descriptorCount = 1,
+        .stageFlags = vk::ShaderStageFlagBits::eVertex,
+        .pImmutableSamplers = nullptr, // Optional
+    };
+
+    static constexpr vk::DescriptorSetLayoutBinding samplerLayoutBinding
+    {
+        .binding = 1,
+        .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+        .descriptorCount = 1,
+        .stageFlags = vk::ShaderStageFlagBits::eFragment,
+        .pImmutableSamplers = nullptr, // Optional
+    };
+
+    static constexpr std::array bindings{layoutBinding, samplerLayoutBinding};
+    static constexpr vk::DescriptorSetLayoutCreateInfo layoutInfo
+    {
+        .bindingCount = static_cast<UInt32>(bindings.size()),
+        .pBindings = bindings.data(),
+    };
+
+    const vk::DescriptorSetLayout descriptorSetLayout = device.createDescriptorSetLayout(layoutInfo, nullptr);
+    if (!descriptorSetLayout)
+    {
+        fatalError("failed to create descriptor set layout!");
+    }
+    return descriptorSetLayout;
+}
+
+[[nodiscard]]
+vk::DescriptorPool createDescriptorPool(vk::Device device)
+{
+    static constexpr UInt32 count = MaxFramesInFlight;
+    static constexpr std::array poolSizes
+    {
+        vk::DescriptorPoolSize{vk::DescriptorType::eUniformBuffer, count},
+        vk::DescriptorPoolSize{vk::DescriptorType::eCombinedImageSampler, count},
+    };
+
+    static constexpr vk::DescriptorPoolCreateInfo poolInfo
+    {
+        .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
+        .maxSets = 1000, // TODO figure this out
+        .poolSizeCount = static_cast<UInt32>(poolSizes.size()),
+        .pPoolSizes = poolSizes.data(),
+    };
+
+    return device.createDescriptorPool(poolInfo, nullptr);
 }
 
 RenderManager::~RenderManager() noexcept
@@ -44,7 +187,7 @@ void RenderManager::init(GLFWwindow* window)
 
     // Init Vulkan
     {
-        vk::defaultDispatchLoaderDynamic.init();
+        vk::detail::defaultDispatchLoaderDynamic.init();
 
         // Determine what API version is available
         const UInt32 apiVersion = vk::enumerateInstanceVersion();
@@ -59,16 +202,17 @@ void RenderManager::init(GLFWwindow* window)
         createLogicalDevice();
         createSwapchain();
         createImageViews();
-        createRenderPass();
-        createDescriptorSetLayout();
-        createGraphicsPipeline();
-        createLinePipeline();
+        m_descriptorPool = createDescriptorPool(m_device);
+        m_descriptorSetLayout = createDescriptorSetLayout(m_device);
+        m_pipelineLayout = createPipelineLayout(m_device, m_descriptorSetLayout);
+
+        m_graphicsPipeline = createGraphicsPipeline(m_device, m_pipelineCache, m_pipelineLayout, m_swapchainExtent);
+        m_linePipeline = createLinePipeline(m_device, m_pipelineCache, m_pipelineLayout, m_swapchainExtent);
+
         createCommandPool();
         createDepthResources();
-        createFramebuffers();
         createCommandBuffers();
         createSyncObjects();
-        createDescriptorPool();
     }
 
     const ImGuiInitInfo imguiInfo
@@ -78,7 +222,6 @@ void RenderManager::init(GLFWwindow* window)
         .device = m_device,
         .surface = m_surface,
         .queue = m_graphicsQueue,
-        .renderPass = m_renderPass,
         .imageCount = m_swapChainImageViews.size(),
         .pipelineCache = m_pipelineCache
     };
@@ -113,7 +256,7 @@ void RenderManager::update()
         cmd->get()->process();
         cmd = m_commands.tryPop();
     }
-    
+
     m_deltaTime.update();
     drawFrame();
 }
@@ -137,7 +280,6 @@ void RenderManager::shutdown()
     m_device.destroyPipeline(m_graphicsPipeline);
     m_device.destroyPipeline(m_linePipeline);
     m_device.destroyPipelineLayout(m_pipelineLayout);
-    m_device.destroyRenderPass(m_renderPass);
 
     for (size_t i = 0; i < MaxFramesInFlight; ++i)
     {
@@ -149,7 +291,7 @@ void RenderManager::shutdown()
     m_device.destroy();
     m_instance.destroySurfaceKHR(m_surface);
 
-    if (vk::EnableValidationLayers)
+    if constexpr (vk::EnableValidationLayers)
     {
         RenderUtils::destroyDebugUtilsMessenger(m_instance, m_debugMessenger, nullptr);
     }
@@ -188,7 +330,7 @@ void RenderManager::createInstance()
 
     constexpr vk::ApplicationInfo appInfo
     {
-        .pApplicationName = "Hello Triangle",
+        .pApplicationName = "Mashi Engine",
         .applicationVersion = vk::makeApiVersion(0, 1, 0, 0),
         .pEngineName = "No Engine",
         .engineVersion = vk::makeApiVersion(0, 1, 0, 0),
@@ -208,7 +350,7 @@ void RenderManager::createInstance()
 
     const auto debugCreateInfo = RenderUtils::newDebugUtilsMessengerCreateInfo();
 
-    if (vk::EnableValidationLayers)
+    if constexpr (vk::EnableValidationLayers)
     {
         createInfo.enabledLayerCount = static_cast<UInt32>(RenderUtils::ValidationLayers.size());
         createInfo.ppEnabledLayerNames = RenderUtils::ValidationLayers.data();
@@ -217,7 +359,7 @@ void RenderManager::createInstance()
 
     m_instance = vk::createInstance(createInfo);
 
-    vk::defaultDispatchLoaderDynamic.init(m_instance);
+    vk::detail::defaultDispatchLoaderDynamic.init(m_instance);
 }
 
 void RenderManager::createSurface()
@@ -255,19 +397,14 @@ void RenderManager::createLogicalDevice()
         .samplerAnisotropy = vk::True,
     };
 
-    constexpr vk::PhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures
+    constexpr vk::PhysicalDeviceDynamicRenderingFeaturesKHR dynamicRenderingFeatures
     {
-        .descriptorBindingUniformBufferUpdateAfterBind = true,
-        .descriptorBindingSampledImageUpdateAfterBind = true,
-        .descriptorBindingStorageImageUpdateAfterBind = true,
-        .descriptorBindingStorageBufferUpdateAfterBind = true,
-        .descriptorBindingUniformTexelBufferUpdateAfterBind = true,
-        .descriptorBindingStorageTexelBufferUpdateAfterBind = true,
+        .dynamicRendering = vk::True
     };
 
     const vk::DeviceCreateInfo createInfo
     {
-        .pNext = &descriptorIndexingFeatures,
+        .pNext = &dynamicRenderingFeatures,
         .queueCreateInfoCount = static_cast<UInt32>(queueCreateInfos.size()),
         .pQueueCreateInfos = queueCreateInfos.data(),
         .enabledLayerCount = [&]
@@ -311,7 +448,6 @@ void RenderManager::recreateSwapchain()
     createSwapchain();
     createImageViews();
     createDepthResources();
-    createFramebuffers();
 }
 
 void RenderManager::createSwapchain()
@@ -383,526 +519,8 @@ void RenderManager::createImageViews()
     }
 }
 
-void RenderManager::createRenderPass()
-{
-    const vk::AttachmentDescription colorAttachment
-    {
-        .format = m_swapChainImageFormat,
-        .samples = vk::SampleCountFlagBits::e1,
-        .loadOp = vk::AttachmentLoadOp::eClear,
-        .storeOp = vk::AttachmentStoreOp::eStore,
-        .stencilLoadOp = vk::AttachmentLoadOp::eDontCare,
-        .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
-        .initialLayout = vk::ImageLayout::eUndefined,
-        .finalLayout = vk::ImageLayout::ePresentSrcKHR,
-    };
-
-    static constexpr vk::AttachmentReference colorAttachmentRef
-    {
-        .attachment = 0,
-        .layout = vk::ImageLayout::eColorAttachmentOptimal,
-    };
-
-    const vk::AttachmentDescription depthAttachment
-    {
-        .format = RenderUtils::findDepthFormat(m_physicalDevice),
-        .samples = vk::SampleCountFlagBits::e1,
-        .loadOp = vk::AttachmentLoadOp::eClear,
-        .storeOp = vk::AttachmentStoreOp::eDontCare,
-        .stencilLoadOp = vk::AttachmentLoadOp::eDontCare,
-        .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
-        .initialLayout = vk::ImageLayout::eUndefined,
-        .finalLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal
-    };
-
-    static constexpr vk::AttachmentReference depthAttachmentRef
-    {
-        .attachment = 1,
-        .layout = vk::ImageLayout::eDepthStencilAttachmentOptimal
-    };
-
-    static constexpr vk::SubpassDescription subpass
-    {
-        .pipelineBindPoint = vk::PipelineBindPoint::eGraphics,
-        .colorAttachmentCount = 1,
-        .pColorAttachments = &colorAttachmentRef,
-        .pDepthStencilAttachment = &depthAttachmentRef
-    };
-
-    static constexpr vk::SubpassDependency dependency
-    {
-        .srcSubpass = vk::SubpassExternal,
-        .dstSubpass = 0,
-        .srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput |
-        vk::PipelineStageFlagBits::eEarlyFragmentTests,
-        .dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput |
-        vk::PipelineStageFlagBits::eEarlyFragmentTests,
-        .srcAccessMask = {},
-        .dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
-    };
-
-    const std::array attachments = {colorAttachment, depthAttachment};
-
-    const vk::RenderPassCreateInfo renderPassInfo
-    {
-        .attachmentCount = static_cast<UInt32>(attachments.size()),
-        .pAttachments = attachments.data(),
-        .subpassCount = 1,
-        .pSubpasses = &subpass,
-        .dependencyCount = 1,
-        .pDependencies = &dependency
-    };
-
-    m_renderPass = m_device.createRenderPass(renderPassInfo, nullptr);
-    if (!m_renderPass)
-    {
-        fatalError("failed to create render pass!");
-    }
-}
-
-void RenderManager::createDescriptorSetLayout()
-{
-    static constexpr vk::DescriptorSetLayoutBinding layoutBinding
-    {
-        .binding = 0,
-        .descriptorType = vk::DescriptorType::eUniformBuffer,
-        .descriptorCount = 1,
-        .stageFlags = vk::ShaderStageFlagBits::eVertex,
-        .pImmutableSamplers = nullptr, // Optional
-    };
-
-    static constexpr vk::DescriptorSetLayoutBinding samplerLayoutBinding
-    {
-        .binding = 1,
-        .descriptorType = vk::DescriptorType::eCombinedImageSampler,
-        .descriptorCount = 1,
-        .stageFlags = vk::ShaderStageFlagBits::eFragment,
-        .pImmutableSamplers = nullptr, // Optional
-    };
-
-    static constexpr std::array bindings{layoutBinding, samplerLayoutBinding};
-    static constexpr vk::DescriptorSetLayoutCreateInfo layoutInfo
-    {
-        .bindingCount = static_cast<UInt32>(bindings.size()),
-        .pBindings = bindings.data(),
-    };
-
-    m_descriptorSetLayout = m_device.createDescriptorSetLayout(layoutInfo, nullptr);
-    if (!m_descriptorSetLayout)
-    {
-        fatalError("failed to create descriptor set layout!");
-    }
-}
-
-void RenderManager::createGraphicsPipeline()
-{
-    auto vertShaderCode = RenderUtils::readFile(getExecutableRoot() + "Shaders/vert.spv");
-    auto fragShaderCode = RenderUtils::readFile(getExecutableRoot() + "Shaders/frag.spv");
-
-    vk::ShaderModule vertShaderModule = RenderUtils::createShaderModule(vertShaderCode, m_device);
-    vk::ShaderModule fragShaderModule = RenderUtils::createShaderModule(fragShaderCode, m_device);
-
-    const vk::PipelineShaderStageCreateInfo vertShaderStageInfo
-    {
-        .stage = vk::ShaderStageFlagBits::eVertex,
-        .module = vertShaderModule,
-        .pName = "main",
-    };
-
-    const vk::PipelineShaderStageCreateInfo fragShaderStageInfo
-    {
-        .stage = vk::ShaderStageFlagBits::eFragment,
-        .module = fragShaderModule,
-        .pName = "main",
-    };
-
-    const vk::PipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
-
-    const std::vector dynamicStates
-    {
-        vk::DynamicState::eViewport,
-        vk::DynamicState::eScissor
-    };
-
-    const vk::PipelineDynamicStateCreateInfo dynamicStateInfo
-    {
-        .dynamicStateCount = static_cast<UInt32>(dynamicStates.size()),
-        .pDynamicStates = dynamicStates.data(),
-    };
-
-    static constexpr vk::VertexInputBindingDescription bindingDescription
-    {
-        .binding = 0,
-        .stride = sizeof(Vertex),
-        .inputRate = vk::VertexInputRate::eVertex,
-    };
-
-    static constexpr std::array attributeDescriptions
-    {
-        vk::VertexInputAttributeDescription
-        {
-            .location = 0,
-            .binding = 0,
-            .format = vk::Format::eR32G32B32Sfloat,
-            .offset = offsetof(Vertex, pos),
-        },
-        vk::VertexInputAttributeDescription
-        {
-            .location = 1,
-            .binding = 0,
-            .format = vk::Format::eR32G32Sfloat,
-            .offset = offsetof(Vertex, uv),
-        },
-    };
-
-    const vk::PipelineVertexInputStateCreateInfo vertexInputInfo
-    {
-        .vertexBindingDescriptionCount = 1,
-        .pVertexBindingDescriptions = &bindingDescription, // Optional
-        .vertexAttributeDescriptionCount = static_cast<UInt32>(attributeDescriptions.size()),
-        .pVertexAttributeDescriptions = attributeDescriptions.data(), // Optional
-    };
-
-    static constexpr vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo
-    {
-        .topology = vk::PrimitiveTopology::eTriangleList,
-        .primitiveRestartEnable = vk::False,
-    };
-
-    const vk::Viewport viewport
-    {
-        .x = 0,
-        .y = 0,
-        .width = static_cast<float>(m_swapchainExtent.width),
-        .height = static_cast<float>(m_swapchainExtent.height),
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f,
-    };
-
-    const vk::Rect2D scissor
-    {
-        .offset = {0, 0},
-        .extent = m_swapchainExtent,
-    };
-
-    const vk::PipelineViewportStateCreateInfo viewportStateInfo
-    {
-        .viewportCount = 1,
-        .pViewports = &viewport,
-        .scissorCount = 1,
-        .pScissors = &scissor
-    };
-
-    static constexpr vk::PipelineRasterizationStateCreateInfo rasterizerInfo
-    {
-        .depthClampEnable = vk::False,
-        .rasterizerDiscardEnable = vk::False,
-        .polygonMode = vk::PolygonMode::eFill,
-        .cullMode = vk::CullModeFlagBits::eBack,
-        .frontFace = vk::FrontFace::eClockwise,
-        .depthBiasEnable = vk::False,
-        .depthBiasConstantFactor = 0.0f, // Optional
-        .depthBiasClamp = 0.0f, // Optional
-        .depthBiasSlopeFactor = 0.0f, // Optional
-        .lineWidth = 1.0f,
-    };
-
-    static constexpr vk::PipelineMultisampleStateCreateInfo multisamplingInfo
-    {
-        .rasterizationSamples = vk::SampleCountFlagBits::e1,
-        .sampleShadingEnable = vk::False,
-        .minSampleShading = 1.0f, // Optional
-        .pSampleMask = nullptr, // Optional
-        .alphaToCoverageEnable = vk::False, // Optional
-        .alphaToOneEnable = vk::False, // Optional
-    };
-
-    static constexpr vk::PipelineColorBlendAttachmentState colorBlendAttachment
-    {
-        .blendEnable = vk::False,
-        .srcColorBlendFactor = vk::BlendFactor::eOne, // Optional
-        .dstColorBlendFactor = vk::BlendFactor::eZero, // Optional
-        .colorBlendOp = vk::BlendOp::eAdd, // Optional
-        .srcAlphaBlendFactor = vk::BlendFactor::eOne, // Optional
-        .dstAlphaBlendFactor = vk::BlendFactor::eZero, // Optional
-        .alphaBlendOp = vk::BlendOp::eAdd, // Optional
-        .colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
-        vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
-    };
-
-    static constexpr vk::PipelineColorBlendStateCreateInfo colorBlendingInfo
-    {
-        .logicOpEnable = vk::False,
-        .logicOp = vk::LogicOp::eCopy, // Optional
-        .attachmentCount = 1,
-        .pAttachments = &colorBlendAttachment,
-        .blendConstants = std::array{0.f, 0.f, 0.f, 0.f}
-    };
-
-    const vk::PipelineLayoutCreateInfo pipelineLayoutInfo
-    {
-        .setLayoutCount = 1,
-        .pSetLayouts = &m_descriptorSetLayout,
-        .pushConstantRangeCount = 0, // Optional
-        .pPushConstantRanges = nullptr, // Optional
-    };
-
-    m_pipelineLayout = m_device.createPipelineLayout(pipelineLayoutInfo, nullptr);
-    if (!m_pipelineLayout)
-    {
-        fatalError("failed to create pipeline layout!");
-    }
-
-    constexpr vk::PipelineDepthStencilStateCreateInfo depthStencil
-    {
-        .depthTestEnable = vk::True,
-        .depthWriteEnable = vk::True,
-        .depthCompareOp = vk::CompareOp::eLess,
-        .depthBoundsTestEnable = vk::False,
-        .stencilTestEnable = vk::False,
-        .front = {}, // Optional
-        .back = {}, // Optional
-        .minDepthBounds = 0.0f, // Optional
-        .maxDepthBounds = 1.0f, // Optional
-    };
-
-    const vk::GraphicsPipelineCreateInfo pipelineInfo
-    {
-        .stageCount = 2,
-        .pStages = shaderStages,
-        .pVertexInputState = &vertexInputInfo,
-        .pInputAssemblyState = &inputAssemblyInfo,
-        .pViewportState = &viewportStateInfo,
-        .pRasterizationState = &rasterizerInfo,
-        .pMultisampleState = &multisamplingInfo,
-        .pDepthStencilState = &depthStencil,
-        .pColorBlendState = &colorBlendingInfo,
-        .pDynamicState = &dynamicStateInfo,
-        .layout = m_pipelineLayout,
-        .renderPass = m_renderPass,
-        .subpass = 0,
-        .basePipelineHandle = nullptr,
-        .basePipelineIndex = -1,
-    };
-
-    auto&& [result, pipeline] = m_device.createGraphicsPipeline(m_pipelineCache, pipelineInfo);
-
-    m_graphicsPipeline = pipeline;
-
-    if (result != vk::Result::eSuccess)
-    {
-        fatalError("failed to create graphics pipeline!");
-    }
-
-    m_device.destroyShaderModule(fragShaderModule, nullptr);
-    m_device.destroyShaderModule(vertShaderModule, nullptr);
-}
-
-void RenderManager::createLinePipeline()
-{
-    // Load shaders
-    auto vertShaderCode = RenderUtils::readFile(getExecutableRoot() + "Shaders/line_vert.spv");
-    auto fragShaderCode = RenderUtils::readFile(getExecutableRoot() + "Shaders/line_frag.spv");
-    vk::ShaderModule vertShaderModule = RenderUtils::createShaderModule(vertShaderCode, m_device);
-    vk::ShaderModule fragShaderModule = RenderUtils::createShaderModule(fragShaderCode, m_device);
-
-    const vk::PipelineShaderStageCreateInfo vertShaderStageInfo
-    {
-        .stage = vk::ShaderStageFlagBits::eVertex,
-        .module = vertShaderModule,
-        .pName = "main",
-    };
-
-    const vk::PipelineShaderStageCreateInfo fragShaderStageInfo
-    {
-        .stage = vk::ShaderStageFlagBits::eFragment,
-        .module = fragShaderModule,
-        .pName = "main",
-    };
-
-    vk::PipelineShaderStageCreateInfo shaderStages[]{vertShaderStageInfo, fragShaderStageInfo};
-
-    // Rasterization for lines
-    vk::PipelineRasterizationStateCreateInfo rasterizerInfo
-    {
-        .polygonMode = vk::PolygonMode::eLine,
-        .cullMode = vk::CullModeFlagBits::eNone,
-        .lineWidth = 1.0f,
-    };
-
-    // Disable depth writes for debugging lines
-    vk::PipelineDepthStencilStateCreateInfo depthStencil
-    {
-        .depthTestEnable = vk::False,
-        .depthWriteEnable = vk::False,
-        .depthCompareOp = vk::CompareOp::eLess,
-    };
-
-    // Multisampling (optional)
-    vk::PipelineMultisampleStateCreateInfo multisamplingInfo
-    {
-        .rasterizationSamples = vk::SampleCountFlagBits::e1,
-    };
-
-    static constexpr vk::VertexInputBindingDescription bindingDescription
-    {
-        .binding = 0,
-        .stride = sizeof(LineVertex),
-        .inputRate = vk::VertexInputRate::eVertex,
-    };
-
-    static constexpr std::array attributeDescriptions
-    {
-        vk::VertexInputAttributeDescription
-        {
-            .location = 0,
-            .binding = 0,
-            .format = vk::Format::eR32G32B32Sfloat,
-            .offset = offsetof(LineVertex, pos),
-        },
-        vk::VertexInputAttributeDescription
-        {
-            .location = 1,
-            .binding = 0,
-            .format = vk::Format::eR32G32B32Sfloat,
-            .offset = offsetof(LineVertex, colour),
-        },
-    };
-
-    // Vertex input (reuse your format or customize as needed)
-    vk::PipelineVertexInputStateCreateInfo vertexInputInfo{
-        .vertexBindingDescriptionCount = 1,
-        .pVertexBindingDescriptions = &bindingDescription,
-        .vertexAttributeDescriptionCount = static_cast<UInt32>(attributeDescriptions.size()),
-        .pVertexAttributeDescriptions = attributeDescriptions.data(),
-    };
-
-    const std::vector dynamicStates
-    {
-        vk::DynamicState::eViewport,
-        vk::DynamicState::eScissor,
-    };
-
-    const vk::PipelineDynamicStateCreateInfo dynamicStateInfo
-    {
-        .dynamicStateCount = static_cast<UInt32>(dynamicStates.size()),
-        .pDynamicStates = dynamicStates.data(),
-    };
-
-    const vk::Viewport viewport
-    {
-        .x = 0,
-        .y = 0,
-        .width = static_cast<float>(m_swapchainExtent.width),
-        .height = static_cast<float>(m_swapchainExtent.height),
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f,
-    };
-
-    const vk::Rect2D scissor
-    {
-        .offset = {0, 0},
-        .extent = m_swapchainExtent,
-    };
-
-    const vk::PipelineViewportStateCreateInfo viewportStateInfo
-    {
-        .viewportCount = 1,
-        .pViewports = &viewport,
-        .scissorCount = 1,
-        .pScissors = &scissor
-    };
-
-    static constexpr vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo
-    {
-        .topology = vk::PrimitiveTopology::eLineList,
-        .primitiveRestartEnable = vk::False,
-    };
-
-    static constexpr vk::PipelineColorBlendAttachmentState colorBlendAttachment
-    {
-        .blendEnable = vk::False,
-        .srcColorBlendFactor = vk::BlendFactor::eOne, // Optional
-        .dstColorBlendFactor = vk::BlendFactor::eZero, // Optional
-        .colorBlendOp = vk::BlendOp::eAdd, // Optional
-        .srcAlphaBlendFactor = vk::BlendFactor::eOne, // Optional
-        .dstAlphaBlendFactor = vk::BlendFactor::eZero, // Optional
-        .alphaBlendOp = vk::BlendOp::eAdd, // Optional
-        .colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
-        vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
-    };
-
-    static constexpr vk::PipelineColorBlendStateCreateInfo colorBlendingInfo
-    {
-        .logicOpEnable = vk::False,
-        .logicOp = vk::LogicOp::eCopy, // Optional
-        .attachmentCount = 1,
-        .pAttachments = &colorBlendAttachment,
-        .blendConstants = std::array{0.f, 0.f, 0.f, 0.f}
-    };
-
-    // Build the pipeline
-    const vk::GraphicsPipelineCreateInfo pipelineInfo
-    {
-        .stageCount = 2,
-        .pStages = shaderStages,
-        .pVertexInputState = &vertexInputInfo,
-        .pInputAssemblyState = &inputAssemblyInfo,
-        .pViewportState = &viewportStateInfo,
-        .pRasterizationState = &rasterizerInfo,
-        .pMultisampleState = &multisamplingInfo,
-        .pDepthStencilState = &depthStencil,
-        .pColorBlendState = &colorBlendingInfo,
-        .pDynamicState = &dynamicStateInfo,
-        .layout = m_pipelineLayout,
-        .renderPass = m_renderPass,
-        .subpass = 0,
-        .basePipelineHandle = nullptr,
-        .basePipelineIndex = -1,
-    };
-
-    auto result = m_device.createGraphicsPipeline(m_pipelineCache, pipelineInfo);
-
-    if (result.result != vk::Result::eSuccess)
-        fatalError("Failed to create line rendering pipeline!");
-
-    m_device.destroyShaderModule(vertShaderModule);
-    m_device.destroyShaderModule(fragShaderModule);
-
-    m_linePipeline = result.value;
-}
-
-void RenderManager::createFramebuffers()
-{
-    m_swapChainFramebuffers.resize(m_swapChainImageViews.size());
-
-    for (size_t i = 0; i < m_swapChainImageViews.size(); ++i)
-    {
-        const std::array attachments{m_swapChainImageViews[i], m_depthImageView};
-
-        const vk::FramebufferCreateInfo framebufferInfo
-        {
-            .renderPass = m_renderPass,
-            .attachmentCount = static_cast<UInt32>(attachments.size()),
-            .pAttachments = attachments.data(),
-            .width = m_swapchainExtent.width,
-            .height = m_swapchainExtent.height,
-            .layers = 1
-        };
-
-        m_swapChainFramebuffers[i] = m_device.createFramebuffer(framebufferInfo, nullptr);
-        if (!m_swapChainFramebuffers[i])
-        {
-            fatalError("failed to create framebuffer!");
-        }
-    }
-}
-
 void RenderManager::cleanupSwapchain() const
 {
-    for (vk::Framebuffer framebuffer : m_swapChainFramebuffers)
-        m_device.destroyFramebuffer(framebuffer);
-
     for (vk::ImageView imageView : m_swapChainImageViews)
         m_device.destroyImageView(imageView);
 
@@ -985,26 +603,6 @@ void RenderManager::createSyncObjects()
     }
 }
 
-void RenderManager::createDescriptorPool()
-{
-    static constexpr UInt32 count = MaxFramesInFlight;
-    static constexpr std::array poolSizes
-    {
-        vk::DescriptorPoolSize{vk::DescriptorType::eUniformBuffer, count},
-        vk::DescriptorPoolSize{vk::DescriptorType::eCombinedImageSampler, count},
-    };
-
-    static constexpr vk::DescriptorPoolCreateInfo poolInfo
-    {
-        .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-        .maxSets = 1000, // TODO figure this out
-        .poolSizeCount = static_cast<UInt32>(poolSizes.size()),
-        .pPoolSizes = poolSizes.data(),
-    };
-
-    m_descriptorPool = m_device.createDescriptorPool(poolInfo, nullptr);
-}
-
 void RenderManager::pickPhysicalDevice()
 {
     const std::vector<vk::PhysicalDevice> devices = m_instance.enumeratePhysicalDevices();
@@ -1065,8 +663,7 @@ void RenderManager::drawFrame()
         fatalError("failed to wait for fences!");
     }
 
-    const auto imageResult = m_device.acquireNextImageKHR(m_swapChain, std::numeric_limits<UInt64>::max(), imageAvailableSemaphore,
-                                                          nullptr);
+    const auto imageResult = m_device.acquireNextImageKHR(m_swapChain, std::numeric_limits<UInt64>::max(), imageAvailableSemaphore, nullptr);
 
     if (imageResult.result == vk::Result::eErrorOutOfDateKHR)
     {
@@ -1087,32 +684,7 @@ void RenderManager::drawFrame()
 
     commandBuffer.reset();
 
-    constexpr vk::CommandBufferBeginInfo beginInfo
-    {
-        .flags = {},
-        .pInheritanceInfo = nullptr, // Optional
-    };
-
-    commandBuffer.begin(beginInfo);
-
-    constexpr std::array clearColor
-    {
-        vk::ClearValue{vk::ClearColorValue{0.0f, 0.0f, 0.0f, 1.0f}},
-        vk::ClearValue{vk::ClearDepthStencilValue{1.0f, 0}},
-    };
-
-    const vk::RenderPassBeginInfo renderPassInfo
-    {
-        .renderPass = m_renderPass,
-        .framebuffer = m_swapChainFramebuffers[imageResult.value],
-        .renderArea
-        {
-            .offset = {0, 0},
-            .extent = m_swapchainExtent,
-        },
-        .clearValueCount = static_cast<UInt32>(clearColor.size()),
-        .pClearValues = clearColor.data(),
-    };
+    commandBuffer.begin(vk::CommandBufferBeginInfo{});
 
     const vk::Viewport viewport
     {
@@ -1132,7 +704,46 @@ void RenderManager::drawFrame()
     };
     commandBuffer.setScissor(0, 1, &scissor);
 
-    commandBuffer.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
+    const vk::RenderingAttachmentInfo colorAttachmentInfo
+    {
+        .imageView = m_swapChainImageViews[m_currentFrame],
+        .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+        .loadOp = vk::AttachmentLoadOp::eClear,
+        .storeOp = vk::AttachmentStoreOp::eStore,
+        .clearValue = vk::ClearColorValue{0.0f, 0.0f, 0.0f, 1.0f}
+    };
+
+    const vk::RenderingAttachmentInfo depthAttachmentInfo
+    {
+        .imageView = m_depthImageView,
+        .imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
+        .loadOp = vk::AttachmentLoadOp::eClear,
+        .storeOp = vk::AttachmentStoreOp::eDontCare,
+        .clearValue = vk::ClearDepthStencilValue{1.0f, 0}
+    };
+
+    const vk::RenderingInfo renderingInfo
+    {
+        .renderArea = vk::Rect2D{{0, 0}, m_swapchainExtent},
+        .layerCount = 1,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &colorAttachmentInfo,
+        .pDepthAttachment = &depthAttachmentInfo,
+    };
+
+    RenderUtils::transitionImageLayout
+    (
+        commandBuffer,
+        m_swapChainImages[imageResult.value],
+        vk::ImageLayout::eUndefined,
+        vk::ImageLayout::eColorAttachmentOptimal,
+        {},
+        vk::AccessFlagBits::eColorAttachmentWrite,
+        vk::PipelineStageFlagBits::eTopOfPipe,
+        vk::PipelineStageFlagBits::eColorAttachmentOutput
+    );
+
+    commandBuffer.beginRendering(renderingInfo);
 
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_graphicsPipeline);
     m_renderObjectManager.renderFrame(commandBuffer, m_pipelineLayout, m_currentFrame);
@@ -1142,8 +753,20 @@ void RenderManager::drawFrame()
 
     m_imguiHelper.renderFrame(commandBuffer);
 
-    commandBuffer.endRenderPass();
+    commandBuffer.endRendering();
 
+    RenderUtils::transitionImageLayout
+    (
+        commandBuffer,
+        m_swapChainImages[imageResult.value],
+        vk::ImageLayout::eColorAttachmentOptimal,
+        vk::ImageLayout::ePresentSrcKHR,
+        vk::AccessFlagBits::eColorAttachmentWrite,
+        {},
+        vk::PipelineStageFlagBits::eColorAttachmentOutput,
+        vk::PipelineStageFlagBits::eBottomOfPipe
+    );
+    
     commandBuffer.end();
 
     const vk::Semaphore waitSemaphores[] = {imageAvailableSemaphore};
@@ -1205,7 +828,7 @@ std::vector<const char*> RenderManager::getRequiredExtensions()
 
     std::vector extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-    if (vk::EnableValidationLayers)
+    if constexpr (vk::EnableValidationLayers)
     {
         extensions.push_back(vk::EXTDebugUtilsExtensionName);
     }
@@ -1227,8 +850,7 @@ void RenderManager::createDepthResources()
         vk::ImageUsageFlagBits::eDepthStencilAttachment
     );
 
-    m_depthImageView = RenderUtils::createImageView(m_device, m_depthImage, depthFormat,
-                                                    vk::ImageAspectFlagBits::eDepth);
+    m_depthImageView = RenderUtils::createImageView(m_device, m_depthImage, depthFormat, vk::ImageAspectFlagBits::eDepth);
 
     RenderUtils::transitionImageLayout(m_device, m_graphicsQueue, m_commandPool, m_depthImage, depthFormat,
                                        vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);

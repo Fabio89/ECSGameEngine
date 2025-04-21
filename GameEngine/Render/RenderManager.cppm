@@ -9,6 +9,13 @@ import Render.Model;
 import Render.RenderObject;
 import Wrapper.Glfw;
 
+export enum class RenderPipelineType
+{
+    Opaque,
+    Textured,
+    Transparent,
+};
+
 export class RenderManager
 {
 public:
@@ -52,7 +59,6 @@ private:
     vk::Queue m_graphicsQueue{};
     vk::Queue m_presentQueue{};
     vk::Queue m_transferQueue{};
-    vk::RenderPass m_renderPass{};
     vk::DescriptorSetLayout m_descriptorSetLayout{};
     vk::PipelineLayout m_pipelineLayout{};
     vk::Pipeline m_graphicsPipeline{};
@@ -67,7 +73,6 @@ private:
 
     std::vector<vk::Image> m_swapChainImages;
     std::vector<vk::ImageView> m_swapChainImageViews;
-    std::vector<vk::Framebuffer> m_swapChainFramebuffers;
     vk::Format m_swapChainImageFormat{vk::Format::eUndefined};
     vk::Extent2D m_swapchainExtent{0, 0};
 
@@ -97,18 +102,12 @@ private:
     void createSwapchain();
     void createImageViews();
     void createDepthResources();
-    void createFramebuffers();
 
     void cleanupSwapchain() const;
 
-    void createRenderPass();
-    void createDescriptorSetLayout();
-    void createGraphicsPipeline();
-    void createLinePipeline();
     void createCommandPool();
     void createCommandBuffers();
     void createSyncObjects();
-    void createDescriptorPool();
     void pickPhysicalDevice();
     [[nodiscard]] static bool checkValidationLayerSupport();
     void drawFrame();
@@ -133,20 +132,14 @@ public:
 };
 
 template <typename T>
-class RenderManager::RenderCommand : public RenderCommandBase
+class RenderManager::RenderCommand final : public RenderCommandBase
 {
 public:
-    using RenderCommandBase::RenderCommandBase;
-
-    RenderCommand(RenderManager* renderManager, const T& data) : m_renderManager{renderManager}, m_data{std::forward<T>(data)}
-    {
-    }
-
     RenderCommand(RenderManager* renderManager, T&& data) : m_renderManager{renderManager}, m_data{std::forward<T>(data)}
     {
     }
 
-    void process() final { m_renderManager->processCommand<T>(std::forward<T>(m_data)); }
+    void process() override;
 
 private:
     RenderManager* m_renderManager{};
@@ -157,6 +150,12 @@ template <typename T>
 void RenderManager::addCommand(T&& command)
 {
     m_commands.push(std::make_unique<RenderCommand<T>>(this, std::forward<T>(command)));
+}
+
+template <typename T>
+void RenderManager::RenderCommand<T>::process()
+{
+    m_renderManager->processCommand<T>(std::forward<T>(m_data));
 }
 
 template <>

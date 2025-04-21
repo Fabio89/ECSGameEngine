@@ -24,10 +24,10 @@ export namespace NameUtils
 }
 
 template <>
-JsonObject serialize(const NameComponent& thing, Json::MemoryPoolAllocator<>& allocator)
+JsonObject serialize(const NameComponent& component, Json::MemoryPoolAllocator<>& allocator)
 {
     JsonObject json{Json::kObjectType};
-    json.AddMember("name", JsonObject{thing.name.c_str(), allocator}, allocator);
+    json.AddMember("name", JsonObject{component.name.c_str(), allocator}, allocator);
     return json;
 }
 

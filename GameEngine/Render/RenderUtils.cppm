@@ -2,18 +2,21 @@ export module Render.Utils;
 import Core;
 import Wrapper.Glfw;
 import Wrapper.Vulkan;
+import Wrapper.Windows;
+import vulkan_hpp;
 
 export namespace RenderUtils
 {
-    const std::vector ValidationLayers
-    {
+    constexpr auto ValidationLayers = std::to_array
+    ({
         "VK_LAYER_KHRONOS_validation"
-    };
+    });
 
-    const std::vector DeviceExtensions
-    {
-        vk::KHRSwapchainExtensionName
-    };
+    constexpr auto DeviceExtensions = std::to_array
+    ({
+        vk::KHRSwapchainExtensionName,
+        vk::KHRDynamicRenderingExtensionName
+    });
 
     UInt32 findMemoryType(vk::PhysicalDevice physicalDevice, UInt32 typeFilter, vk::MemoryPropertyFlags properties);
 
@@ -100,9 +103,33 @@ export namespace RenderUtils
 
     vk::Format findDepthFormat(vk::PhysicalDevice physicalDevice);
 
+    void transitionImageLayout
+    (
+        vk::CommandBuffer cmd,
+        vk::Image image,
+        vk::ImageLayout oldLayout,
+        vk::ImageLayout newLayout,
+        vk::AccessFlags srcAccessMask,
+        vk::AccessFlags dstAccessMask,
+        vk::PipelineStageFlags srcStage,
+        vk::PipelineStageFlags dstStage,
+        vk::ImageAspectFlags aspectMask = vk::ImageAspectFlagBits::eColor
+    );
+    
     constexpr bool hasStencilComponent(vk::Format format)
     {
         return format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint;
+    }
+
+    const std::string& getExecutableRoot()
+    {
+        static const std::string exeRoot = []
+        {
+            const auto moduleName = Wrapper_Windows::getModuleFileName();
+            const auto pos = moduleName.find_last_of("\\/") + 1;
+            return std::filesystem::canonical(moduleName.substr(0, pos)).generic_string() + "/";
+        }();
+        return exeRoot;
     }
 }
 

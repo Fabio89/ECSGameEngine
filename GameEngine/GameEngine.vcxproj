@@ -129,21 +129,23 @@
         </Lib>
     </ItemDefinitionGroup>
     <ItemGroup>
-        <ClCompile Include="Application.cppm"/>
-        <ClCompile Include="AssetManager.cppm"/>
+        <ClCompile Include="Application.cppm" />
+        <ClCompile Include="AssetManager.cppm" />
         <ClCompile Include="ComponentArray.cppm" />
-        <ClCompile Include="ComponentRegistry.cppm"/>
-        <ClCompile Include="Component\BoundingBoxComponent.cppm"/>
-        <ClCompile Include="Component\CameraComponent.cppm"/>
-        <ClCompile Include="Component\EngineComponents.cppm"/>
+        <ClCompile Include="ComponentRegistry.cppm" />
+        <ClCompile Include="Component\BoundingBoxComponent.cppm" />
+        <ClCompile Include="Component\CameraComponent.cppm" />
+        <ClCompile Include="Component\EngineComponents.cppm" />
         <ClCompile Include="Component\LineRenderComponent.cppm" />
-        <ClCompile Include="Component\ModelComponent.cppm"/>
-        <ClCompile Include="Component\NameComponent.cppm"/>
+        <ClCompile Include="Component\ModelComponent.cppm" />
+        <ClCompile Include="Component\NameComponent.cppm" />
+        <ClCompile Include="Component\ParentComponent.cppm" />
+        <ClCompile Include="Component\PersistentIdComponent.cppm" />
         <ClCompile Include="Component\RenderComponent.cppm" />
         <ClCompile Include="Component\TagsComponent.cppm" />
-        <ClCompile Include="Component\TransformComponent.cppm"/>
+        <ClCompile Include="Component\TransformComponent.cppm" />
         <ClCompile Include="Core.cppm" />
-        <ClCompile Include="CoreTypes.cppm"/>
+        <ClCompile Include="CoreTypes.cppm" />
         <ClCompile Include="Archetype.cpp" />
         <ClCompile Include="Editor\EditorCamera.cpp">
           <RuntimeLibrary>MultiThreadedDebugDll</RuntimeLibrary>
@@ -391,6 +393,7 @@
           <RuntimeTypeInfo>false</RuntimeTypeInfo>
           <LinkCompiled>true</LinkCompiled>
         </ClCompile>
+        <ClCompile Include="ExternalModules\vulkan.cppm" />
         <ClCompile Include="Input.cpp" />
         <ClCompile Include="Log.cppm" />
         <ClCompile Include="Input.cppm" />
@@ -407,7 +410,6 @@
         <ClCompile Include="DebugUI\ImGui.cppm" />
         <ClCompile Include="Engine.cppm" />
         <ClCompile Include="Application.cpp" />
-        <ClCompile Include="ExternalModules\vulkan.cppm" />
         <ClCompile Include="Guid.cppm" />
         <ClCompile Include="Job.cppm" />
         <ClCompile Include="Math.cppm" />
@@ -428,6 +430,7 @@
         <ClCompile Include="Render\TextureLoading.cppm" />
         <ClCompile Include="Serialization.cpp" />
         <ClCompile Include="Serialization.cppm" />
+        <ClCompile Include="System\System_PersistentId.cppm" />
         <ClCompile Include="System\System_BoundingBox.cppm" />
         <ClCompile Include="System\System_Camera.cppm" />
         <ClCompile Include="System\EngineSystems.cppm" />

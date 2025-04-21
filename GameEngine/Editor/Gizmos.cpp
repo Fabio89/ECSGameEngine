@@ -58,11 +58,12 @@ Entity EditorUtils::createTranslationGizmo(World& world)
 
 Entity EditorUtils::createRotationGizmo(World& world)
 {
-    return createGizmo
-    (
-        world,
-        Primitives::generateCone(1, 1, 30)
-    );
+    return createTranslationGizmo(world);
+    // return createGizmo
+    // (
+    //     world,
+    //     Primitives::generateCone(1, 1, 30)
+    // );
 }
 
 Entity EditorUtils::createScaleGizmo(World& world)

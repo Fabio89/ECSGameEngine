@@ -78,9 +78,7 @@ vk::ImageView RenderUtils::createImageView(vk::Device device, vk::Image image, v
 
 // Create a Vulkan image from the specified file
 [[nodiscard]] std::tuple<vk::Image, vk::DeviceMemory>
-RenderUtils::createTextureImage(const char* path, vk::Device device, vk::PhysicalDevice physicalDevice,
-                                vk::Queue commandQueue, vk::CommandPool
-                                commandPool)
+RenderUtils::createTextureImage(const char* path, vk::Device device, vk::PhysicalDevice physicalDevice, vk::Queue commandQueue, vk::CommandPool commandPool)
 {
     int texWidth, texHeight, texChannels;
     stbi_uc* pixels = stbi_load(path, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
@@ -88,7 +86,7 @@ RenderUtils::createTextureImage(const char* path, vk::Device device, vk::Physica
 
     if (!check(pixels, std::string{"failed to load texture image: "} + path))
     {
-        static constexpr std::tuple<vk::Image, vk::DeviceMemory> emptyImage{};
+        static const std::tuple<vk::Image, vk::DeviceMemory> emptyImage{};
         return emptyImage;
     }
 
@@ -111,20 +109,21 @@ RenderUtils::createTextureImage(const char* path, vk::Device device, vk::Physica
 
     const vk::Extent2D imageExtent{static_cast<UInt32>(texWidth), static_cast<UInt32>(texHeight)};
 
+    static constexpr auto format = vk::Format::eR8G8B8A8Srgb;
+
     auto result = createImage
     (
         device,
         physicalDevice,
         vk::MemoryPropertyFlagBits::eDeviceLocal,
         imageExtent,
-        vk::Format::eR8G8B8A8Srgb,
+        format,
         vk::ImageTiling::eOptimal,
         vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled
     );
 
     const auto image = std::get<vk::Image>(result);
 
-    constexpr auto format = vk::Format::eR8G8B8A8Srgb;
     transitionImageLayout(device, commandQueue, commandPool, image, format, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
 
     copyBufferToImage(device, commandQueue, commandPool, stagingBuffer, image, imageExtent);
