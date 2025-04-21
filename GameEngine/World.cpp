@@ -92,6 +92,46 @@ Archetype& World::editOrCreateArchetype(const EntitySignature& signature)
     return m_archetypes[signature];
 }
 
+UInt64 getComponentIndex(ComponentTypeId componentId)
+{
+    static std::unordered_map<ComponentTypeId, UInt64> componentIndexMap;
+    static UInt64 lastComponentIndex = 0u;
+    
+    auto [it, added] = componentIndexMap.try_emplace(componentId, lastComponentIndex++);
+    check(!added || it->second < maxComponentsPerEntity, std::format("Can't have more than {} components!", maxComponentsPerEntity));
+    return it->second;
+}
+
+Archetype& World::prepareArchetypeOnAddComponent(Entity entity, ComponentTypeId componentId)
+{
+    EntitySignature& signature = m_entities[entity];
+    const EntitySignature oldSignature = signature;
+
+    Archetype& oldArchetype = m_archetypes[oldSignature];
+
+    signature.bitset.set(getComponentIndex(componentId));
+
+    const bool usingExistingArchetype = m_archetypes.contains(signature);
+
+    Archetype& newArchetype = m_archetypes[signature];
+    if (usingExistingArchetype)
+    {
+        newArchetype.steal(oldArchetype, entity);
+    }
+    else
+    {
+        newArchetype = oldArchetype.cloneForEntity(entity);
+        oldArchetype.removeEntity(entity);
+    }
+
+    if (oldArchetype.isEmpty())
+    {
+        m_archetypes.erase(oldSignature);
+    }
+
+    return newArchetype;
+}
+
 void World::removeEntity(Entity entity)
 {
     auto it = m_entities.find(entity);

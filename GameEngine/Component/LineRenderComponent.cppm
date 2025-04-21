@@ -4,7 +4,6 @@ import Render.Model;
 
 export struct LineRenderComponent
 {
-    Entity parent;
     std::vector<LineVertex> vertices;
 };
 

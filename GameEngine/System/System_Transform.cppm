@@ -1,5 +1,7 @@
 export module System.Transform;
+import Component.Parent;
 import Component.Transform;
+import Math;
 import System;
 
 export class System_Transform final : public System
@@ -23,6 +25,18 @@ export class System_Transform final : public System
 
     static void updateRenderTransform(World& world, Entity entity, const TransformComponent& transform)
     {
-        world.getRenderManager().addCommand(RenderCommands::SetTransform{entity, transform.position, transform.rotation, transform.scale});
+        Mat4 worldTransform = TransformUtils::toMatrix(transform);
+
+        if (world.hasComponent<ParentComponent>(entity))
+        {
+            const ParentComponent& parentComponent = world.readComponent<ParentComponent>(entity);
+            if (parentComponent.parent != invalidId())
+            {
+                const TransformComponent& parentTransform = world.readComponent<TransformComponent>(parentComponent.parent);
+                worldTransform = TransformUtils::toMatrix(parentTransform) * worldTransform;
+            }
+        }
+        
+        world.getRenderManager().addCommand(RenderCommands::SetTransform{entity, worldTransform});
     }
 };

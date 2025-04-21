@@ -29,6 +29,6 @@ export class System_Render final : public System
 
     static void updateRenderTransform(World& world, Entity entity, const TransformComponent& transform)
     {
-        world.getRenderManager().addCommand(RenderCommands::SetTransform{entity, transform.position, transform.rotation, transform.scale});
+        world.getRenderManager().addCommand(RenderCommands::SetTransform{entity, TransformUtils::toMatrix(transform)});
     }
 };

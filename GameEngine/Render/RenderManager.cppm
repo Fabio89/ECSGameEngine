@@ -185,7 +185,7 @@ void RenderManager::processCommand(RenderCommands::AddLineObject&& cmd)
 template <>
 void RenderManager::processCommand(RenderCommands::SetTransform&& cmd)
 {
-    m_renderObjectManager.setObjectTransform(cmd.entity, cmd.location, cmd.rotation, cmd.scale);
+    m_renderObjectManager.setObjectTransform(cmd.entity, cmd.worldTransform);
 }
 
 template <>

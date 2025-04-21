@@ -1,9 +1,11 @@
 module EditorBridge;
 import Editor.Camera;
 import Application;
+import Component.Parent;
 import Component.Transform;
 import Editor.Gizmos;
 import Input;
+import Math;
 import Physics;
 
 enum class EditMode : UInt8
@@ -26,6 +28,12 @@ constexpr Entity& getGizmo(EditMode editMode)
 std::unordered_map<Entity, Entity> entitiesToBoundingBoxGizmos;
 Entity selected = invalidId();
 
+void attachToSelectedEntity(Entity gizmo)
+{
+    getWorld().editComponent<ParentComponent>(gizmo).parent = selected;
+    getWorld().editComponent<TransformComponent>(gizmo).scale = 0.2 / getWorld().readComponent<TransformComponent>(selected).scale;
+}
+
 void setEditMode(EditMode editMode)
 {
     if (editMode != currentEditMode)
@@ -37,7 +45,9 @@ void setEditMode(EditMode editMode)
             const bool shouldShow = selected != invalidId() && editMode != EditMode::None && gizmo == getGizmo(editMode);
             getWorld().getRenderManager().addCommand(RenderCommands::SetObjectVisibility{gizmo, shouldShow});
             if (shouldShow)
-                getWorld().editComponent<TransformComponent>(gizmo) = getWorld().readComponent<TransformComponent>(selected);
+            {
+                attachToSelectedEntity(gizmo);
+            }
         }
     }
 }
@@ -86,8 +96,9 @@ void editorUpdate(GLFWwindow* window, float deltaTime)
             {
                 if (currentEditMode != EditMode::None)
                 {
-                    getWorld().editComponent<TransformComponent>(getGizmo(currentEditMode)) = getWorld().readComponent<TransformComponent>(selected);
-                    getWorld().getRenderManager().addCommand(RenderCommands::SetObjectVisibility{getGizmo(currentEditMode), true});
+                    const Entity gizmo = getGizmo(currentEditMode);
+                    attachToSelectedEntity(gizmo);
+                    getWorld().getRenderManager().addCommand(RenderCommands::SetObjectVisibility{gizmo, true});
                 }
 
                 auto it = entitiesToBoundingBoxGizmos.find(selected);

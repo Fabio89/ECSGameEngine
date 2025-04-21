@@ -40,8 +40,6 @@ export namespace RenderCommands
     struct SetTransform
     {
         Entity entity;
-        Vec3 location{};
-        Quat rotation{};
-        float scale{1.f};
+        Mat4 worldTransform;
     };
 }

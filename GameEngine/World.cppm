@@ -6,7 +6,7 @@ import Guid;
 import Render.RenderManager;
 import Serialization;
 
-static constexpr int maxComponentsPerEntity = 64;
+constexpr int maxComponentsPerEntity = 64;
 
 struct EntitySignature
 {
@@ -87,7 +87,8 @@ private:
     const Archetype& readArchetype(const EntitySignature& signature) const;
     Archetype& editArchetype(const EntitySignature& signature);
     Archetype& editOrCreateArchetype(const EntitySignature& signature);
-
+    Archetype& prepareArchetypeOnAddComponent(Entity entity, ComponentTypeId componentId);
+    
     std::unordered_map<ArchetypeChangedObserverHandle, ArchetypeChangedCallback> m_archetypeChangeObservers;
     Entity m_nextEntity = 0;
     std::unordered_map<Entity, EntitySignature> m_entities;
@@ -98,35 +99,12 @@ private:
 //------------------------------------------------------------------------------------------------------------------------
 // World - Implementation
 //------------------------------------------------------------------------------------------------------------------------
+
 template <ValidComponentData T, typename... Args>
 T& World::addComponent(Entity entity, Args&&... args)
 {
-    EntitySignature& signature = m_entities[entity];
-    const EntitySignature oldSignature = signature;
-
-    Archetype& oldArchetype = m_archetypes[oldSignature];
-
-    signature.bitset.set(std::hash<ComponentTypeId>{}(Component<T>::typeId()) % maxComponentsPerEntity);
-
-    const bool usingExistingArchetype = m_archetypes.contains(signature);
-
-    Archetype& newArchetype = m_archetypes[signature];
-    if (usingExistingArchetype)
-    {
-        newArchetype.steal(oldArchetype, entity);
-    }
-    else
-    {
-        newArchetype = oldArchetype.cloneForEntity(entity);
-        oldArchetype.removeEntity(entity);
-    }
-
-    if (oldArchetype.isEmpty())
-    {
-        m_archetypes.erase(oldSignature);
-    }
-
-    T& addedComponent = newArchetype.addComponent<T>(entity, T{std::forward<Args>(args)...});
+    Archetype& archetype = prepareArchetypeOnAddComponent(entity, Component<T>::typeId());
+    T& addedComponent = archetype.addComponent<T>(entity, T{std::forward<Args>(args)...});
     log(std::format("Added component {} to entity {}", getComponentName<T>(), entity));
 
     for (auto& callback : m_archetypeChangeObservers | std::views::values)

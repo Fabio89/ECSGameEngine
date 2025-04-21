@@ -290,27 +290,19 @@ void RenderObjectManager::addRenderObject(Entity entity, Guid meshAsset, const G
     std::cout << "\tTexture: " << textureAsset << std::endl;
 }
 
-Mat4 buildModelMatrix(const Vec3& translation, const Quat& rotation, const Vec3& scale)
-{
-    const Mat4 translationMatrix = Math::translate(Mat4{1.0f}, translation);
-    const Mat4 rotationMatrix = Math::mat4_cast(rotation);
-    const Mat4 scaleMatrix = Math::scale(Mat4{1.0f}, scale);
-    return translationMatrix * rotationMatrix * scaleMatrix;
-}
-
-void RenderObjectManager::setObjectTransform(Entity entity, Vec3 location, Quat rotation, float scale)
+void RenderObjectManager::setObjectTransform(Entity entity, const Mat4& worldTransform)
 {
     if (const auto it = std::ranges::find_if(m_objects,
-        [&](auto&& object) { return object.entity == entity; }); it != m_objects.end())
+       [&](auto&& object) { return object.entity == entity; }); it != m_objects.end())
     {
-        it->model = buildModelMatrix(location, rotation, Vec3{scale, scale, scale});
+        it->model = worldTransform;
     }
 
     if (const auto it = std::ranges::find_if(m_lineObjects,
         [&](auto&& object){ return object.entity == entity; }); it != m_lineObjects.end())
     {
-        it->model = buildModelMatrix(location, rotation, Vec3{scale, scale, scale});
-    }
+        it->model = worldTransform;
+    }   
 }
 
 void RenderObjectManager::addLineRenderObject(Entity entity, std::vector<LineVertex>&& vertices)

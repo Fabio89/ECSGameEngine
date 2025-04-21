@@ -11,8 +11,4 @@ export class System_PersistentId final : public System
             PersistentIdUtils::registerEntity(entity, world.readComponent<PersistentIdComponent>(entity).id);
         }
     }
-
-    void onUpdate(World& world, [[maybe_unused]] Player& player, [[maybe_unused]] float deltaTime) override
-    {
-    }
 };

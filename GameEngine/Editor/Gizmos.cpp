@@ -3,6 +3,7 @@ import Component.LineRender;
 import Component.BoundingBox;
 import Component.Name;
 import Component.Model;
+import Component.Parent;
 import Component.Render;
 import Component.Tags;
 import Component.Transform;
@@ -13,7 +14,7 @@ import Render.Primitives;
 
 Entity createGizmo(World& world, MeshData&& mesh)
 {
-    Entity gizmo = world.createEntity();
+    const Entity gizmo = world.createEntity();
     world.addComponent<NameComponent>(gizmo, "Gizmo");
     world.addComponent<TagsComponent>(gizmo, {{Tag::notEditable}});
     world.addComponent<TransformComponent>(gizmo);
@@ -26,11 +27,12 @@ Entity createGizmo(World& world, MeshData&& mesh)
 
 Entity createGizmo(World& world, std::vector<LineVertex>&& vertices)
 {
-    Entity gizmo = world.createEntity();
+    const Entity gizmo = world.createEntity();
     world.addComponent<NameComponent>(gizmo, "Gizmo");
     world.addComponent<TagsComponent>(gizmo, {{Tag::notEditable}});
     world.addComponent<TransformComponent>(gizmo);
     world.addComponent<LineRenderComponent>(gizmo, {.vertices = std::move(vertices)});
+    world.addComponent<ParentComponent>(gizmo);
     world.getRenderManager().addCommand(RenderCommands::SetObjectVisibility{gizmo, false});
     return gizmo;
 }
@@ -128,7 +130,7 @@ Entity EditorUtils::createBoundingBoxGizmo(World& world, Entity parentEntity)
     world.addComponent<NameComponent>(aabbGizmo, std::format("BoundingBoxGizmo_{}", name));
     world.addComponent<TagsComponent>(aabbGizmo, {{Tag::notEditable}});
     world.addComponent<TransformComponent>(aabbGizmo, transform);
-    world.addComponent<LineRenderComponent>(aabbGizmo, {.parent = parentEntity, .vertices = generateAABBVertices(aabb.minLocal, aabb.maxLocal)});
+    world.addComponent<LineRenderComponent>(aabbGizmo, {.vertices = generateAABBVertices(aabb.minLocal, aabb.maxLocal)});
 
     return aabbGizmo;
 }

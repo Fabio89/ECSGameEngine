@@ -93,7 +93,7 @@ public:
     void addMesh(MeshData&& data, Guid guid);
     void addTexture(TextureData&& textureData, Guid guid);
     void addRenderObject(Entity entity, Guid meshAsset, Guid textureAsset);
-    void setObjectTransform(Entity entity, Vec3 location = {}, Quat rotation = {}, float scale = 1.f);
+    void setObjectTransform(Entity entity, const Mat4& worldTransform);
     void addLineRenderObject(Entity entity, std::vector<LineVertex>&& vertices);
     void setObjectVisibility(Entity entity, bool visible);
     
