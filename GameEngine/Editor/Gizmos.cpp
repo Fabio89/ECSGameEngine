@@ -1,6 +1,7 @@
 module Editor.Gizmos;
 import Component.LineRender;
 import Component.BoundingBox;
+import Component.Gizmo;
 import Component.Name;
 import Component.Model;
 import Component.Parent;
@@ -9,53 +10,85 @@ import Component.Tags;
 import Component.Transform;
 import Guid;
 import Math;
+import Physics;
 import Render.Model;
 import Render.Primitives;
 
-Entity createGizmo(World& world, MeshData&& mesh)
+Entity createTranslationGizmoAxis(World& world, Entity gizmo, std::string name, std::vector<LineVertex>&& vertices, BoundingBoxComponent boundingBox)
 {
-    const Entity gizmo = world.createEntity();
-    world.addComponent<NameComponent>(gizmo, "Gizmo");
-    world.addComponent<TagsComponent>(gizmo, {{Tag::notEditable}});
-    world.addComponent<TransformComponent>(gizmo);
-
-    const Guid meshGuid = Guid::createRandom();
-    world.getRenderManager().addCommand(RenderCommands::AddMesh{meshGuid, std::forward<MeshData>(mesh)});
-    world.addComponent<ModelComponent>(gizmo, {.mesh = meshGuid});
-    return gizmo;
-}
-
-Entity createGizmo(World& world, std::vector<LineVertex>&& vertices)
-{
-    const Entity gizmo = world.createEntity();
-    world.addComponent<NameComponent>(gizmo, "Gizmo");
-    world.addComponent<TagsComponent>(gizmo, {{Tag::notEditable}});
-    world.addComponent<TransformComponent>(gizmo);
-    world.addComponent<LineRenderComponent>(gizmo, {.vertices = std::move(vertices)});
-    world.addComponent<ParentComponent>(gizmo);
-    world.getRenderManager().addCommand(RenderCommands::SetObjectVisibility{gizmo, false});
-    return gizmo;
+    const Entity axis = world.createEntity();
+    world.addComponent<BoundingBoxComponent>(axis, std::move(boundingBox));
+    world.addComponent<LineRenderComponent>(axis, std::move(vertices));
+    world.addComponent<NameComponent>(axis, std::move(name));
+    world.addComponent<ParentComponent>(axis, gizmo);
+    world.addComponent<TagsComponent>(axis, {{Tag::notEditable}});
+    world.addComponent<TransformComponent>(axis);
+    return axis;
 }
 
 Entity EditorUtils::createTranslationGizmo(World& world)
 {
-    return createGizmo
+    const Entity gizmo = world.createEntity();
+    world.addComponent<NameComponent>(gizmo, "Translation Gizmo");
+    world.addComponent<ParentComponent>(gizmo);
+    world.addComponent<TagsComponent>(gizmo, {{Tag::notEditable}});
+    world.addComponent<TransformComponent>(gizmo);
+
+    static constexpr Vec3 xColor = {1.0f, 0.0f, 0.0f};
+    const Entity x = createTranslationGizmoAxis
     (
         world,
+        gizmo,
+        "X",
         {
-            // X-axis line (red)
-            LineVertex{{0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}}, // Start of red line
-            LineVertex{{1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}}, // End of red line
-
-            // Y-axis line (green)
-            LineVertex{{0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}}, // Start of green line
-            LineVertex{{0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}}, // End of green line
-
-            // Z-axis line (blue)
-            LineVertex{{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}}, // Start of blue line
-            LineVertex{{0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}} // End of blue line
+            LineVertex{{0.0f, 0.0f, 0.0f}, xColor},
+            LineVertex{{1.0f, 0.0f, 0.0f}, xColor}
+        },
+        {
+            .channel = TraceChannel{TraceChannelFlags::Gizmo},
+            .minLocal = {-0.2f, -0.2f, -0.2f},
+            .maxLocal = {1.2f, 0.2f, 0.2f}
         }
     );
+
+    static constexpr Vec3 yColor = {0.0f, 1.0f, 0.0f};
+    const Entity y = createTranslationGizmoAxis
+    (
+        world,
+        gizmo,
+        "Y",
+        {
+            LineVertex{{0.0f, 0.0f, 0.0f}, yColor},
+            LineVertex{{0.0f, 1.0f, 0.0f}, yColor}
+        },
+        {
+            .channel = TraceChannel{TraceChannelFlags::Gizmo},
+            .minLocal = {-0.2f, -0.2f, -0.2f},
+            .maxLocal = {0.2f, 1.2f, 0.2f}
+        }
+    );
+    
+    static constexpr Vec3 zColor = {0.0f, 0.0f, 1.0f};
+    const Entity z = createTranslationGizmoAxis
+    (
+        world,
+        gizmo,
+        "Z",
+        {
+            LineVertex{{0.0f, 0.0f, 0.0f}, zColor},
+            LineVertex{{0.0f, 0.0f, 1.0f}, zColor}
+        },
+        {
+            .channel = TraceChannel{TraceChannelFlags::Gizmo},
+            .minLocal = {-0.2f, -0.2f, -0.2f},
+            .maxLocal = {0.2f, 0.2f, 1.2f}
+        }
+    );
+    
+    world.addComponent<GizmoComponent>(gizmo, {.xAxisEntity = x, .yAxisEntity = y, .zAxisEntity = z});
+    setGizmoVisible(world, gizmo, false);
+    
+    return gizmo;
 }
 
 Entity EditorUtils::createRotationGizmo(World& world)
@@ -70,23 +103,20 @@ Entity EditorUtils::createRotationGizmo(World& world)
 
 Entity EditorUtils::createScaleGizmo(World& world)
 {
-    return createGizmo
-    (
-        world,
-        {
-            // X-axis line (red)
-            LineVertex{{0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 0.0f}}, // Start of red line
-            LineVertex{{1.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 0.0f}}, // End of red line
+    return createTranslationGizmo(world);
+}
 
-            // Y-axis line (green)
-            LineVertex{{0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 1.0f}}, // Start of green line
-            LineVertex{{0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 1.0f}}, // End of green line
+void EditorUtils::setGizmoVisible(World& world, Entity gizmoEntity, bool visible)
+{
+    world.getRenderManager().addCommand(RenderCommands::SetObjectVisibility{gizmoEntity, visible});
 
-            // Z-axis line (blue)
-            LineVertex{{0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 1.0f}}, // Start of blue line
-            LineVertex{{0.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 1.0f}} // End of blue line
-        }
-    );
+    if (world.hasComponent<GizmoComponent>(gizmoEntity))
+    {
+        const GizmoComponent& gizmoComponent = world.readComponent<GizmoComponent>(gizmoEntity);
+        world.getRenderManager().addCommand(RenderCommands::SetObjectVisibility{gizmoComponent.xAxisEntity, visible});
+        world.getRenderManager().addCommand(RenderCommands::SetObjectVisibility{gizmoComponent.yAxisEntity, visible});
+        world.getRenderManager().addCommand(RenderCommands::SetObjectVisibility{gizmoComponent.zAxisEntity, visible});
+    }
 }
 
 constexpr std::vector<LineVertex> generateAABBVertices(const Vec3& min, const Vec3& max)
@@ -123,14 +153,14 @@ constexpr std::vector<LineVertex> generateAABBVertices(const Vec3& min, const Ve
 Entity EditorUtils::createBoundingBoxGizmo(World& world, Entity parentEntity)
 {
     const BoundingBoxComponent& aabb = world.readComponent<BoundingBoxComponent>(parentEntity);
-    const TransformComponent& transform = world.readComponent<TransformComponent>(parentEntity);
     std::string_view name = NameUtils::getName(world, parentEntity);
 
     Entity aabbGizmo = world.createEntity();
-    world.addComponent<NameComponent>(aabbGizmo, std::format("BoundingBoxGizmo_{}", name));
-    world.addComponent<TagsComponent>(aabbGizmo, {{Tag::notEditable}});
-    world.addComponent<TransformComponent>(aabbGizmo, transform);
     world.addComponent<LineRenderComponent>(aabbGizmo, {.vertices = generateAABBVertices(aabb.minLocal, aabb.maxLocal)});
+    world.addComponent<NameComponent>(aabbGizmo, std::format("BoundingBoxGizmo_{}", name));
+    world.addComponent<ParentComponent>(aabbGizmo, parentEntity);
+    world.addComponent<TagsComponent>(aabbGizmo, {{Tag::notEditable}});
+    world.addComponent<TransformComponent>(aabbGizmo);
 
     return aabbGizmo;
 }

@@ -10,13 +10,16 @@ namespace Physics
     bool rayIntersectsAABB(const Ray& ray, const Vec3& aabbMin, const Vec3& aabbMax, float& tClosest);
 }
 
-Entity Physics::lineTrace(const World& world, const Ray& ray)
+Entity Physics::lineTrace(const World& world, const Ray& ray, TraceChannelFlags channel)
 {
     float closestHit = std::numeric_limits<float>::max();
     Entity hitEntity = invalidId();
 
     for (auto&& [entity, aabb] : world.view<BoundingBoxComponent>())
     {
+        if (!aabb.channel.test(channel))
+            continue;
+        
         float tClosest;
         if (rayIntersectsAABB(ray, aabb.minWorld, aabb.maxWorld, tClosest))
         {
@@ -62,7 +65,7 @@ Ray Physics::rayFromScreenPosition(const World& world, const Player& player, Vec
     ray.direction = rayWorldDirection;
 
     // Output ray for debugging or raycasting logic
-    log(std::format("Ray: ({}, {}, {}) -> ({}, {}, {})", ray.origin.x, ray.origin.y, ray.origin.z, ray.direction.x, ray.direction.y, ray.direction.z));
+    //log(std::format("Ray: ({}, {}, {}) -> ({}, {}, {})", ray.origin.x, ray.origin.y, ray.origin.z, ray.direction.x, ray.direction.y, ray.direction.z));
 
     return ray;
 }

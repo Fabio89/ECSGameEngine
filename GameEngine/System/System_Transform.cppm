@@ -10,7 +10,7 @@ export class System_Transform final : public System
     {
         if (componentType == getComponentType<TransformComponent>())
         {
-            const auto& component = world.readComponent<TransformComponent>(entity);
+            auto& component = world.editComponent<TransformComponent>(entity);
             updateRenderTransform(world, entity, component);
         }
     }
@@ -21,22 +21,37 @@ export class System_Transform final : public System
         {
             updateRenderTransform(world, entity, transform);
         }
+
+        for (auto&& [entity, transform] : world.view<TransformComponent>())
+        {
+            transform.runtimeData.calculatedThisFrame = false;
+        }
     }
 
-    static void updateRenderTransform(World& world, Entity entity, const TransformComponent& transform)
+    static void updateRenderTransform(World& world, Entity entity, TransformComponent& transform)
     {
-        Mat4 worldTransform = TransformUtils::toMatrix(transform);
+        computeWorldTransform(world, entity, transform);
+         
+        world.getRenderManager().addCommand(RenderCommands::SetTransform{entity, transform.runtimeData.worldMatrix});
+    }
 
+    static void computeWorldTransform(World& world, Entity entity, TransformComponent& transform)
+    {
+        if (transform.runtimeData.calculatedThisFrame)
+            return;
+        
+        transform.runtimeData.worldMatrix = TransformUtils::toMatrix(transform);
+        
         if (world.hasComponent<ParentComponent>(entity))
         {
-            const ParentComponent& parentComponent = world.readComponent<ParentComponent>(entity);
-            if (parentComponent.parent != invalidId())
+            const auto& [parentEntity] = world.readComponent<ParentComponent>(entity);
+            TransformComponent& parentTransform = world.editComponent<TransformComponent>(parentEntity);
+            if (parentEntity != invalidId())
             {
-                const TransformComponent& parentTransform = world.readComponent<TransformComponent>(parentComponent.parent);
-                worldTransform = TransformUtils::toMatrix(parentTransform) * worldTransform;
+                computeWorldTransform(world, parentEntity, parentTransform);
+                transform.runtimeData.worldMatrix = parentTransform.runtimeData.worldMatrix * transform.runtimeData.worldMatrix;
             }
         }
-        
-        world.getRenderManager().addCommand(RenderCommands::SetTransform{entity, worldTransform});
+        transform.runtimeData.calculatedThisFrame = true;
     }
 };

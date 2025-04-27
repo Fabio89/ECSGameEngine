@@ -31,6 +31,9 @@ export namespace Json
 
     using rapidjson::IStreamWrapper;
     using rapidjson::OStreamWrapper;
+    
+    template<typename T>
+    std::optional<T> toNumber(const JsonObject& j, const char* key);
 
     JsonObject fromVec2(Vec2 v, MemoryPoolAllocator<>& allocator);
     std::optional<Vec2> toVec2(const JsonObject& j, const char* key);
@@ -50,3 +53,22 @@ JsonObject serialize(const T&, Json::MemoryPoolAllocator<>&) { return {}; }
 
 export template <ValidComponentData T> 
 T deserialize(const JsonObject&) { return T{}; }
+
+template<typename T>
+T toNumber(const JsonObject& j);
+
+template<>
+int toNumber<int>(const JsonObject& j) { return j.GetInt(); }
+
+template<>
+UInt64 toNumber<UInt64>(const JsonObject& j) { return j.GetUint64(); }
+
+template<typename T>
+std::optional<T> Json::toNumber(const JsonObject& j, const char* key)
+{
+    const auto it = j.FindMember(key);
+    if (it == j.MemberEnd())
+        return std::nullopt;
+        
+    return ::toNumber<T>(it->value);
+}

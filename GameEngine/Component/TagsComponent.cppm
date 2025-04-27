@@ -21,7 +21,13 @@ struct TypeTraits<TagsComponent>
 template <>
 JsonObject serialize(const TagsComponent& component, Json::MemoryPoolAllocator<>& allocator)
 {
-    return {};
+    JsonObject json{Json::kArrayType};
+    json.Reserve(component.tags.size(), allocator);
+    for (const auto& tag : component.tags)
+    {
+        json.PushBack(JsonObject{tag.data(), allocator}, allocator);
+    }
+    return json;
 }
 
 template <>

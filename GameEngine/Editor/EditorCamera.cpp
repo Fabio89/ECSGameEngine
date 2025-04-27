@@ -1,8 +1,11 @@
 module Editor.Camera;
 import Core;
 
-Vec2 lastCursorPosition;
-bool isActive{};
+namespace
+{
+    Vec2 lastCursorPosition;
+    bool isActive{};
+}
 
 void updateCameraTransform(GLFWwindow* window, World& world, Entity camera, float deltaTime, bool allowRotation)
 {

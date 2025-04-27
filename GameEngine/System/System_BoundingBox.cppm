@@ -19,18 +19,16 @@ constexpr std::vector<Vec3> computeCorners(const BoundingBoxComponent& aabb)
     };
 }
 
-void computeWorldCorners(BoundingBoxComponent& aabb, const TransformComponent& transform)
+void computeWorldCorners(BoundingBoxComponent& aabb, const Mat4& worldTransform)
 {
     const std::vector<Vec3>& corners = computeCorners(aabb);
 
     Vec3 minWorld{std::numeric_limits<float>::max()};
     Vec3 maxWorld{std::numeric_limits<float>::lowest()};
-
-    const Mat4 worldMatrix = TransformUtils::toMatrix(transform);
-
+    
     for (int i = 0; i < 8; i++)
     {
-        const Vec3 worldPos{worldMatrix * Vec4{corners[i], 1.0f}};
+        const Vec3 worldPos{worldTransform * Vec4{corners[i], 1.0f}};
         minWorld = Math::min(minWorld, worldPos);
         maxWorld = Math::max(maxWorld, worldPos);
     }
@@ -47,7 +45,7 @@ export class System_BoundingBox final : public System
         {
             auto& aabb = world.editComponent<BoundingBoxComponent>(entity);
             const auto& transform = world.readComponent<TransformComponent>(entity);
-            computeWorldCorners(aabb, transform);
+            computeWorldCorners(aabb, transform.runtimeData.worldMatrix);
         }
     }
 
@@ -55,7 +53,7 @@ export class System_BoundingBox final : public System
     {
         for (auto&& [entity, aabb, transform] : world.view<BoundingBoxComponent, TransformComponent>())
         {
-            computeWorldCorners(aabb, transform);
+            computeWorldCorners(aabb, transform.runtimeData.worldMatrix);
         }
     }
 };

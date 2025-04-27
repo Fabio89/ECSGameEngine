@@ -8,6 +8,12 @@ export struct TransformComponent
     Vec3 position;
     Quat rotation;
     float scale{1.f};
+
+    struct Runtime
+    {
+        Mat4 worldMatrix;
+        bool calculatedThisFrame{false};
+    } runtimeData{};
 };
 
 export namespace TransformUtils

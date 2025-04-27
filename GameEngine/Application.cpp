@@ -127,7 +127,7 @@ void addKeyEventCallback(Input::KeyEventCallback callback)
 
 Entity getEntityUnderCursor(GLFWwindow* window)
 {
-    return Physics::lineTrace(world, Physics::rayFromScreenPosition(world, player, getCursorPosition(window)));
+    return Physics::lineTrace(world, Physics::rayFromScreenPosition(world, player, getCursorPosition(window)), TraceChannelFlags::Default);
 }
 
 Vec2 getCursorPosition(GLFWwindow* window)
