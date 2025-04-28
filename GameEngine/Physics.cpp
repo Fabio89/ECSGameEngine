@@ -8,6 +8,7 @@ import Core;
 namespace Physics
 {
     bool rayIntersectsAABB(const Ray& ray, const Vec3& aabbMin, const Vec3& aabbMax, float& tClosest);
+    void checkNormalized(const Vec3& vector);
 }
 
 Entity Physics::lineTrace(const World& world, const Ray& ray, TraceChannelFlags channel)
@@ -70,6 +71,22 @@ Ray Physics::rayFromScreenPosition(const World& world, const Player& player, Vec
     return ray;
 }
 
+std::optional<Vec3> Physics::intersectRayPlane(const Ray& ray, const Plane& plane)
+{
+    checkNormalized(ray.direction);
+    checkNormalized(plane.normal);
+
+    const float denominator = Math::dot(plane.normal, ray.direction);
+    if (Math::abs(denominator) < Math::epsilon<float>()) // Parallel, no intersection
+        return std::nullopt;
+
+    const float t = Math::dot(plane.point - ray.origin, plane.normal) / denominator;
+    if (t < 0.0f)
+        return std::nullopt; // Intersection behind the ray origin
+
+    return ray.origin + ray.direction * t;
+}
+
 bool Physics::rayIntersectsAABB(const Ray& ray, const Vec3& aabbMin, const Vec3& aabbMax, float& tClosest)
 {
     float tMin = 0.0f;
@@ -99,4 +116,8 @@ bool Physics::rayIntersectsAABB(const Ray& ray, const Vec3& aabbMin, const Vec3&
 
     tClosest = tMin;
     return true;
+}
+
+void Physics::checkNormalized(const Vec3& vector)
+{
 }

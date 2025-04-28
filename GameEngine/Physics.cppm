@@ -38,7 +38,7 @@ public:
 
     bool test(TraceChannelFlags flags) const { return (m_mask & flags) == flags; }
     TraceChannelFlagsType toNumber() const { return static_cast<TraceChannelFlagsType>(m_mask); }
-    
+
 private:
     TraceChannelFlags m_mask;
 };
@@ -57,4 +57,7 @@ namespace Physics
 
     export __declspec(dllexport)
     Ray rayFromScreenPosition(const World& world, const Player& player, Vec2 screenPosition);
+
+    export
+    std::optional<Vec3> intersectRayPlane(const Ray& ray, const Plane& plane);
 }

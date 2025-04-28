@@ -23,7 +23,8 @@ namespace
     std::array<Entity, 3> gizmos;
     std::unordered_map<Entity, Entity> entitiesToBoundingBoxGizmos;
     Entity selected = invalidId();
-    Vec2 lastCursorPosition;
+    Entity selectedGizmoAxis = invalidId();
+    std::optional<Vec3> projectedCursorPositionLastFrame;
 }
 
 constexpr Entity& getGizmo(EditMode editMode)
@@ -58,7 +59,7 @@ void setEditMode(EditMode editMode)
 void editorInit()
 {
     EditorComponents::init();
-    
+
     getGizmo(EditMode::Translate) = EditorUtils::createTranslationGizmo(getWorld());
     getGizmo(EditMode::Rotate) = EditorUtils::createRotationGizmo(getWorld());
     getGizmo(EditMode::Scale) = EditorUtils::createScaleGizmo(getWorld());
@@ -86,18 +87,50 @@ void editorUpdate(GLFWwindow* window, float deltaTime)
     const Vec2 cursorPosition = getCursorPosition(window);
     const Ray ray = Physics::rayFromScreenPosition(getWorld(), getPlayer(), cursorPosition);
 
-    if (selected != invalidId() && Input::isKeyDown(KeyCode::MouseButtonLeft))
+    if (selected != invalidId() && selectedGizmoAxis != invalidId() && Input::isKeyDown(KeyCode::MouseButtonLeft))
     {
-        if (const Entity selectedGizmoAxis = Physics::lineTrace(getWorld(), ray, TraceChannelFlags::Gizmo); selectedGizmoAxis != invalidId())
+        TransformComponent& transform = getWorld().editComponent<TransformComponent>(selected);
+
+        const Vec3 gizmoAxisDirection = [&]
         {
-            const Vec2 dPos = cursorPosition - lastCursorPosition;
-            TransformComponent& transform = getWorld().editComponent<TransformComponent>(selected);
+            const Entity gizmoEntity = getWorld().readComponent<ParentComponent>(selectedGizmoAxis).parent;
+            const GizmoComponent& gizmo = getWorld().readComponent<GizmoComponent>(gizmoEntity);
+            if (selectedGizmoAxis == gizmo.xAxisEntity)
+                return TransformUtils::right(transform);
+            if (selectedGizmoAxis == gizmo.yAxisEntity)
+                return TransformUtils::up(transform);
+            if (selectedGizmoAxis == gizmo.zAxisEntity)
+                return TransformUtils::forward(transform);
+            report("Invalid gizmo axis entity");
+            return Vec3{};
+        }();
+
+        const Plane movePlane
+        {
+            .point = transform.position,
+            .normal = Math::cross(TransformUtils::right(getWorld().readComponent<TransformComponent>(getPlayer().getMainCamera())), gizmoAxisDirection)
+        };
+
+        const std::optional<Vec3> projectedCursorPosition = Physics::intersectRayPlane(ray, movePlane);
+
+        if (projectedCursorPositionLastFrame.has_value() && projectedCursorPosition.has_value())
+        {
+            const auto delta = Math::dot(*projectedCursorPosition - *projectedCursorPositionLastFrame, gizmoAxisDirection);
+            transform.position += gizmoAxisDirection * delta;
+            projectedCursorPositionLastFrame = *projectedCursorPosition;
         }
+        projectedCursorPositionLastFrame = projectedCursorPosition;
     }
-    lastCursorPosition = cursorPosition;
-    
+    else
+    {
+        selectedGizmoAxis = invalidId();
+        projectedCursorPositionLastFrame = {};
+    }
+
     if (Input::isKeyJustPressed(KeyCode::MouseButtonLeft))
     {
+        selectedGizmoAxis = Physics::lineTrace(getWorld(), ray, TraceChannelFlags::Gizmo);
+
         const Entity previouslySelected = selected;
         selected = Physics::lineTrace(getWorld(), ray, TraceChannelFlags::Default);
 

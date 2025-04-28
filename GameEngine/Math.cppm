@@ -33,6 +33,12 @@ export using IVec2 = glm::ivec2;
 export using Quat = glm::quat;
 export using Mat4 = glm::mat4;
 
+export struct Plane
+{
+    Vec3 point;
+    Vec3 normal;
+};
+
 export using glm::operator==;
 export using glm::operator!=;
 export using glm::operator*;
@@ -42,86 +48,63 @@ export using glm::operator-;
 
 export namespace Math
 {
-    using glm::all;
-    using glm::equal;
+    // Basic math operations
+    using glm::abs;
     using glm::min;
     using glm::max;
     using glm::clamp;
-    using glm::length;
-    using glm::radians;
-    using glm::degrees;
-    using glm::angleAxis;
-    using glm::pitch;
-    using glm::yaw;
-    using glm::roll;
-    using glm::lookAt;
-    using glm::perspective;
-    using glm::translate;
-    using glm::rotate;
-    using glm::scale;
-    using glm::normalize;
-    using glm::eulerAngles;
-    using glm::epsilonEqual;
-    using glm::epsilon;
-    using glm::distance;
-    using glm::mat4_cast;
-    using glm::pi;
-    using glm::half_pi;
+
+    // Trigonometric functions
     using glm::sin;
-    using glm::cos;
+    using glm::cos; 
     using glm::tan;
     using glm::asin;
     using glm::acos;
     using glm::atan;
+    using glm::radians;
+    using glm::degrees;
+
+    // Constants
+    using glm::pi;
+    using glm::half_pi;
+    using glm::epsilon;
+
+    // Vector operations
+    using glm::length;
+    using glm::distance;
+    using glm::normalize;
     using glm::cross;
     using glm::dot;
-    using glm::inverse;
 
+    // Matrix operations
+    using glm::inverse;
+    using glm::translate;
+    using glm::rotate;
+    using glm::scale;
+    using glm::lookAt;
+    using glm::perspective;
+    using glm::mat4_cast;
+
+    // Rotation/orientation
+    using glm::angleAxis;
+    using glm::pitch;
+    using glm::yaw;
+    using glm::roll;
+    using glm::eulerAngles;
     using glm::rotation;
 
+    // Interpolation
     using glm::lerp;
     using glm::slerp;
     using glm::smoothstep;
-    // template<typename T, qualifier Q>
-    // GLM_FUNC_QUALIFIER T pitch(qua<T, Q> const& q)
-    // {
-    //     log("Using pitch");
-    //     // Corrected Pitch (rotation around X-axis)
-    //     T sinp = 2 * (q.w * q.x - q.y * q.z);
-    //
-    //     // Small numerical inaccuracies can cause near-zero deviations, force these to zero:
-    //     if (std::abs(sinp) < static_cast<T>(1e-6)) {
-    //         return static_cast<T>(0); // Explicitly treat no X-axis rotation as zero
-    //     }
-    //
-    //     // Otherwise, safely compute pitch using arcsine:
-    //     return static_cast<T>(asin(clamp(sinp, static_cast<T>(-1), static_cast<T>(1))));
-    // }
-    //
-    //
-    //
-    //
-    // template<typename T, qualifier Q>
-    // GLM_FUNC_QUALIFIER T yaw(qua<T, Q> const& q)
-    // { log("Using yaw");
-    //     // Yaw (rotation around Y-axis)
-    //     return static_cast<T>(atan2(2 * (q.w * q.y + q.z * q.x), 1 - 2 * (q.y * q.y + q.x * q.x)));
-    // }
-    //
-    // template<typename T, qualifier Q>
-    // GLM_FUNC_QUALIFIER T roll(qua<T, Q> const& q)
-    // {log("Using roll");
-    //     return static_cast<T>(atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.z * q.z + q.x * q.x)));
-    // }
 
-
-
-
-
-
+    // Comparison
+    using glm::all;
+    using glm::equal;
+    using glm::epsilonEqual;
 }
 
-export constexpr Vec3 forwardVector() { return { 0.0f, 0.0f, 1.0f }; }
+export constexpr Vec3 forwardVector() { return {0.0f, 0.0f, 1.0f}; }
 export constexpr Vec3 rightVector() { return {1.0f, 0.0f, 0.0f}; }
 export constexpr Vec3 upVector() { return {0.0f, 1.0f, 0.0f}; }
 
