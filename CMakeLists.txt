@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 4.2.2)
 
-set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD
-        "451f2fe2-a8a2-47c3-bc32-94786d8fc91b")
+set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "451f2fe2-a8a2-47c3-bc32-94786d8fc91b")
 
 project(
         EcsGameEngine
@@ -24,11 +23,11 @@ find_package(imgui CONFIG REQUIRED)
 # ----------------------------------------------------------
 
 file(GLOB_RECURSE ENGINE_SOURCES CONFIGURE_DEPENDS
-        GameEngine/*.cpp
+        Engine/*.cpp
 )
 
 file(GLOB_RECURSE ENGINE_MODULES CONFIGURE_DEPENDS
-        GameEngine/*.cppm
+        Engine/*.cppm
 )
 
 add_library(Engine SHARED)
@@ -45,7 +44,7 @@ target_sources(Engine
 target_include_directories(Engine
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/GameEngine
+        ${CMAKE_CURRENT_SOURCE_DIR}/Engine
 )
 
 target_link_libraries(Engine
@@ -74,3 +73,11 @@ target_link_libraries(Game
 
 target_compile_features(Game PUBLIC cxx_std_23)
 set_property(TARGET Game PROPERTY CXX_MODULE_STD ON)
+
+# ----------------------------------------------------------
+# Shaders
+# ----------------------------------------------------------
+
+add_subdirectory(Engine/Render/Shaders)
+
+add_dependencies(Game Game_shaders)

@@ -275,10 +275,10 @@ vk::Extent2D RenderUtils::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& cap
     return actualExtent;
 }
 
-std::vector<char> RenderUtils::readFile(const std::string& filename)
+std::vector<char> RenderUtils::readFile(const std::filesystem::path& path)
 {
-    std::cout << "Reading file at: " << filename << std::endl;
-    std::ifstream file{filename, std::ios::ate | std::ios::binary};
+    std::cout << "Reading file at: " << path << std::endl;
+    std::ifstream file{path, std::ios::ate | std::ios::binary};
     if (!file.is_open())
     {
         fatalError("failed to open file!");

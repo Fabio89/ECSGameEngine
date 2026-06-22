@@ -8,13 +8,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Game", "Game\Game.vcxproj",
 		{3357F57C-37C6-4721-8CFC-F0016B27F423} = {3357F57C-37C6-4721-8CFC-F0016B27F423}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Engine", "GameEngine\GameEngine.vcxproj", "{3357F57C-37C6-4721-8CFC-F0016B27F423}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Engine", "Engine\Engine.vcxproj", "{3357F57C-37C6-4721-8CFC-F0016B27F423}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{90A5D86F-5B5A-4C2B-B98F-14E44F050EE5}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
 		CMakeLists.txt = CMakeLists.txt
-		GameEngine\Render\Shaders\compile.bat = GameEngine\Render\Shaders\compile.bat
+		Engine\Render\Shaders\compile.bat = Engine\Render\Shaders\compile.bat
 		vcpkg.json = vcpkg.json
 		..\..\Users\march\Documents\Mashi Projects\TestProject\project.ma = ..\..\Users\march\Documents\Mashi Projects\TestProject\project.ma
 	EndProjectSection

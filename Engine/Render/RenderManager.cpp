@@ -705,7 +705,7 @@ void RenderManager::drawFrame()
 
     const vk::RenderingAttachmentInfo colorAttachmentInfo
     {
-        .imageView = m_swapChainImageViews[m_currentFrame],
+        .imageView = m_swapChainImageViews[imageResult.value],
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .loadOp = vk::AttachmentLoadOp::eClear,
         .storeOp = vk::AttachmentStoreOp::eStore,

@@ -1,31 +1,41 @@
 module;
 #include <cstddef>
 
-export module Render.Pipeline.MeshWithTexture;
+export module Render.Pipeline.Line;
 import Core;
 import Render.Model;
 import Render.Utils;
 import Project;
 import Wrapper.Vulkan;
 
-export vk::Pipeline createGraphicsPipeline(vk::Device device, vk::PipelineCache pipelineCache, vk::PipelineLayout pipelineLayout, vk::Extent2D swapchainExtent)
+export vk::Pipeline createLinePipeline(vk::Device device, vk::PipelineCache pipelineCache, vk::PipelineLayout pipelineLayout, vk::Extent2D swapchainExtent)
 {
-    static constexpr std::array dynamicStates
+    // Rasterization for lines
+    static constexpr vk::PipelineRasterizationStateCreateInfo rasterizerInfo
     {
-        vk::DynamicState::eViewport,
-        vk::DynamicState::eScissor
+        .polygonMode = vk::PolygonMode::eLine,
+        .cullMode = vk::CullModeFlagBits::eNone,
+        .lineWidth = 1.0f,
     };
 
-    static constexpr vk::PipelineDynamicStateCreateInfo dynamicStateInfo
+    // Disable depth writes for debugging lines
+    static constexpr vk::PipelineDepthStencilStateCreateInfo depthStencil
     {
-        .dynamicStateCount = static_cast<UInt32>(dynamicStates.size()),
-        .pDynamicStates = dynamicStates.data(),
+        .depthTestEnable = vk::False,
+        .depthWriteEnable = vk::False,
+        .depthCompareOp = vk::CompareOp::eLess,
+    };
+
+    // Multisampling (optional)
+    static constexpr vk::PipelineMultisampleStateCreateInfo multisamplingInfo
+    {
+        .rasterizationSamples = vk::SampleCountFlagBits::e1,
     };
 
     static constexpr vk::VertexInputBindingDescription bindingDescription
     {
         .binding = 0,
-        .stride = sizeof(Vertex),
+        .stride = sizeof(LineVertex),
         .inputRate = vk::VertexInputRate::eVertex,
     };
 
@@ -36,17 +46,18 @@ export vk::Pipeline createGraphicsPipeline(vk::Device device, vk::PipelineCache 
             .location = 0,
             .binding = 0,
             .format = vk::Format::eR32G32B32Sfloat,
-            .offset = offsetof(Vertex, pos),
+            .offset = offsetof(LineVertex, pos),
         },
         vk::VertexInputAttributeDescription
         {
             .location = 1,
             .binding = 0,
-            .format = vk::Format::eR32G32Sfloat,
-            .offset = offsetof(Vertex, uv),
+            .format = vk::Format::eR32G32B32Sfloat,
+            .offset = offsetof(LineVertex, colour),
         },
     };
 
+    // Vertex input (reuse your format or customize as needed)
     static constexpr vk::PipelineVertexInputStateCreateInfo vertexInputInfo
     {
         .vertexBindingDescriptionCount = 1,
@@ -55,32 +66,33 @@ export vk::Pipeline createGraphicsPipeline(vk::Device device, vk::PipelineCache 
         .pVertexAttributeDescriptions = attributeDescriptions.data(),
     };
 
+    static constexpr std::array dynamicStates
+    {
+        vk::DynamicState::eViewport,
+        vk::DynamicState::eScissor,
+    };
+
+    static constexpr vk::PipelineDynamicStateCreateInfo dynamicStateInfo
+    {
+        .dynamicStateCount = static_cast<UInt32>(dynamicStates.size()),
+        .pDynamicStates = dynamicStates.data(),
+    };
+
     static constexpr vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo
     {
-        .topology = vk::PrimitiveTopology::eTriangleList,
+        .topology = vk::PrimitiveTopology::eLineList,
         .primitiveRestartEnable = vk::False,
-    };
-
-    static constexpr vk::PipelineRasterizationStateCreateInfo rasterizerInfo
-    {
-        .depthClampEnable = vk::False,
-        .rasterizerDiscardEnable = vk::False,
-        .polygonMode = vk::PolygonMode::eFill,
-        .cullMode = vk::CullModeFlagBits::eBack,
-        .frontFace = vk::FrontFace::eClockwise,
-        .depthBiasEnable = vk::False,
-        .lineWidth = 1.0f,
-    };
-
-    static constexpr vk::PipelineMultisampleStateCreateInfo multisamplingInfo
-    {
-        .rasterizationSamples = vk::SampleCountFlagBits::e1,
-        .sampleShadingEnable = vk::False,
     };
 
     static constexpr vk::PipelineColorBlendAttachmentState colorBlendAttachment
     {
         .blendEnable = vk::False,
+        .srcColorBlendFactor = vk::BlendFactor::eOne, // Optional
+        .dstColorBlendFactor = vk::BlendFactor::eZero, // Optional
+        .colorBlendOp = vk::BlendOp::eAdd, // Optional
+        .srcAlphaBlendFactor = vk::BlendFactor::eOne, // Optional
+        .dstAlphaBlendFactor = vk::BlendFactor::eZero, // Optional
+        .alphaBlendOp = vk::BlendOp::eAdd, // Optional
         .colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
         vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
     };
@@ -88,27 +100,15 @@ export vk::Pipeline createGraphicsPipeline(vk::Device device, vk::PipelineCache 
     static constexpr vk::PipelineColorBlendStateCreateInfo colorBlendingInfo
     {
         .logicOpEnable = vk::False,
+        .logicOp = vk::LogicOp::eCopy, // Optional
         .attachmentCount = 1,
         .pAttachments = &colorBlendAttachment,
         .blendConstants = std::array{0.f, 0.f, 0.f, 0.f}
     };
 
-    static constexpr vk::PipelineDepthStencilStateCreateInfo depthStencil
-    {
-        .depthTestEnable = vk::True,
-        .depthWriteEnable = vk::True,
-        .depthCompareOp = vk::CompareOp::eLess,
-        .depthBoundsTestEnable = vk::False,
-        .stencilTestEnable = vk::False,
-        .front = {}, // Optional
-        .back = {}, // Optional
-        .minDepthBounds = 0.0f, // Optional
-        .maxDepthBounds = 1.0f, // Optional
-    };
-
-    auto vertShaderCode = RenderUtils::readFile(RenderUtils::getExecutableRoot().string() + "Shaders/vert.spv");
-    auto fragShaderCode = RenderUtils::readFile(RenderUtils::getExecutableRoot().string() + "Shaders/frag.spv");
-
+    // Load shaders
+    auto vertShaderCode = RenderUtils::readFile(RenderUtils::getExecutableRoot() / "Shaders/LineShader.vert.spv");
+    auto fragShaderCode = RenderUtils::readFile(RenderUtils::getExecutableRoot() / "Shaders/LineShader.frag.spv");
     vk::ShaderModule vertShaderModule = RenderUtils::createShaderModule(vertShaderCode, device);
     vk::ShaderModule fragShaderModule = RenderUtils::createShaderModule(fragShaderCode, device);
 
@@ -126,7 +126,7 @@ export vk::Pipeline createGraphicsPipeline(vk::Device device, vk::PipelineCache 
         .pName = "main",
     };
 
-    const vk::PipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
+    vk::PipelineShaderStageCreateInfo shaderStages[]{vertShaderStageInfo, fragShaderStageInfo};
 
     const vk::Viewport viewport
     {
@@ -162,7 +162,8 @@ export vk::Pipeline createGraphicsPipeline(vk::Device device, vk::PipelineCache 
         .depthAttachmentFormat = depthFormat,
         .stencilAttachmentFormat = vk::Format::eUndefined
     };
-    
+
+    // Build the pipeline
     const vk::GraphicsPipelineCreateInfo pipelineInfo
     {
         .pNext = &renderingCreateInfo,
@@ -183,15 +184,13 @@ export vk::Pipeline createGraphicsPipeline(vk::Device device, vk::PipelineCache 
         .basePipelineIndex = -1,
     };
 
-    auto&& [result, pipeline] = device.createGraphicsPipeline(pipelineCache, pipelineInfo);
+    auto result = device.createGraphicsPipeline(pipelineCache, pipelineInfo);
 
-    if (result != vk::Result::eSuccess)
-    {
-        fatalError("failed to create graphics pipeline!");
-    }
+    if (result.result != vk::Result::eSuccess)
+        fatalError("Failed to create line rendering pipeline!");
 
-    device.destroyShaderModule(fragShaderModule, nullptr);
-    device.destroyShaderModule(vertShaderModule, nullptr);
+    device.destroyShaderModule(vertShaderModule);
+    device.destroyShaderModule(fragShaderModule);
 
-    return pipeline;
+    return result.value;
 }

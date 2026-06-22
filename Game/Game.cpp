@@ -3,7 +3,6 @@ import ComponentArray;
 import EditorBridge;
 import std;
 import Wrapper.Glfw;
-#include <chrono>
 
 ::GLFWwindow* window{};
 
