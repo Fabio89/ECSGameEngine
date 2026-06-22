@@ -39,6 +39,13 @@ void ImGuiHelper::init(GLFWwindow* window, const ImGuiInitInfo& initInfo)
     m_descriptorPool = initInfo.device.createDescriptorPool(imguiPoolInfo, nullptr);
     check(m_descriptorPool, "failed to create descriptor pool!");
 
+    Wrapper_ImGui::ImGui_ImplVulkan_PipelineInfo pipelineInfo
+    {
+        .RenderPass = initInfo.renderPass,
+        .Subpass = 0,
+        .MSAASamples = Wrapper_ImGui::VK_SAMPLE_COUNT_1_BIT
+    };
+
     Wrapper_ImGui::ImGui_ImplVulkan_InitInfo imguiInitInfo
     {
         .Instance = initInfo.instance,
@@ -47,12 +54,10 @@ void ImGuiHelper::init(GLFWwindow* window, const ImGuiInitInfo& initInfo)
         .QueueFamily = *QueueFamilyUtils::findQueueFamilies(initInfo.physicalDevice, initInfo.surface).get(QueueFamilyType::Graphics),
         .Queue = initInfo.queue,
         .DescriptorPool = m_descriptorPool,
-        .RenderPass = initInfo.renderPass,
         .MinImageCount = 2,
         .ImageCount = static_cast<UInt32>(initInfo.imageCount),
-        .MSAASamples = Wrapper_ImGui::VK_SAMPLE_COUNT_1_BIT,
         .PipelineCache = initInfo.pipelineCache,
-        .Subpass = 0,
+        .PipelineInfoMain = pipelineInfo,
         .Allocator = nullptr,
         .CheckVkResultFn = nullptr,
     };

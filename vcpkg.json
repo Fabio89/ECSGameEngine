@@ -1,15 +1,9 @@
 {
-  "dependencies": [
-    "boost-uuid",
-    "cryptopp",
-    "glfw3",
-    "glm",
-    {
-      "name": "imgui",
-      "features": [
-        "glfw-binding",
-        "vulkan-binding"
-      ]
-    }
-  ]
+  "dependencies" : [ "boost-uuid", "cryptopp", "glfw3", "glm", {
+    "name" : "imgui",
+    "features" : [ "glfw-binding", "vulkan-binding" ]
+  }, {
+    "name" : "rapidjson",
+    "version>=" : "2025-02-26"
+  } ]
 }

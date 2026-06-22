@@ -108,14 +108,14 @@ export constexpr Vec3 forwardVector() { return {0.0f, 0.0f, 1.0f}; }
 export constexpr Vec3 rightVector() { return {1.0f, 0.0f, 0.0f}; }
 export constexpr Vec3 upVector() { return {0.0f, 1.0f, 0.0f}; }
 
-export inline void hash_combine(size_t& seed, size_t hash)
+export inline void hash_combine(std::size_t& seed, std::size_t hash)
 {
     hash += 0x9e3779b9 + (seed << 6) + (seed >> 2);
     seed ^= hash;
 }
 
 export template <typename T, qualifier Q>
-size_t hash_value(const vec<2, T, Q>& v)
+std::size_t hash_value(const vec<2, T, Q>& v)
 {
     auto hasher = std::hash<T>{};
     auto seed = hasher(v.x);
@@ -124,7 +124,7 @@ size_t hash_value(const vec<2, T, Q>& v)
 }
 
 export template <typename T, qualifier Q>
-size_t hash_value(const vec<3, T, Q>& v)
+std::size_t hash_value(const vec<3, T, Q>& v)
 {
     auto hasher = std::hash<T>{};
     auto seed = hasher(v.x);

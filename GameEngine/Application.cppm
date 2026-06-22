@@ -1,3 +1,7 @@
+module;
+
+#include "EngineExport.h"
+
 export module Application;
 import ComponentRegistry;
 import Core;
@@ -7,77 +11,88 @@ import Player;
 import World;
 import Render.RenderManager;
 import Wrapper.Glfw;
-import Wrapper.Windows;
-
-export using ::GLFWwindow;
-export using ::HWND;
 
 //------------------------------------------------------------------------------------------------------------------------
 // Application
 //------------------------------------------------------------------------------------------------------------------------
 
-extern "C" __declspec(dllexport)
+extern "C" ENGINE_API
 inline int getCoolestNumber() { return 22; }
 
-export extern "C" __declspec(dllexport)
+export extern "C" ENGINE_API
 void runTest(GLFWwindow* window = nullptr);
 
-export extern "C" __declspec(dllexport)
-GLFWwindow* createWindow(HWND parentHwnd, int width, int height);
+export
+enum class ENGINE_API WindowMode
+{
+    Standalone,
+    Embedded
+};
 
-export extern "C" __declspec(dllexport)
+export
+struct ENGINE_API WindowCreateInfo
+{
+    int width = 1280;
+    int height = 720;
+    WindowMode mode = WindowMode::Standalone;
+};
+
+export ENGINE_API
+GLFWwindow* createWindow(const WindowCreateInfo& info);
+
+export extern "C" ENGINE_API
 void engineInit(GLFWwindow* window);
 
-export extern "C" __declspec(dllexport)
+export extern "C" ENGINE_API
 bool engineUpdate(GLFWwindow* window, float deltaTime);
 
-export extern "C" __declspec(dllexport)
+export extern "C" ENGINE_API
 void engineShutdown(GLFWwindow* window);
 
-export extern "C" __declspec(dllexport)
+export extern "C" ENGINE_API
 void setViewport(GLFWwindow* window, int x, int y, int width, int height);
 
 //------------------------------------------------------------------------------------------------------------------------
 // Input
 //------------------------------------------------------------------------------------------------------------------------
-export extern "C" __declspec(dllexport)
+export extern "C" ENGINE_API
 void addKeyEventCallback(Input::KeyEventCallback callback);
 
-export extern "C" __declspec(dllexport)
+export extern "C" ENGINE_API
 Entity getEntityUnderCursor(GLFWwindow* window);
 
-export __declspec(dllexport)
+export ENGINE_API
 Vec2 getCursorPosition(GLFWwindow* window);
 
 //------------------------------------------------------------------------------------------------------------------------
 // Project
 //------------------------------------------------------------------------------------------------------------------------
 
-export extern "C" __declspec(dllexport)
+export extern "C" ENGINE_API
 void openProject(const char* path);
 
-export extern "C" __declspec(dllexport)
+export extern "C" ENGINE_API
 void saveCurrentProject();
 
-export extern "C" __declspec(dllexport)
+export extern "C" ENGINE_API
 void serializeScene(char* buffer, int bufferSize);
 
-export extern "C" __declspec(dllexport)
+export extern "C" ENGINE_API
 void patchEntity(Entity entity, const char* json);
 
 //------------------------------------------------------------------------------------------------------------------------
 // DEBUG -TEMPORARY
 //------------------------------------------------------------------------------------------------------------------------
-export __declspec(dllexport)
+export ENGINE_API
 World& getWorld();
 
-export __declspec(dllexport)
+export ENGINE_API
 void printArchetypeStatus();
 
-export __declspec(dllexport)
+export ENGINE_API
 Player& getPlayer();
 
-export __declspec(dllexport)
+export ENGINE_API
 ComponentBase& editComponent(Entity entity, ComponentTypeId typeId);
 
 export template<ValidComponentData T>

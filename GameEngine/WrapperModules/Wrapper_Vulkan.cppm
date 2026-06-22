@@ -1,7 +1,8 @@
 export module Wrapper.Vulkan;
 export import vulkan_hpp;
+import std;
 
-export constexpr size_t MaxFramesInFlight{2};
+export constexpr std::size_t MaxFramesInFlight{2};
 
 export namespace vk
 {

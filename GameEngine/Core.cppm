@@ -1,3 +1,13 @@
+module;
+
+#include "EngineExport.h"
+
+#ifdef _MSC_VER
+#define FUNCTION_SIGNATURE __FUNCSIG__
+#else
+#define FUNCTION_SIGNATURE __PRETTY_FUNCTION__
+#endif
+
 export module Core;
 export import Log;
 export import std;
@@ -11,12 +21,12 @@ export using UInt16 = std::uint16_t;
 export using UInt32 = std::uint32_t;
 export using UInt64 = std::uint64_t;
 
-export using TypeId = size_t;
+export using TypeId = std::size_t;
 export constexpr TypeId invalidId() { return std::numeric_limits<TypeId>::max(); }
 
 export namespace UniqueIdGenerator
 {
-    __declspec(dllexport)
+    ENGINE_API
     TypeId generateUniqueId()
     {
         static TypeId id = 0;
@@ -25,28 +35,28 @@ export namespace UniqueIdGenerator
     }
 
     template <typename T>
-    struct __declspec(dllexport) TypeIdGenerator
+    struct ENGINE_API TypeIdGenerator
     {
         inline static const TypeId value = generateUniqueId();
     };
 }
 
 // General hash function
-consteval size_t hash_fnv1a(std::string_view str)
+consteval std::size_t hash_fnv1a(std::string_view str)
 {
-    size_t hash = 2166136261u;
+    std::size_t hash = 2166136261u;
     for (char c : str)
     {
-        hash ^= static_cast<size_t>(c);
+        hash ^= static_cast<std::size_t>(c);
         hash *= 16777619u;
     }
     return hash;
 }
 
 export template <typename T>
-consteval size_t getTypeHash()
+consteval std::size_t getTypeHash()
 {
-    return hash_fnv1a(__FUNCSIG__); // Use __PRETTY_FUNCTION__ (or __FUNCSIG__ on MSVC)
+    return hash_fnv1a(FUNCTION_SIGNATURE);
 }
 
 export using Entity = TypeId;

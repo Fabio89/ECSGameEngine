@@ -56,6 +56,7 @@ void setEditMode(EditMode editMode)
     }
 }
 
+extern "C"
 void editorInit()
 {
     EditorComponents::init();
@@ -65,21 +66,22 @@ void editorInit()
     getGizmo(EditMode::Scale) = EditorUtils::createScaleGizmo(getWorld());
 }
 
+extern "C"
 void editorUpdate(GLFWwindow* window, float deltaTime)
 {
-    if (Input::isKeyJustPressed(KeyCode::Q))
+    if (Input::isKeyJustPressed(GlfwKeyCode::Q))
     {
         setEditMode(EditMode::None);
     }
-    else if (Input::isKeyJustPressed(KeyCode::W))
+    else if (Input::isKeyJustPressed(GlfwKeyCode::W))
     {
         setEditMode(EditMode::Translate);
     }
-    else if (Input::isKeyJustPressed(KeyCode::E))
+    else if (Input::isKeyJustPressed(GlfwKeyCode::E))
     {
         setEditMode(EditMode::Rotate);
     }
-    else if (Input::isKeyJustPressed(KeyCode::R))
+    else if (Input::isKeyJustPressed(GlfwKeyCode::R))
     {
         setEditMode(EditMode::Scale);
     }
@@ -87,7 +89,7 @@ void editorUpdate(GLFWwindow* window, float deltaTime)
     const Vec2 cursorPosition = getCursorPosition(window);
     const Ray ray = Physics::rayFromScreenPosition(getWorld(), getPlayer(), cursorPosition);
 
-    if (selected != invalidId() && selectedGizmoAxis != invalidId() && Input::isKeyDown(KeyCode::MouseButtonLeft))
+    if (selected != invalidId() && selectedGizmoAxis != invalidId() && Input::isKeyDown(GlfwKeyCode::MouseButtonLeft))
     {
         TransformComponent& transform = getWorld().editComponent<TransformComponent>(selected);
 
@@ -127,7 +129,7 @@ void editorUpdate(GLFWwindow* window, float deltaTime)
         projectedCursorPositionLastFrame = {};
     }
 
-    if (Input::isKeyJustPressed(KeyCode::MouseButtonLeft))
+    if (Input::isKeyJustPressed(GlfwKeyCode::MouseButtonLeft))
     {
         selectedGizmoAxis = Physics::lineTrace(getWorld(), ray, TraceChannelFlags::Gizmo);
 
@@ -167,6 +169,6 @@ void editorUpdate(GLFWwindow* window, float deltaTime)
         }
     }
 
-    EditorCamera::setActive(window, Input::isKeyDown(KeyCode::MouseButtonRight));
+    EditorCamera::setActive(window, Input::isKeyDown(GlfwKeyCode::MouseButtonRight));
     EditorCamera::update(window, getWorld(), getPlayer(), deltaTime);
 }

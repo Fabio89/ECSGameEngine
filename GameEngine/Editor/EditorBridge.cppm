@@ -1,21 +1,22 @@
+module;
+
+#include "EngineExport.h"
+
 export module EditorBridge;
 import Core;
 import Wrapper.Glfw;
 
-export extern "C" __declspec(dllexport)
-void editTranslation(Entity entity);
+export extern "C"
+{
+    ENGINE_API void editTranslation(Entity entity);
 
-export extern "C" __declspec(dllexport)
-void editRotation(Entity entity);
+    ENGINE_API void editRotation(Entity entity);
 
-export extern "C" __declspec(dllexport)
-void editScale(Entity entity);
+    ENGINE_API void editScale(Entity entity);
 
-export extern "C" __declspec(dllexport)
-void stopEditing();
+    ENGINE_API void stopEditing();
 
-export extern "C" __declspec(dllexport)
-void editorInit();
+    ENGINE_API void editorInit();
 
-export extern "C" __declspec(dllexport)
-void editorUpdate(GLFWwindow* window, float deltaTime);
+    ENGINE_API void editorUpdate(GLFWwindow* window, float deltaTime);
+}

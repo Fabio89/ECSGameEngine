@@ -50,17 +50,17 @@ Vec2 Input::getCursorPosition(GLFWwindow* window)
     return {x / size.x, y / size.y};
 }
 
-bool Input::isKeyDown(KeyCode key)
+bool Input::isKeyDown(GlfwKeyCode key)
 {
     return heldKeys[static_cast<int>(key)];
 }
 
-bool Input::isKeyJustPressed(KeyCode key)
+bool Input::isKeyJustPressed(GlfwKeyCode key)
 {
     return justPressedKeys[static_cast<int>(key)];
 }
 
-bool Input::isKeyJustReleased(KeyCode key)
+bool Input::isKeyJustReleased(GlfwKeyCode key)
 {
     return justReleasedKeys[static_cast<int>(key)];
 }
@@ -89,7 +89,7 @@ void Input::setCursorType(GLFWwindow* window, CursorType type)
 
 void Input::keyCallback([[maybe_unused]] GLFWwindow* window, int key, [[maybe_unused]] int scancode, int action, [[maybe_unused]] int mods)
 {
-    const KeyCode keyCode = static_cast<KeyCode>(key);
+    const GlfwKeyCode keyCode = static_cast<GlfwKeyCode>(key);
     const KeyAction keyAction = static_cast<KeyAction>(action);
 
     for (KeyEventCallback callback : keyEventCallbacks)

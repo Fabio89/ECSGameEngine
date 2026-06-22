@@ -1,5 +1,6 @@
 module;
 #define TINYOBJLOADER_IMPLEMENTATION
+#include <algorithm>
 #include <External/MeshLoading/tiny_obj_loader.h>
 
 module Render.Model;
@@ -13,9 +14,9 @@ bool operator==(const Vertex& a, const Vertex& b)
 template <>
 struct std::hash<Vertex>
 {
-    size_t operator()(Vertex const& vertex) const noexcept
+    std::size_t operator()(Vertex const& vertex) const noexcept
     {
-        size_t seed = hash_value(vertex.pos);
+        std::size_t seed = hash_value(vertex.pos);
         hash_combine(seed, hash_value(vertex.uv));
         return seed;
     }
@@ -34,8 +35,12 @@ MeshData loadModel(const char* path)
         return {};
     }
 
-    const size_t vertexCount = std::reduce(shapes.begin(), shapes.end(), size_t{0},
-                                           [](size_t a, auto&& b) { return a + b.mesh.indices.size(); });
+    const std::size_t vertexCount =
+        std::ranges::fold_left(
+            shapes,
+            std::size_t{0},
+            [](std::size_t a, const tinyobj::shape_t& b) { return a + b.mesh.indices.size(); });
+
     MeshData mesh;
     mesh.vertices.reserve(vertexCount);
     mesh.indices.reserve(vertexCount);

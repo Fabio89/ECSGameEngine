@@ -44,7 +44,7 @@ private:
     const ComponentArray<T>& getComponentArray() { return static_cast<const ComponentArray<T>&>(*m_componentArrays.at(Component<T>::typeId())); }
 
     std::unordered_map<ComponentTypeId, std::unique_ptr<ComponentArrayBase>> m_componentArrays;
-    std::unordered_map<Entity, size_t> m_entityToIndex;
+    std::unordered_map<Entity, std::size_t> m_entityToIndex;
     std::vector<Entity> m_indexToEntity;
 
     template <ValidComponentData ... Components>
@@ -68,7 +68,7 @@ template <ValidComponentData ... Components>
 class Archetype::ViewIterator
 {
 public:
-    ViewIterator(const Archetype* archetype, size_t index);
+    ViewIterator(const Archetype* archetype, std::size_t index);
 
     // Dereference to get the current entity and its components
     auto operator*() const;
@@ -80,11 +80,11 @@ public:
 
 private:
     const Archetype* m_archetype;
-    size_t m_index;
+    std::size_t m_index;
 };
 
 template <ValidComponentData ... Components>
-Archetype::ViewIterator<Components...>::ViewIterator(const Archetype* archetype, size_t index)
+Archetype::ViewIterator<Components...>::ViewIterator(const Archetype* archetype, std::size_t index)
     : m_archetype(archetype), m_index(index)
 {
 }
@@ -120,7 +120,7 @@ T& Archetype::addComponent(Entity entity, T&& component)
     if (!arr)
         arr = std::make_unique<ComponentArray<T>>();
 
-    size_t index;
+    std::size_t index;
     if (auto it = m_entityToIndex.find(entity); it != m_entityToIndex.end())
     {
         index = it->second;
@@ -196,11 +196,11 @@ void Archetype::removeEntity(Entity entity)
 {
     if (auto indexIt = m_entityToIndex.find(entity); indexIt != m_entityToIndex.end())
     {
-        const size_t indexToRemove = indexIt->second;
+        const std::size_t indexToRemove = indexIt->second;
         const Entity entityToSwapFor = m_indexToEntity.back();
         m_entityToIndex.erase(entity);
 
-        if (const size_t lastEntityIndex = m_indexToEntity.size() - 1; lastEntityIndex > indexToRemove)
+        if (const std::size_t lastEntityIndex = m_indexToEntity.size() - 1; lastEntityIndex > indexToRemove)
         {
             m_entityToIndex[entityToSwapFor] = indexToRemove;
             m_indexToEntity[indexToRemove] = entityToSwapFor;
@@ -241,12 +241,12 @@ void Archetype::steal(Archetype& other, Entity entity)
 
     if (auto fromIndexIt = other.m_entityToIndex.find(entity); fromIndexIt != other.m_entityToIndex.end())
     {
-        const size_t indexToRemoveFromOther = fromIndexIt->second;
-        const size_t toIndex = m_entityToIndex[entity] = m_indexToEntity.size();
+        const std::size_t indexToRemoveFromOther = fromIndexIt->second;
+        const std::size_t toIndex = m_entityToIndex[entity] = m_indexToEntity.size();
         m_indexToEntity.push_back(entity);
 
         const Entity entityToSwapFor = other.m_indexToEntity.back();
-        const size_t otherArchetypeLastEntityIndex = other.m_indexToEntity.size() - 1;
+        const std::size_t otherArchetypeLastEntityIndex = other.m_indexToEntity.size() - 1;
         other.m_entityToIndex.erase(fromIndexIt);
         if (entityToSwapFor != entity)
         {

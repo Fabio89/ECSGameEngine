@@ -2,7 +2,6 @@ export module Project;
 import Core;
 import Serialization;
 import World;
-import Wrapper.Windows;
 
 export class Project
 {

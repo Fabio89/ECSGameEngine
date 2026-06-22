@@ -1,3 +1,7 @@
+module;
+
+#include "EngineExport.h"
+
 export module Editor.Gizmos;
 import Core;
 import World;
@@ -12,6 +16,6 @@ export namespace EditorUtils
 
     void setGizmoVisible(World& world, Entity gizmoEntity, bool visible);
 
-    __declspec(dllexport)
+    ENGINE_API
     Entity createBoundingBoxGizmo(World& world, Entity parentEntity);
 }

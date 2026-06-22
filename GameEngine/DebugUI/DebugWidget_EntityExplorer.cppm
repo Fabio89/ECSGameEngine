@@ -41,7 +41,7 @@ export namespace DebugWidgets
             Wrapper_ImGui::ImVec2 contentRegion = Wrapper_ImGui::GetContentRegionAvail();
 
             // First child window
-            Wrapper_ImGui::BeginChild("Hierarchy", Wrapper_ImGui::ImVec2(contentRegion.x * splitRatio, contentRegion.y), Wrapper_ImGui::ImGuiChildFlags_Border);
+            Wrapper_ImGui::BeginChild("Hierarchy", Wrapper_ImGui::ImVec2(contentRegion.x * splitRatio, contentRegion.y), Wrapper_ImGui::ImGuiChildFlags_Borders);
             Wrapper_ImGui::Text("Hierarchy");
 
 
@@ -94,7 +94,7 @@ export namespace DebugWidgets
             Wrapper_ImGui::PopStyleVar(2);
 
             // Second child window
-            Wrapper_ImGui::BeginChild("Details", Wrapper_ImGui::ImVec2(0, 0), Wrapper_ImGui::ImGuiChildFlags_Border);
+            Wrapper_ImGui::BeginChild("Details", Wrapper_ImGui::ImVec2(0, 0), Wrapper_ImGui::ImGuiChildFlags_Borders);
             Wrapper_ImGui::Text("Details");
 
             if (m_currentlySelected.has_value())

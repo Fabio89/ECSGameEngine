@@ -1,6 +1,7 @@
 export module System.Render;
 import Component.Model;
 import Component.Transform;
+import Render.Commands;
 import System;
 
 export class System_Render final : public System

@@ -5,7 +5,7 @@ import Math;
 import Serialization;
 import Wrapper.Vulkan;
 
-using InstanceId = size_t;
+using InstanceId = std::size_t;
 
 //------------------------------------------------------------------------------------------------------------------------
 // Vertex
@@ -26,7 +26,7 @@ export struct LineVertex
 bool operator==(const Vertex& a, const Vertex& b);
 
 template <>
-struct std::hash<Vertex> { size_t operator()(Vertex const& vertex) const noexcept; };
+struct std::hash<Vertex>;
 
 //------------------------------------------------------------------------------------------------------------------------
 // Texture

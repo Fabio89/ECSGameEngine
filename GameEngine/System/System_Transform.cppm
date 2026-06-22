@@ -2,6 +2,7 @@ export module System.Transform;
 import Component.Parent;
 import Component.Transform;
 import Math;
+import Render.Commands;
 import System;
 
 export class System_Transform final : public System

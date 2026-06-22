@@ -1,14 +1,13 @@
+module;
+#include <ranges>
 module Render.RenderManager;
-import Core;
 import Guid;
-import Render.Model;
 import Render.Pipeline.Line;
 import Render.Pipeline.MeshWithTexture;
 import Render.QueueFamily;
 import Render.TextureLoading;
 import Render.Utils;
 import Wrapper.Vulkan;
-import Wrapper.Windows;
 
 std::mutex updateLockMutex;
 std::atomic updatesBlocked{false};
@@ -281,7 +280,7 @@ void RenderManager::shutdown()
     m_device.destroyPipeline(m_linePipeline);
     m_device.destroyPipelineLayout(m_pipelineLayout);
 
-    for (size_t i = 0; i < MaxFramesInFlight; ++i)
+    for (std::size_t i = 0; i < MaxFramesInFlight; ++i)
     {
         m_device.destroySemaphore(m_imageAvailableSemaphores[i]);
         m_device.destroySemaphore(m_renderFinishedSemaphores[i]);
@@ -513,7 +512,7 @@ void RenderManager::createImageViews()
 {
     m_swapChainImageViews.resize(m_swapChainImages.size());
 
-    for (size_t i = 0; i < m_swapChainImages.size(); ++i)
+    for (std::size_t i = 0; i < m_swapChainImages.size(); ++i)
     {
         m_swapChainImageViews[i] = RenderUtils::createImageView(m_device, m_swapChainImages[i], m_swapChainImageFormat);
     }

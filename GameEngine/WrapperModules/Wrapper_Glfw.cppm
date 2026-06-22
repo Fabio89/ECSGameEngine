@@ -1,6 +1,14 @@
 module;
 #define GLFW_INCLUDE_VULKAN
+#if defined(_WIN32)
 #define GLFW_EXPOSE_NATIVE_WIN32
+#define GET_WINDOW glfwGetWin32Window
+#define WINDOW_HANDLE_TYPE HWND
+#else
+#define GLFW_EXPOSE_NATIVE_X11
+#define GET_WINDOW glfwGetX11Window
+#define WINDOW_HANDLE_TYPE Window
+#endif
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
 
@@ -27,7 +35,8 @@ export using ::glfwWaitEvents;
 export using ::glfwGetRequiredInstanceExtensions;
 export using ::glfwGetWindowUserPointer;
 export using ::glfwCreateWindowSurface;
-export using ::glfwGetWin32Window;
+export using ::GET_WINDOW;
+export using ::WINDOW_HANDLE_TYPE;
 export using ::glfwMakeContextCurrent;
 export using ::glfwSwapInterval;
 export using ::glfwSetKeyCallback;
@@ -54,16 +63,6 @@ export enum class CursorType
     ResizeAll = GLFW_RESIZE_ALL_CURSOR
 };
 
-export enum GetWindowLongOption
-{
-    GWL_Style = GWL_STYLE
-};
-
-export enum WindowStyle
-{
-    WS_Child = WS_CHILD
-};
-
 export enum class CursorMode
 {
     Normal = GLFW_CURSOR_NORMAL,
@@ -87,8 +86,8 @@ export namespace glfw
     constexpr auto NoApi = GLFW_NO_API;
     constexpr auto Decorated = GLFW_DECORATED;
     constexpr auto Resizable = GLFW_RESIZABLE;
-    constexpr auto True = GLFW_TRUE;
-    constexpr auto False = GLFW_FALSE;
+    constexpr auto Enabled = GLFW_TRUE;
+    constexpr auto Disabled = GLFW_FALSE;
 
     vk::Result createWindowSurface(vk::Instance instance, GLFWwindow* window, const vk::AllocationCallbacks* allocator, vk::SurfaceKHR* surface)
     {
@@ -97,7 +96,7 @@ export namespace glfw
     }
 }
 
-export enum class KeyCode
+export enum class GlfwKeyCode
 {
     MouseButton1 = 0,
     MouseButton2 = 1,
@@ -232,7 +231,7 @@ export enum class KeyCode
     RightSuper = 347,
     Menu = 348,
 };
-export constexpr int KeyCodeCount = static_cast<int>(KeyCode::Menu) + 1;
+export constexpr int KeyCodeCount = static_cast<int>(GlfwKeyCode::Menu) + 1;
 
 export enum class KeyAction
 {

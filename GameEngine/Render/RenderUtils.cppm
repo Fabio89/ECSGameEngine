@@ -1,8 +1,8 @@
 export module Render.Utils;
 import Core;
+import Platform.Filesystem;
 import Wrapper.Glfw;
 import Wrapper.Vulkan;
-import Wrapper.Windows;
 import vulkan_hpp;
 
 export namespace RenderUtils
@@ -61,12 +61,10 @@ export namespace RenderUtils
 
     [[nodiscard]] UInt32 findMemoryType(vk::PhysicalDevice physicalDevice, UInt32 typeFilter, vk::MemoryPropertyFlags properties);
 
-    [[nodiscard]] std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(const CreateBufferInfo& info);
-
     template <BufferableData T>
     [[nodiscard]] std::tuple<vk::Buffer, vk::DeviceMemory> createDataBuffer(const T& range, const CreateDataBufferInfo& info)
     {
-        return createDataBuffer(range.data(), sizeof(std::remove_reference_t<decltype(range)>::value_type) * range.size(), info);
+        return createDataBuffer(range.data(), sizeof(typename std::remove_reference_t<decltype(range)>::value_type) * range.size(), info);
     }
 
     bool checkDeviceExtensionSupport(vk::PhysicalDevice device);
@@ -121,15 +119,10 @@ export namespace RenderUtils
         return format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint;
     }
 
-    const std::string& getExecutableRoot()
+    const std::filesystem::path& getExecutableRoot()
     {
-        static const std::string exeRoot = []
-        {
-            const auto moduleName = Wrapper_Windows::getModuleFileName();
-            const auto pos = moduleName.find_last_of("\\/") + 1;
-            return std::filesystem::canonical(moduleName.substr(0, pos)).generic_string() + "/";
-        }();
-        return exeRoot;
+        static const auto path = std::filesystem::canonical(Platform::executableDirectory());
+        return path;
     }
 }
 
@@ -137,7 +130,7 @@ template <RenderUtils::BufferableData T>
 void RenderUtils::updateBuffer(const T& range, vk::Device device, vk::DeviceMemory bufferMemory)
 {
     void* data;
-    const size_t bufferSize = sizeof(std::remove_reference_t<decltype(range)>::value_type) * range.size();
+    const std::size_t bufferSize = sizeof(typename std::remove_reference_t<decltype(range)>::value_type) * range.size();
     if (device.mapMemory(bufferMemory, 0, bufferSize, {}, &data) == vk::Result::eSuccess)
         std::memcpy(data, range.data(), bufferSize);        
     device.unmapMemory(bufferMemory);

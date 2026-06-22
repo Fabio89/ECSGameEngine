@@ -3,6 +3,7 @@ import Component.LineRender;
 import Component.Parent;
 import Component.Transform;
 import Math;
+import Render.Commands;
 import System;
 
 export class System_LineRender final : public System

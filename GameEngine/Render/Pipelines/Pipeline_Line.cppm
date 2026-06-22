@@ -107,8 +107,8 @@ export vk::Pipeline createLinePipeline(vk::Device device, vk::PipelineCache pipe
     };
 
     // Load shaders
-    auto vertShaderCode = RenderUtils::readFile(RenderUtils::getExecutableRoot() + "Shaders/line_vert.spv");
-    auto fragShaderCode = RenderUtils::readFile(RenderUtils::getExecutableRoot() + "Shaders/line_frag.spv");
+    auto vertShaderCode = RenderUtils::readFile(RenderUtils::getExecutableRoot().string() + "Shaders/line_vert.spv");
+    auto fragShaderCode = RenderUtils::readFile(RenderUtils::getExecutableRoot().string() + "Shaders/line_frag.spv");
     vk::ShaderModule vertShaderModule = RenderUtils::createShaderModule(vertShaderCode, device);
     vk::ShaderModule fragShaderModule = RenderUtils::createShaderModule(fragShaderCode, device);
 

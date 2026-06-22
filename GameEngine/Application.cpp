@@ -3,14 +3,9 @@ import DebugWidget.EntityExplorer;
 import EngineComponents;
 import EngineSystems;
 import Editor.Camera;
-import Input;
-import Math;
 import Physics;
-import Player;
 import Project;
-import Render.RenderManager;
 import Serialization;
-import World;
 
 bool shutdownRequested = false;
 std::atomic<bool> engineShuttingDown = false;
@@ -24,8 +19,6 @@ void framebufferResizeCallback(GLFWwindow* window, [[maybe_unused]] int width, [
     auto rm = static_cast<RenderManager*>(glfwGetWindowUserPointer(window));
     rm->updateFramebufferSize();
 }
-
-GLFWwindow* createWindow(HWND parent, int width, int height);
 
 void runRenderThread(GLFWwindow* window)
 {
@@ -61,6 +54,7 @@ Entity ensureCamera()
     return camera;
 }
 
+extern "C"
 void engineInit(GLFWwindow* window)
 {
     renderThread = std::thread
@@ -76,6 +70,7 @@ void engineInit(GLFWwindow* window)
     //world.addDebugWidget<DebugWidgets::ImGuiDemo>();
 }
 
+extern "C"
 bool engineUpdate(GLFWwindow* window, float deltaTime)
 {
     if (shutdownRequested || glfwWindowShouldClose(window))
@@ -92,6 +87,7 @@ bool engineUpdate(GLFWwindow* window, float deltaTime)
     return true;
 }
 
+extern "C"
 void engineShutdown(GLFWwindow* window)
 {
     if (engineShuttingDown.exchange(true))
@@ -111,6 +107,7 @@ void engineShutdown(GLFWwindow* window)
     std::cout << "[Application] Shutdown complete!\n";
 }
 
+extern "C"
 void setViewport(GLFWwindow* window, int x, int y, int width, int height)
 {
     if (check(window, "Can't set viewport offset for null window!"))
@@ -120,11 +117,13 @@ void setViewport(GLFWwindow* window, int x, int y, int width, int height)
     }
 }
 
+extern "C"
 void addKeyEventCallback(Input::KeyEventCallback callback)
 {
     Input::addKeyEventCallback(reinterpret_cast<Input::KeyEventCallback>(callback));
 }
 
+extern "C"
 Entity getEntityUnderCursor(GLFWwindow* window)
 {
     return Physics::lineTrace(world, Physics::rayFromScreenPosition(world, player, getCursorPosition(window)), TraceChannelFlags::Default);
@@ -135,6 +134,7 @@ Vec2 getCursorPosition(GLFWwindow* window)
     return Input::getCursorPosition(window);
 }
 
+extern "C"
 void openProject(const char* path)
 {
     EngineSystems::reset();
@@ -144,11 +144,13 @@ void openProject(const char* path)
     player.setMainCamera(world, ensureCamera());
 }
 
+extern "C"
 void saveCurrentProject()
 {
     Project::saveToCurrent(world);
 }
 
+extern "C"
 void serializeScene(char* buffer, int bufferSize)
 {
     JsonDocument doc;
@@ -163,6 +165,7 @@ void serializeScene(char* buffer, int bufferSize)
     std::memcpy(buffer, jsonBuffer.GetString(), bufferSize);
 }
 
+extern "C"
 void patchEntity(Entity entity, const char* json)
 {
     log(std::format("Patching entity '{}' with:\n{}", entity, json));
@@ -204,25 +207,19 @@ void updateDebugCamera(GLFWwindow* window, float deltaTime)
     EditorCamera::update(window, world, player, deltaTime);
 }
 
-GLFWwindow* createWindow(HWND parent, int width, int height)
+GLFWwindow* createWindow(const WindowCreateInfo& info)
 {
     glfwInit();
+
     glfwWindowHint(glfw::ClientApi, glfw::NoApi);
-    glfwWindowHint(glfw::Resizable, glfw::True);
-    if (parent)
+    glfwWindowHint(glfw::Resizable, glfw::Enabled);
+
+    if (info.mode == WindowMode::Embedded)
     {
-        glfwWindowHint(glfw::Decorated, glfw::False);
+        glfwWindowHint(glfw::Decorated, glfw::Disabled);
     }
 
-    GLFWwindow* window = glfwCreateWindow(width, height, "Vulkan", nullptr, nullptr);
-    glfwSwapInterval(1);
-
-    if (parent)
-    {
-        const auto hwnd = glfwGetWin32Window(window);
-        Wrapper_Windows::SetParent(hwnd, parent);
-        Wrapper_Windows::SetWindowLongA(hwnd, GWL_Style, Wrapper_Windows::GetWindowLongA(hwnd, GWL_Style) | WS_Child);
-    }
+    GLFWwindow* window = glfwCreateWindow(info.width, info.height, "Engine", nullptr, nullptr);
 
     return window;
 }

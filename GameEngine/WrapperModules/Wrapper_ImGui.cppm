@@ -417,7 +417,7 @@ export namespace Wrapper_ImGui
     using ImGuiConfigFlags_::ImGuiConfigFlags_NavEnableKeyboard;
     using ImGuiConfigFlags_::ImGuiConfigFlags_NavEnableGamepad;
 
-    using ImGuiChildFlags_::ImGuiChildFlags_Border;
+    using ImGuiChildFlags_::ImGuiChildFlags_Borders;
     
     using ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen;
     
@@ -429,7 +429,7 @@ export namespace Wrapper_ImGui
     using ::ImVec2;
     using ::ImGuiIO;
     using ::ImGui_ImplVulkan_InitInfo;
-    
+    using ::ImGui_ImplVulkan_PipelineInfo;
     using ::ImGui_ImplGlfw_InitForVulkan;
     using ::ImGui_ImplGlfw_NewFrame;
     using ::ImGui_ImplGlfw_Shutdown;

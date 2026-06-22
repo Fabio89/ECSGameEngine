@@ -12,7 +12,7 @@ export struct ImGuiInitInfo
     vk::SurfaceKHR surface;
     vk::Queue queue;
     vk::RenderPass renderPass;
-    size_t imageCount;
+    std::size_t imageCount;
     vk::PipelineCache pipelineCache;
 };
 

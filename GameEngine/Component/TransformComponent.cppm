@@ -1,3 +1,7 @@
+module;
+
+#include "EngineExport.h"
+
 export module Component.Transform;
 import Core;
 import Math;
@@ -5,26 +9,26 @@ import Serialization;
 
 export struct TransformComponent
 {
-    Vec3 position;
-    Quat rotation;
+    Vec3 position{};
+    Quat rotation{};
     float scale{1.f};
 
     struct Runtime
     {
-        Mat4 worldMatrix;
+        Mat4 worldMatrix{};
         bool calculatedThisFrame{false};
     } runtimeData{};
 };
 
 export namespace TransformUtils
 {
-    __declspec(dllexport)
+    ENGINE_API
     Vec3 forward(const TransformComponent& transform) { return Math::normalize(Math::rotate(transform.rotation, forwardVector())); }
 
-    __declspec(dllexport)
+    ENGINE_API
     Vec3 right(const TransformComponent& transform) { return Math::normalize(Math::rotate(transform.rotation, rightVector())); }
 
-    __declspec(dllexport)
+    ENGINE_API
     Vec3 up(const TransformComponent& transform) { return Math::normalize(Math::rotate(transform.rotation, upVector())); }
 
     Mat4 toMatrix(const TransformComponent& transform)

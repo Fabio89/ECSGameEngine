@@ -1,3 +1,7 @@
+module;
+
+#include "EngineExport.h"
+
 export module Physics;
 import Math;
 import Player;
@@ -36,8 +40,8 @@ public:
     {
     }
 
-    bool test(TraceChannelFlags flags) const { return (m_mask & flags) == flags; }
-    TraceChannelFlagsType toNumber() const { return static_cast<TraceChannelFlagsType>(m_mask); }
+    [[nodiscard]] bool test(TraceChannelFlags flags) const { return (m_mask & flags) == flags; }
+    [[nodiscard]] TraceChannelFlagsType toNumber() const { return static_cast<TraceChannelFlagsType>(m_mask); }
 
 private:
     TraceChannelFlags m_mask;
@@ -52,10 +56,10 @@ struct Ray
 
 namespace Physics
 {
-    export __declspec(dllexport)
+    export ENGINE_API
     Entity lineTrace(const World& world, const Ray& ray, TraceChannelFlags channel);
 
-    export __declspec(dllexport)
+    export ENGINE_API
     Ray rayFromScreenPosition(const World& world, const Player& player, Vec2 screenPosition);
 
     export

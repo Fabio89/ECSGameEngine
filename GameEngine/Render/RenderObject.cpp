@@ -32,7 +32,7 @@ void RenderObjectManager::updateDescriptorSets(const RenderObject& object) const
     const bool hasTexture = texture && texture->image;
     const UInt32 descriptorWriteCount = static_cast<UInt32>(hasTexture) + 1;
 
-    for (size_t i = 0; i < MaxFramesInFlight; i++)
+    for (std::size_t i = 0; i < MaxFramesInFlight; i++)
     {
         std::vector<vk::WriteDescriptorSet> descriptorWrites;
         descriptorWrites.reserve(descriptorWriteCount);
@@ -413,7 +413,7 @@ void RenderObjectManager::renderFrame
 
 void RenderObjectManager::updateLineDescriptorSets(const LineRenderObject& object) const
 {
-    for (size_t i = 0; i < MaxFramesInFlight; i++)
+    for (std::size_t i = 0; i < MaxFramesInFlight; i++)
     {
         const vk::DescriptorBufferInfo vertexBufferInfo
         {

@@ -32,8 +32,6 @@ module;
 #endif
 
 export module vulkan_hpp;
-export VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
-export using VULKAN_HPP_DEFAULT_DISPATCHER;
 
 export namespace VULKAN_HPP_NAMESPACE
 {
@@ -47,6 +45,7 @@ export namespace VULKAN_HPP_NAMESPACE
 
   namespace detail
   {
+    using VULKAN_HPP_DEFAULT_DISPATCHER;
     using VULKAN_HPP_NAMESPACE::detail::DispatchLoaderBase;
     using VULKAN_HPP_NAMESPACE::detail::DispatchLoaderDynamic;
 #if !defined( VK_NO_PROTOTYPES )
@@ -1009,7 +1008,6 @@ export namespace VULKAN_HPP_NAMESPACE
   using VULKAN_HPP_NAMESPACE::SystemError;
   using VULKAN_HPP_NAMESPACE::TooManyObjectsError;
   using VULKAN_HPP_NAMESPACE::UnknownError;
-  using VULKAN_HPP_NAMESPACE::ValidationFailedEXTError;
   using VULKAN_HPP_NAMESPACE::VideoPictureLayoutNotSupportedKHRError;
   using VULKAN_HPP_NAMESPACE::VideoProfileCodecNotSupportedKHRError;
   using VULKAN_HPP_NAMESPACE::VideoProfileFormatNotSupportedKHRError;
@@ -8521,7 +8519,3 @@ export namespace std
   using std::tuple_size;
 #endif
 }  // namespace std
-
-// This VkFlags type is used as part of a bitfield in some structure.
-// As it that can't be mimiced by vk-data types, we need to export just that!!
-export VkGeometryInstanceFlagsKHR;

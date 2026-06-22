@@ -8,6 +8,7 @@ import Math;
 import Render.Model;
 import Render.RenderObject;
 import Wrapper.Glfw;
+import vulkan_hpp;
 
 export enum class RenderPipelineType
 {

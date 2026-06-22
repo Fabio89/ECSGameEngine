@@ -2,7 +2,7 @@ export module Render.QueueFamily;
 import Core;
 import vulkan_hpp;
 
-export enum class QueueFamilyType : size_t
+export enum class QueueFamilyType : std::size_t
 {
 	Graphics,
 	Present,
@@ -38,7 +38,7 @@ namespace QueueFamilyUtils
 }
 
 QueueFamilyIndices::QueueFamilyIndices()
-	: m_families(static_cast<size_t>(QueueFamilyType::INDEX_TYPE_COUNT))
+	: m_families(static_cast<std::size_t>(QueueFamilyType::INDEX_TYPE_COUNT))
 {}
 
 int QueueFamilyIndices::size() const
@@ -48,12 +48,12 @@ int QueueFamilyIndices::size() const
 
 const std::optional<UInt32>& QueueFamilyIndices::get(QueueFamilyType type) const
 {
-	return m_families.at(static_cast<size_t>(type));
+	return m_families.at(static_cast<std::size_t>(type));
 }
 
 std::optional<UInt32>& QueueFamilyIndices::get(QueueFamilyType type)
 {
-	return m_families.at(static_cast<size_t>(type));
+	return m_families.at(static_cast<std::size_t>(type));
 }
 
 bool QueueFamilyUtils::areAllIndicesSet(const QueueFamilyIndices& indices)

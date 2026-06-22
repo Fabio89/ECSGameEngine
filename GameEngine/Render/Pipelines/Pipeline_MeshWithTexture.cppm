@@ -106,8 +106,8 @@ export vk::Pipeline createGraphicsPipeline(vk::Device device, vk::PipelineCache 
         .maxDepthBounds = 1.0f, // Optional
     };
 
-    auto vertShaderCode = RenderUtils::readFile(RenderUtils::getExecutableRoot() + "Shaders/vert.spv");
-    auto fragShaderCode = RenderUtils::readFile(RenderUtils::getExecutableRoot() + "Shaders/frag.spv");
+    auto vertShaderCode = RenderUtils::readFile(RenderUtils::getExecutableRoot().string() + "Shaders/vert.spv");
+    auto fragShaderCode = RenderUtils::readFile(RenderUtils::getExecutableRoot().string() + "Shaders/frag.spv");
 
     vk::ShaderModule vertShaderModule = RenderUtils::createShaderModule(vertShaderCode, device);
     vk::ShaderModule fragShaderModule = RenderUtils::createShaderModule(fragShaderCode, device);

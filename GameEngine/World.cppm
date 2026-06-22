@@ -17,7 +17,7 @@ struct EntitySignature
 template <>
 struct std::hash<EntitySignature>
 {
-    size_t operator()(const EntitySignature& a) const noexcept { return hash<bitset<maxComponentsPerEntity>>()(a.bitset); }
+    std::size_t operator()(const EntitySignature& a) const noexcept { return hash<bitset<maxComponentsPerEntity>>()(a.bitset); }
 };
 
 export struct WorldCreateInfo

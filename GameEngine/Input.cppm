@@ -1,35 +1,39 @@
+module;
+
+#include "EngineExport.h"
+
 export module Input;
 import Math;
 import Wrapper.Glfw;
 
-export using ::KeyCode;
+export using ::GlfwKeyCode;
 export using ::KeyAction;
 export using ::CursorMode;
 export using ::CursorType;
 
 export namespace Input
 {
-    __declspec(dllexport)
+    ENGINE_API
     Vec2 getCursorPosition(GLFWwindow* window);
 
-    __declspec(dllexport)
-    bool isKeyDown(KeyCode key);
+    ENGINE_API
+    bool isKeyDown(GlfwKeyCode key);
 
-    __declspec(dllexport)
-    bool isKeyJustPressed(KeyCode key);
+    ENGINE_API
+    bool isKeyJustPressed(GlfwKeyCode key);
 
-    __declspec(dllexport)
-    bool isKeyJustReleased(KeyCode key);
+    ENGINE_API
+    bool isKeyJustReleased(GlfwKeyCode key);
 
-    __declspec(dllexport)
+    ENGINE_API
     void setCursorMode(GLFWwindow* window, CursorMode mode);
 
-    __declspec(dllexport)
+    ENGINE_API
     void setCursorType(GLFWwindow* window, CursorType type);
     
     void init(GLFWwindow* window);
     void shutdown();
     void postUpdate();
-    using KeyEventCallback = void(*)(KeyCode key, KeyAction action);
+    using KeyEventCallback = void(*)(GlfwKeyCode key, KeyAction action);
     void addKeyEventCallback(KeyEventCallback callback);
 }

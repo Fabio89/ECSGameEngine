@@ -2,7 +2,8 @@ import Engine;
 import ComponentArray;
 import EditorBridge;
 import std;
-import <chrono>;
+import Wrapper.Glfw;
+#include <chrono>
 
 ::GLFWwindow* window{};
 
@@ -45,14 +46,15 @@ ComponentArray<TransformComponent> transforms;
 
 int main()
 {
-    window = createWindow(nullptr, 800, 600);
+    window = createWindow({800, 600});
     engineInit(window);
-    openProject("C:/Users/march/Documents/Mashi Projects/TestProject/project.ma");
-    editorInit();
+    // openProject("C:/Users/march/Documents/Mashi Projects/TestProject/project.ma");
+    // editorInit();
 
     // char buf[4096];
     // serializeScene(buf, sizeof(buf));
     // std::cout << buf;
+
 
     std::vector<Entity> entities;
     for (Entity entity : getWorld().getEntitiesRange())

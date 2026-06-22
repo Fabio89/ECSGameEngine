@@ -16,46 +16,46 @@ public:
     ComponentArrayBase& operator=(ComponentArrayBase&&) = delete;
     virtual ~ComponentArrayBase() = default;
 
-    virtual void copy(ComponentArrayBase& other, size_t indexFrom, size_t indexTo) = 0;
-    virtual void move(size_t fromIndex, size_t toIndex) = 0;
-    virtual std::unique_ptr<ComponentArrayBase> cloneForIndex(size_t index) = 0;
-    virtual const ComponentBase& get(size_t index) const = 0;
-    virtual ComponentBase& get(size_t index) = 0;
+    virtual void copy(ComponentArrayBase& other, std::size_t indexFrom, std::size_t indexTo) = 0;
+    virtual void move(std::size_t fromIndex, std::size_t toIndex) = 0;
+    virtual std::unique_ptr<ComponentArrayBase> cloneForIndex(std::size_t index) = 0;
+    virtual const ComponentBase& get(std::size_t index) const = 0;
+    virtual ComponentBase& get(std::size_t index) = 0;
 };
 
 template <ValidComponentData T>
 class ComponentArray final : public ComponentArrayBase
 {
 public:
-    T& insert(size_t index, T&& component);
+    T& insert(std::size_t index, T&& component);
     
     std::unique_ptr<ComponentArrayBase> cloneForIndex(Entity index) override;
 
-    void copy(ComponentArrayBase& other, size_t indexFrom, size_t indexTo) override;
-    void move(size_t fromIndex, size_t toIndex) override;
+    void copy(ComponentArrayBase& other, std::size_t indexFrom, std::size_t indexTo) override;
+    void move(std::size_t fromIndex, std::size_t toIndex) override;
 
-    const Component<T>& get(size_t index) const override;
-    Component<T>& get(size_t index) override;
+    const Component<T>& get(std::size_t index) const override;
+    Component<T>& get(std::size_t index) override;
 
 private:
-    std::vector<Component<T>> m_components = std::vector<Component<T>>(100, {});
+    std::vector<Component<T>> m_components = std::vector<Component<T>>(100, Component<T>{});
 };
 
 template <ValidComponentData T>
-T& ComponentArray<T>::insert(size_t index, T&& component)
+T& ComponentArray<T>::insert(std::size_t index, T&& component)
 {
     return m_components.at(index).data = std::forward<T>(component);
 }
 
 template <ValidComponentData T>
-void ComponentArray<T>::move(size_t fromIndex, size_t toIndex)
+void ComponentArray<T>::move(std::size_t fromIndex, std::size_t toIndex)
 {
     m_components[toIndex] = std::move(m_components[fromIndex]);
     m_components[fromIndex] = {};
 }
 
 template <ValidComponentData T>
-[[nodiscard]] std::unique_ptr<ComponentArrayBase> ComponentArray<T>::cloneForIndex(size_t index)
+[[nodiscard]] std::unique_ptr<ComponentArrayBase> ComponentArray<T>::cloneForIndex(std::size_t index)
 {
     auto componentArray = std::make_unique<ComponentArray>();
     componentArray->m_components[0] = m_components.at(index);
@@ -63,20 +63,20 @@ template <ValidComponentData T>
 }
 
 template <ValidComponentData T>
-void ComponentArray<T>::copy(ComponentArrayBase& other, size_t indexFrom, size_t indexTo)
+void ComponentArray<T>::copy(ComponentArrayBase& other, std::size_t indexFrom, std::size_t indexTo)
 {
     ComponentArray& otherComponentArray = static_cast<ComponentArray&>(other);
     m_components.at(indexTo) = otherComponentArray.m_components.at(indexFrom);
 }
 
 template <ValidComponentData T>
-[[nodiscard]] const Component<T>& ComponentArray<T>::get(size_t index) const
+[[nodiscard]] const Component<T>& ComponentArray<T>::get(std::size_t index) const
 {
     return m_components.at(index);
 }
 
 template <ValidComponentData T>
-[[nodiscard]] Component<T>& ComponentArray<T>::get(size_t index)
+[[nodiscard]] Component<T>& ComponentArray<T>::get(std::size_t index)
 {
     return const_cast<Component<T>&>(std::as_const(*this).get(index));
 }
