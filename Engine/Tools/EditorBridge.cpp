@@ -1,7 +1,7 @@
 module EditorBridge;
 import Editor.Camera;
 import Application;
-import Component.Parent;
+import Component.Hierarchy;
 import Component.Transform;
 import Editor.Components;
 import Editor.Gizmos;
@@ -34,7 +34,7 @@ constexpr Entity& getGizmo(EditMode editMode)
 
 void attachToSelectedEntity(Entity gizmo)
 {
-    getWorld().editComponent<ParentComponent>(gizmo).parent = selected;
+    HierarchyUtils::setParent(getWorld(), gizmo, selected);
     getWorld().editComponent<TransformComponent>(gizmo).scale = 0.2f / getWorld().readComponent<TransformComponent>(selected).scale;
 }
 
@@ -72,16 +72,13 @@ void editorUpdate(GLFWwindow* window, float deltaTime)
     if (Input::isKeyJustPressed(GlfwKeyCode::Q))
     {
         setEditMode(EditMode::None);
-    }
-    else if (Input::isKeyJustPressed(GlfwKeyCode::W))
+    } else if (Input::isKeyJustPressed(GlfwKeyCode::W))
     {
         setEditMode(EditMode::Translate);
-    }
-    else if (Input::isKeyJustPressed(GlfwKeyCode::E))
+    } else if (Input::isKeyJustPressed(GlfwKeyCode::E))
     {
         setEditMode(EditMode::Rotate);
-    }
-    else if (Input::isKeyJustPressed(GlfwKeyCode::R))
+    } else if (Input::isKeyJustPressed(GlfwKeyCode::R))
     {
         setEditMode(EditMode::Scale);
     }
@@ -91,12 +88,12 @@ void editorUpdate(GLFWwindow* window, float deltaTime)
 
     if (selected != invalidId() && selectedGizmoAxis != invalidId() && Input::isKeyDown(GlfwKeyCode::MouseButtonLeft))
     {
-        TransformComponent& transform = getWorld().editComponent<TransformComponent>(selected);
+        TransformComponent &transform = getWorld().editComponent<TransformComponent>(selected);
 
         const Vec3 gizmoAxisDirection = [&]
         {
-            const Entity gizmoEntity = getWorld().readComponent<ParentComponent>(selectedGizmoAxis).parent;
-            const GizmoComponent& gizmo = getWorld().readComponent<GizmoComponent>(gizmoEntity);
+            const Entity gizmoEntity = HierarchyUtils::getParent(getWorld(), selectedGizmoAxis);
+            const GizmoComponent &gizmo = getWorld().readComponent<GizmoComponent>(gizmoEntity);
             if (selectedGizmoAxis == gizmo.xAxisEntity)
                 return TransformUtils::right(transform);
             if (selectedGizmoAxis == gizmo.yAxisEntity)
@@ -110,20 +107,22 @@ void editorUpdate(GLFWwindow* window, float deltaTime)
         const Plane movePlane
         {
             .point = transform.position,
-            .normal = Math::cross(TransformUtils::right(getWorld().readComponent<TransformComponent>(getPlayer().getMainCamera())), gizmoAxisDirection)
+            .normal = Math::cross(
+                TransformUtils::right(getWorld().readComponent<TransformComponent>(getPlayer().getMainCamera())),
+                gizmoAxisDirection)
         };
 
         const std::optional<Vec3> projectedCursorPosition = Physics::intersectRayPlane(ray, movePlane);
 
         if (projectedCursorPositionLastFrame.has_value() && projectedCursorPosition.has_value())
         {
-            const auto delta = Math::dot(*projectedCursorPosition - *projectedCursorPositionLastFrame, gizmoAxisDirection);
+            const auto delta = Math::dot(*projectedCursorPosition - *projectedCursorPositionLastFrame,
+                                         gizmoAxisDirection);
             transform.position += gizmoAxisDirection * delta;
             projectedCursorPositionLastFrame = *projectedCursorPosition;
         }
         projectedCursorPositionLastFrame = projectedCursorPosition;
-    }
-    else
+    } else
     {
         selectedGizmoAxis = invalidId();
         projectedCursorPositionLastFrame = {};
@@ -154,12 +153,12 @@ void editorUpdate(GLFWwindow* window, float deltaTime)
 
                 auto it = entitiesToBoundingBoxGizmos.find(selected);
                 if (it == entitiesToBoundingBoxGizmos.end())
-                    it = entitiesToBoundingBoxGizmos.emplace(selected, EditorUtils::createBoundingBoxGizmo(getWorld(), selected)).first;
+                    it = entitiesToBoundingBoxGizmos.emplace(
+                        selected, EditorUtils::createBoundingBoxGizmo(getWorld(), selected)).first;
 
                 const Entity boundingBoxGizmo = it->second;
                 EditorUtils::setGizmoVisible(getWorld(), boundingBoxGizmo, true);
-            }
-            else
+            } else
             {
                 if (currentEditMode != EditMode::None)
                 {

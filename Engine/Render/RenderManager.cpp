@@ -159,7 +159,7 @@ vk::DescriptorPool createDescriptorPool(vk::Device device)
     static constexpr vk::DescriptorPoolCreateInfo poolInfo
     {
         .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-        .maxSets = 1000, // TODO figure this out
+        .maxSets = 1000, // TODO: figure this out
         .poolSizeCount = static_cast<UInt32>(poolSizes.size()),
         .pPoolSizes = poolSizes.data(),
     };
@@ -222,7 +222,9 @@ void RenderManager::init(GLFWwindow* window)
         .surface = m_surface,
         .queue = m_graphicsQueue,
         .imageCount = m_swapChainImageViews.size(),
-        .pipelineCache = m_pipelineCache
+        .pipelineCache = m_pipelineCache,
+        .colorFormat = {vk::Format::eB8G8R8A8Srgb},
+        .depthFormat = RenderUtils::findDepthFormat(m_physicalDevice),
     };
     m_imguiHelper.init(m_window, imguiInfo);
 
@@ -247,7 +249,7 @@ void RenderManager::update()
 
     std::lock_guard lock{updateLockMutex};
 
-    m_graphicsQueue.waitIdle(); // TODO: Optimization target. Explore VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT.
+    m_graphicsQueue.waitIdle(); // TODO(perf): Explore VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT.
 
     auto cmd = m_commands.tryPop();
     while (cmd.has_value())
@@ -317,7 +319,7 @@ void RenderManager::setCamera(const Camera& camera)
     m_renderObjectManager.setCamera(camera);
 }
 
-void RenderManager::addDebugWidget(std::unique_ptr<IDebugWidget> widget)
+void RenderManager::addDebugWidget(std::unique_ptr<IWidget> widget)
 {
     m_imguiHelper.addWidget(std::move(widget));
 }

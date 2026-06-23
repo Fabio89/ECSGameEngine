@@ -8,7 +8,7 @@ export struct NameComponent
     std::string name{""};
 };
 
-template <>
+template<>
 struct TypeTraits<NameComponent>
 {
     static constexpr auto name = "NameComponent";
@@ -16,23 +16,23 @@ struct TypeTraits<NameComponent>
 
 export namespace NameUtils
 {
-    std::string_view getName(const World& world, Entity entity)
+    std::string_view getName(const World &world, Entity entity)
     {
-        static constexpr const char* emptyName = "";
+        static constexpr const char *emptyName = "";
         return world.hasComponent<NameComponent>(entity) ? world.readComponent<NameComponent>(entity).name : emptyName;
     }
 }
 
-template <>
-JsonObject serialize(const NameComponent& component, Json::MemoryPoolAllocator<>& allocator)
+template<>
+JsonObject serialize(const NameComponent &component, Json::MemoryPoolAllocator<> &allocator)
 {
     JsonObject json{Json::kObjectType};
     json.AddMember("name", JsonObject{component.name.c_str(), allocator}, allocator);
     return json;
 }
 
-template <>
-NameComponent deserialize(const JsonObject& data)
+template<>
+NameComponent deserialize(const JsonObject &data)
 {
     NameComponent ret;
     if (auto it = data.FindMember("name"); it != data.MemberEnd())

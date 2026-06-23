@@ -13,13 +13,13 @@ using InstanceId = std::size_t;
 
 export struct Vertex
 {
-    Vec3 pos;
-    Vec2 uv;
+    Vec3 pos{};
+    Vec2 uv{};
 };
 
 export struct LineVertex
 {
-    Vec3 pos;
+    Vec3 pos{};
     Vec3 colour{1, 1, 1};
 };
 
@@ -36,7 +36,7 @@ export using TextureId = InstanceId;
 
 export struct TextureData
 {
-    std::string path;
+    std::string path{};
 };
 
 export using TextureAsset = Asset<TextureData>;
@@ -52,8 +52,8 @@ export using MeshId = InstanceId;
 
 export struct MeshData
 {
-    std::vector<Vertex> vertices;
-    std::vector<UInt32> indices;
+    std::vector<Vertex> vertices{};
+    std::vector<UInt32> indices{};
 
     static constexpr auto indexType{vk::IndexType::eUint32};
 };

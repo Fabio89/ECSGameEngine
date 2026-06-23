@@ -34,10 +34,9 @@ export void Project::saveToCurrent(const World& world)
     Json::toFile(doc, currentProjectPath);
 }
 
-export std::string Project::getContentRoot()
+export std::string Project::getContentRoot() // TODO(refactor): use filesystem::path
 {
-    JsonDocument doc = Json::fromFile(currentProjectPath);
-    if (doc.IsObject())
+    if (JsonDocument doc = Json::fromFile(currentProjectPath); doc.IsObject())
     {
         if (auto contentRootIt = doc.FindMember("contentRoot"); contentRootIt != doc.MemberEnd())
         {

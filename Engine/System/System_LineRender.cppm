@@ -1,6 +1,6 @@
 export module System.LineRender;
 import Component.LineRender;
-import Component.Parent;
+import Component.Hierarchy;
 import Component.Transform;
 import Math;
 import Render.Commands;

@@ -7,18 +7,18 @@ import Serialization;
 
 export struct ModelComponent
 {
-    Guid mesh;
-    Guid texture;
+    Guid mesh{};
+    Guid texture{};
 };
 
-template <>
+template<>
 struct TypeTraits<ModelComponent>
 {
     static constexpr auto name = "ModelComponent";
 };
 
-template <>
-JsonObject serialize(const ModelComponent& component, Json::MemoryPoolAllocator<>& allocator)
+template<>
+JsonObject serialize(const ModelComponent &component, Json::MemoryPoolAllocator<> &allocator)
 {
     JsonObject json{Json::kObjectType};
     json.AddMember("mesh", JsonObject{component.mesh.toString().data(), allocator}, allocator);
@@ -26,8 +26,8 @@ JsonObject serialize(const ModelComponent& component, Json::MemoryPoolAllocator<
     return json;
 }
 
-template <>
-ModelComponent deserialize(const JsonObject& serializedData)
+template<>
+ModelComponent deserialize(const JsonObject &serializedData)
 {
     const Guid meshGuid = Guid::createFromString(serializedData.FindMember("mesh")->value.GetString());
 

@@ -37,6 +37,7 @@ public:
         return std::strong_ordering::greater;
     }
 
+    [[nodiscard]]
     std::string toString() const { return to_string(m_impl); }
 
     friend std::ostream& operator<<(std::ostream& os, const Guid& guid)
@@ -51,6 +52,7 @@ public:
         return is;
     }
 
+    [[nodiscard]]
     std::size_t hashValue() const { return hash_value(m_impl); }
 
 private:

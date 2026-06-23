@@ -18,6 +18,10 @@ find_package(Vulkan REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 
+message(STATUS "Vulkan_LIBRARY = ${Vulkan_LIBRARY}")
+message(STATUS "Vulkan_LIBRARIES = ${Vulkan_LIBRARIES}")
+message(STATUS "Vulkan_INCLUDE_DIRS = ${Vulkan_INCLUDE_DIRS}")
+
 # ----------------------------------------------------------
 # Engine
 # ----------------------------------------------------------
@@ -32,6 +36,18 @@ file(GLOB_RECURSE ENGINE_MODULES CONFIGURE_DEPENDS
 
 add_library(Engine SHARED)
 
+get_target_property(VULKAN_INCLUDE_DIR Vulkan::Headers INTERFACE_INCLUDE_DIRECTORIES)
+
+target_compile_definitions(Engine
+        PRIVATE
+        VULKAN_HPP_CXX_MODULE
+        VULKAN_HPP_HAS_SPACESHIP_OPERATOR
+        VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
+        VULKAN_HPP_NO_STRUCT_SETTERS
+        VULKAN_HPP_NO_SMART_HANDLE
+        VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
+)
+
 target_sources(Engine
         PRIVATE
         ${ENGINE_SOURCES}
@@ -39,6 +55,7 @@ target_sources(Engine
         PUBLIC
         FILE_SET CXX_MODULES FILES
         ${ENGINE_MODULES}
+        ${Vulkan_INCLUDE_DIR}/vulkan/vulkan.cppm
 )
 
 target_include_directories(Engine
@@ -49,7 +66,6 @@ target_include_directories(Engine
 
 target_link_libraries(Engine
         PUBLIC
-        Vulkan::Vulkan
         glfw
         imgui::imgui
 )

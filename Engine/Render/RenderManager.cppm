@@ -8,7 +8,7 @@ import Math;
 import Render.Model;
 import Render.RenderObject;
 import Wrapper.Glfw;
-import vulkan_hpp;
+import vulkan;
 
 export enum class RenderPipelineType
 {
@@ -36,7 +36,7 @@ public:
     template <typename T>
     void addCommand(T&& command);
 
-    void addDebugWidget(std::unique_ptr<IDebugWidget> widget);
+    void addDebugWidget(std::unique_ptr<IWidget> widget);
     void setCamera(const Camera& camera);
     float getAspectRatio() const { return m_swapchainExtent.height > 0 ? m_swapchainExtent.width / static_cast<float>(m_swapchainExtent.height) : 1.f; }
 

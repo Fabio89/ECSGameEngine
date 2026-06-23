@@ -1,5 +1,5 @@
 export module System.Transform;
-import Component.Parent;
+import Component.Hierarchy;
 import Component.Transform;
 import Math;
 import Render.Commands;
@@ -43,16 +43,13 @@ export class System_Transform final : public System
         
         transform.runtimeData.worldMatrix = TransformUtils::toMatrix(transform);
         
-        if (world.hasComponent<ParentComponent>(entity))
+        if (const Entity parent = HierarchyUtils::getParent(world, entity); parent != invalidId())
         {
-            const auto& [parentEntity] = world.readComponent<ParentComponent>(entity);
-            TransformComponent& parentTransform = world.editComponent<TransformComponent>(parentEntity);
-            if (parentEntity != invalidId())
-            {
-                computeWorldTransform(world, parentEntity, parentTransform);
-                transform.runtimeData.worldMatrix = parentTransform.runtimeData.worldMatrix * transform.runtimeData.worldMatrix;
-            }
+            TransformComponent& parentTransform = world.editComponent<TransformComponent>(parent);
+            computeWorldTransform(world, parent, parentTransform);
+            transform.runtimeData.worldMatrix = parentTransform.runtimeData.worldMatrix * transform.runtimeData.worldMatrix;
         }
+
         transform.runtimeData.calculatedThisFrame = true;
     }
 };

@@ -7,12 +7,12 @@ import Serialization;
 export struct RenderComponent
 {
     bool visible{true};
-    MeshId mesh;
-    TextureId texture;
+    MeshId mesh{invalidId()};
+    TextureId texture{invalidId()};
     Mat4 model{1};
 };
 
-template <>
+template<>
 struct TypeTraits<RenderComponent>
 {
     static constexpr auto name = "RenderComponent";

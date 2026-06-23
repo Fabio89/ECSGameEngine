@@ -1,8 +1,8 @@
 export module DebugUI.IDebugWidget;
 
-export class IDebugWidget
+export class IWidget
 {
 public:
-    virtual ~IDebugWidget() = default;
+    virtual ~IWidget() = default;
     virtual void draw() = 0;
 };

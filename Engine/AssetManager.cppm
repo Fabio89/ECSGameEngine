@@ -20,14 +20,16 @@ public:
         }
     }
 
+    [[nodiscard]]
     const Guid& getGuid() const { return m_id; };
 
     virtual ~AssetBase() = default;
 
+    [[nodiscard]]
     virtual AssetTypeId getType() const = 0;
 
 private:
-    Guid m_id;
+    Guid m_id{};
 };
 
 export template <typename T>
@@ -36,13 +38,15 @@ class Asset final : public AssetBase
 public:
     inline static const AssetTypeId typeId = UniqueIdGenerator::TypeIdGenerator<T>::value;
 
-    Asset(const JsonObject& serializedData)
+    explicit Asset(const JsonObject& serializedData)
         : AssetBase{serializedData},
           m_data{deserialize<T>(serializedData)}
     {
     }
 
     const T& getData() const { return m_data; }
+
+    [[nodiscard]]
     AssetTypeId getType() const override { return typeId; }
 
 private:

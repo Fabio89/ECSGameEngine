@@ -4,10 +4,10 @@ import Render.Model;
 
 export struct LineRenderComponent
 {
-    std::vector<LineVertex> vertices;
+    std::vector<LineVertex> vertices{};
 };
 
-template <>
+template<>
 struct TypeTraits<LineRenderComponent>
 {
     static constexpr auto name = "LineRenderComponent";

@@ -20,12 +20,12 @@
     <ClCompile Include="Component\TransformComponent.cppm" />
     <ClCompile Include="Config.cppm" />
     <ClCompile Include="Core.cppm" />
-    <ClCompile Include="Editor\DebugWidget.cppm" />
-    <ClCompile Include="Editor\DebugWidget_EntityExplorer.cppm" />
-    <ClCompile Include="Editor\IDebugWidget.cppm" />
+    <ClCompile Include="Editor\Widget.cppm" />
+    <ClCompile Include="Editor\HierarchyWidget.cppm" />
+    <ClCompile Include="Editor\IWidget.cppm" />
     <ClCompile Include="Editor\ImGui.cppm" />
     <ClCompile Include="Engine.cppm" />
-    <ClCompile Include="ExternalModules\vulkan.cppm" />
+    <ClCompile Include="ExternalModules\vulkan2.cppm" />
     <ClCompile Include="Guid.cppm" />
     <ClCompile Include="Job.cppm" />
     <ClCompile Include="Math.cppm" />

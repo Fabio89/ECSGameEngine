@@ -83,7 +83,7 @@ public:
     void printArchetypeStatus();
 
 private:
-    void addDebugWidget(std::unique_ptr<IDebugWidget> widget);
+    void addDebugWidget(std::unique_ptr<IWidget> widget);
     const Archetype& readArchetype(const EntitySignature& signature) const;
     Archetype& editArchetype(const EntitySignature& signature);
     Archetype& editOrCreateArchetype(const EntitySignature& signature);

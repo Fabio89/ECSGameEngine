@@ -47,8 +47,8 @@ int main()
 {
     window = createWindow({800, 600});
     engineInit(window);
-    // openProject("C:/Users/march/Documents/Mashi Projects/TestProject/project.ma");
-    // editorInit();
+    openProject("/home/Fabio/Projects/MashiTestProject/project.ma");
+    editorInit();
 
     // char buf[4096];
     // serializeScene(buf, sizeof(buf));
@@ -65,7 +65,7 @@ int main()
         
     }
 
-    printArchetypeStatus();
+    // printArchetypeStatus();
     
     waitTillClosed();
     engineShutdown(window);

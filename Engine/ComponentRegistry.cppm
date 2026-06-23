@@ -13,10 +13,17 @@ public:
     ComponentTypeBase& operator=(const ComponentTypeBase&) = delete;
     ComponentTypeBase& operator=(ComponentTypeBase&&) = delete;
 
-    [[nodiscard]] virtual ComponentTypeId getTypeId() const = 0;
-    [[nodiscard]] virtual std::string_view getName() const = 0;
+    [[nodiscard]]
+    virtual ComponentTypeId getTypeId() const = 0;
+
+    [[nodiscard]]
+    virtual std::string_view getName() const = 0;
+
     virtual void createInstance(World& world, Entity entity, const JsonObject& data) const = 0; // Could be refactored out of this class
-    [[nodiscard]] virtual JsonObject serialize(const ComponentBase& component, Json::MemoryPoolAllocator<>& allocator) const = 0;
+
+    [[nodiscard]]
+    virtual JsonObject serialize(const ComponentBase& component, Json::MemoryPoolAllocator<>& allocator) const = 0;
+
     virtual void deserialize(World& world, Entity entity, const JsonObject& json) const = 0;
 };
 
@@ -24,11 +31,22 @@ export template <ValidComponentData T>
 class ComponentType final : public ComponentTypeBase
 {
 public:
-    [[nodiscard]] ComponentTypeId getTypeId() const override { return Component<T>::typeId(); }
-    [[nodiscard]] std::string_view getName() const override { return getComponentName<T>(); }
+    [[nodiscard]]
+    ComponentTypeId getTypeId() const override
+    {
+        return Component<T>::typeId();
+    }
+
+    [[nodiscard]]
+    std::string_view getName() const override
+    {
+        return getComponentName<T>();
+    }
+
     void createInstance(World& world, Entity entity, const JsonObject& json) const override { world.addComponent<T>(entity, ::deserialize<T>(json)); }
 
-    [[nodiscard]] JsonObject serialize(const ComponentBase& component, Json::MemoryPoolAllocator<>& allocator) const override
+    [[nodiscard]]
+    JsonObject serialize(const ComponentBase& component, Json::MemoryPoolAllocator<>& allocator) const override
     {
         return ::serialize<T>(static_cast<const Component<T>&>(component).data, allocator);
     }

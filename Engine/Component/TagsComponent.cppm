@@ -9,29 +9,29 @@ export namespace Tag
 
 export struct TagsComponent
 {
-    std::vector<std::string_view> tags;
+    std::vector<std::string_view> tags{};
 };
 
-template <>
+template<>
 struct TypeTraits<TagsComponent>
 {
     static constexpr auto name = "TagsComponent";
 };
 
-template <>
-JsonObject serialize(const TagsComponent& component, Json::MemoryPoolAllocator<>& allocator)
+template<>
+JsonObject serialize(const TagsComponent &component, Json::MemoryPoolAllocator<> &allocator)
 {
     JsonObject json{Json::kArrayType};
     json.Reserve(component.tags.size(), allocator);
-    for (const auto& tag : component.tags)
+    for (const auto &tag: component.tags)
     {
         json.PushBack(JsonObject{tag.data(), allocator}, allocator);
     }
     return json;
 }
 
-template <>
-TagsComponent deserialize(const JsonObject& data)
+template<>
+TagsComponent deserialize(const JsonObject &data)
 {
     return {};
 }

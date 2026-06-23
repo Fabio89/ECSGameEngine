@@ -3,7 +3,7 @@ import Core;
 import Platform.Filesystem;
 import Wrapper.Glfw;
 import Wrapper.Vulkan;
-import vulkan_hpp;
+import vulkan;
 
 export namespace RenderUtils
 {

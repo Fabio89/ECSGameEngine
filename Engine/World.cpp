@@ -67,7 +67,7 @@ void World::printArchetypeStatus()
     }
 }
 
-void World::addDebugWidget(std::unique_ptr<IDebugWidget> widget)
+void World::addDebugWidget(std::unique_ptr<IWidget> widget)
 {
     m_renderManager.get().addDebugWidget(std::move(widget));
 }

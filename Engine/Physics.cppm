@@ -50,8 +50,8 @@ private:
 export
 struct Ray
 {
-    Vec3 origin;
-    Vec3 direction;
+    Vec3 origin{};
+    Vec3 direction{};
 };
 
 namespace Physics

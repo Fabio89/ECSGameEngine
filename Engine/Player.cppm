@@ -16,6 +16,7 @@ public:
         }
     }
 
+    [[nodiscard]]
     Entity getMainCamera() const
     {
         return m_mainCamera;

@@ -15,7 +15,7 @@ public:
     }
     
 private:
-    std::chrono::steady_clock::time_point m_lastFrameTime;
+    std::chrono::steady_clock::time_point m_lastFrameTime{};
     float m_deltaTime{};
 };
 
@@ -57,7 +57,7 @@ public:
     }
 
 private:
-    std::queue<T> m_queue;
-    std::mutex m_mutex;
-    std::condition_variable m_condition;
+    std::queue<T> m_queue{};
+    std::mutex m_mutex{};
+    std::condition_variable m_condition{};
 };

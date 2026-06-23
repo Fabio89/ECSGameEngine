@@ -66,8 +66,8 @@ void engineInit(GLFWwindow* window)
     Input::init(window);
     EngineComponents::init();
     EngineSystems::init(world);
-    // world.addDebugWidget<DebugWidgets::EntityExplorer>();
-    //world.addDebugWidget<DebugWidgets::ImGuiDemo>();
+    world.addDebugWidget<DebugWidgets::EntityExplorer>();
+    world.addDebugWidget<DebugWidgets::ImGuiDemo>();
 }
 
 extern "C"

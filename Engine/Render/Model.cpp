@@ -1,7 +1,8 @@
 module;
+
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <algorithm>
-#include <External/MeshLoading/tiny_obj_loader.h>
+#include <tiny_obj_loader.h>
 
 module Render.Model;
 import Project;

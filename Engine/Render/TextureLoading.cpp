@@ -1,7 +1,7 @@
 module;
 
 #define STB_IMAGE_IMPLEMENTATION
-#include <External/TextureLoading/stb_image.h>
+#include <stb_image.h>
 
 module Render.TextureLoading;
 import Core;

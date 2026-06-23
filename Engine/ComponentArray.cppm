@@ -17,9 +17,14 @@ public:
     virtual ~ComponentArrayBase() = default;
 
     virtual void copy(ComponentArrayBase& other, std::size_t indexFrom, std::size_t indexTo) = 0;
+
     virtual void move(std::size_t fromIndex, std::size_t toIndex) = 0;
+
     virtual std::unique_ptr<ComponentArrayBase> cloneForIndex(std::size_t index) = 0;
+
+    [[nodiscard]]
     virtual const ComponentBase& get(std::size_t index) const = 0;
+
     virtual ComponentBase& get(std::size_t index) = 0;
 };
 
@@ -32,9 +37,12 @@ public:
     std::unique_ptr<ComponentArrayBase> cloneForIndex(Entity index) override;
 
     void copy(ComponentArrayBase& other, std::size_t indexFrom, std::size_t indexTo) override;
+
     void move(std::size_t fromIndex, std::size_t toIndex) override;
 
+    [[nodiscard]]
     const Component<T>& get(std::size_t index) const override;
+
     Component<T>& get(std::size_t index) override;
 
 private:
@@ -65,7 +73,7 @@ template <ValidComponentData T>
 template <ValidComponentData T>
 void ComponentArray<T>::copy(ComponentArrayBase& other, std::size_t indexFrom, std::size_t indexTo)
 {
-    ComponentArray& otherComponentArray = static_cast<ComponentArray&>(other);
+    auto& otherComponentArray = static_cast<ComponentArray&>(other);
     m_components.at(indexTo) = otherComponentArray.m_components.at(indexFrom);
 }
 

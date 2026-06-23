@@ -139,7 +139,7 @@
         <ClCompile Include="Component\LineRenderComponent.cppm" />
         <ClCompile Include="Component\ModelComponent.cppm" />
         <ClCompile Include="Component\NameComponent.cppm" />
-        <ClCompile Include="Component\ParentComponent.cppm" />
+        <ClCompile Include="Component\HierarchyComponent.cppm" />
         <ClCompile Include="Component\PersistentIdComponent.cppm" />
         <ClCompile Include="Component\RenderComponent.cppm" />
         <ClCompile Include="Component\TagsComponent.cppm" />
@@ -475,7 +475,7 @@
           <RuntimeTypeInfo>false</RuntimeTypeInfo>
           <LinkCompiled>true</LinkCompiled>
         </ClCompile>
-        <ClCompile Include="ExternalModules\vulkan.cppm" />
+        <ClCompile Include="ExternalModules\vulkan2.cppm" />
         <ClCompile Include="Input.cpp" />
         <ClCompile Include="Log.cppm" />
         <ClCompile Include="Input.cppm" />
@@ -485,9 +485,9 @@
         <ClCompile Include="Player.cppm" />
         <ClCompile Include="Project.cppm" />
         <ClCompile Include="Archetype.cppm" />
-        <ClCompile Include="DebugUI\DebugWidget.cppm" />
-        <ClCompile Include="DebugUI\DebugWidget_EntityExplorer.cppm" />
-        <ClCompile Include="DebugUI\IDebugWidget.cppm" />
+        <ClCompile Include="DebugUI\Widget.cppm" />
+        <ClCompile Include="DebugUI\HierarchyWidget.cppm" />
+        <ClCompile Include="DebugUI\IWidget.cppm" />
         <ClCompile Include="DebugUI\ImGui.cpp" />
         <ClCompile Include="DebugUI\ImGui.cppm" />
         <ClCompile Include="Engine.cppm" />

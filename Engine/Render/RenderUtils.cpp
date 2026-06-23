@@ -315,7 +315,7 @@ void RenderUtils::transitionImageLayout(vk::Device device, vk::Queue commandQueu
     {
         aspectFlags = vk::ImageAspectFlagBits::eDepth;
 
-        if (hasStencilComponent(format))
+        if (RenderUtils::hasStencilComponent(format))
             aspectFlags |= vk::ImageAspectFlagBits::eStencil;
     }
     else

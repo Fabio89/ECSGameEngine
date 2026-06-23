@@ -12,15 +12,15 @@ public:
     using ComponentArrayMap = std::unordered_map<ComponentTypeId, std::unique_ptr<ComponentArrayBase>>;
     using ComponentRange = std::ranges::elements_view<std::ranges::ref_view<const ComponentArrayMap>, 0>;
 
-    bool isEmpty() const;
+    [[nodiscard]] bool isEmpty() const;
 
     template <ValidComponentData T>
     T& addComponent(Entity entity, T&& component);
 
     template <ValidComponentData T>
-    const T& readComponent(Entity entity) const;
+    [[nodiscard]] const T& readComponent(Entity entity) const;
 
-    const ComponentBase& readComponent(Entity entity, ComponentTypeId componentType) const;
+    [[nodiscard]] const ComponentBase& readComponent(Entity entity, ComponentTypeId componentType) const;
 
     void removeEntity(Entity entity);
 
@@ -28,10 +28,10 @@ public:
 
     void steal(Archetype& other, Entity entity);
 
-    ComponentRange getComponentTypes() const { return m_componentArrays | std::views::keys; }
+    [[nodiscard]] ComponentRange getComponentTypes() const { return m_componentArrays | std::views::keys; }
 
     template <ValidComponentData... Components>
-    bool matches() const;
+    [[nodiscard]] bool matches() const;
 
     template <ValidComponentData ... Components>
     std::generator<std::tuple<Entity, const Components&...>> view() const;
@@ -80,7 +80,7 @@ public:
 
 private:
     const Archetype* m_archetype;
-    std::size_t m_index;
+    std::size_t m_index{};
 };
 
 template <ValidComponentData ... Components>

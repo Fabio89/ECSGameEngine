@@ -52,9 +52,9 @@ public:
 	}
 
 private:
-	std::vector<std::thread> m_workers;
-	std::queue<Job> m_jobs;
-	std::mutex m_queueMutex;
-	std::condition_variable m_condition;
-	std::atomic<bool> m_stopFlag;
+	std::vector<std::thread> m_workers{};
+	std::queue<Job> m_jobs{};
+	std::mutex m_queueMutex{};
+	std::condition_variable m_condition{};
+	std::atomic<bool> m_stopFlag{};
 };

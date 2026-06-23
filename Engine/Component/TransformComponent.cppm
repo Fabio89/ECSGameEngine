@@ -23,28 +23,38 @@ export struct TransformComponent
 export namespace TransformUtils
 {
     ENGINE_API
-    Vec3 forward(const TransformComponent& transform) { return Math::normalize(Math::rotate(transform.rotation, forwardVector())); }
-
-    ENGINE_API
-    Vec3 right(const TransformComponent& transform) { return Math::normalize(Math::rotate(transform.rotation, rightVector())); }
-
-    ENGINE_API
-    Vec3 up(const TransformComponent& transform) { return Math::normalize(Math::rotate(transform.rotation, upVector())); }
-
-    Mat4 toMatrix(const TransformComponent& transform)
+    Vec3 forward(const TransformComponent &transform)
     {
-        return Math::translate(Mat4{1.0f}, transform.position) * Math::mat4_cast(transform.rotation) * Math::scale(Mat4{1.0f}, Vec3{transform.scale});
+        return Math::normalize(Math::rotate(transform.rotation, forwardVector()));
+    }
+
+    ENGINE_API
+    Vec3 right(const TransformComponent &transform)
+    {
+        return Math::normalize(Math::rotate(transform.rotation, rightVector()));
+    }
+
+    ENGINE_API
+    Vec3 up(const TransformComponent &transform)
+    {
+        return Math::normalize(Math::rotate(transform.rotation, upVector()));
+    }
+
+    Mat4 toMatrix(const TransformComponent &transform)
+    {
+        return Math::translate(Mat4{1.0f}, transform.position) * Math::mat4_cast(transform.rotation) * Math::scale(
+                   Mat4{1.0f}, Vec3{transform.scale});
     }
 }
 
-template <>
+template<>
 struct TypeTraits<TransformComponent>
 {
     static constexpr auto name = "TransformComponent";
 };
 
-template <>
-JsonObject serialize(const TransformComponent& component, Json::MemoryPoolAllocator<>& allocator)
+template<>
+JsonObject serialize(const TransformComponent &component, Json::MemoryPoolAllocator<> &allocator)
 {
     JsonObject json{Json::kObjectType};
     json.AddMember("position", Json::fromVec3(component.position, allocator), allocator);
@@ -53,8 +63,8 @@ JsonObject serialize(const TransformComponent& component, Json::MemoryPoolAlloca
     return json;
 }
 
-template <>
-TransformComponent deserialize(const JsonObject& data)
+template<>
+TransformComponent deserialize(const JsonObject &data)
 {
     const Vec3 position = Json::toVec3(data, "position").value_or(Vec3{});
     const Quat rotation = Json::toQuat(data, "rotation").value_or(Quat{});

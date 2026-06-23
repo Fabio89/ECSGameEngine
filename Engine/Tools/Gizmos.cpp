@@ -4,7 +4,7 @@ import Component.BoundingBox;
 import Component.Gizmo;
 import Component.Name;
 import Component.Model;
-import Component.Parent;
+import Component.Hierarchy;
 import Component.Render;
 import Component.Tags;
 import Component.Transform;
@@ -21,9 +21,10 @@ Entity createTranslationGizmoAxis(World& world, Entity gizmo, std::string name, 
     world.addComponent<BoundingBoxComponent>(axis, std::move(boundingBox));
     world.addComponent<LineRenderComponent>(axis, std::move(vertices));
     world.addComponent<NameComponent>(axis, std::move(name));
-    world.addComponent<ParentComponent>(axis, gizmo);
+    world.addComponent<HierarchyComponent>(axis);
     world.addComponent<TagsComponent>(axis, {{Tag::notEditable}});
     world.addComponent<TransformComponent>(axis);
+    HierarchyUtils::setParent(world, axis, gizmo);
     return axis;
 }
 
@@ -31,7 +32,7 @@ Entity EditorUtils::createTranslationGizmo(World& world)
 {
     const Entity gizmo = world.createEntity();
     world.addComponent<NameComponent>(gizmo, "Translation Gizmo");
-    world.addComponent<ParentComponent>(gizmo);
+    world.addComponent<HierarchyComponent>(gizmo);
     world.addComponent<TagsComponent>(gizmo, {{Tag::notEditable}});
     world.addComponent<TransformComponent>(gizmo);
 
@@ -159,9 +160,10 @@ Entity EditorUtils::createBoundingBoxGizmo(World& world, Entity parentEntity)
     Entity aabbGizmo = world.createEntity();
     world.addComponent<LineRenderComponent>(aabbGizmo, {.vertices = generateAABBVertices(aabb.minLocal, aabb.maxLocal)});
     world.addComponent<NameComponent>(aabbGizmo, std::format("BoundingBoxGizmo_{}", name));
-    world.addComponent<ParentComponent>(aabbGizmo, parentEntity);
+    world.addComponent<HierarchyComponent>(aabbGizmo);
     world.addComponent<TagsComponent>(aabbGizmo, {{Tag::notEditable}});
     world.addComponent<TransformComponent>(aabbGizmo);
+    HierarchyUtils::setParent(world, aabbGizmo, parentEntity);
 
     return aabbGizmo;
 }

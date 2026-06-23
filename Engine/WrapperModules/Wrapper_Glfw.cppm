@@ -13,7 +13,7 @@ module;
 #include <GLFW/glfw3native.h>
 
 export module Wrapper.Glfw;
-import vulkan_hpp;
+import vulkan;
 import std;
 
 export using ::GLFWwindow;

@@ -1,12 +1,16 @@
 module;
+
+#define IMGUI_IMPL_VULKAN_HAS_DYNAMIC_RENDERING
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 
 export module Wrapper.ImGui;
 
-export namespace Wrapper_ImGui
+export namespace ImGui
 {
+    using ::VkResult;
+
     // ReSharper disable CppClangTidyMiscUnusedUsingDecls
     using ImGui::CreateContext;
     using ImGui::DestroyContext;
@@ -419,8 +423,9 @@ export namespace Wrapper_ImGui
 
     using ImGuiChildFlags_::ImGuiChildFlags_Borders;
     
-    using ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen;
-    
+    using ::ImGuiTreeNodeFlags_;
+    using ::ImGuiTreeNodeFlags;
+
     using ImGuiStyleVar_::ImGuiStyleVar_ItemSpacing;
     using ImGuiStyleVar_::ImGuiStyleVar_ItemInnerSpacing;
 
