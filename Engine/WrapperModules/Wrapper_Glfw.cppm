@@ -1,16 +1,6 @@
 module;
 #define GLFW_INCLUDE_VULKAN
-#if defined(_WIN32)
-#define GLFW_EXPOSE_NATIVE_WIN32
-#define GET_WINDOW glfwGetWin32Window
-#define WINDOW_HANDLE_TYPE HWND
-#else
-#define GLFW_EXPOSE_NATIVE_X11
-#define GET_WINDOW glfwGetX11Window
-#define WINDOW_HANDLE_TYPE Window
-#endif
 #include <GLFW/glfw3.h>
-#include <GLFW/glfw3native.h>
 
 export module Wrapper.Glfw;
 import vulkan;
@@ -35,8 +25,6 @@ export using ::glfwWaitEvents;
 export using ::glfwGetRequiredInstanceExtensions;
 export using ::glfwGetWindowUserPointer;
 export using ::glfwCreateWindowSurface;
-export using ::GET_WINDOW;
-export using ::WINDOW_HANDLE_TYPE;
 export using ::glfwMakeContextCurrent;
 export using ::glfwSwapInterval;
 export using ::glfwSetKeyCallback;

@@ -19,7 +19,7 @@ export namespace NameUtils
     std::string_view getName(const World &world, Entity entity)
     {
         static constexpr const char *emptyName = "";
-        return world.hasComponent<NameComponent>(entity) ? world.readComponent<NameComponent>(entity).name : emptyName;
+        return world.hasComponent<NameComponent>(entity) ? world.readComponent<NameComponent>(entity).name.c_str() : emptyName;
     }
 }
 

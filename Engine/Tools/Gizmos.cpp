@@ -14,6 +14,7 @@ import Physics;
 import Render.Commands;
 import Render.Model;
 import Render.Primitives;
+import Application;
 
 Entity createTranslationGizmoAxis(World& world, Entity gizmo, std::string name, std::vector<LineVertex>&& vertices, BoundingBoxComponent boundingBox)
 {

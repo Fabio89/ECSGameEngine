@@ -54,7 +54,6 @@ int main()
     // serializeScene(buf, sizeof(buf));
     // std::cout << buf;
 
-
     std::vector<Entity> entities;
     for (Entity entity : getWorld().getEntitiesRange())
     {
@@ -65,7 +64,7 @@ int main()
         
     }
 
-    // printArchetypeStatus();
+    printArchetypeStatus();
     
     waitTillClosed();
     engineShutdown(window);

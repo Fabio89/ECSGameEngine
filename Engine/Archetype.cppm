@@ -219,7 +219,7 @@ void Archetype::removeEntity(Entity entity)
     Archetype newArchetype;
     if (auto indexIt = m_entityToIndex.find(entity); indexIt != m_entityToIndex.end())
     {
-        newArchetype.m_entityToIndex[entity] = indexIt->second;
+        newArchetype.m_entityToIndex[entity] = 0;
         newArchetype.m_indexToEntity.push_back(entity);
 
         for (const auto& [componentType, componentArray] : m_componentArrays)

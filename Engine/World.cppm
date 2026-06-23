@@ -89,9 +89,9 @@ private:
     Archetype& editOrCreateArchetype(const EntitySignature& signature);
     Archetype& prepareArchetypeOnAddComponent(Entity entity, ComponentTypeId componentId);
     
-    std::unordered_map<ArchetypeChangedObserverHandle, ArchetypeChangedCallback> m_archetypeChangeObservers;
-    Entity m_nextEntity = 0;
-    std::unordered_map<Entity, EntitySignature> m_entities;
+    std::unordered_map<ArchetypeChangedObserverHandle, ArchetypeChangedCallback> m_archetypeChangeObservers{};
+    Entity m_nextEntity{};
+    std::unordered_map<Entity, EntitySignature> m_entities{};
     std::unordered_map<EntitySignature, Archetype> m_archetypes;
     std::reference_wrapper<RenderManager> m_renderManager;
 };

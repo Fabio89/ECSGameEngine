@@ -34,7 +34,7 @@ class ComponentArray final : public ComponentArrayBase
 public:
     T& insert(std::size_t index, T&& component);
     
-    std::unique_ptr<ComponentArrayBase> cloneForIndex(Entity index) override;
+    std::unique_ptr<ComponentArrayBase> cloneForIndex(std::size_t index) override;
 
     void copy(ComponentArrayBase& other, std::size_t indexFrom, std::size_t indexTo) override;
 

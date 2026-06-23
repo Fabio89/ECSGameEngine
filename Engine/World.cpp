@@ -43,24 +43,32 @@ void World::printArchetypeStatus()
     for (const Archetype& archetype : m_archetypes | std::views::values)
     {
         std::string archetypeStr = "Archetype [";
+        std::string separator;
 
-        auto componentTypes = archetype.getComponentTypes();
-        auto lastComponentTypeIt = std::prev(componentTypes.end());
-        for (auto it = componentTypes.begin(); it != componentTypes.end(); ++it)
+        for (auto componentType : archetype.getComponentTypes())
         {
-            archetypeStr += ComponentRegistry::get(*it)->getName();
-            if (it != lastComponentTypeIt)
-            {
-                archetypeStr += " | ";
-            }
+            archetypeStr += separator;
+            archetypeStr += ComponentRegistry::get(componentType)->getName();
+
+            separator = " | ";
         }
+
         archetypeStr += "]\nEntities: ";
 
         auto entities = archetype.view();
         for (auto&& [entity] : archetype.view())
         {
-            std::string entityName = hasComponent<NameComponent>(entity) ? std::format("'{}'", readComponent<NameComponent>(entity).name) : std::format("'{}'", entity);
-            archetypeStr += entityName + " ";
+            std::string name;
+            if (hasComponent<NameComponent>(entity))
+            {
+                auto nameComponent = readComponent<NameComponent>(entity);
+                name = nameComponent.name;
+            }
+            else
+            {
+                name = std::format("'{}'", entity);
+            }
+            archetypeStr += name + " ";
         }
         archetypeStr += "\n";
         log(archetypeStr);
@@ -79,7 +87,9 @@ const Archetype& World::readArchetype(const EntitySignature& signature) const
         return it->second;
     }
 
-    throw std::runtime_error{"Couldn't find requested archetype!\n\tRequested: " + signature.bitset.to_string() + "\n"};
+    static const Archetype emptyArchetype{};
+    return emptyArchetype;
+    //throw std::runtime_error{"Couldn't find requested archetype!\n\tRequested: " + signature.bitset.to_string() + "\n"};
 }
 
 Archetype& World::editArchetype(const EntitySignature& signature)
