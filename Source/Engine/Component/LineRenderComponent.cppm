@@ -8,7 +8,4 @@ export struct LineRenderComponent
 };
 
 template<>
-struct TypeTraits<LineRenderComponent>
-{
-    static constexpr std::string_view name = "LineRenderComponent";
-};
+constexpr std::string_view getTypeName<LineRenderComponent>() { return "LineRenderComponent"; }

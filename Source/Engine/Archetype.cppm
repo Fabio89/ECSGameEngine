@@ -9,6 +9,12 @@ import ComponentArray;
 export class Archetype
 {
 public:
+    Archetype() = default;
+    Archetype(const Archetype&) = delete;
+    Archetype& operator=(const Archetype&) = delete;
+    Archetype(Archetype&&) noexcept = default;
+    Archetype& operator=(Archetype&&) noexcept = default;
+    
     using ComponentArrayMap = std::unordered_map<ComponentTypeId, std::unique_ptr<ComponentArrayBase>>;
     using ComponentRange = std::ranges::elements_view<std::ranges::ref_view<const ComponentArrayMap>, 0>;
 

@@ -49,10 +49,7 @@ export namespace TransformUtils
 }
 
 template<>
-struct TypeTraits<TransformComponent>
-{
-    static constexpr std::string_view name = "TransformComponent";
-};
+constexpr std::string_view getTypeName<TransformComponent>() { return "TransformComponent"; }
 
 template<>
 struct TypeProperties<TransformComponent>

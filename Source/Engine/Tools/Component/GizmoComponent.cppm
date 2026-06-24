@@ -8,8 +8,5 @@ export struct GizmoComponent
     Entity zAxisEntity{invalidId()};
 };
 
-template <>
-struct TypeTraits<GizmoComponent>
-{
-    static constexpr std::string_view name = "GizmoComponent";
-};
+template<>
+constexpr std::string_view getTypeName<GizmoComponent>() { return "GizmoComponent"; }

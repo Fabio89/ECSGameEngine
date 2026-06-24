@@ -1,3 +1,7 @@
+module;
+
+#include "EngineExport.h"
+
 export module World;
 import Archetype;
 import Core;
@@ -28,11 +32,15 @@ export struct WorldCreateInfo
 //------------------------------------------------------------------------------------------------------------------------
 // World
 //------------------------------------------------------------------------------------------------------------------------
-export class World
+export class ENGINE_API World
 {
 public:
     explicit World(const WorldCreateInfo&);
-
+    World(const World&) = delete;
+    World& operator=(const World&) = delete;
+    World(World&&) noexcept = default;
+    World& operator=(World&&) noexcept = default;
+    
     Entity createEntity();
     void removeEntity(Entity entity);
 

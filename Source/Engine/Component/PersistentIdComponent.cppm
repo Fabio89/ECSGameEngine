@@ -9,10 +9,7 @@ export struct PersistentIdComponent
 };
 
 template<>
-struct TypeTraits<PersistentIdComponent>
-{
-    static constexpr std::string_view name = "PersistentIdComponent";
-};
+constexpr std::string_view getTypeName<PersistentIdComponent>() { return "PersistentIdComponent"; }
 
 template<>
 JsonObject serialize(const PersistentIdComponent &component, Json::MemoryPoolAllocator<> &allocator)

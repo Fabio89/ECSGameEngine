@@ -78,6 +78,12 @@ struct TypeTraits
 };
 
 export template<typename T>
+constexpr std::string_view getTypeName()
+{
+    return "<unknown>";
+}
+
+export template<typename T>
 consteval TypeId getTypeId()
 {
     return getTypeHash<T>();
@@ -89,7 +95,7 @@ constexpr TypeInfo getTypeInfo()
     return
     {
         .id = getTypeId<T>(),
-        .name = TypeTraits<T>::name
+        .name = getTypeName<T>()
     };
 }
 
@@ -117,7 +123,7 @@ export template <typename T>
 concept ValidComponent = std::is_base_of_v<Component<T>, T>;
 
 export template <ValidComponentData T>
-constexpr std::string_view getComponentName() { return TypeTraits<T>::name; }
+constexpr std::string_view getComponentName() { return getTypeName<T>(); }
 
 export template <ValidComponentData T>
 constexpr ComponentTypeId getComponentType() { return Component<T>::typeId(); }

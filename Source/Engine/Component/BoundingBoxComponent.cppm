@@ -17,10 +17,7 @@ export struct BoundingBoxComponent
 };
 
 template<>
-struct TypeTraits<BoundingBoxComponent>
-{
-    static constexpr std::string_view name = "BoundingBoxComponent";
-};
+constexpr std::string_view getTypeName<BoundingBoxComponent>() { return "BoundingBoxComponent"; }
 
 template<>
 JsonObject serialize(const BoundingBoxComponent &component, Json::MemoryPoolAllocator<> &allocator)

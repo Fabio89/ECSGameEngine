@@ -14,10 +14,7 @@ export struct CameraComponent
 };
 
 template<>
-struct TypeTraits<CameraComponent>
-{
-    static constexpr std::string_view name = "CameraComponent";
-};
+constexpr std::string_view getTypeName<CameraComponent>() { return "CameraComponent"; }
 
 template<>
 struct TypeProperties<CameraComponent>

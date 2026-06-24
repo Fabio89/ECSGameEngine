@@ -13,13 +13,16 @@ file(GLOB_RECURSE ENGINE_MODULES CONFIGURE_DEPENDS
 add_library(Engine SHARED)
 
 set_target_properties(Engine PROPERTIES
-        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
 )
 
 get_target_property(VULKAN_INCLUDE_DIR Vulkan::Headers INTERFACE_INCLUDE_DIRECTORIES)
 
 target_compile_definitions(Engine
         PRIVATE
+        ENGINE_BUILD
         VULKAN_HPP_CXX_MODULE
         VULKAN_HPP_HAS_SPACESHIP_OPERATOR
         VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
@@ -67,8 +70,10 @@ add_executable(Game
         Game/Game.cpp
 )
 
+set(GAME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+
 set_target_properties(Game PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+        RUNTIME_OUTPUT_DIRECTORY "${GAME_OUTPUT_DIRECTORY}"
 )
 
 target_link_libraries(Game

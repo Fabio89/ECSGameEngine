@@ -34,22 +34,13 @@ export using Quat = glm::quat;
 export using Mat4 = glm::mat4;
 
 template<>
-struct TypeTraits<Vec3>
-{
-    static constexpr auto name = "Vec3";
-};
+constexpr std::string_view getTypeName<Vec3>() { return "Vec3"; }
 
 template<>
-struct TypeTraits<Quat>
-{
-    static constexpr auto name = "Quat";
-};
+constexpr std::string_view getTypeName<Quat>() { return "Quat"; }
 
 template<>
-struct TypeTraits<float>
-{
-    static constexpr auto name = "float";
-};
+constexpr std::string_view getTypeName<float>() { return "float"; }
 
 export struct Plane
 {

@@ -30,7 +30,7 @@ export namespace RenderUtils
         vk::DeviceSize size{};
         vk::BufferUsageFlags usage{};
         vk::MemoryPropertyFlags properties{};
-        std::initializer_list<UInt32> queueFamilyIndices{};
+        std::initializer_list<UInt32> queueFamilyIndices;
     };
 
     [[nodiscard]] std::tuple<vk::Buffer, vk::DeviceMemory> createBuffer(const CreateBufferInfo& info);

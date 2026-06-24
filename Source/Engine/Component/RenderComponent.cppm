@@ -14,10 +14,7 @@ export struct RenderComponent
 };
 
 template<>
-struct TypeTraits<RenderComponent>
-{
-    static constexpr std::string_view name = "RenderComponent";
-};
+constexpr std::string_view getTypeName<RenderComponent>() { return "RenderComponent"; }
 
 template<>
 struct TypeProperties<RenderComponent>

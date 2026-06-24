@@ -10,10 +10,7 @@ export struct NameComponent
 };
 
 template<>
-struct TypeTraits<NameComponent>
-{
-    static constexpr std::string_view name = "NameComponent";
-};
+constexpr std::string_view getTypeName<NameComponent>() { return "NameComponent"; }
 
 template<>
 struct TypeProperties<NameComponent>

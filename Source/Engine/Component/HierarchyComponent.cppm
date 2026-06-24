@@ -15,10 +15,7 @@ export struct HierarchyComponent
 };
 
 template<>
-struct TypeTraits<HierarchyComponent>
-{
-    static constexpr std::string_view name = "HierarchyComponent";
-};
+constexpr std::string_view getTypeName<HierarchyComponent>() { return "HierarchyComponent"; }
 
 export namespace HierarchyUtils
 {

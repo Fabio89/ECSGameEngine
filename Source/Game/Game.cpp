@@ -47,7 +47,8 @@ int main()
 {
     window = createWindow({2560, 1440});
     engineInit(window);
-    openProject("/home/Fabio/Projects/MashiTestProject/project.ma");
+    openProject("C:/Users/march/Documents/Mashi Projects/MashiTestProject/project.ma");
+    //openProject("/home/Fabio/Projects/MashiTestProject/project.ma");
     //startEmptyProject();
     editorInit();
 

@@ -11,21 +11,32 @@ project(
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
 
 if(ENABLE_ASAN)
-    add_compile_options(
-            -fsanitize=address
-            -fno-omit-frame-pointer
-    )
+    if(MSVC)
+        add_compile_options(/fsanitize=address)
+        add_link_options(/fsanitize=address)
+    else()
+        add_compile_options(
+                -fsanitize=address
+                -fno-omit-frame-pointer
+        )
 
-    add_link_options(
-            -fsanitize=address
-    )
+        add_link_options(
+                -fsanitize=address
+        )
+    endif()
+endif()
+
+if(MSVC)
+    set(CMAKE_CXX_FLAGS_DEVELOPMENT "/Od /Zi")
+    set(CMAKE_CXX_FLAGS_DEBUG "/Od /Zi")
+    set(CMAKE_CXX_FLAGS_RELEASE "/O2 /DNDEBUG")
+else()
+    set(CMAKE_CXX_FLAGS_DEVELOPMENT "-Og -g")
+    set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 endif()
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Development;Release" CACHE STRING "" FORCE)
-
-set(CMAKE_CXX_FLAGS_DEVELOPMENT "-Og -g")
-set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

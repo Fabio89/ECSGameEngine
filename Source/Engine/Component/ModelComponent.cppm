@@ -12,10 +12,7 @@ export struct ModelComponent
 };
 
 template<>
-struct TypeTraits<ModelComponent>
-{
-    static constexpr std::string_view name = "ModelComponent";
-};
+constexpr std::string_view getTypeName<ModelComponent>() { return "ModelComponent"; }
 
 template<>
 JsonObject serialize(const ModelComponent &component, Json::MemoryPoolAllocator<> &allocator)

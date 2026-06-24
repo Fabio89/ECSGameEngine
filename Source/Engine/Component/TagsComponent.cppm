@@ -5,7 +5,7 @@ import Serialization;
 
 export namespace Tag
 {
-    constexpr std::string notEditable = "NotEditable";
+    const std::string notEditable = "NotEditable";
 }
 
 export struct TagsComponent
@@ -14,10 +14,7 @@ export struct TagsComponent
 };
 
 template<>
-struct TypeTraits<TagsComponent>
-{
-    static constexpr std::string_view name = "TagsComponent";
-};
+constexpr std::string_view getTypeName<TagsComponent>() { return "TagsComponent"; }
 
 template<>
 struct TypeProperties<TagsComponent>

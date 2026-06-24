@@ -19,7 +19,7 @@
     {
       "name": "debug",
       "inherits": "base",
-      "binaryDir": "${sourceDir}/Build/debug",
+      "binaryDir": "${sourceDir}/../ECSGameEngine-build/debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
@@ -28,7 +28,7 @@
     {
       "name": "debug-asan",
       "inherits": "debug",
-      "binaryDir": "${sourceDir}/Build/debug-asan",
+      "binaryDir": "${sourceDir}/../ECSGameEngine-build/debug-asan",
       "cacheVariables": {
         "ENABLE_ASAN": "ON"
       }
@@ -37,7 +37,7 @@
     {
       "name": "development",
       "inherits": "base",
-      "binaryDir": "${sourceDir}/Build/development",
+      "binaryDir": "${sourceDir}/../ECSGameEngine-build/development",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Development"
       }
@@ -46,7 +46,7 @@
     {
       "name": "development-asan",
       "inherits": "development",
-      "binaryDir": "${sourceDir}/Build/development-asan",
+      "binaryDir": "${sourceDir}/../ECSGameEngine-build/development-asan",
       "cacheVariables": {
         "ENABLE_ASAN": "ON"
       }
@@ -55,7 +55,7 @@
     {
       "name": "release",
       "inherits": "base",
-      "binaryDir": "${sourceDir}/Build/release",
+      "binaryDir": "${sourceDir}/../ECSGameEngine-build/release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
@@ -64,7 +64,7 @@
     {
       "name": "release-asan",
       "inherits": "release",
-      "binaryDir": "${sourceDir}/Build/release-asan",
+      "binaryDir": "${sourceDir}/../ECSGameEngine-build/release-asan",
       "cacheVariables": {
         "ENABLE_ASAN": "ON",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
