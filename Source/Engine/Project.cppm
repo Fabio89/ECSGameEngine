@@ -8,7 +8,7 @@ export class Project
 public:
     static void open(std::string path, World& world);
     static void saveToCurrent(const World& world);
-    static std::string getContentRoot();
+    static std::filesystem::path getContentRoot();
 
 private:
     inline static std::string currentProjectPath;
@@ -34,7 +34,7 @@ void Project::saveToCurrent(const World& world)
     Json::toFile(doc, currentProjectPath);
 }
 
-std::string Project::getContentRoot() // TODO(refactor): use filesystem::path
+std::filesystem::path Project::getContentRoot()
 {
     if (JsonDocument doc = Json::fromFile(currentProjectPath); doc.IsObject())
     {
@@ -42,9 +42,9 @@ std::string Project::getContentRoot() // TODO(refactor): use filesystem::path
         {
             std::filesystem::path completePath{currentProjectPath};
             completePath.replace_filename(contentRootIt->value.GetString());
-            return canonical(completePath).generic_string() + "/";
+            return canonical(completePath);
         }
     }
     report("No content root specified in the project file! Using default 'Content'", ErrorType::Warning);
-    return "Content";
+    return std::filesystem::path{"Content"};
 }

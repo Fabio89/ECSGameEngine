@@ -151,7 +151,7 @@ void RenderObjectManager::addTexture(TextureData&& textureData, Guid guid)
 {
     Texture& texture = m_textures.emplace_back();
     texture.id = m_textures.size() - 1;
-    const std::string fullPath = Project::getContentRoot() + std::move(textureData.path);
+    const std::string fullPath = Project::getContentRoot() / std::move(textureData.path);
     std::tie(texture.image, texture.memory) = RenderUtils::createTextureImage(
         fullPath.c_str(), m_device, m_physicalDevice,
         m_queue, m_cmdPool);

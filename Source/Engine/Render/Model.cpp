@@ -23,14 +23,14 @@ struct std::hash<Vertex>
     }
 };
 
-MeshData loadModel(const char* path)
+MeshData loadModel(std::filesystem::path path)
 {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
     std::string warn, err;
 
-    if (!LoadObj(&attrib, &shapes, &materials, &warn, &err, (Project::getContentRoot() + path).c_str()))
+    if (!LoadObj(&attrib, &shapes, &materials, &warn, &err, (Project::getContentRoot() / path).c_str()))
     {
         report((warn + err).c_str(), ErrorType::Error);
         return {};
@@ -85,7 +85,7 @@ MeshData deserialize(const JsonObject& serializedData)
     MeshData data;
     if (auto it = serializedData.FindMember("path"); it != serializedData.MemberEnd())
     {
-        data = loadModel(std::string{it->value.GetString()}.c_str());
+        data = loadModel(it->value.GetString());
     }
     else if (auto verticesJson = serializedData.FindMember("vertices"),
         indicesJson = serializedData.FindMember("indices");
@@ -112,7 +112,7 @@ TextureData deserialize(const JsonObject& serializedData)
     TextureData data;
     if (auto it = serializedData.FindMember("path"); it != serializedData.MemberEnd())
     {
-        data.path = it->value.GetString();
+        data.path.assign(it->value.GetString());
     }
     return data;
 }

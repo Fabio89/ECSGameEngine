@@ -36,7 +36,7 @@ export using TextureId = InstanceId;
 
 export struct TextureData
 {
-    std::string path{};
+    std::filesystem::path path{};
 };
 
 export using TextureAsset = Asset<TextureData>;
