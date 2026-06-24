@@ -3,13 +3,13 @@
 
   "configurePresets": [
     {
-      "name": "linux-base",
+      "name": "base",
       "hidden": true,
       "generator": "Ninja",
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "$env{HOME}/.local/vcpkg/scripts/buildsystems/vcpkg.cmake",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "VCPKG_INSTALLED_DIR": "${sourceDir}/Build/vcpkg_installed"
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_INSTALLED_DIR": "${sourceDir}/vcpkg/installed",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       },
       "warnings": {
         "dev": false
@@ -17,54 +17,54 @@
     },
 
     {
-      "name": "linux-debug",
-      "inherits": "linux-base",
-      "binaryDir": "${sourceDir}/Build/linx-debug",
+      "name": "debug",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/Build/debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
     },
 
     {
-      "name": "linux-debug-asan",
-      "inherits": "linux-debug",
-      "binaryDir": "${sourceDir}/Build/linx-debug-asan",
+      "name": "debug-asan",
+      "inherits": "debug",
+      "binaryDir": "${sourceDir}/Build/debug-asan",
       "cacheVariables": {
         "ENABLE_ASAN": "ON"
       }
     },
 
     {
-      "name": "linux-development",
-      "inherits": "linux-base",
-      "binaryDir": "${sourceDir}/Build/linx-development",
+      "name": "development",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/Build/development",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Development"
       }
     },
 
     {
-      "name": "linux-development-asan",
-      "inherits": "linux-development",
-      "binaryDir": "${sourceDir}/Build/linx-development-asan",
+      "name": "development-asan",
+      "inherits": "development",
+      "binaryDir": "${sourceDir}/Build/development-asan",
       "cacheVariables": {
         "ENABLE_ASAN": "ON"
       }
     },
 
     {
-      "name": "linux-release",
-      "inherits": "linux-base",
-      "binaryDir": "${sourceDir}/Build/linx-release",
+      "name": "release",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/Build/release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
 
     {
-      "name": "linux-release-asan",
-      "inherits": "linux-release",
-      "binaryDir": "${sourceDir}/Build/linx-release-asan",
+      "name": "release-asan",
+      "inherits": "release",
+      "binaryDir": "${sourceDir}/Build/release-asan",
       "cacheVariables": {
         "ENABLE_ASAN": "ON",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
