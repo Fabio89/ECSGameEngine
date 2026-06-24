@@ -10,5 +10,5 @@ export struct LineRenderComponent
 template<>
 struct TypeTraits<LineRenderComponent>
 {
-    static constexpr auto name = "LineRenderComponent";
+    static constexpr std::string_view name = "LineRenderComponent";
 };

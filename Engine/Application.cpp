@@ -67,7 +67,7 @@ void engineInit(GLFWwindow* window)
     EngineComponents::init();
     EngineSystems::init(world);
     world.addDebugWidget<DebugWidgets::EntityExplorer>();
-    world.addDebugWidget<DebugWidgets::ImGuiDemo>();
+    //world.addDebugWidget<DebugWidgets::ImGuiDemo>();
 }
 
 extern "C"
@@ -142,6 +142,12 @@ void openProject(const char* path)
     Project::open(path, world);
 
     player.setMainCamera(world, ensureCamera());
+}
+
+extern "C"
+void startEmptyProject()
+{
+    EngineSystems::reset();
 }
 
 extern "C"

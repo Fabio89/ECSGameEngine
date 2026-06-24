@@ -5,6 +5,7 @@ module;
 export module Component.Transform;
 import Core;
 import Math;
+import Properties;
 import Serialization;
 
 export struct TransformComponent
@@ -50,7 +51,17 @@ export namespace TransformUtils
 template<>
 struct TypeTraits<TransformComponent>
 {
-    static constexpr auto name = "TransformComponent";
+    static constexpr std::string_view name = "TransformComponent";
+};
+
+template<>
+struct TypeProperties<TransformComponent>
+{
+    static constexpr std::tuple list{
+        makeProperty("position", &TransformComponent::position),
+        makeProperty("rotation", &TransformComponent::rotation),
+        makeProperty("scale", &TransformComponent::scale)
+    };
 };
 
 template<>

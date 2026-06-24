@@ -1,9 +1,9 @@
 module;
 
-#define IMGUI_IMPL_VULKAN_HAS_DYNAMIC_RENDERING
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
+#include <imgui_stdlib.h>
 
 export module Wrapper.ImGui;
 
@@ -422,7 +422,10 @@ export namespace ImGui
     using ImGuiConfigFlags_::ImGuiConfigFlags_NavEnableGamepad;
 
     using ImGuiChildFlags_::ImGuiChildFlags_Borders;
-    
+
+    using ::ImGuiTableFlags_;
+    using ::ImGuiTableFlags;
+
     using ::ImGuiTreeNodeFlags_;
     using ::ImGuiTreeNodeFlags;
 
@@ -441,6 +444,7 @@ export namespace ImGui
     using ::ImGui_ImplVulkan_Init;
     using ::ImGui_ImplVulkan_NewFrame;
     using ::ImGui_ImplVulkan_RenderDrawData;
+    using ::ImGui_ImplVulkan_SetMinImageCount;
     using ::ImGui_ImplVulkan_Shutdown;
     
     void CheckVersion() { IMGUI_CHECKVERSION(); }

@@ -51,7 +51,7 @@ export struct $NAME$Component
 template &lt;&gt;
 struct TypeTraits&lt;$NAME$Component&gt;
 {
-    static constexpr auto name = "$NAME$Component";
+    static constexpr std::string_view name = "$NAME$Component";
 };
 
 template &lt;&gt;

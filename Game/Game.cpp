@@ -45,10 +45,17 @@ ComponentArray<TransformComponent> transforms;
 
 int main()
 {
-    window = createWindow({800, 600});
+    window = createWindow({2560, 1440});
     engineInit(window);
     openProject("/home/Fabio/Projects/MashiTestProject/project.ma");
+    //startEmptyProject();
     editorInit();
+
+    Entity camera = getWorld().createEntity();
+    getWorld().addComponent<NameComponent>(camera, "TestCamera");
+    getWorld().addComponent<TransformComponent>(camera);
+    getWorld().addComponent<TagsComponent>(camera, {.tags = {"Uno", "Due", "Tre", "Quattro", "Cinque", "Sei"}});
+    getWorld().addComponent<CameraComponent>(camera);
 
     // char buf[4096];
     // serializeScene(buf, sizeof(buf));

@@ -19,7 +19,7 @@ export struct BoundingBoxComponent
 template<>
 struct TypeTraits<BoundingBoxComponent>
 {
-    static constexpr auto name = "BoundingBoxComponent";
+    static constexpr std::string_view name = "BoundingBoxComponent";
 };
 
 template<>

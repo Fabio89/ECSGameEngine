@@ -14,13 +14,13 @@ private:
     inline static std::string currentProjectPath;
 };
 
-export void Project::open(std::string path, World& world)
+void Project::open(std::string path, World& world)
 {
     currentProjectPath = std::move(path);
     world.loadScene(currentProjectPath);
 }
 
-export void Project::saveToCurrent(const World& world)
+void Project::saveToCurrent(const World& world)
 {
     if (!check(!currentProjectPath.empty(), "Can't save current project as none is open!"))
         return;
@@ -34,7 +34,7 @@ export void Project::saveToCurrent(const World& world)
     Json::toFile(doc, currentProjectPath);
 }
 
-export std::string Project::getContentRoot() // TODO(refactor): use filesystem::path
+std::string Project::getContentRoot() // TODO(refactor): use filesystem::path
 {
     if (JsonDocument doc = Json::fromFile(currentProjectPath); doc.IsObject())
     {

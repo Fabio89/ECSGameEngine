@@ -62,6 +62,38 @@ consteval std::size_t getTypeHash()
 export using Entity = TypeId;
 
 //------------------------------------------------------------------------------------------------------------------------
+// Generic type reflection
+//------------------------------------------------------------------------------------------------------------------------
+
+export struct TypeInfo
+{
+    TypeId id{invalidId()};
+    std::string_view name{};
+};
+
+export template<typename T>
+struct TypeTraits
+{
+    static constexpr std::string_view name = "Unknown";
+};
+
+export template<typename T>
+consteval TypeId getTypeId()
+{
+    return getTypeHash<T>();
+}
+
+export template<typename T>
+constexpr TypeInfo getTypeInfo()
+{
+    return
+    {
+        .id = getTypeId<T>(),
+        .name = TypeTraits<T>::name
+    };
+}
+
+//------------------------------------------------------------------------------------------------------------------------
 // Component
 //------------------------------------------------------------------------------------------------------------------------
 
@@ -85,13 +117,7 @@ export template <typename T>
 concept ValidComponent = std::is_base_of_v<Component<T>, T>;
 
 export template <ValidComponentData T>
-struct TypeTraits
-{
-    static constexpr const char* name = "Unknown";
-};
-
-export template <ValidComponentData T>
-constexpr const char* getComponentName() { return TypeTraits<T>::name; }
+constexpr std::string_view getComponentName() { return TypeTraits<T>::name; }
 
 export template <ValidComponentData T>
 constexpr ComponentTypeId getComponentType() { return Component<T>::typeId(); }

@@ -162,9 +162,9 @@ Entity EditorUtils::createBoundingBoxGizmo(World& world, Entity parentEntity)
     world.addComponent<LineRenderComponent>(aabbGizmo, {.vertices = generateAABBVertices(aabb.minLocal, aabb.maxLocal)});
     world.addComponent<NameComponent>(aabbGizmo, std::format("BoundingBoxGizmo_{}", name));
     world.addComponent<HierarchyComponent>(aabbGizmo);
+    HierarchyUtils::setParent(world, aabbGizmo, parentEntity);
     world.addComponent<TagsComponent>(aabbGizmo, {{Tag::notEditable}});
     world.addComponent<TransformComponent>(aabbGizmo);
-    HierarchyUtils::setParent(world, aabbGizmo, parentEntity);
 
     return aabbGizmo;
 }

@@ -34,48 +34,47 @@ void RenderObjectManager::updateDescriptorSets(const RenderObject& object) const
 
     for (std::size_t i = 0; i < MaxFramesInFlight; i++)
     {
+        std::vector<vk::DescriptorBufferInfo> bufferInfos;
+        std::vector<vk::DescriptorImageInfo> imageInfos;
         std::vector<vk::WriteDescriptorSet> descriptorWrites;
+
+        bufferInfos.reserve(1);
+        imageInfos.reserve(1);
         descriptorWrites.reserve(descriptorWriteCount);
 
-        const vk::DescriptorBufferInfo vertexBufferInfo
-        {
+        bufferInfos.push_back
+        ({
             .buffer = object.uniformBuffers[i],
             .offset = 0,
             .range = sizeof(UniformBufferObject),
-        };
-        descriptorWrites.emplace_back
-        (
-            vk::WriteDescriptorSet
-            {
-                .dstSet = object.descriptorSets[i],
-                .dstBinding = 0,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
-                .descriptorType = vk::DescriptorType::eUniformBuffer,
-                .pBufferInfo = &vertexBufferInfo,
-            }
-        );
+        });
+
+        descriptorWrites.push_back
+        ({
+            .dstSet = object.descriptorSets[i],
+            .dstBinding = 0,
+            .descriptorCount = 1,
+            .descriptorType = vk::DescriptorType::eUniformBuffer,
+            .pBufferInfo = &bufferInfos.back(),
+        });
 
         if (hasTexture)
         {
-            const vk::DescriptorImageInfo imageInfo
-            {
+            imageInfos.push_back
+            ({
                 .sampler = texture->sampler,
                 .imageView = texture->view,
                 .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
-            };
-            descriptorWrites.emplace_back
-            (
-                vk::WriteDescriptorSet
-                {
-                    .dstSet = object.descriptorSets[i],
-                    .dstBinding = 1,
-                    .dstArrayElement = 0,
-                    .descriptorCount = 1,
-                    .descriptorType = vk::DescriptorType::eCombinedImageSampler,
-                    .pImageInfo = &imageInfo,
-                }
-            );
+            });
+
+            descriptorWrites.push_back
+            ({
+                .dstSet = object.descriptorSets[i],
+                .dstBinding = 1,
+                .descriptorCount = 1,
+                .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+                .pImageInfo = &imageInfos.back(),
+            });
         }
 
         m_device.updateDescriptorSets

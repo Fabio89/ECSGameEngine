@@ -1,6 +1,7 @@
 export module Component.Camera;
 import Core;
 import Math;
+import Properties;
 import Serialization;
 
 export struct CameraComponent
@@ -15,7 +16,19 @@ export struct CameraComponent
 template<>
 struct TypeTraits<CameraComponent>
 {
-    static constexpr auto name = "CameraComponent";
+    static constexpr std::string_view name = "CameraComponent";
+};
+
+template<>
+struct TypeProperties<CameraComponent>
+{
+    static constexpr std::tuple list{
+        makeProperty("fov", &CameraComponent::fov),
+        makeProperty("nearPlane", &CameraComponent::nearPlane),
+        makeProperty("farPlane", &CameraComponent::farPlane),
+        makeProperty("projectionMatrix", &CameraComponent::projectionMatrix),
+        makeProperty("viewMatrix", &CameraComponent::viewMatrix),
+    };
 };
 
 template<>

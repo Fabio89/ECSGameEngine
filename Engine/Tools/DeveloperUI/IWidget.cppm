@@ -1,4 +1,4 @@
-export module DebugUI.IDebugWidget;
+export module DevUI.IDebugWidget;
 
 export class IWidget
 {

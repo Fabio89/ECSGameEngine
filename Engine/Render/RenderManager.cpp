@@ -32,85 +32,6 @@ vk::PipelineLayout createPipelineLayout(vk::Device device, vk::DescriptorSetLayo
 }
 
 [[nodiscard]]
-vk::RenderPass createRenderPass(vk::Device device, vk::PhysicalDevice physicalDevice, vk::Format swapChainImageFormat)
-{
-    const vk::AttachmentDescription colorAttachment
-    {
-        .format = swapChainImageFormat,
-        .samples = vk::SampleCountFlagBits::e1,
-        .loadOp = vk::AttachmentLoadOp::eClear,
-        .storeOp = vk::AttachmentStoreOp::eStore,
-        .stencilLoadOp = vk::AttachmentLoadOp::eDontCare,
-        .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
-        .initialLayout = vk::ImageLayout::eUndefined,
-        .finalLayout = vk::ImageLayout::ePresentSrcKHR,
-    };
-
-    static constexpr vk::AttachmentReference colorAttachmentRef
-    {
-        .attachment = 0,
-        .layout = vk::ImageLayout::eColorAttachmentOptimal,
-    };
-
-    const vk::AttachmentDescription depthAttachment
-    {
-        .format = RenderUtils::findDepthFormat(physicalDevice),
-        .samples = vk::SampleCountFlagBits::e1,
-        .loadOp = vk::AttachmentLoadOp::eClear,
-        .storeOp = vk::AttachmentStoreOp::eDontCare,
-        .stencilLoadOp = vk::AttachmentLoadOp::eDontCare,
-        .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
-        .initialLayout = vk::ImageLayout::eUndefined,
-        .finalLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal
-    };
-
-    static constexpr vk::AttachmentReference depthAttachmentRef
-    {
-        .attachment = 1,
-        .layout = vk::ImageLayout::eDepthStencilAttachmentOptimal
-    };
-
-    static constexpr vk::SubpassDescription subpass
-    {
-        .pipelineBindPoint = vk::PipelineBindPoint::eGraphics,
-        .colorAttachmentCount = 1,
-        .pColorAttachments = &colorAttachmentRef,
-        .pDepthStencilAttachment = &depthAttachmentRef
-    };
-
-    static constexpr vk::SubpassDependency dependency
-    {
-        .srcSubpass = vk::SubpassExternal,
-        .dstSubpass = 0,
-        .srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput |
-        vk::PipelineStageFlagBits::eEarlyFragmentTests,
-        .dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput |
-        vk::PipelineStageFlagBits::eEarlyFragmentTests,
-        .srcAccessMask = {},
-        .dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentWrite,
-    };
-
-    const std::array attachments = {colorAttachment, depthAttachment};
-
-    const vk::RenderPassCreateInfo renderPassInfo
-    {
-        .attachmentCount = static_cast<UInt32>(attachments.size()),
-        .pAttachments = attachments.data(),
-        .subpassCount = 1,
-        .pSubpasses = &subpass,
-        .dependencyCount = 1,
-        .pDependencies = &dependency
-    };
-
-    const vk::RenderPass renderPass = device.createRenderPass(renderPassInfo, nullptr);
-    if (!renderPass)
-    {
-        fatalError("failed to create render pass!");
-    }
-    return renderPass;
-}
-
-[[nodiscard]]
 vk::DescriptorSetLayout createDescriptorSetLayout(vk::Device device)
 {
     static constexpr vk::DescriptorSetLayoutBinding layoutBinding
@@ -221,7 +142,7 @@ void RenderManager::init(GLFWwindow* window)
         .device = m_device,
         .surface = m_surface,
         .queue = m_graphicsQueue,
-        .imageCount = m_swapChainImageViews.size(),
+        .imageCount = m_swapchainImageViews.size(),
         .pipelineCache = m_pipelineCache,
         .colorFormat = {vk::Format::eB8G8R8A8Srgb},
         .depthFormat = RenderUtils::findDepthFormat(m_physicalDevice),
@@ -449,6 +370,8 @@ void RenderManager::recreateSwapchain()
     createSwapchain();
     createImageViews();
     createDepthResources();
+
+    m_imguiHelper.recreateSwapchain(m_swapchainImages.size());
 }
 
 void RenderManager::createSwapchain()
@@ -505,24 +428,25 @@ void RenderManager::createSwapchain()
         fatalError("failed to create swap chain!");
     }
 
-    m_swapChainImages = m_device.getSwapchainImagesKHR(m_swapChain);
+    m_swapchainImages = m_device.getSwapchainImagesKHR(m_swapChain);
+    m_swapchainLayouts.assign(m_swapchainImages.size(), vk::ImageLayout::eUndefined);
     m_swapChainImageFormat = surfaceFormat.format;
     m_swapchainExtent = extent;
 }
 
 void RenderManager::createImageViews()
 {
-    m_swapChainImageViews.resize(m_swapChainImages.size());
+    m_swapchainImageViews.resize(m_swapchainImages.size());
 
-    for (std::size_t i = 0; i < m_swapChainImages.size(); ++i)
+    for (std::size_t i = 0; i < m_swapchainImages.size(); ++i)
     {
-        m_swapChainImageViews[i] = RenderUtils::createImageView(m_device, m_swapChainImages[i], m_swapChainImageFormat);
+        m_swapchainImageViews[i] = RenderUtils::createImageView(m_device, m_swapchainImages[i], m_swapChainImageFormat);
     }
 }
 
-void RenderManager::cleanupSwapchain() const
+void RenderManager::cleanupSwapchain()
 {
-    for (vk::ImageView imageView : m_swapChainImageViews)
+    for (vk::ImageView imageView : m_swapchainImageViews)
         m_device.destroyImageView(imageView);
 
     m_device.destroySwapchainKHR(m_swapChain);
@@ -530,6 +454,9 @@ void RenderManager::cleanupSwapchain() const
     m_device.destroyImageView(m_depthImageView);
     m_device.destroyImage(m_depthImage);
     m_device.freeMemory(m_depthImageMemory);
+
+    m_swapchainImages.clear();
+    m_swapchainLayouts.clear();
 }
 
 void RenderManager::createCommandPool()
@@ -681,33 +608,13 @@ void RenderManager::drawFrame()
         fatalError("failed to reset fences!");
     }
 
-    m_imguiHelper.drawFrame();
-
     commandBuffer.reset();
 
     commandBuffer.begin(vk::CommandBufferBeginInfo{});
 
-    const vk::Viewport viewport
-    {
-        .x = 0,
-        .y = 0,
-        .width = static_cast<float>(m_swapchainExtent.width),
-        .height = static_cast<float>(m_swapchainExtent.height),
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f,
-    };
-    commandBuffer.setViewport(0, 1, &viewport);
-
-    const vk::Rect2D scissor
-    {
-        .offset = {0, 0},
-        .extent = m_swapchainExtent,
-    };
-    commandBuffer.setScissor(0, 1, &scissor);
-
     const vk::RenderingAttachmentInfo colorAttachmentInfo
     {
-        .imageView = m_swapChainImageViews[imageResult.value],
+        .imageView = m_swapchainImageViews[imageResult.value],
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .loadOp = vk::AttachmentLoadOp::eClear,
         .storeOp = vk::AttachmentStoreOp::eStore,
@@ -732,19 +639,41 @@ void RenderManager::drawFrame()
         .pDepthAttachment = &depthAttachmentInfo,
     };
 
+    const UInt32 imageIndex = imageResult.value;
+
     RenderUtils::transitionImageLayout
     (
         commandBuffer,
-        m_swapChainImages[imageResult.value],
-        vk::ImageLayout::eUndefined,
+        m_swapchainImages[imageIndex],
+        m_swapchainLayouts[imageIndex],
         vk::ImageLayout::eColorAttachmentOptimal,
         {},
         vk::AccessFlagBits::eColorAttachmentWrite,
-        vk::PipelineStageFlagBits::eTopOfPipe,
+        vk::PipelineStageFlagBits::eColorAttachmentOutput,
         vk::PipelineStageFlagBits::eColorAttachmentOutput
     );
+    // std::cout << "Image " << imageIndex << " old layout = " << vk::to_string(m_swapchainLayouts[imageIndex]) << "\n";
+    m_swapchainLayouts[imageIndex] = vk::ImageLayout::eColorAttachmentOptimal;
 
     commandBuffer.beginRendering(renderingInfo);
+
+    const vk::Viewport viewport
+    {
+        .x = 0,
+        .y = 0,
+        .width = static_cast<float>(m_swapchainExtent.width),
+        .height = static_cast<float>(m_swapchainExtent.height),
+        .minDepth = 0.0f,
+        .maxDepth = 1.0f,
+    };
+    commandBuffer.setViewport(0, 1, &viewport);
+
+    const vk::Rect2D scissor
+    {
+        .offset = {0, 0},
+        .extent = m_swapchainExtent,
+    };
+    commandBuffer.setScissor(0, 1, &scissor);
 
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_graphicsPipeline);
     m_renderObjectManager.renderFrame(commandBuffer, m_pipelineLayout, m_currentFrame);
@@ -752,6 +681,29 @@ void RenderManager::drawFrame()
     commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_linePipeline);
     m_renderObjectManager.renderLineFrame(commandBuffer, m_pipelineLayout, m_currentFrame);
 
+    commandBuffer.endRendering();
+
+    const vk::RenderingAttachmentInfo imGuiColorAttachmentInfo
+    {
+        .imageView = m_swapchainImageViews[imageResult.value],
+        .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+        .loadOp = vk::AttachmentLoadOp::eLoad,
+        .storeOp = vk::AttachmentStoreOp::eStore,
+        .clearValue = vk::ClearColorValue{0.0f, 0.0f, 0.0f, 1.0f}
+    };
+
+    const vk::RenderingInfo imGuiRenderingInfo
+    {
+        .renderArea = vk::Rect2D{{0, 0}, m_swapchainExtent},
+        .layerCount = 1,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &imGuiColorAttachmentInfo,
+        .pDepthAttachment = nullptr,
+    };
+
+    commandBuffer.beginRendering(imGuiRenderingInfo);
+
+    m_imguiHelper.drawFrame();
     m_imguiHelper.renderFrame(commandBuffer);
 
     commandBuffer.endRendering();
@@ -759,15 +711,17 @@ void RenderManager::drawFrame()
     RenderUtils::transitionImageLayout
     (
         commandBuffer,
-        m_swapChainImages[imageResult.value],
-        vk::ImageLayout::eColorAttachmentOptimal,
+        m_swapchainImages[imageIndex],
+        m_swapchainLayouts[imageIndex],
         vk::ImageLayout::ePresentSrcKHR,
         vk::AccessFlagBits::eColorAttachmentWrite,
         {},
         vk::PipelineStageFlagBits::eColorAttachmentOutput,
         vk::PipelineStageFlagBits::eBottomOfPipe
     );
-    
+    // std::cout << "Image " << imageIndex << " old layout = " << vk::to_string(m_swapchainLayouts[imageIndex]) << "\n";
+    m_swapchainLayouts[imageIndex] = vk::ImageLayout::ePresentSrcKHR;
+
     commandBuffer.end();
 
     const vk::Semaphore waitSemaphores[] = {imageAvailableSemaphore};
@@ -798,7 +752,7 @@ void RenderManager::drawFrame()
         .pWaitSemaphores = signalSemaphores,
         .swapchainCount = 1,
         .pSwapchains = swapChains,
-        .pImageIndices = &imageResult.value,
+        .pImageIndices = &imageIndex,
         .pResults = nullptr, // Optional
     };
 

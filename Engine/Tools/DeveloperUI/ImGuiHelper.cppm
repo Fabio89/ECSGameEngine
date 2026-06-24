@@ -1,5 +1,5 @@
 export module ImGuiHelper;
-export import DebugUI.IDebugWidget;
+export import DevUI.IDebugWidget;
 import Core;
 import Wrapper.Glfw;
 import Wrapper.Vulkan;
@@ -28,9 +28,10 @@ public:
     void addWidget() { m_debugWidgets.emplace_back(std::make_unique<T>()); }
 
     void addWidget(std::unique_ptr<IWidget> widget) { m_debugWidgets.emplace_back(std::move(widget)); }
-    
+
     void drawFrame();
     void renderFrame(vk::CommandBuffer commandBuffer);
+    void recreateSwapchain(std::size_t newSize);
     void shutdown();
 
 private:

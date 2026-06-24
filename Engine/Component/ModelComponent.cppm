@@ -14,7 +14,7 @@ export struct ModelComponent
 template<>
 struct TypeTraits<ModelComponent>
 {
-    static constexpr auto name = "ModelComponent";
+    static constexpr std::string_view name = "ModelComponent";
 };
 
 template<>

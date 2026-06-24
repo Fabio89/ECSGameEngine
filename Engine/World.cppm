@@ -1,7 +1,7 @@
 export module World;
 import Archetype;
 import Core;
-import DebugUI.IDebugWidget;
+import DevUI.IDebugWidget;
 import Guid;
 import Render.RenderManager;
 import Serialization;
@@ -62,6 +62,8 @@ public:
 
     template <ValidComponentData T>
     T& editComponent(Entity entity) { return const_cast<T&>(readComponent<T>(entity)); }
+
+    ComponentBase& editComponent(Entity entity, ComponentTypeId componentType) { return const_cast<ComponentBase&>(readComponent(entity, componentType)); }
 
     template <typename T>
     void addDebugWidget() { addDebugWidget(std::make_unique<T>(*this)); }

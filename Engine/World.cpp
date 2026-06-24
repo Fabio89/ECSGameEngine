@@ -107,7 +107,9 @@ UInt64 getComponentIndex(ComponentTypeId componentId)
     static std::unordered_map<ComponentTypeId, UInt64> componentIndexMap;
     static UInt64 lastComponentIndex = 0u;
     
-    auto [it, added] = componentIndexMap.try_emplace(componentId, lastComponentIndex++);
+    auto [it, added] = componentIndexMap.try_emplace(componentId, lastComponentIndex);
+    if (added)
+        ++lastComponentIndex;
     check(!added || it->second < maxComponentsPerEntity, std::format("Can't have more than {} components!", maxComponentsPerEntity));
     return it->second;
 }

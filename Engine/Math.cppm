@@ -33,6 +33,24 @@ export using IVec2 = glm::ivec2;
 export using Quat = glm::quat;
 export using Mat4 = glm::mat4;
 
+template<>
+struct TypeTraits<Vec3>
+{
+    static constexpr auto name = "Vec3";
+};
+
+template<>
+struct TypeTraits<Quat>
+{
+    static constexpr auto name = "Quat";
+};
+
+template<>
+struct TypeTraits<float>
+{
+    static constexpr auto name = "float";
+};
+
 export struct Plane
 {
     Vec3 point;

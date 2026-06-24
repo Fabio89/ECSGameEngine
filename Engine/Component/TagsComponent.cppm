@@ -1,21 +1,30 @@
 export module Component.Tags;
 import Core;
+import Properties;
 import Serialization;
 
 export namespace Tag
 {
-    constexpr std::string_view notEditable = "NotEditable";
+    constexpr std::string notEditable = "NotEditable";
 }
 
 export struct TagsComponent
 {
-    std::vector<std::string_view> tags{};
+    std::vector<std::string> tags{};
 };
 
 template<>
 struct TypeTraits<TagsComponent>
 {
-    static constexpr auto name = "TagsComponent";
+    static constexpr std::string_view name = "TagsComponent";
+};
+
+template<>
+struct TypeProperties<TagsComponent>
+{
+    static constexpr std::tuple list{
+        makeProperty("tags", &TagsComponent::tags)
+    };
 };
 
 template<>

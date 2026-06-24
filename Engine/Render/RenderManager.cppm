@@ -72,8 +72,9 @@ private:
     vk::PipelineCache m_pipelineCache{};
     vk::DescriptorPool m_descriptorPool{};
 
-    std::vector<vk::Image> m_swapChainImages;
-    std::vector<vk::ImageView> m_swapChainImageViews;
+    std::vector<vk::Image> m_swapchainImages;
+    std::vector<vk::ImageLayout> m_swapchainLayouts;
+    std::vector<vk::ImageView> m_swapchainImageViews;
     vk::Format m_swapChainImageFormat{vk::Format::eUndefined};
     vk::Extent2D m_swapchainExtent{0, 0};
 
@@ -104,7 +105,7 @@ private:
     void createImageViews();
     void createDepthResources();
 
-    void cleanupSwapchain() const;
+    void cleanupSwapchain();
 
     void createCommandPool();
     void createCommandBuffers();

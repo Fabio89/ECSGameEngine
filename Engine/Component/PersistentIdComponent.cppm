@@ -11,7 +11,7 @@ export struct PersistentIdComponent
 template<>
 struct TypeTraits<PersistentIdComponent>
 {
-    static constexpr auto name = "PersistentIdComponent";
+    static constexpr std::string_view name = "PersistentIdComponent";
 };
 
 template<>

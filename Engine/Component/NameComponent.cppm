@@ -1,5 +1,6 @@
 export module Component.Name;
 import Core;
+import Properties;
 import Serialization;
 import World;
 
@@ -11,7 +12,15 @@ export struct NameComponent
 template<>
 struct TypeTraits<NameComponent>
 {
-    static constexpr auto name = "NameComponent";
+    static constexpr std::string_view name = "NameComponent";
+};
+
+template<>
+struct TypeProperties<NameComponent>
+{
+    static constexpr std::tuple list{
+        makeProperty("name", &NameComponent::name)
+    };
 };
 
 export namespace NameUtils

@@ -1,5 +1,5 @@
 export module DebugUI.DebugWidget;
-import DebugUI.IDebugWidget;
+import DevUI.IDebugWidget;
 import World;
 
 export class Widget : public IWidget

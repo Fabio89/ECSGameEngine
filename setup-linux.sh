@@ -15,6 +15,7 @@ sudo dnf install -y \
     vulkan-tools \
     glslang \
     glslc \
+    libasan \
     libXinerama-devel \
     libXcursor-devel \
     libXrandr-devel \

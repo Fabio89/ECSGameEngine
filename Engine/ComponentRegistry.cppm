@@ -1,7 +1,8 @@
 export module ComponentRegistry;
 import Core;
-import World;
+import Properties;
 import Serialization;
+import World;
 
 export class ComponentTypeBase
 {
@@ -25,6 +26,12 @@ public:
     virtual JsonObject serialize(const ComponentBase& component, Json::MemoryPoolAllocator<>& allocator) const = 0;
 
     virtual void deserialize(World& world, Entity entity, const JsonObject& json) const = 0;
+
+    [[nodiscard]]
+    virtual bool hasProperties() const = 0;
+
+    [[nodiscard]]
+    virtual std::generator<const PropertyDescriptorBase&> getProperties() const = 0;
 };
 
 export template <ValidComponentData T>
@@ -52,6 +59,12 @@ public:
     }
 
     void deserialize(World& world, Entity entity, const JsonObject& json) const override { world.editComponent<T>(entity) = ::deserialize<T>(json); }
+
+    [[nodiscard]]
+    bool hasProperties() const override { return std::tuple_size_v<decltype(TypeProperties<T>::list)> != 0; }
+
+    [[nodiscard]]
+    std::generator<const PropertyDescriptorBase&> getProperties() const override { return generateProperties(TypeProperties<T>::list); }
 };
 
 namespace ComponentRegistry
@@ -60,7 +73,7 @@ namespace ComponentRegistry
 
     std::vector<std::unique_ptr<const ComponentTypeBase>> componentTypes;
     std::unordered_map<ComponentTypeId, const ComponentTypeBase*> byId;
-    std::unordered_map<std::string, const ComponentTypeBase*> byName;
+    std::unordered_map<std::string_view, const ComponentTypeBase*> byName;
 
     export template <ValidComponentData T>
     void init()

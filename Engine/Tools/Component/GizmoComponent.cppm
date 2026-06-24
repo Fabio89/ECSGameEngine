@@ -11,5 +11,5 @@ export struct GizmoComponent
 template <>
 struct TypeTraits<GizmoComponent>
 {
-    static constexpr auto name = "GizmoComponent";
+    static constexpr std::string_view name = "GizmoComponent";
 };

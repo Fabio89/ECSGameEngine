@@ -1,4 +1,5 @@
 module ImGuiHelper;
+import DevUI.PropertyDrawers;
 import Render.QueueFamily;
 import Wrapper.ImGui;
 
@@ -13,12 +14,23 @@ void ImGuiHelper::init(GLFWwindow* window, const ImGuiInitInfo& initInfo)
     if constexpr (!enabled)
         return;
 
+    DevUI::initPropertyDrawers();
+
     m_device = initInfo.device;
 
     // Setup Dear ImGui context
     ImGui::CheckVersion();
     ImGui::CreateContext();
     ImGui::ImGuiIO& io = ImGui::GetIO();
+
+    std::cout << "BackendRendererName="
+          << (io.BackendRendererName ? io.BackendRendererName : "null")
+          << "\n";
+
+    std::cout << "BackendFlags="
+              << io.BackendFlags
+              << "\n";
+
     (void)io;
     io.ConfigFlags |= ImGui::ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     io.ConfigFlags |= ImGui::ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
@@ -77,7 +89,7 @@ void ImGuiHelper::init(GLFWwindow* window, const ImGuiInitInfo& initInfo)
         .QueueFamily = *QueueFamilyUtils::findQueueFamilies(initInfo.physicalDevice, initInfo.surface).get(QueueFamilyType::Graphics),
         .Queue = initInfo.queue,
         .DescriptorPool = m_descriptorPool,
-        .MinImageCount = 2,
+        .MinImageCount = static_cast<UInt32>(initInfo.imageCount),
         .ImageCount = static_cast<UInt32>(initInfo.imageCount),
         .PipelineCache = initInfo.pipelineCache,
         .PipelineInfoMain = pipelineInfo,
@@ -111,6 +123,11 @@ void ImGuiHelper::renderFrame(vk::CommandBuffer commandBuffer)
 
     ImGui::Render();
     ImGui::ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+}
+
+void ImGuiHelper::recreateSwapchain(std::size_t newSize)
+{
+    ImGui::ImGui_ImplVulkan_SetMinImageCount(static_cast<UInt32>(newSize));
 }
 
 void ImGuiHelper::shutdown()

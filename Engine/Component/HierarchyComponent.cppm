@@ -2,8 +2,9 @@ export module Component.Hierarchy;
 import Component.PersistentId;
 import Core;
 import Guid;
-import World;
+import Properties;
 import Serialization;
+import World;
 
 export struct HierarchyComponent
 {
@@ -16,7 +17,7 @@ export struct HierarchyComponent
 template<>
 struct TypeTraits<HierarchyComponent>
 {
-    static constexpr auto name = "HierarchyComponent";
+    static constexpr std::string_view name = "HierarchyComponent";
 };
 
 export namespace HierarchyUtils

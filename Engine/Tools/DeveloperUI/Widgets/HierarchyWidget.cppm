@@ -1,13 +1,15 @@
 export module DebugWidget.EntityExplorer;
 import Core;
+import Component.Hierarchy;
 import Component.Name;
 import Component.Model;
 import Component.Transform;
 import ComponentRegistry;
 import DebugUI.DebugWidget;
+import Math;
+import Properties;
 import World;
 import Wrapper.ImGui;
-import Component.Hierarchy;
 
 export namespace DebugWidgets
 {
@@ -84,35 +86,14 @@ export namespace DebugWidgets
 
             if (m_selectedEntity != invalidId())
             {
-                for (ComponentTypeId typeId : world.getComponentTypesInEntity(m_selectedEntity))
+                for (const ComponentTypeId typeId : world.getComponentTypesInEntity(m_selectedEntity))
                 {
                     if (typeId != Component<NameComponent>::typeId())
                     {
-                        if (const ComponentTypeBase* type = ComponentRegistry::get(typeId))
-                        {
-                            if (ImGui::Selectable(type->getName().data(), isSelected(m_selectedEntity, typeId)))
-                            {
-                                m_currentlySelected.emplace(m_selectedEntity, typeId);
-                            }
-                        }
+                        addComponent(world, m_selectedEntity, typeId);
                     }
                 }
 
-
-                // if (const ComponentTypeBase* componentType = ComponentRegistry::get(m_currentlySelected->second))
-                // {
-                //     if (ImGui::TreeNode(componentType->getName().data()))
-                //     {
-                //         // ImGui::BulletText(std::format("Position: X: {}; Y: {}; Z: {}", transform.position.x, transform.position.y, transform.position.z).c_str());
-                //         // ImGui::BulletText(std::format("Rotation: X: {}; Y: {}; Z: {}", transform.rotation.x, transform.rotation.y, transform.rotation.z).c_str());
-                //         // ImGui::BulletText(std::format("Scale: {}", transform.scale).c_str());
-                //
-                //         ImGui::TreePop(); // Close Child Node 1
-                //     }
-                // }
-                // const ComponentTypeId componentType = m_currentlySelected->second;
-                // const ComponentBase& selectedComponent = world.readComponent(m_currentlySelected->first, componentType);
-                //
             }
 
             ImGui::EndChild();
@@ -156,20 +137,6 @@ export namespace DebugWidgets
 
             if (opened)
             {
-                // for (ComponentTypeId typeId : world.getComponentTypesInEntity(entity))
-                // {
-                //     if (typeId != Component<NameComponent>::typeId())
-                //     {
-                //         if (const ComponentTypeBase* type = ComponentRegistry::get(typeId))
-                //         {
-                //             if (ImGui::Selectable(type->getName().data(), isSelected(entity, typeId)))
-                //             {
-                //                 m_currentlySelected.emplace(entity, typeId);
-                //             }
-                //         }
-                //     }
-                // }
-
                 for(Entity child : HierarchyUtils::children(world, entity))
                 {
                     addEntity(world, child);
@@ -179,6 +146,54 @@ export namespace DebugWidgets
             }
 
             ImGui::PopID();
+        }
+
+        void addComponent(World& world, Entity entity, TypeId componentTypeId)
+        {
+            ImGui::Separator();
+
+            ImGui::ImGuiTreeNodeFlags flags =
+                ImGui::ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen |
+                ImGui::ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnArrow |
+                ImGui::ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_SpanFullWidth;
+
+            if (m_currentlySelected.has_value() && entity == m_currentlySelected->first && componentTypeId == m_currentlySelected->second)
+            {
+                flags |= ImGui::ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
+            }
+
+            const ComponentTypeBase* componentType = ComponentRegistry::get(componentTypeId);
+            if (!componentType->hasProperties())
+            {
+                flags |= ImGui::ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Leaf;
+            }
+
+            if (const ComponentTypeBase* type = ComponentRegistry::get(componentTypeId))
+            {
+                ImGui::PushID(entity);
+                ImGui::PushID(componentTypeId);
+
+                bool opened = ImGui::TreeNodeEx(type->getName().data(), flags);
+
+                if (ImGui::IsItemClicked() | ImGui::IsItemFocused())
+                {
+                    m_currentlySelected = {entity, componentTypeId};
+                }
+
+                if (opened)
+                {
+                    for (const PropertyDescriptorBase& property : componentType->getProperties())
+                    {
+                        ComponentBase& component = world.editComponent(entity, componentTypeId);
+                        property.draw(&component);
+                    }
+
+                    ImGui::TreePop();
+                }
+
+                ImGui::PopID();
+                ImGui::PopID();
+            }
         }
 
         bool m_open{true};

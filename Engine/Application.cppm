@@ -72,6 +72,9 @@ export extern "C" ENGINE_API
 void openProject(const char* path);
 
 export extern "C" ENGINE_API
+void startEmptyProject();
+
+export extern "C" ENGINE_API
 void saveCurrentProject();
 
 export extern "C" ENGINE_API
