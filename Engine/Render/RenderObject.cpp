@@ -34,47 +34,43 @@ void RenderObjectManager::updateDescriptorSets(const RenderObject& object) const
 
     for (std::size_t i = 0; i < MaxFramesInFlight; i++)
     {
-        std::vector<vk::DescriptorBufferInfo> bufferInfos;
-        std::vector<vk::DescriptorImageInfo> imageInfos;
-        std::vector<vk::WriteDescriptorSet> descriptorWrites;
+        std::array<vk::DescriptorBufferInfo, 1> bufferInfos;
+        std::array<vk::DescriptorImageInfo, 1> imageInfos;
+        std::array<vk::WriteDescriptorSet, 2> descriptorWrites;
 
-        bufferInfos.reserve(1);
-        imageInfos.reserve(1);
-        descriptorWrites.reserve(descriptorWriteCount);
-
-        bufferInfos.push_back
-        ({
+        bufferInfos[0] = vk::DescriptorBufferInfo
+        {
             .buffer = object.uniformBuffers[i],
             .offset = 0,
             .range = sizeof(UniformBufferObject),
-        });
+        };
 
-        descriptorWrites.push_back
-        ({
+        descriptorWrites[0] = vk::WriteDescriptorSet
+        {
             .dstSet = object.descriptorSets[i],
             .dstBinding = 0,
             .descriptorCount = 1,
             .descriptorType = vk::DescriptorType::eUniformBuffer,
-            .pBufferInfo = &bufferInfos.back(),
-        });
+            .pBufferInfo = &bufferInfos[0],
+        };
 
         if (hasTexture)
         {
-            imageInfos.push_back
-            ({
+            imageInfos[0] = vk::DescriptorImageInfo
+            {
                 .sampler = texture->sampler,
                 .imageView = texture->view,
                 .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
-            });
+            };
 
-            descriptorWrites.push_back
-            ({
+            descriptorWrites[1] = vk::WriteDescriptorSet
+            {
                 .dstSet = object.descriptorSets[i],
                 .dstBinding = 1,
                 .descriptorCount = 1,
                 .descriptorType = vk::DescriptorType::eCombinedImageSampler,
-                .pImageInfo = &imageInfos.back(),
-            });
+                .pImageInfo = &imageInfos[0],
+            };
         }
 
         m_device.updateDescriptorSets
