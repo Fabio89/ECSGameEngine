@@ -8,7 +8,8 @@
       "generator": "Ninja",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "$env{HOME}/.local/vcpkg/scripts/buildsystems/vcpkg.cmake",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "VCPKG_INSTALLED_DIR": "${sourceDir}/Build/vcpkg_installed"
       },
       "warnings": {
         "dev": false
@@ -21,6 +22,15 @@
       "binaryDir": "${sourceDir}/Build/linx-debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+
+    {
+      "name": "linux-debug-asan",
+      "inherits": "linux-debug",
+      "binaryDir": "${sourceDir}/Build/linx-debug-asan",
+      "cacheVariables": {
+        "ENABLE_ASAN": "ON"
       }
     },
 

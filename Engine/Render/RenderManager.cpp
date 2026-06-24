@@ -1,5 +1,3 @@
-module;
-#include <ranges>
 module Render.RenderManager;
 import Guid;
 import Render.Pipeline.Line;
