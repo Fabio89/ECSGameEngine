@@ -1,4 +1,6 @@
 {
+  "name": "mashi-engine",
+  "version-string": "1",
   "dependencies": [
     "boost-uuid",
     "cryptopp",
@@ -10,6 +12,12 @@
         "glfw-binding",
         "vulkan-binding"
       ]
-    }
+    },
+    {
+      "name": "rapidjson",
+      "version>=": "2025-02-26"
+    },
+    "stb",
+    "tinyobjloader"
   ]
 }
