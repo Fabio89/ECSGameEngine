@@ -86,7 +86,7 @@ export namespace Widgets
 
             if (world.isValid(m_selectedEntity))
             {
-                for (const ComponentTypeId typeId : world.getComponentTypesInEntity(m_selectedEntity))
+                for (const TypeId typeId : world.getComponentTypesInEntity(m_selectedEntity))
                 {
                     if (typeId != Component<NameComponent>::typeId())
                     {
@@ -101,7 +101,7 @@ export namespace Widgets
             ImGui::End();
         }
 
-        bool isSelected(Entity entity, ComponentTypeId componentType) const
+        bool isSelected(Entity entity, TypeId componentType) const
         {
             return m_currentlySelected.has_value() && m_currentlySelected->first == entity && m_currentlySelected->second == componentType;
         }
@@ -171,7 +171,7 @@ export namespace Widgets
             if (const ComponentTypeBase* type = ComponentRegistry::get(componentTypeId))
             {
                 ImGui::PushID(entity.value);
-                ImGui::PushID(componentTypeId);
+                ImGui::PushID(componentTypeId.value);
 
                 bool opened = ImGui::TreeNodeEx(type->getName().data(), flags);
 
@@ -198,7 +198,7 @@ export namespace Widgets
 
         bool m_open{true};
         Entity m_selectedEntity{};
-        std::optional<std::pair<Entity, ComponentTypeId>> m_currentlySelected;
+        std::optional<std::pair<Entity, TypeId>> m_currentlySelected;
         bool m_transformSelected{false};
     };
 }

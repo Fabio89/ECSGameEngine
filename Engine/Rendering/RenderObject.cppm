@@ -50,8 +50,8 @@ struct RenderObject
 {
     Entity entity{};
     bool visible{true};
-    MeshId mesh{invalidId()};
-    TextureId texture{invalidId()};
+    MeshId mesh{};
+    TextureId texture{};
     Mat4 model{1};
     std::vector<vk::Buffer> uniformBuffers;
     std::vector<vk::DeviceMemory> uniformBuffersMemory;

@@ -8,8 +8,8 @@ import Serialization.Json;
 export struct RenderComponent
 {
     bool visible{true};
-    MeshId mesh{invalidId()};
-    TextureId texture{invalidId()};
+    MeshId mesh{};
+    TextureId texture{};
     Mat4 model{1};
 };
 

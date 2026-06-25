@@ -19,9 +19,6 @@ export using UInt16 = std::uint16_t;
 export using UInt32 = std::uint32_t;
 export using UInt64 = std::uint64_t;
 
-export using TypeId = std::size_t;
-export constexpr TypeId invalidId() { return std::numeric_limits<TypeId>::max(); }
-
 export template<typename Tag, typename T = UInt32>
 struct Id
 {
@@ -44,7 +41,7 @@ struct Id
     auto operator<=>(const Id&) const = default;
 };
 
-export template<typename Tag, typename T>
+template<typename Tag, typename T>
 struct std::hash<Id<Tag, T>>
 {
     constexpr std::size_t operator()(const Id<Tag, T>& id) const noexcept
@@ -53,7 +50,7 @@ struct std::hash<Id<Tag, T>>
     }
 };
 
-export template<typename Tag, typename T>
+template<typename Tag, typename T>
 struct std::formatter<Id<Tag, T>>
 {
     constexpr auto parse(std::format_parse_context& ctx)
@@ -67,15 +64,18 @@ struct std::formatter<Id<Tag, T>>
     }
 };
 
-// General hash function
-consteval std::size_t hash_fnv1a(std::string_view str)
+using TypeHash = std::uint64_t;
+
+consteval TypeHash hash_fnv1a(std::string_view str)
 {
-    std::size_t hash = 2166136261u;
+    TypeHash hash = 14695981039346656037ull;
+
     for (char c : str)
     {
-        hash ^= static_cast<std::size_t>(c);
-        hash *= 16777619u;
+        hash ^= static_cast<std::uint8_t>(c);
+        hash *= 1099511628211ull;
     }
+
     return hash;
 }
 
@@ -87,13 +87,15 @@ consteval std::size_t getTypeHash()
 
 export using Entity = Id<struct EntityTag>;
 
+export using TypeId = Id<struct TypeIdTag, std::size_t>;
+
 //------------------------------------------------------------------------------------------------------------------------
 // Generic type reflection
 //------------------------------------------------------------------------------------------------------------------------
 
 export struct TypeInfo
 {
-    TypeId id{invalidId()};
+    TypeId id{};
     std::string_view name{};
 };
 
@@ -112,7 +114,7 @@ constexpr std::string_view getTypeName()
 export template<typename T>
 consteval TypeId getTypeId()
 {
-    return getTypeHash<T>();
+    return {getTypeHash<T>()};
 }
 
 export template<typename T>
@@ -129,8 +131,6 @@ constexpr TypeInfo getTypeInfo()
 // Component
 //------------------------------------------------------------------------------------------------------------------------
 
-export using ComponentTypeId = TypeId;
-
 export template <typename T>
 concept ValidComponentData = true;
 
@@ -141,7 +141,7 @@ export struct ComponentBase
 export template <ValidComponentData T>
 struct Component : ComponentBase
 {
-    static consteval ComponentTypeId typeId();
+    static consteval TypeId typeId();
     T data;
 };
 
@@ -152,10 +152,10 @@ export template <ValidComponentData T>
 constexpr std::string_view getComponentName() { return getTypeName<T>(); }
 
 export template <ValidComponentData T>
-constexpr ComponentTypeId getComponentType() { return Component<T>::typeId(); }
+constexpr TypeId getComponentType() { return Component<T>::typeId(); }
 
 template <ValidComponentData T>
-consteval ComponentTypeId Component<T>::typeId()
+consteval TypeId Component<T>::typeId()
 {
-    return getTypeHash<T>();
+    return {getTypeHash<T>()};
 }

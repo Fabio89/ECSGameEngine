@@ -3,13 +3,11 @@ import Core;
 import Guid;
 import Serialization.Json;
 
-export using AssetTypeId = TypeId;
-
 namespace UniqueIdGenerator
 {
-    TypeId generateUniqueId()
+    TypeId::ValueType generateUniqueId()
     {
-        static TypeId id = 0;
+        static TypeId::ValueType id{};
         log(std::format("Generated unique id: {}", id));
         return id++;
     }
@@ -17,7 +15,7 @@ namespace UniqueIdGenerator
     template <typename T>
     struct TypeIdGenerator
     {
-        inline static const TypeId value = generateUniqueId();
+        inline static const TypeId::ValueType value = generateUniqueId();
     };
 }
 
@@ -42,7 +40,7 @@ public:
     virtual ~AssetBase() = default;
 
     [[nodiscard]]
-    virtual AssetTypeId getType() const = 0;
+    virtual TypeId getType() const = 0;
 
 private:
     Guid m_id{};
@@ -52,7 +50,7 @@ export template <typename T>
 class Asset final : public AssetBase
 {
 public:
-    inline static const AssetTypeId typeId = UniqueIdGenerator::TypeIdGenerator<T>::value;
+    inline static const TypeId typeId{UniqueIdGenerator::TypeIdGenerator<T>::value};
 
     explicit Asset(const JsonObject& serializedData)
         : AssetBase{serializedData},
@@ -63,7 +61,7 @@ public:
     const T& getData() const { return m_data; }
 
     [[nodiscard]]
-    AssetTypeId getType() const override { return typeId; }
+    TypeId getType() const override { return typeId; }
 
 private:
     T m_data;

@@ -14,10 +14,10 @@ public:
     System& operator=(System&&) noexcept = delete;
     
     void update(World& world, Player& player, float deltaTime);
-    void notifyComponentAdded(World&, Entity, ComponentTypeId);
+    void notifyComponentAdded(World&, Entity, TypeId);
 
 private:
-    virtual void onComponentAdded(World& world, Entity entity, ComponentTypeId componentTypeId);
+    virtual void onComponentAdded(World& world, Entity entity, TypeId componentTypeId);
     virtual void onUpdate(World& world, Player& player, float deltaTime);
 };
 
@@ -26,12 +26,12 @@ void System::update(World& world, Player& player, float deltaTime)
     onUpdate(world, player, deltaTime);
 }
 
-void System::notifyComponentAdded(World& world, Entity entity, ComponentTypeId componentTypeId)
+void System::notifyComponentAdded(World& world, Entity entity, TypeId componentTypeId)
 {
     onComponentAdded(world, entity, componentTypeId);
 }
 
-void System::onComponentAdded([[maybe_unused]] World& world, [[maybe_unused]] Entity entity, [[maybe_unused]] ComponentTypeId componentTypeId)
+void System::onComponentAdded([[maybe_unused]] World& world, [[maybe_unused]] Entity entity, [[maybe_unused]] TypeId componentTypeId)
 {
 }
 

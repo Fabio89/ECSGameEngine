@@ -90,7 +90,7 @@ template <ValidComponentData T>
 }
 
 template <ValidComponentData ... Components>
-constexpr bool containsType(ComponentTypeId id)
+constexpr bool containsType(TypeId id)
 {
     return (... || (Component<Components>::typeId() == id));
 }

@@ -4,7 +4,7 @@ import System;
 
 export class PersistentIdSystem final : public System
 {
-    void onComponentAdded(World& world, Entity entity, ComponentTypeId componentType) override
+    void onComponentAdded(World& world, Entity entity, TypeId componentType) override
     {
         if (componentType == getComponentType<PersistentIdComponent>())
         {

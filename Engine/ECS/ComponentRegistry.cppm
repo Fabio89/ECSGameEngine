@@ -15,7 +15,7 @@ public:
     ComponentTypeBase& operator=(ComponentTypeBase&&) = delete;
 
     [[nodiscard]]
-    virtual ComponentTypeId getTypeId() const = 0;
+    virtual TypeId getTypeId() const = 0;
 
     [[nodiscard]]
     virtual std::string_view getName() const = 0;
@@ -39,7 +39,7 @@ class ComponentType final : public ComponentTypeBase
 {
 public:
     [[nodiscard]]
-    ComponentTypeId getTypeId() const override
+    TypeId getTypeId() const override
     {
         return Component<T>::typeId();
     }
@@ -72,7 +72,7 @@ namespace ComponentRegistry
     using ComponentCreateFunc = std::function<void(World&, Entity, const JsonObject&)>;
 
     std::vector<std::unique_ptr<const ComponentTypeBase>> componentTypes;
-    std::unordered_map<ComponentTypeId, const ComponentTypeBase*> byId;
+    std::unordered_map<TypeId, const ComponentTypeBase*> byId;
     std::unordered_map<std::string_view, const ComponentTypeBase*> byName;
 
     export template <ValidComponentData T>
@@ -85,7 +85,7 @@ namespace ComponentRegistry
         log(std::format("Registered component: {} (id={})", getComponentName<T>(), type->getTypeId()));
     }
     
-    export const ComponentTypeBase* get(ComponentTypeId typeId)
+    export const ComponentTypeBase* get(TypeId typeId)
     {
         auto it = byId.find(typeId);
         return it != byId.end() ? it->second : nullptr;

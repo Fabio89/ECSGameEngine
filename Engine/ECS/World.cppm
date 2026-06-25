@@ -60,19 +60,19 @@ public:
 
     template <ValidComponentData T>
     bool hasComponent(Entity entity) const;
-    bool hasComponent(Entity entity, ComponentTypeId componentTypeId) const;
+    bool hasComponent(Entity entity, TypeId componentTypeId) const;
 
     template <ValidComponentData T>
     const T& readComponent(Entity entity) const;
 
-    const ComponentBase& readComponent(Entity entity, ComponentTypeId componentType) const;
+    const ComponentBase& readComponent(Entity entity, TypeId componentType) const;
 
     Archetype::ComponentRange getComponentTypesInEntity(Entity entity) const;
 
     template <ValidComponentData T>
     T& editComponent(Entity entity) { return const_cast<T&>(readComponent<T>(entity)); }
 
-    ComponentBase& editComponent(Entity entity, ComponentTypeId componentType) { return const_cast<ComponentBase&>(readComponent(entity, componentType)); }
+    ComponentBase& editComponent(Entity entity, TypeId componentType) { return const_cast<ComponentBase&>(readComponent(entity, componentType)); }
 
     template <typename T>
     void addWidget() { addWidget(std::make_unique<T>(*this)); }
@@ -98,7 +98,7 @@ private:
     const Archetype& readArchetype(const EntitySignature& signature) const;
     Archetype& editArchetype(const EntitySignature& signature);
     Archetype& editOrCreateArchetype(const EntitySignature& signature);
-    Archetype& prepareArchetypeOnAddComponent(Entity entity, ComponentTypeId componentId);
+    Archetype& prepareArchetypeOnAddComponent(Entity entity, TypeId componentId);
     
     std::unordered_map<ArchetypeChangedObserverHandle, ArchetypeChangedCallback> m_archetypeChangeObservers{};
     Entity::ValueType m_nextEntityValue{};

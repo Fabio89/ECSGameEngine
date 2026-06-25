@@ -73,17 +73,17 @@ export namespace Engine
     template <ValidComponentData T>
     ENGINE_API bool hasComponent(Entity entity);
 
-    ENGINE_API bool hasComponent(Entity entity, ComponentTypeId componentTypeId);
+    ENGINE_API bool hasComponent(Entity entity, TypeId componentTypeId);
 
     template <ValidComponentData T>
     ENGINE_API const T& readComponent(Entity entity);
 
-    ENGINE_API const ComponentBase& readComponent(Entity entity, ComponentTypeId componentType);
+    ENGINE_API const ComponentBase& readComponent(Entity entity, TypeId componentType);
 
     template <ValidComponentData T>
     ENGINE_API T& editComponent(Entity entity);
 
-    ENGINE_API ComponentBase& editComponent(Entity entity, ComponentTypeId componentType);
+    ENGINE_API ComponentBase& editComponent(Entity entity, TypeId componentType);
 
     ENGINE_API auto getEntitiesRange() { return world.getEntitiesRange(); }
 
@@ -118,17 +118,17 @@ namespace Engine
     template <ValidComponentData T>
     bool hasComponent(Entity entity) { return world.hasComponent<T>(entity); }
 
-    bool hasComponent(Entity entity, ComponentTypeId componentTypeId);
+    bool hasComponent(Entity entity, TypeId componentTypeId);
 
     template <ValidComponentData T>
     const T& readComponent(Entity entity) { return world.readComponent<T>(entity); }
 
-    const ComponentBase& readComponent(Entity entity, ComponentTypeId componentType);
+    const ComponentBase& readComponent(Entity entity, TypeId componentType);
 
     template <ValidComponentData T>
     T& editComponent(Entity entity) { return world.editComponent<T>(entity); }
 
-    ComponentBase& editComponent(Entity entity, ComponentTypeId componentType);
+    ComponentBase& editComponent(Entity entity, TypeId componentType);
 
     template <ValidComponentData First, ValidComponentData ... Rest>
     std::generator<std::tuple<Entity, const First&, const Rest&...>> view() { return world.view<First, Rest...>(); }

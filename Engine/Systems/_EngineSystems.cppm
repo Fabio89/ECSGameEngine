@@ -47,7 +47,7 @@ void EngineSystems::reset()
 void EngineSystems::addSystem(World& world, std::unique_ptr<System> system)
 {
     System* systemPtr = systems.emplace_back(std::move(system)).get();
-    world.observeOnComponentAdded([&world, systemPtr](Entity entity, ComponentTypeId componentId)
+    world.observeOnComponentAdded([&world, systemPtr](Entity entity, TypeId componentId)
     {
         systemPtr->notifyComponentAdded(world, entity, componentId);
     });

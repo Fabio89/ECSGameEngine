@@ -102,9 +102,9 @@ Archetype& World::editOrCreateArchetype(const EntitySignature& signature)
     return m_archetypes[signature];
 }
 
-UInt64 getComponentIndex(ComponentTypeId componentId)
+UInt64 getComponentIndex(TypeId componentId)
 {
-    static std::unordered_map<ComponentTypeId, UInt64> componentIndexMap;
+    static std::unordered_map<TypeId, UInt64> componentIndexMap;
     static UInt64 lastComponentIndex = 0u;
     
     auto [it, added] = componentIndexMap.try_emplace(componentId, lastComponentIndex);
@@ -114,7 +114,7 @@ UInt64 getComponentIndex(ComponentTypeId componentId)
     return it->second;
 }
 
-Archetype& World::prepareArchetypeOnAddComponent(Entity entity, ComponentTypeId componentId)
+Archetype& World::prepareArchetypeOnAddComponent(Entity entity, TypeId componentId)
 {
     EntitySignature& signature = m_entities[entity];
     const EntitySignature oldSignature = signature;
@@ -275,7 +275,7 @@ void World::patchEntity(Entity entity, const JsonObject& json)
     }
 }
 
-bool World::hasComponent(Entity entity, ComponentTypeId componentTypeId) const
+bool World::hasComponent(Entity entity, TypeId componentTypeId) const
 {
     if (auto it = m_entities.find(entity); it != m_entities.end())
     {
@@ -286,7 +286,7 @@ bool World::hasComponent(Entity entity, ComponentTypeId componentTypeId) const
 }
 
 [[nodiscard]]
-const ComponentBase& World::readComponent(Entity entity, ComponentTypeId componentType) const
+const ComponentBase& World::readComponent(Entity entity, TypeId componentType) const
 {
     if (auto it = m_entities.find(entity); it != m_entities.end())
     {

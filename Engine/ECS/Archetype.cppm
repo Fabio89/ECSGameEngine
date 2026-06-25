@@ -15,7 +15,7 @@ public:
     Archetype(Archetype&&) noexcept = default;
     Archetype& operator=(Archetype&&) noexcept = default;
     
-    using ComponentArrayMap = std::unordered_map<ComponentTypeId, std::unique_ptr<ComponentArrayBase>>;
+    using ComponentArrayMap = std::unordered_map<TypeId, std::unique_ptr<ComponentArrayBase>>;
     using ComponentRange = std::ranges::elements_view<std::ranges::ref_view<const ComponentArrayMap>, 0>;
 
     [[nodiscard]] bool isEmpty() const;
@@ -26,7 +26,7 @@ public:
     template <ValidComponentData T>
     [[nodiscard]] const T& readComponent(Entity entity) const;
 
-    [[nodiscard]] const ComponentBase& readComponent(Entity entity, ComponentTypeId componentType) const;
+    [[nodiscard]] const ComponentBase& readComponent(Entity entity, TypeId componentType) const;
 
     void removeEntity(Entity entity);
 
@@ -49,7 +49,7 @@ private:
     template <ValidComponentData T>
     const ComponentArray<T>& getComponentArray() { return static_cast<const ComponentArray<T>&>(*m_componentArrays.at(Component<T>::typeId())); }
 
-    std::unordered_map<ComponentTypeId, std::unique_ptr<ComponentArrayBase>> m_componentArrays;
+    std::unordered_map<TypeId, std::unique_ptr<ComponentArrayBase>> m_componentArrays;
     std::unordered_map<Entity, std::size_t> m_entityToIndex;
     std::vector<Entity> m_indexToEntity;
 
@@ -57,7 +57,7 @@ private:
     class ViewIterator;
 };
 
-export using ArchetypeChangedCallback = std::function<void(Entity, ComponentTypeId)>;
+export using ArchetypeChangedCallback = std::function<void(Entity, TypeId)>;
 export using ArchetypeChangedObserverHandle = int;
 
 export ArchetypeChangedObserverHandle generateArchetypeObserverHandle()
@@ -184,7 +184,7 @@ std::generator<std::tuple<Entity, Components&...>> Archetype::view()
     return m_entityToIndex.empty();
 }
 
-[[nodiscard]] const ComponentBase& Archetype::readComponent(Entity entity, ComponentTypeId componentType) const
+[[nodiscard]] const ComponentBase& Archetype::readComponent(Entity entity, TypeId componentType) const
 {
     if (auto indexIt = m_entityToIndex.find(entity); indexIt != m_entityToIndex.end())
     {

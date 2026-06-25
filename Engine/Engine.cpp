@@ -154,17 +154,17 @@ bool Engine::isValid(Entity entity)
     return world.isValid(entity);
 }
 
-bool Engine::hasComponent(Entity entity, ComponentTypeId componentTypeId)
+bool Engine::hasComponent(Entity entity, TypeId componentTypeId)
 {
     return world.hasComponent(entity, componentTypeId);
 }
 
-const ComponentBase& Engine::readComponent(Entity entity, ComponentTypeId componentType)
+const ComponentBase& Engine::readComponent(Entity entity, TypeId componentType)
 {
     return world.readComponent(entity, componentType);
 }
 
-ComponentBase& Engine::editComponent(Entity entity, ComponentTypeId componentType)
+ComponentBase& Engine::editComponent(Entity entity, TypeId componentType)
 {
     return world.editComponent(entity, componentType);
 }

@@ -39,7 +39,7 @@ void computeWorldCorners(BoundingBoxComponent& aabb, const Mat4& worldTransform)
 
 export class BoundingBoxSystem final : public System
 {
-    void onComponentAdded(World& world, Entity entity, ComponentTypeId componentType) override
+    void onComponentAdded(World& world, Entity entity, TypeId componentType) override
     {
         if (componentType == getComponentType<BoundingBoxComponent>())
         {
