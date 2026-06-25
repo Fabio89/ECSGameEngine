@@ -27,6 +27,5 @@ export namespace Input
     void setCursorType(WindowHandle window, CursorType type);
 
     void init(WindowHandle window);
-    void shutdown(); // TODO: Try removing
     void postUpdate();
 }

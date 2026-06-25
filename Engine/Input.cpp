@@ -18,11 +18,6 @@ void Input::init(WindowHandle window)
     Platform::Window::setMouseButtonCallback(window, mouseButtonCallback);
 }
 
-void Input::shutdown()
-{
-    Platform::Window::destroyCursors();
-}
-
 void Input::postUpdate()
 {
     justPressedKeys.reset();

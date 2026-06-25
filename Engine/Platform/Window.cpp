@@ -20,6 +20,19 @@ namespace Platform::Window
     void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 }
 
+void Platform::Window::init()
+{
+}
+
+void Platform::Window::shutdown()
+{
+    for (GLFWcursor* cursorType : cursorTypes | std::views::values)
+    {
+        glfwDestroyCursor(cursorType);
+    }
+    cursorTypes.clear();
+}
+
 WindowHandle Platform::Window::createWindow(WindowCreateInfo info)
 {
     glfwWindowHint(glfw::ClientApi, glfw::NoApi);
@@ -85,15 +98,6 @@ void Platform::Window::setCursorType(WindowHandle window, CursorType type)
         cursorTypes[type] = cursor;
     }
     glfwSetCursor(getWindowData(window).glfwHandle, cursor);
-}
-
-void Platform::Window::destroyCursors()
-{
-    for (GLFWcursor* cursorType : cursorTypes | std::views::values)
-    {
-        glfwDestroyCursor(cursorType);
-    }
-    cursorTypes.clear();
 }
 
 IVec2 Platform::Window::getWindowSize(WindowHandle window)

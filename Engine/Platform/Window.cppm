@@ -27,13 +27,15 @@ export using ::CursorType;
 
 export namespace Platform::Window
 {
+    void init();
+    void shutdown();
+
     WindowHandle createWindow(WindowCreateInfo info);
     void destroyWindow(WindowHandle window);
 
     Vec2 getCursorPosition(WindowHandle window);
     void setCursorMode(WindowHandle window, CursorMode mode);
     void setCursorType(WindowHandle window, CursorType type);
-    void destroyCursors();
 
     IVec2 getWindowSize(WindowHandle window);
     void setWindowSize(WindowHandle window, IVec2 size);
