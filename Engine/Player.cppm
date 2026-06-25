@@ -9,7 +9,7 @@ export class Player
 public:
     void setMainCamera(const World& world, Entity camera)
     {
-        if (world.hasComponent<CameraComponent>(camera))
+        if (camera == invalidId() || world.hasComponent<CameraComponent>(camera))
         {
             m_mainCamera = camera;
             log(std::format("Assigned camera entity '{}' as main camera", camera));

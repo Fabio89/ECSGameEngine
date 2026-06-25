@@ -3,40 +3,30 @@ module;
 #include "EngineExport.h"
 
 export module Input;
-import Glfw;
 import Math;
-
-export using ::GlfwKeyCode;
-export using ::KeyAction;
-export using ::CursorMode;
-export using ::CursorType;
+import Window;
 
 export namespace Input
 {
     ENGINE_API
-    Vec2 getCursorPosition(GLFWwindow* window);
+    Vec2 getCursorPosition(WindowHandle window);
 
     ENGINE_API
-    bool isKeyDown(GlfwKeyCode key);
+    bool isKeyDown(KeyCode key);
 
     ENGINE_API
-    bool isKeyJustPressed(GlfwKeyCode key);
+    bool isKeyJustPressed(KeyCode key);
 
     ENGINE_API
-    bool isKeyJustReleased(GlfwKeyCode key);
+    bool isKeyJustReleased(KeyCode key);
 
     ENGINE_API
-    void setCursorMode(GLFWwindow* window, CursorMode mode);
+    void setCursorMode(WindowHandle window, CursorMode mode);
 
     ENGINE_API
-    void setCursorType(GLFWwindow* window, CursorType type);
+    void setCursorType(WindowHandle window, CursorType type);
 
-    using KeyEventCallback = void(*)(GlfwKeyCode key, KeyAction action);
-
-    ENGINE_API
-    void addKeyEventCallback(KeyEventCallback callback);
-
-    void init(GLFWwindow* window);
-    void shutdown();
+    void init(WindowHandle window);
+    void shutdown(); // TODO: Try removing
     void postUpdate();
 }

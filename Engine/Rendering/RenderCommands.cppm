@@ -42,4 +42,7 @@ export namespace RenderCommands
         Entity entity;
         Mat4 worldTransform;
     };
+
+    struct ClearRenderObjects
+    {};
 }

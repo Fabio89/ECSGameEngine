@@ -1,7 +1,5 @@
 module;
 
-#include "EngineExport.h"
-
 #ifdef _MSC_VER
 #define FUNCTION_SIGNATURE __FUNCSIG__
 #else
@@ -24,22 +22,27 @@ export using UInt64 = std::uint64_t;
 export using TypeId = std::size_t;
 export constexpr TypeId invalidId() { return std::numeric_limits<TypeId>::max(); }
 
-export namespace UniqueIdGenerator
+export template<typename Derived, typename T = UInt32>
+struct Id
 {
-    ENGINE_API
-    TypeId generateUniqueId()
+    using ValueType = T;
+    static constexpr T invalidValue = std::numeric_limits<T>::max();
+
+    T value{invalidValue};
+
+    [[nodiscard]]
+    constexpr bool isValid() const
     {
-        static TypeId id = 0;
-        log(std::format("Generated unique id: {}", id));
-        return id++;
+        return value != invalidValue;
     }
 
-    template <typename T>
-    struct ENGINE_API TypeIdGenerator
+    explicit constexpr operator bool() const
     {
-        inline static const TypeId value = generateUniqueId();
-    };
-}
+        return isValid();
+    }
+
+    auto operator<=>(const Id&) const = default;
+};
 
 // General hash function
 consteval std::size_t hash_fnv1a(std::string_view str)
@@ -53,7 +56,7 @@ consteval std::size_t hash_fnv1a(std::string_view str)
     return hash;
 }
 
-export template <typename T>
+template <typename T>
 consteval std::size_t getTypeHash()
 {
     return hash_fnv1a(FUNCTION_SIGNATURE);

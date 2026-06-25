@@ -3,18 +3,25 @@ module;
 #include "EngineExport.h"
 
 export module Engine;
-export import ComponentRegistry;
 export import Core;
 export import EngineComponents;
-export import Glfw;
-export import Input;
-export import Log;
-export import Math;
-export import Physics;
-export import Player;
-export import Project;
-export import World;
+import ComponentRegistry;
+import FileSystem;
+import Input;
+import Log;
+import Math;
+import Physics;
+import Player;
+import Project;
+import Window;
+import World;
 import Render.RenderManager;
+
+namespace Engine
+{
+    RenderManager renderManager;
+    World world{{&renderManager}};
+}
 
 export namespace Engine
 {
@@ -22,56 +29,110 @@ export namespace Engine
     // Application
     //------------------------------------------------------------------------------------------------------------------------
 
-    enum class ENGINE_API WindowMode
-    {
-        Standalone,
-        Embedded
-    };
+    using ::WindowMode;
+    using ::WindowCreateInfo;
 
-    struct ENGINE_API WindowCreateInfo
-    {
-        int width = 1280;
-        int height = 720;
-        WindowMode mode = WindowMode::Standalone;
-    };
+    ENGINE_API void init(const WindowCreateInfo& info);
 
-    ENGINE_API GLFWwindow* createWindow(const WindowCreateInfo& info);
-    ENGINE_API void engineInit(GLFWwindow* window);
-    ENGINE_API bool engineUpdate(GLFWwindow* window, float deltaTime);
-    ENGINE_API void engineShutdown(GLFWwindow* window);
-    ENGINE_API void setViewport(GLFWwindow* window, int x, int y, int width, int height);
+    ENGINE_API bool update(float deltaTime);
+
+    ENGINE_API void shutdown();
+
+    ENGINE_API void setViewport(IVec2 position, IVec2 size);
 
     //------------------------------------------------------------------------------------------------------------------------
     // Input
     //------------------------------------------------------------------------------------------------------------------------
 
-    ENGINE_API Entity getEntityUnderCursor(GLFWwindow* window);
+    ENGINE_API Entity getEntityUnderCursor();
 
     //------------------------------------------------------------------------------------------------------------------------
     // Project
     //------------------------------------------------------------------------------------------------------------------------
 
-    ENGINE_API void openProject(const char* path);
-    ENGINE_API void startEmptyProject();
+    ENGINE_API void openProject(std::filesystem::path path);
+
     ENGINE_API void saveCurrentProject();
-    ENGINE_API void serializeScene(char* buffer, int bufferSize);
-    ENGINE_API void patchEntity(Entity entity, const char* json);
+
+    //------------------------------------------------------------------------------------------------------------------------
+    // ECS
+    //------------------------------------------------------------------------------------------------------------------------
+
+    ENGINE_API Entity createEntity();
+
+    ENGINE_API void removeEntity(Entity entity);
+
+    ENGINE_API bool isValid(Entity entity);
+
+    template <ValidComponentData T, typename... Args>
+    ENGINE_API T& addComponent(Entity entity, Args&&... args);
+
+    template <ValidComponentData T>
+    ENGINE_API T& addComponent(Entity entity, T&& args);
+
+    template <ValidComponentData T>
+    ENGINE_API bool hasComponent(Entity entity);
+
+    ENGINE_API bool hasComponent(Entity entity, ComponentTypeId componentTypeId);
+
+    template <ValidComponentData T>
+    ENGINE_API const T& readComponent(Entity entity);
+
+    ENGINE_API const ComponentBase& readComponent(Entity entity, ComponentTypeId componentType);
+
+    template <ValidComponentData T>
+    ENGINE_API T& editComponent(Entity entity);
+
+    ENGINE_API ComponentBase& editComponent(Entity entity, ComponentTypeId componentType);
+
+    ENGINE_API auto getEntitiesRange() { return world.getEntitiesRange(); }
+
+    template <ValidComponentData First, ValidComponentData ... Rest>
+    ENGINE_API std::generator<std::tuple<Entity, const First&, const Rest&...>> view();
+
+    template <ValidComponentData First, ValidComponentData ... Rest>
+    ENGINE_API std::generator<std::tuple<Entity, First&, Rest&...>> view();
 
     //------------------------------------------------------------------------------------------------------------------------
     // DEBUG -TEMPORARY
     //------------------------------------------------------------------------------------------------------------------------
 
+    ENGINE_API Player& getPlayer();
+
     ENGINE_API World& getWorld();
 
     ENGINE_API void printArchetypeStatus();
+}
 
-    ENGINE_API Player& getPlayer();
+//------------------------------------------------------------------------------------------------------------------------
+// Template Definitions
+//------------------------------------------------------------------------------------------------------------------------
+namespace Engine
+{
+    template<ValidComponentData T, typename... Args>
+    T& addComponent(Entity entity, Args&&... args) { return world.addComponent<T>(entity, std::forward<Args>(args)...); }
 
-    ENGINE_API ComponentBase& editComponent(Entity entity, ComponentTypeId typeId);
+    template <ValidComponentData T>
+    T& addComponent(Entity entity, T&& args) { return world.addComponent<T>(entity, std::forward<T>(args)); }
 
-    template<ValidComponentData T>
-    T& editComponent(Entity entity)
-    {
-        return reinterpret_cast<T&>(editComponent(entity, Component<T>::typeId()));
-    }
+    template <ValidComponentData T>
+    bool hasComponent(Entity entity) { return world.hasComponent<T>(entity); }
+
+    bool hasComponent(Entity entity, ComponentTypeId componentTypeId);
+
+    template <ValidComponentData T>
+    const T& readComponent(Entity entity) { return world.readComponent<T>(entity); }
+
+    const ComponentBase& readComponent(Entity entity, ComponentTypeId componentType);
+
+    template <ValidComponentData T>
+    T& editComponent(Entity entity) { return world.editComponent<T>(entity); }
+
+    ComponentBase& editComponent(Entity entity, ComponentTypeId componentType);
+
+    template <ValidComponentData First, ValidComponentData ... Rest>
+    std::generator<std::tuple<Entity, const First&, const Rest&...>> view() { return world.view<First, Rest...>(); }
+
+    template <ValidComponentData First, ValidComponentData ... Rest>
+    std::generator<std::tuple<Entity, First&, Rest&...>> view() { return world.view<First, Rest...>(); }
 }

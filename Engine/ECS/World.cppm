@@ -43,6 +43,7 @@ public:
     
     Entity createEntity();
     void removeEntity(Entity entity);
+    bool isValid(Entity entity) const;
 
     void loadScene(const std::filesystem::path& path);
     void unloadScene();
@@ -137,7 +138,7 @@ bool World::hasComponent(Entity entity) const
     {
         return readArchetype(it->second).matches<T>();
     }
-    report("A component was requested for an entity that doesn't exist");
+    report(std::format("{} was requested for an entity that doesn't exist", getTypeName<T>()));
     return false;
 }
 

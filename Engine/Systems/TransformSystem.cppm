@@ -43,7 +43,7 @@ export class TransformSystem final : public System
         
         transform.runtimeData.worldMatrix = TransformUtils::toMatrix(transform);
         
-        if (const Entity parent = HierarchyUtils::getParent(world, entity); parent != invalidId())
+        if (const Entity parent = HierarchyUtils::getParent(world, entity); world.isValid(parent))
         {
             TransformComponent& parentTransform = world.editComponent<TransformComponent>(parent);
             computeWorldTransform(world, parent, parentTransform);

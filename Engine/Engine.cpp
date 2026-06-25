@@ -1,30 +1,24 @@
 module Engine;
+import Editor; // TODO: remove this dependency
 import EngineSystems;
 import Editor.Camera;
+import Platform;
 import Serialization.Json;
-import UI.Widget.EntityExplorer;
 
 namespace Engine
 {
-    void runRenderThread(GLFWwindow* window);
-    void updateEditorCamera(GLFWwindow* window, float deltaTime);
+    void runRenderThread();
+    void updateEditorCamera(float deltaTime);
     Entity ensureCamera();
 
     bool shutdownRequested = false;
     std::atomic<bool> engineShuttingDown = false;
-    RenderManager renderManager;
     std::thread renderThread;
-    World world{{&renderManager}};
     Player player;
+    WindowHandle window;
 }
 
-void framebufferResizeCallback(GLFWwindow* window, [[maybe_unused]] int width, [[maybe_unused]] int height)
-{
-    auto rm = static_cast<RenderManager*>(glfwGetWindowUserPointer(window));
-    rm->updateFramebufferSize();
-}
-
-void Engine::runRenderThread(GLFWwindow* window)
+void Engine::runRenderThread()
 {
     renderManager.init(window);
 
@@ -47,6 +41,7 @@ Entity Engine::ensureCamera()
 
     const Entity camera = world.createEntity();
     world.addComponent<CameraComponent>(camera, CameraComponent{.fov = 60.f});
+    world.addComponent<NameComponent>(camera, "Main Camera");
     world.addComponent<TransformComponent>(camera);
 
     auto& transform = world.editComponent<TransformComponent>(camera);
@@ -58,38 +53,44 @@ Entity Engine::ensureCamera()
     return camera;
 }
 
-void Engine::engineInit(GLFWwindow* window)
+void Engine::init(const WindowCreateInfo& info)
 {
+    Platform::init();
+
+    if (!check(!window.isValid(), "Can't create more than one window!"))
+        return;
+
+    window = Platform::Window::createWindow(info);
+
     renderThread = std::thread
     {
-        runRenderThread,
-        window
+        runRenderThread
     };
 
     Input::init(window);
     EngineComponents::init();
     EngineSystems::init(world);
-    world.addWidget<Widgets::EntityExplorer>();
-    //world.addWidget<Widgets::ImGuiDemo>();
+    Editor::init(world);
 }
 
-bool Engine::engineUpdate(GLFWwindow* window, float deltaTime)
+bool Engine::update(float deltaTime)
 {
-    if (shutdownRequested || glfwWindowShouldClose(window))
+    if (shutdownRequested || Platform::Window::isWindowClosing(window))
     {
-        engineShutdown(window);
+        shutdown();
         return false;
     }
 
     EngineSystems::update(world, player, deltaTime);
 
     Input::postUpdate();
-    glfwPollEvents();
+    Platform::update();
+    Editor::update(world, window, deltaTime);
 
     return true;
 }
 
-void Engine::engineShutdown(GLFWwindow* window)
+void Engine::shutdown()
 {
     if (engineShuttingDown.exchange(true))
         return;
@@ -103,37 +104,34 @@ void Engine::engineShutdown(GLFWwindow* window)
         std::cout << "[Application] Render thread joined!\n";
     }
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
+    Platform::Window::destroyWindow(window);
+    Platform::shutdown();
     std::cout << "[Application] Shutdown complete!\n";
 }
 
-void Engine::setViewport(GLFWwindow* window, int x, int y, int width, int height)
+void Engine::setViewport(IVec2 position, IVec2 size)
 {
-    if (check(window, "Can't set viewport offset for null window!"))
+    if (check(window.isValid(), "Can't set viewport offset for null window!"))
     {
-        glfwSetWindowPos(window, x, y);
-        glfwSetWindowSize(window, width, height);
+        Platform::Window::setWindowPosition(window, position);
+        Platform::Window::setWindowSize(window, size);
     }
 }
 
-Entity Engine::getEntityUnderCursor(GLFWwindow* window)
+Entity Engine::getEntityUnderCursor()
 {
     return Physics::lineTrace(world, Physics::rayFromScreenPosition(world, player, Input::getCursorPosition(window)), TraceChannelFlags::Default);
 }
 
-void Engine::openProject(const char* path)
+void Engine::openProject(std::filesystem::path path)
 {
     EngineSystems::reset();
 
-    Project::open(path, world);
+    Project::open(std::move(path), world);
+
+    Editor::createGizmos(world);
 
     player.setMainCamera(world, ensureCamera());
-}
-
-void Engine::startEmptyProject()
-{
-    EngineSystems::reset();
 }
 
 void Engine::saveCurrentProject()
@@ -141,34 +139,34 @@ void Engine::saveCurrentProject()
     Project::saveToCurrent(world);
 }
 
-void Engine::serializeScene(char* buffer, int bufferSize)
+Entity Engine::createEntity()
 {
-    JsonDocument doc;
-    doc.Swap(world.serializeScene(doc.GetAllocator()).Move());
-
-    Json::StringBuffer jsonBuffer{};
-    Json::PrettyWriter writer{jsonBuffer};
-    writer.SetMaxDecimalPlaces(Json::defaultFloatPrecision);
-    doc.Accept(writer);
-
-    // log(std::format("Serialized scene:\n\n{}", jsonBuffer.GetString()));
-    std::memcpy(buffer, jsonBuffer.GetString(), bufferSize);
+    return world.createEntity();
 }
 
-void Engine::patchEntity(Entity entity, const char* json)
+void Engine::removeEntity(Entity entity)
 {
-    log(std::format("Patching entity '{}' with:\n{}", entity, json));
+    return world.removeEntity(entity);
+}
 
-    JsonDocument document;
-    document.Parse(json);
+bool Engine::isValid(Entity entity)
+{
+    return world.isValid(entity);
+}
 
-    if (document.HasParseError())
-    {
-        report(std::format("JSON parse error while trying to patch entity '{}'! Patch:\n{}", entity, json));
-        return;
-    }
+bool Engine::hasComponent(Entity entity, ComponentTypeId componentTypeId)
+{
+    return world.hasComponent(entity, componentTypeId);
+}
 
-    world.patchEntity(entity, document);
+const ComponentBase& Engine::readComponent(Entity entity, ComponentTypeId componentType)
+{
+    return world.readComponent(entity, componentType);
+}
+
+ComponentBase& Engine::editComponent(Entity entity, ComponentTypeId componentType)
+{
+    return world.editComponent(entity, componentType);
 }
 
 World& Engine::getWorld()
@@ -186,29 +184,8 @@ Player& Engine::getPlayer()
     return player;
 }
 
-ComponentBase& Engine::editComponent(Entity entity, ComponentTypeId typeId)
-{
-    return const_cast<ComponentBase&>(world.readComponent(entity, typeId));
-}
-
-void Engine::updateEditorCamera(GLFWwindow* window, float deltaTime)
+void Engine::updateEditorCamera(float deltaTime)
 {
     EditorCamera::update(window, world, player, deltaTime);
 }
 
-GLFWwindow* Engine::createWindow(const WindowCreateInfo& info)
-{
-    glfwInit();
-
-    glfwWindowHint(glfw::ClientApi, glfw::NoApi);
-    glfwWindowHint(glfw::Resizable, glfw::Enabled);
-
-    if (info.mode == WindowMode::Embedded)
-    {
-        glfwWindowHint(glfw::Decorated, glfw::Disabled);
-    }
-
-    GLFWwindow* window = glfwCreateWindow(info.width, info.height, "Engine", nullptr, nullptr);
-
-    return window;
-}

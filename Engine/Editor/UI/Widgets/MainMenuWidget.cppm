@@ -1,4 +1,5 @@
 export module UI.Widget.MainMenu;
+import Engine;
 import FileSystem;
 import UI.ImGui;
 import UI.Widget;
@@ -27,6 +28,7 @@ void Widgets::MainMenuWidget::doDraw(World& world)
     if (!ImGui::BeginMainMenuBar())
         return;
 
+    drawFileMenu(world);
     drawEditMenu(world);
     drawViewMenu(world);
     drawToolsMenu(world);
@@ -42,11 +44,9 @@ void Widgets::MainMenuWidget::drawFileMenu(World& world)
 
     if (ImGui::MenuItem("Open Project..."))
     {
-        if (const auto path = FileSystem::openFileDialog(); path.has_filename())
+        if (const auto path = FileSystem::openFileDialog())
         {
-
-            // TODO
-            // ProjectManager::load(*projectPath);
+            Engine::openProject(*path);
         }
     }
 

@@ -159,6 +159,11 @@ void World::removeEntity(Entity entity)
     }
 }
 
+bool World::isValid(Entity entity) const
+{
+    return entity != invalidId() && m_entities.contains(entity);
+}
+
 void World::loadScene(const std::filesystem::path& path)
 {
     std::cout << "Loading scene: " << path << '\n';
@@ -169,7 +174,7 @@ void World::loadScene(const std::filesystem::path& path)
 
 void World::unloadScene()
 {
-    m_renderManager.get().clear();
+    m_renderManager.get().addCommand<RenderCommands::ClearRenderObjects>({});
     m_entities.clear();
     m_archetypes.clear();
 }
@@ -276,7 +281,7 @@ bool World::hasComponent(Entity entity, ComponentTypeId componentTypeId) const
     {
         return std::ranges::contains(readArchetype(it->second).getComponentTypes(), componentTypeId);
     }
-    report("A component was requested for an entity that doesn't exist");
+    report(std::format("{} was requested for an entity that doesn't exist", ComponentRegistry::get(componentTypeId)->getName()));
     return false;
 }
 

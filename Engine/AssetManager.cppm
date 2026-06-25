@@ -5,6 +5,22 @@ import Serialization.Json;
 
 export using AssetTypeId = TypeId;
 
+namespace UniqueIdGenerator
+{
+    TypeId generateUniqueId()
+    {
+        static TypeId id = 0;
+        log(std::format("Generated unique id: {}", id));
+        return id++;
+    }
+
+    template <typename T>
+    struct TypeIdGenerator
+    {
+        inline static const TypeId value = generateUniqueId();
+    };
+}
+
 export class AssetBase
 {
 public:

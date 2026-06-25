@@ -1,4 +1,9 @@
+module;
+
+#include <experimental/scope>
+
 module Render.RenderManager;
+import Glfw;
 import Guid;
 import Render.Pipeline.Line;
 import Render.Pipeline.MeshWithTexture;
@@ -8,7 +13,6 @@ import Render.Utils;
 import Render.Vulkan;
 
 std::mutex updateLockMutex;
-std::atomic updatesBlocked{false};
 
 [[nodiscard]]
 vk::PipelineLayout createPipelineLayout(vk::Device device, vk::DescriptorSetLayout descriptorSetLayout)
@@ -94,12 +98,12 @@ RenderManager::~RenderManager() noexcept
     }
 }
 
-void RenderManager::init(GLFWwindow* window)
+void RenderManager::init(WindowHandle window)
 {
     // Init window
     check(!m_initialised, "[RenderManager] Tried to initialise more than once!");
     check(!m_window, "[RenderManager] Tried to create a new window without having deleted the current one!");
-    check(window, "[RenderManager] Can't initialise without a window!");
+    check(window.isValid(), "[RenderManager] Can't initialise without a window!");
 
     m_window = window;
 
@@ -163,18 +167,17 @@ void RenderManager::init(GLFWwindow* window)
 
 void RenderManager::update()
 {
-    if (updatesBlocked.load())
-        return;
-
-    std::lock_guard lock{updateLockMutex};
-
-    m_graphicsQueue.waitIdle(); // TODO(perf): Explore VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT.
-
-    auto cmd = m_commands.tryPop();
-    while (cmd.has_value())
     {
-        cmd->get()->process();
-        cmd = m_commands.tryPop();
+        std::lock_guard lock{updateLockMutex};
+
+        m_graphicsQueue.waitIdle(); // TODO(perf): Explore VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT.
+
+        auto cmd = m_commands.tryPop();
+        while (cmd.has_value())
+        {
+            cmd->get()->process();
+            cmd = m_commands.tryPop();
+        }
     }
 
     m_deltaTime.update();
@@ -221,16 +224,11 @@ void RenderManager::shutdown()
 
 void RenderManager::clear()
 {
-    std::lock_guard lock{updateLockMutex};
-
     if (!m_initialised)
         return;
 
-    updatesBlocked = true;
-
     m_device.waitIdle();
     m_renderObjectManager.clear();
-    updatesBlocked = false;
 }
 
 void RenderManager::setCamera(const Camera& camera)
@@ -284,7 +282,7 @@ void RenderManager::createInstance()
 
 void RenderManager::createSurface()
 {
-    check(glfw::createWindowSurface(m_instance, m_window, nullptr, &m_surface) == vk::Result::eSuccess, "Failed to create window surface!");
+    check(glfw::createWindowSurface(m_instance, Platform::Window::getGlfwWindow(m_window), nullptr, &m_surface) == vk::Result::eSuccess, "Failed to create window surface!");
 }
 
 void RenderManager::createLogicalDevice()
@@ -354,10 +352,11 @@ void RenderManager::createLogicalDevice()
 void RenderManager::recreateSwapchain()
 {
     int width = 0, height = 0;
-    glfwGetFramebufferSize(m_window, &width, &height);
+    GLFWwindow* glfwWindow = Platform::Window::getGlfwWindow(m_window);
+    glfwGetFramebufferSize(glfwWindow, &width, &height);
     while (width == 0 || height == 0) // NOLINT(bugprone-infinite-loop)
     {
-        glfwGetFramebufferSize(m_window, &width, &height);
+        glfwGetFramebufferSize(glfwWindow, &width, &height);
         glfwWaitEvents();
     }
 
@@ -378,7 +377,7 @@ void RenderManager::createSwapchain()
 
     const vk::SurfaceFormatKHR surfaceFormat = RenderUtils::chooseSwapSurfaceFormat(swapChainSupport.formats);
     const vk::PresentModeKHR presentMode = RenderUtils::chooseSwapPresentMode(swapChainSupport.presentModes);
-    const vk::Extent2D extent = RenderUtils::chooseSwapExtent(swapChainSupport.capabilities, m_window);
+    const vk::Extent2D extent = RenderUtils::chooseSwapExtent(swapChainSupport.capabilities, Platform::Window::getGlfwWindow(m_window));
 
     UInt32 minImageCount = swapChainSupport.capabilities.minImageCount + 1;
 

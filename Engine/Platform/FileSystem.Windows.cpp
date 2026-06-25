@@ -22,4 +22,9 @@ std::filesystem::path FileSystem::executablePath()
     return std::filesystem::path(buffer);
 }
 
+std::optional<std::filesystem::path> FileSystem::openFileDialog()
+{
+    return std::nullopt;
+}
+
 #endif

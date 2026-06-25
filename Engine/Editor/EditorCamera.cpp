@@ -7,12 +7,12 @@ namespace
     bool isActive{};
 }
 
-void updateCameraTransform(GLFWwindow* window, World& world, Entity camera, float deltaTime, bool allowRotation)
+void updateCameraTransform(WindowHandle window, World& world, Entity camera, float deltaTime, bool allowRotation)
 {
     float speed = 3.0f * deltaTime;
-    float xMovement = (static_cast<int>(Input::isKeyDown(GlfwKeyCode::D)) - static_cast<int>(Input::isKeyDown(GlfwKeyCode::A))) * speed;
-    float yMovement = (static_cast<int>(Input::isKeyDown(GlfwKeyCode::E)) - static_cast<int>(Input::isKeyDown(GlfwKeyCode::Q))) * speed;
-    float zMovement = (static_cast<int>(Input::isKeyDown(GlfwKeyCode::W)) - static_cast<int>(Input::isKeyDown(GlfwKeyCode::S))) * speed;
+    float xMovement = (static_cast<int>(Input::isKeyDown(KeyCode::D)) - static_cast<int>(Input::isKeyDown(KeyCode::A))) * speed;
+    float yMovement = (static_cast<int>(Input::isKeyDown(KeyCode::E)) - static_cast<int>(Input::isKeyDown(KeyCode::Q))) * speed;
+    float zMovement = (static_cast<int>(Input::isKeyDown(KeyCode::W)) - static_cast<int>(Input::isKeyDown(KeyCode::S))) * speed;
     
     auto& transform = world.editComponent<TransformComponent>(camera);
     const Vec3 forward = TransformUtils::forward(transform);
@@ -44,7 +44,7 @@ void updateCameraTransform(GLFWwindow* window, World& world, Entity camera, floa
 
 float rotationCooldown = delayBeforeDrag;
 
-void EditorCamera::setActive(GLFWwindow* window, bool active)
+void EditorCamera::setActive(WindowHandle window, bool active)
 {
     if (active != isActive)
     {
@@ -61,14 +61,14 @@ void EditorCamera::setActive(GLFWwindow* window, bool active)
     }
 }
 
-void EditorCamera::update(GLFWwindow* window, World& world, const Player& player, float deltaTime)
+void EditorCamera::update(WindowHandle window, World& world, const Player& player, float deltaTime)
 {
     if (!isActive)
         return;
     
     rotationCooldown = Math::max(rotationCooldown - deltaTime, 0.f);
 
-    if (auto cameraEntity = player.getMainCamera(); cameraEntity != invalidId())
+    if (auto cameraEntity = player.getMainCamera(); world.isValid(cameraEntity))
         updateCameraTransform(window, world, cameraEntity, deltaTime, rotationCooldown == 0.f);
     
     lastCursorPosition = Input::getCursorPosition(window);

@@ -84,7 +84,7 @@ export namespace Widgets
             ImGui::BeginChild("Details", ImGui::ImVec2(0, 0), ImGui::ImGuiChildFlags_Borders);
             ImGui::Text("Details");
 
-            if (m_selectedEntity != invalidId())
+            if (world.isValid(m_selectedEntity))
             {
                 for (const ComponentTypeId typeId : world.getComponentTypesInEntity(m_selectedEntity))
                 {

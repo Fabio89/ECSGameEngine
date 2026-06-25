@@ -1,8 +1,8 @@
 export module ImGuiHelper;
 export import UI.IWidget;
 import Core;
-import Glfw;
 import Render.Vulkan;
+import Window;
 
 export struct ImGuiInitInfo
 {
@@ -22,7 +22,7 @@ export class ImGuiHelper
 {
 public:
     static constexpr bool enabled = true;
-    void init(GLFWwindow* window, const ImGuiInitInfo& initInfo);
+    void init(WindowHandle window, const ImGuiInitInfo& initInfo);
 
     template <typename T>
     void addWidget() { m_widgets.emplace_back(std::make_unique<T>()); }

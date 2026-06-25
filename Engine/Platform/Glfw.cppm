@@ -12,6 +12,7 @@ export using ::glfwGetFramebufferSize;
 export using ::glfwInit;
 export using ::glfwWindowHint;
 export using ::glfwCreateWindow;
+export using ::glfwGetWindowPos;
 export using ::glfwSetWindowPos;
 export using ::glfwGetWindowSize;
 export using ::glfwSetWindowSize;
@@ -37,6 +38,8 @@ export using ::glfwCreateStandardCursor;
 export using ::glfwDestroyCursor;
 export using ::glfwGetInputMode;
 export using ::glfwSetInputMode;
+export using ::GLFWkeyfun;
+export using ::GLFWmousebuttonfun;
 
 export enum class CursorType
 {
@@ -84,7 +87,7 @@ export namespace glfw
     }
 }
 
-export enum class GlfwKeyCode
+export enum class KeyCode
 {
     MouseButton1 = 0,
     MouseButton2 = 1,
@@ -219,7 +222,7 @@ export enum class GlfwKeyCode
     RightSuper = 347,
     Menu = 348,
 };
-export constexpr int KeyCodeCount = static_cast<int>(GlfwKeyCode::Menu) + 1;
+export constexpr int KeyCodeCount = static_cast<int>(KeyCode::Menu) + 1;
 
 export enum class KeyAction
 {

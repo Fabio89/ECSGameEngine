@@ -4,11 +4,14 @@ module;
 
 export module Editor;
 import Core;
-import Glfw;
+import Window;
+import World;
 
 export namespace Editor
 {
-    ENGINE_API void init();
+    ENGINE_API void init(World& world);
 
-    ENGINE_API void update(GLFWwindow* window, float deltaTime);
+    ENGINE_API void createGizmos(World& world);
+
+    ENGINE_API void update(World& world, WindowHandle window, float deltaTime);
 }

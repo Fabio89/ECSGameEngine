@@ -9,7 +9,7 @@ static void check_vk_result(ImGui::VkResult result)
         log(std::format("ImGui Vulkan error: {}\n", static_cast<int>(result)));
 }
 
-void ImGuiHelper::init(GLFWwindow* window, const ImGuiInitInfo& initInfo)
+void ImGuiHelper::init(WindowHandle window, const ImGuiInitInfo& initInfo)
 {
     if constexpr (!enabled)
         return;
@@ -39,7 +39,7 @@ void ImGuiHelper::init(GLFWwindow* window, const ImGuiInitInfo& initInfo)
     ImGui::StyleColorsDark();
 
     // Init ImGui
-    ImGui::ImGui_ImplGlfw_InitForVulkan(window, true);
+    ImGui::ImGui_ImplGlfw_InitForVulkan(Platform::Window::getGlfwWindow(window), true);
 
     static constexpr std::array imguiPoolSizes
     {

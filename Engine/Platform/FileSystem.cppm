@@ -7,5 +7,5 @@ export namespace FileSystem
 
     std::filesystem::path executableDirectory();
 
-    std::filesystem::path openFileDialog();
+    std::optional<std::filesystem::path> openFileDialog();
 }

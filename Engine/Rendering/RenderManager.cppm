@@ -2,13 +2,13 @@ export module Render.RenderManager;
 export import Render.Commands;
 import Core;
 import CoreTypes;
-import Glfw;
 import Guid;
 import ImGuiHelper;
 import Math;
 import Render.Vulkan;
 import Render.Model;
 import Render.RenderObject;
+import Window;
 
 export enum class RenderPipelineType
 {
@@ -28,7 +28,7 @@ public:
     RenderManager& operator=(RenderManager&&) = delete;
 
     bool hasBeenInitialized() const { return m_initialised; }
-    void init(GLFWwindow* window);
+    void init(WindowHandle window);
     void update();
     void shutdown();
     void clear();
@@ -51,7 +51,7 @@ private:
     bool m_initialised{};
     RenderObjectManager m_renderObjectManager;
     ThreadSafeQueue<std::unique_ptr<RenderCommandBase>> m_commands;
-    GLFWwindow* m_window{};
+    WindowHandle m_window{};
     vk::Instance m_instance{};
     vk::PhysicalDevice m_physicalDevice{};
     vk::Device m_device{};
@@ -194,4 +194,10 @@ template <>
 void RenderManager::processCommand(RenderCommands::SetObjectVisibility&& cmd)
 {
     m_renderObjectManager.setObjectVisibility(cmd.entity, cmd.visible);
+}
+
+template <>
+void RenderManager::processCommand(RenderCommands::ClearRenderObjects&&)
+{
+    clear();
 }

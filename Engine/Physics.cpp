@@ -38,7 +38,7 @@ Entity Physics::lineTrace(const World& world, const Ray& ray, TraceChannelFlags 
 Ray Physics::rayFromScreenPosition(const World& world, const Player& player, Vec2 screenPosition)
 {
     const Entity cameraEntity = player.getMainCamera();
-    if (cameraEntity == invalidId() || !world.hasComponent<CameraComponent>(cameraEntity))
+    if (!world.isValid(cameraEntity) || !world.hasComponent<CameraComponent>(cameraEntity))
         return {};
 
     const CameraComponent& camera = world.readComponent<CameraComponent>(cameraEntity);
