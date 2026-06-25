@@ -12,7 +12,7 @@ const HierarchyComponent& HierarchyUtils::getHierarchy(const World& world, Entit
 
 bool HierarchyUtils::hasChildren(const World& world, Entity entity)
 {
-    return getHierarchy(world, entity).firstChild != invalidId();
+    return getHierarchy(world, entity).firstChild.isValid();
 }
 
 [[nodiscard]]
@@ -20,7 +20,7 @@ std::generator<Entity> HierarchyUtils::children(const World& world, Entity paren
 {
     Entity child = getHierarchy(world, parent).firstChild;
 
-    while (child != invalidId())
+    while (child.isValid())
     {
         co_yield child;
         child = getHierarchy(world, child).nextSibling;
@@ -34,14 +34,14 @@ void HierarchyUtils::setParent(World& world, Entity child, Entity parent)
         return;
 
     // Update neighbouring siblings
-    if (childHierarchy.nextSibling != invalidId())
+    if (childHierarchy.nextSibling.isValid())
         world.editComponent<HierarchyComponent>(childHierarchy.nextSibling).previousSibling = childHierarchy.previousSibling;
 
-    if (childHierarchy.previousSibling != invalidId())
+    if (childHierarchy.previousSibling.isValid())
         world.editComponent<HierarchyComponent>(childHierarchy.previousSibling).nextSibling = childHierarchy.nextSibling;
 
     // If it was the first child, let the next sibling take its place
-    if (childHierarchy.parent != invalidId())
+    if (childHierarchy.parent.isValid())
     {
         HierarchyComponent& oldParentHierarchy = world.editComponent<HierarchyComponent>(childHierarchy.parent);
         if (oldParentHierarchy.firstChild == child)
@@ -51,12 +51,12 @@ void HierarchyUtils::setParent(World& world, Entity child, Entity parent)
     }
 
     // Reset siblings and link new Parent
-    childHierarchy.previousSibling = invalidId();
-    childHierarchy.nextSibling = invalidId();
+    childHierarchy.previousSibling = {};
+    childHierarchy.nextSibling = {};
     childHierarchy.parent = parent;
 
     // Update the new parent
-    if (parent != invalidId())
+    if (parent.isValid())
     {
         if (!world.hasComponent<HierarchyComponent>(parent))
         {
@@ -65,17 +65,17 @@ void HierarchyUtils::setParent(World& world, Entity child, Entity parent)
         else
         {
             HierarchyComponent& newParentHierarchy = world.editComponent<HierarchyComponent>(parent);
-            if (newParentHierarchy.firstChild == invalidId())
+            if (!newParentHierarchy.firstChild.isValid())
             {
                 newParentHierarchy.firstChild = child;
             }
             else
             {
                 Entity lastSibling = newParentHierarchy.firstChild;
-                while (lastSibling != invalidId())
+                while (lastSibling.isValid())
                 {
                     HierarchyComponent& siblingHierarchy = world.editComponent<HierarchyComponent>(lastSibling);
-                    if (siblingHierarchy.nextSibling == invalidId())
+                    if (!siblingHierarchy.nextSibling.isValid())
                     {
                         // Find the last of the new siblings and update links.
                         siblingHierarchy.nextSibling = child;
@@ -91,7 +91,7 @@ void HierarchyUtils::setParent(World& world, Entity child, Entity parent)
 
 void HierarchyUtils::detach(World& world, Entity child)
 {
-    setParent(world, child, invalidId());
+    setParent(world, child, {});
 }
 
 Entity HierarchyUtils::getParent(const World& world, Entity entity)
@@ -101,7 +101,7 @@ Entity HierarchyUtils::getParent(const World& world, Entity entity)
 
 bool HierarchyUtils::isDescendantOf(const World& world, Entity entity, Entity potentialAncestor)
 {
-    for (Entity parent = getParent(world, entity); parent != invalidId(); parent = getParent(world, parent))
+    for (Entity parent = getParent(world, entity); parent.isValid(); parent = getParent(world, parent))
     {
         if (parent == potentialAncestor)
             return true;

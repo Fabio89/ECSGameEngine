@@ -25,8 +25,8 @@ namespace
     EditMode currentEditMode{EditMode::None};
     std::array<Entity, 3> gizmos;
     std::unordered_map<Entity, Entity> entitiesToBoundingBoxGizmos;
-    Entity selected = invalidId();
-    Entity selectedGizmoAxis = invalidId();
+    Entity selected;
+    Entity selectedGizmoAxis;
     std::optional<Vec3> projectedCursorPositionLastFrame;
 }
 
@@ -131,7 +131,7 @@ void Editor::update(World& world, WindowHandle window, float deltaTime)
         projectedCursorPositionLastFrame = projectedCursorPosition;
     } else
     {
-        selectedGizmoAxis = invalidId();
+        selectedGizmoAxis = {};
         projectedCursorPositionLastFrame = {};
     }
 
@@ -144,12 +144,12 @@ void Editor::update(World& world, WindowHandle window, float deltaTime)
 
         if (selected != previouslySelected)
         {
-            if (previouslySelected != invalidId())
+            if (previouslySelected.isValid())
             {
                 EditorUtils::setGizmoVisible(world, entitiesToBoundingBoxGizmos.at(previouslySelected), false);
             }
 
-            if (selected != invalidId())
+            if (selected.isValid())
             {
                 if (currentEditMode != EditMode::None)
                 {

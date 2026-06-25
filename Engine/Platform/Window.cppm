@@ -4,7 +4,7 @@ import Glfw;
 import Math;
 import std;
 
-export struct WindowHandle : Id<WindowHandle> {};
+export using WindowHandle = Id<struct WindowHandleTag>;
 
 export enum class WindowMode
 {

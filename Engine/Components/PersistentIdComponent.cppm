@@ -40,7 +40,7 @@ namespace PersistentIdUtils
     export Entity getEntity(const Guid &uuid)
     {
         const auto it = uuidToEntityMap.find(uuid);
-        return it != uuidToEntityMap.end() ? it->second : invalidId();
+        return it != uuidToEntityMap.end() ? it->second : Entity{};
     }
 
     export const Guid& getUuid(Entity entity)

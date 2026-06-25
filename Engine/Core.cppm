@@ -22,7 +22,7 @@ export using UInt64 = std::uint64_t;
 export using TypeId = std::size_t;
 export constexpr TypeId invalidId() { return std::numeric_limits<TypeId>::max(); }
 
-export template<typename Derived, typename T = UInt32>
+export template<typename Tag, typename T = UInt32>
 struct Id
 {
     using ValueType = T;
@@ -44,6 +44,29 @@ struct Id
     auto operator<=>(const Id&) const = default;
 };
 
+export template<typename Tag, typename T>
+struct std::hash<Id<Tag, T>>
+{
+    constexpr std::size_t operator()(const Id<Tag, T>& id) const noexcept
+    {
+        return std::hash<T>{}(id.value);
+    }
+};
+
+export template<typename Tag, typename T>
+struct std::formatter<Id<Tag, T>>
+{
+    constexpr auto parse(std::format_parse_context& ctx)
+    {
+        return ctx.begin();
+    }
+
+    auto format(const Id<Tag, T>& id, auto& ctx) const
+    {
+        return std::format_to(ctx.out(), "{}", id.value);
+    }
+};
+
 // General hash function
 consteval std::size_t hash_fnv1a(std::string_view str)
 {
@@ -62,7 +85,7 @@ consteval std::size_t getTypeHash()
     return hash_fnv1a(FUNCTION_SIGNATURE);
 }
 
-export using Entity = TypeId;
+export using Entity = Id<struct EntityTag>;
 
 //------------------------------------------------------------------------------------------------------------------------
 // Generic type reflection

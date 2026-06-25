@@ -101,7 +101,7 @@ private:
     Archetype& prepareArchetypeOnAddComponent(Entity entity, ComponentTypeId componentId);
     
     std::unordered_map<ArchetypeChangedObserverHandle, ArchetypeChangedCallback> m_archetypeChangeObservers{};
-    Entity m_nextEntity{};
+    Entity::ValueType m_nextEntityValue{};
     std::unordered_map<Entity, EntitySignature> m_entities{};
     std::unordered_map<EntitySignature, Archetype> m_archetypes;
     std::reference_wrapper<RenderManager> m_renderManager;

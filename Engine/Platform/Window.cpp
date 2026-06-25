@@ -11,7 +11,7 @@ namespace Platform::Window
     };
 
     std::unordered_map<GLFWwindow*, WindowHandle> glfwWindowToHandle;
-    std::unordered_map<WindowHandle::ValueType, WindowData> windows;
+    std::unordered_map<WindowHandle, WindowData> windows;
     WindowHandle::ValueType nextWindowHandle = 0;
     std::unordered_map<CursorType, GLFWcursor*> cursorTypes;
 
@@ -56,7 +56,7 @@ WindowHandle Platform::Window::createWindow(WindowCreateInfo info)
     glfwSetMouseButtonCallback(glfwWindow, mouseButtonCallback);
 
     const WindowHandle handle{nextWindowHandle++};
-    windows[handle.value].glfwHandle = glfwWindow;
+    windows[handle].glfwHandle = glfwWindow;
     glfwWindowToHandle[glfwWindow] = handle;
 
     return handle;
@@ -68,7 +68,7 @@ void Platform::Window::destroyWindow(WindowHandle window)
     glfwDestroyWindow(data.glfwHandle);
     glfwWindowToHandle.erase(data.glfwHandle);
     data = {};
-    windows.erase(window.value);
+    windows.erase(window);
 }
 
 Vec2 Platform::Window::getCursorPosition(WindowHandle window)
@@ -146,7 +146,7 @@ GLFWwindow* Platform::Window::getGlfwWindow(WindowHandle window)
 
 Platform::Window::WindowData& Platform::Window::getWindowData(WindowHandle handle)
 {
-    if (auto it = windows.find(handle.value); it != windows.end())
+    if (auto it = windows.find(handle); it != windows.end())
         return it->second;
 
     fatalError(std::format("Couldn't find window with handle: {}", handle.value));
@@ -161,7 +161,7 @@ void Platform::Window::keyCallback([[maybe_unused]] GLFWwindow* window, int key,
         const KeyCode keyCode = static_cast<KeyCode>(key);
         const KeyAction keyAction = static_cast<KeyAction>(action);
 
-        for (const KeyFunction& callback : windows[it->second.value].keyEventCallbacks)
+        for (const KeyFunction& callback : windows[it->second].keyEventCallbacks)
         {
             callback(keyCode, keyAction);
         }
@@ -175,7 +175,7 @@ void Platform::Window::mouseButtonCallback([[maybe_unused]] GLFWwindow* window, 
         const KeyCode keyCode = static_cast<KeyCode>(button);
         const KeyAction keyAction = static_cast<KeyAction>(action);
 
-        for (const MouseButtonFunction& callback : windows[it->second.value].mouseEventCallbacks)
+        for (const MouseButtonFunction& callback : windows[it->second].mouseEventCallbacks)
         {
             callback(keyCode, keyAction);
         }

@@ -13,7 +13,7 @@ export class CameraSystem final : public System
         Entity cameraEntity = player.getMainCamera();
         if (!world.isValid(cameraEntity))
         {
-            player.setMainCamera(world, invalidId());
+            player.setMainCamera(world, {});
             return;
         }
 

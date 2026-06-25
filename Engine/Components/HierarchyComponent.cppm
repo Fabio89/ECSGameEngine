@@ -8,10 +8,10 @@ import World;
 
 export struct HierarchyComponent
 {
-    Entity parent{invalidId()};
-    Entity firstChild{invalidId()};
-    Entity nextSibling{invalidId()};
-    Entity previousSibling{invalidId()};
+    Entity parent;
+    Entity firstChild;
+    Entity nextSibling;
+    Entity previousSibling;
 };
 
 template<>

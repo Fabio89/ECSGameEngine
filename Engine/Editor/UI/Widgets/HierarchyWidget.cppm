@@ -50,7 +50,7 @@ export namespace Widgets
 
             for (Entity entity : world.getEntitiesRange())
             {
-                if (HierarchyUtils::getParent(world, entity) == invalidId())
+                if (!HierarchyUtils::getParent(world, entity).isValid())
                     addEntity(world, entity);
             }
 
@@ -110,7 +110,7 @@ export namespace Widgets
         {
             auto nameComponent = world.readComponent<NameComponent>(entity);
 
-            ImGui::PushID(entity);
+            ImGui::PushID(entity.value);
 
             ImGui::ImGuiTreeNodeFlags flags =
                 ImGui::ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen |
@@ -170,7 +170,7 @@ export namespace Widgets
 
             if (const ComponentTypeBase* type = ComponentRegistry::get(componentTypeId))
             {
-                ImGui::PushID(entity);
+                ImGui::PushID(entity.value);
                 ImGui::PushID(componentTypeId);
 
                 bool opened = ImGui::TreeNodeEx(type->getName().data(), flags);
@@ -197,7 +197,7 @@ export namespace Widgets
         }
 
         bool m_open{true};
-        Entity m_selectedEntity{invalidId()};
+        Entity m_selectedEntity{};
         std::optional<std::pair<Entity, ComponentTypeId>> m_currentlySelected;
         bool m_transformSelected{false};
     };

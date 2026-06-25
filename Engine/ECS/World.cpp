@@ -33,7 +33,7 @@ World::World(const WorldCreateInfo& info)
 
 Entity World::createEntity()
 {
-    const Entity entity = m_nextEntity++;
+    const Entity entity{m_nextEntityValue++};
     m_entities.try_emplace(entity);
     return entity;
 }
@@ -161,7 +161,7 @@ void World::removeEntity(Entity entity)
 
 bool World::isValid(Entity entity) const
 {
-    return entity != invalidId() && m_entities.contains(entity);
+    return entity.isValid() && m_entities.contains(entity);
 }
 
 void World::loadScene(const std::filesystem::path& path)
@@ -188,7 +188,7 @@ JsonObject World::serializeScene(Json::MemoryPoolAllocator<>& allocator) const
     check(std::in_range<Json::SizeType>(m_entities.size()), "Truncating value of m_entities.size()!");
     jsonEntityArray.Reserve(static_cast<Json::SizeType>(m_entities.size()), allocator);
 
-    for (auto entity : m_entities | std::views::keys)
+    for (Entity entity : m_entities | std::views::keys)
     {
         if (hasComponent<TagsComponent>(entity) && std::ranges::contains(readComponent<TagsComponent>(entity).tags, Tag::notEditable))
             continue;
@@ -207,7 +207,7 @@ JsonObject World::serializeScene(Json::MemoryPoolAllocator<>& allocator) const
             JsonObject jsonComponent = componentTypeInfo.serialize(component, allocator);
             jsonComponentDict.AddMember(Json::GenericStringRef{componentTypeInfo.getName().data()}, jsonComponent, allocator);
         }
-        jsonEntity.AddMember("id", entity, allocator);
+        jsonEntity.AddMember("id", entity.value, allocator);
         jsonEntity.AddMember("components", jsonComponentDict, allocator);
         jsonEntityArray.PushBack(jsonEntity, allocator);
     }

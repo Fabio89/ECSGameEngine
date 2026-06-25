@@ -14,7 +14,7 @@ namespace Physics
 Entity Physics::lineTrace(const World& world, const Ray& ray, TraceChannelFlags channel)
 {
     float closestHit = std::numeric_limits<float>::max();
-    Entity hitEntity = invalidId();
+    Entity hitEntity;
 
     for (auto&& [entity, aabb] : world.view<BoundingBoxComponent>())
     {

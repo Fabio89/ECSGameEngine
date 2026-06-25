@@ -3,9 +3,9 @@ import Core;
 
 export struct GizmoComponent
 {
-    Entity xAxisEntity{invalidId()};
-    Entity yAxisEntity{invalidId()};
-    Entity zAxisEntity{invalidId()};
+    Entity xAxisEntity{};
+    Entity yAxisEntity{};
+    Entity zAxisEntity{};
 };
 
 template<>
