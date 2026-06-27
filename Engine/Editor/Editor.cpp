@@ -4,12 +4,15 @@ import Component.Transform;
 import Editor.Camera;
 import Editor.Components;
 import Editor.Gizmos;
+import Editor.Events;
+import EditorUI;
 import Engine;
 import Input;
 import Math;
 import Physics;
-import UI.Widget.EntityExplorer;
-import UI.Widget.MainMenu;
+import UI.Panel.Hierarchy;
+import UI.Panel.Inspector;
+import UI.Panel.MainMenu;
 import World;
 
 enum class EditMode : UInt8
@@ -25,9 +28,10 @@ namespace
     EditMode currentEditMode{EditMode::None};
     std::array<Entity, 3> gizmos;
     std::unordered_map<Entity, Entity> entitiesToBoundingBoxGizmos;
-    Entity selected;
     Entity selectedGizmoAxis;
+    Editor::Selection currentSelection; // TODO(refactoring): transition to this from single Entity selection
     std::optional<Vec3> projectedCursorPositionLastFrame;
+    EditorUI editorUi;
 }
 
 constexpr Entity& getGizmo(EditMode editMode)
@@ -35,10 +39,15 @@ constexpr Entity& getGizmo(EditMode editMode)
     return gizmos[static_cast<UInt8>(editMode)];
 }
 
-void attachToSelectedEntity(World& world, Entity gizmo)
+void attachToSelection(World& world, Entity gizmo)
 {
-    HierarchyUtils::setParent(world, gizmo, selected);
-    world.editComponent<TransformComponent>(gizmo).scale = 0.2f / world.readComponent<TransformComponent>(selected).scale;
+    // TODO(refactoring): Gizmos probably shouldn't attach to entities as children
+    Entity firstSelected = currentSelection.isEmpty() ? Entity{} : currentSelection.get().front();
+    if (!check(firstSelected.isValid(), "Tried to attach a gizmo to an invalid entity!"))
+        return;
+
+    HierarchyUtils::setParent(world, gizmo, firstSelected);
+    world.editComponent<TransformComponent>(gizmo).scale = 0.2f / world.readComponent<TransformComponent>(firstSelected).scale;
 }
 
 void setEditMode(World& world, EditMode editMode)
@@ -49,22 +58,71 @@ void setEditMode(World& world, EditMode editMode)
         for (Entity gizmo : gizmos)
         {
             check(world.isValid(gizmo), "Gizmo entity is invalid. Please ensure all gizmos are properly initialized before setting edit mode.", ErrorType::Error);
-            const bool shouldShow = Engine::isValid(selected) && editMode != EditMode::None && gizmo == getGizmo(editMode);
+            const bool shouldShow = !currentSelection.isEmpty() && editMode != EditMode::None && gizmo == getGizmo(editMode);
             EditorUtils::setGizmoVisible(world, gizmo, shouldShow);
             if (shouldShow)
             {
-                attachToSelectedEntity(world, gizmo);
+                attachToSelection(world, gizmo);
             }
         }
     }
+}
+
+void Editor::Selection::add(Entity entity)
+{
+    if (!contains(entity))
+        m_entities.push_back(entity);
+}
+
+void Editor::Selection::remove(Entity entity)
+{
+    std::erase(m_entities, entity);
+}
+
+void Editor::Selection::clear()
+{
+    m_entities.clear();
+}
+
+bool Editor::Selection::contains(Entity entity) const
+{
+    return std::ranges::find(m_entities, entity) != m_entities.end();
+}
+
+bool Editor::Selection::isEmpty() const
+{
+    return m_entities.empty();
+}
+
+void Editor::Selection::set(std::span<const Entity> entities)
+{
+    auto validEntities = entities | std::views::filter([](Entity e){ return e.isValid(); });
+    m_entities.assign(validEntities.begin(), validEntities.end());
+
+    Engine::events().publish(SelectionChangedEvent{.selection = m_entities});
+}
+
+void Editor::Selection::setSingle(Entity entity)
+{
+    m_entities.clear();
+    if (entity.isValid())
+        m_entities.push_back(entity);
+
+    Engine::events().publish(SelectionChangedEvent{.selection = m_entities});
+}
+
+std::span<const Entity> Editor::Selection::get() const
+{
+    return m_entities;
 }
 
 void Editor::init(World& world)
 {
     EditorComponents::init();
 
-    world.addWidget<Widgets::EntityExplorer>();
-    world.addWidget<Widgets::MainMenuWidget>();
+    addPanel<Panels::HierarchyPanel>(world);
+    addPanel<Panels::InspectorPanel>(world);
+    addPanel<Panels::MainMenuPanel>(world);
 }
 
 void Editor::createGizmos(World& world)
@@ -76,105 +134,145 @@ void Editor::createGizmos(World& world)
 
 void Editor::update(World& world, WindowHandle window, float deltaTime)
 {
-    if (Input::isKeyJustPressed(KeyCode::Q))
+    if (EditorUI::isKeyboardAvailable())
     {
-        setEditMode(world, EditMode::None);
-    } else if (Input::isKeyJustPressed(KeyCode::W))
-    {
-        setEditMode(world, EditMode::Translate);
-    } else if (Input::isKeyJustPressed(KeyCode::E))
-    {
-        setEditMode(world, EditMode::Rotate);
-    } else if (Input::isKeyJustPressed(KeyCode::R))
-    {
-        setEditMode(world, EditMode::Scale);
-    }
-
-    const Vec2 cursorPosition = Input::getCursorPosition(window);
-    const Ray ray = Physics::rayFromScreenPosition(world, Engine::getPlayer(), cursorPosition);
-
-    if (Engine::isValid(selected) && Engine::isValid(selectedGizmoAxis) && Input::isKeyDown(KeyCode::MouseButtonLeft))
-    {
-        TransformComponent &transform = world.editComponent<TransformComponent>(selected);
-
-        const Vec3 gizmoAxisDirection = [&]
+        if (Input::isKeyJustPressed(KeyCode::Q))
         {
-            const Entity gizmoEntity = HierarchyUtils::getParent(world, selectedGizmoAxis);
-            const GizmoComponent &gizmo = world.readComponent<GizmoComponent>(gizmoEntity);
-            if (selectedGizmoAxis == gizmo.xAxisEntity)
-                return TransformUtils::right(transform);
-            if (selectedGizmoAxis == gizmo.yAxisEntity)
-                return TransformUtils::up(transform);
-            if (selectedGizmoAxis == gizmo.zAxisEntity)
-                return TransformUtils::forward(transform);
-            report("Invalid gizmo axis entity");
-            return Vec3{};
-        }();
-
-        const Plane movePlane
+            setEditMode(world, EditMode::None);
+        } else if (Input::isKeyJustPressed(KeyCode::W))
         {
-            .point = transform.position,
-            .normal = Math::cross(
-                TransformUtils::right(world.readComponent<TransformComponent>(Engine::getPlayer().getMainCamera())),
-                gizmoAxisDirection)
-        };
-
-        const std::optional<Vec3> projectedCursorPosition = Physics::intersectRayPlane(ray, movePlane);
-
-        if (projectedCursorPositionLastFrame.has_value() && projectedCursorPosition.has_value())
+            setEditMode(world, EditMode::Translate);
+        } else if (Input::isKeyJustPressed(KeyCode::E))
         {
-            const auto delta = Math::dot(*projectedCursorPosition - *projectedCursorPositionLastFrame,
-                                         gizmoAxisDirection);
-            transform.position += gizmoAxisDirection * delta;
-            projectedCursorPositionLastFrame = *projectedCursorPosition;
+            setEditMode(world, EditMode::Rotate);
+        } else if (Input::isKeyJustPressed(KeyCode::R))
+        {
+            setEditMode(world, EditMode::Scale);
         }
-        projectedCursorPositionLastFrame = projectedCursorPosition;
-    } else
-    {
-        selectedGizmoAxis = {};
-        projectedCursorPositionLastFrame = {};
     }
 
-    if (Input::isKeyJustPressed(KeyCode::MouseButtonLeft))
+    if (EditorUI::isMouseAvailable())
     {
-        selectedGizmoAxis = Physics::lineTrace(world, ray, TraceChannelFlags::Gizmo);
+        const Vec2 cursorPosition = Input::getCursorPosition(window);
+        const Ray ray = Physics::rayFromScreenPosition(world, Engine::getPlayer(), cursorPosition);
 
-        const Entity previouslySelected = selected;
-        selected = Physics::lineTrace(world, ray, TraceChannelFlags::Default);
-
-        if (selected != previouslySelected)
+        Entity firstSelectedEntity = currentSelection.isEmpty() ? Entity{} : currentSelection.get().front();
+        if (Engine::isValid(firstSelectedEntity) && Engine::isValid(selectedGizmoAxis) && Input::isKeyDown(KeyCode::MouseButtonLeft))
         {
-            if (previouslySelected.isValid())
+            TransformComponent& transform = world.editComponent<TransformComponent>(firstSelectedEntity);
+
+            const Vec3 gizmoAxisDirection = [&]
             {
-                EditorUtils::setGizmoVisible(world, entitiesToBoundingBoxGizmos.at(previouslySelected), false);
+                const Entity gizmoEntity = HierarchyUtils::getParent(world, selectedGizmoAxis);
+                const GizmoComponent& gizmo = world.readComponent<GizmoComponent>(gizmoEntity);
+                if (selectedGizmoAxis == gizmo.xAxisEntity)
+                    return TransformUtils::right(transform);
+                if (selectedGizmoAxis == gizmo.yAxisEntity)
+                    return TransformUtils::up(transform);
+                if (selectedGizmoAxis == gizmo.zAxisEntity)
+                    return TransformUtils::forward(transform);
+                report("Invalid gizmo axis entity");
+                return Vec3{};
+            }();
+
+            const Plane movePlane
+            {
+                .point = transform.position,
+                .normal = Math::cross(
+                    TransformUtils::right(world.readComponent<TransformComponent>(Engine::getPlayer().getMainCamera())),
+                    gizmoAxisDirection)
+            };
+
+            const std::optional<Vec3> projectedCursorPosition = Physics::intersectRayPlane(ray, movePlane);
+
+            if (projectedCursorPositionLastFrame.has_value() && projectedCursorPosition.has_value())
+            {
+                const auto delta = Math::dot(*projectedCursorPosition - *projectedCursorPositionLastFrame,
+                                             gizmoAxisDirection);
+                transform.position += gizmoAxisDirection * delta;
+                projectedCursorPositionLastFrame = *projectedCursorPosition;
             }
+            projectedCursorPositionLastFrame = projectedCursorPosition;
+        } else
+        {
+            selectedGizmoAxis = {};
+            projectedCursorPositionLastFrame = {};
+        }
 
-            if (selected.isValid())
-            {
-                if (currentEditMode != EditMode::None)
-                {
-                    const Entity gizmo = getGizmo(currentEditMode);
-                    attachToSelectedEntity(world, gizmo);
-                    EditorUtils::setGizmoVisible(world, gizmo, true);
-                }
+        if (Input::isKeyJustPressed(KeyCode::MouseButtonLeft))
+        {
+            selectedGizmoAxis = Physics::lineTrace(world, ray, TraceChannelFlags::Gizmo);
 
-                auto it = entitiesToBoundingBoxGizmos.find(selected);
-                if (it == entitiesToBoundingBoxGizmos.end())
-                    it = entitiesToBoundingBoxGizmos.emplace(
-                        selected, EditorUtils::createBoundingBoxGizmo(world, selected)).first;
+            const Entity hitEntity = Physics::lineTrace(world, ray, TraceChannelFlags::Default);
 
-                const Entity boundingBoxGizmo = it->second;
-                EditorUtils::setGizmoVisible(world, boundingBoxGizmo, true);
-            } else
-            {
-                if (currentEditMode != EditMode::None)
-                {
-                    EditorUtils::setGizmoVisible(world, getGizmo(currentEditMode), false);
-                }
-            }
+            setSingleSelection(world, hitEntity);
         }
     }
 
     EditorCamera::setActive(window, Input::isKeyDown(KeyCode::MouseButtonRight));
     EditorCamera::update(window, world, Engine::getPlayer(), deltaTime);
+}
+
+void Editor::drawEditorUI()
+{
+    editorUi.draw();
+}
+
+void Editor::setSingleSelection(World& world, Entity entity)
+{
+    if (currentSelection.contains(entity) && currentSelection.get().size() == 1)
+        return;
+
+    for (Entity selected : currentSelection.get())
+    {
+        EditorUtils::setGizmoVisible(world, entitiesToBoundingBoxGizmos.at(selected), false);
+    }
+
+    currentSelection.setSingle(entity);
+
+    if (entity.isValid())
+    {
+        if (currentEditMode != EditMode::None)
+        {
+            const Entity gizmo = getGizmo(currentEditMode);
+            attachToSelection(world, gizmo);
+            EditorUtils::setGizmoVisible(world, gizmo, true);
+        }
+
+        auto it = entitiesToBoundingBoxGizmos.find(entity);
+        if (it == entitiesToBoundingBoxGizmos.end())
+            it = entitiesToBoundingBoxGizmos.emplace(
+                entity, EditorUtils::createBoundingBoxGizmo(world, entity)).first;
+
+        const Entity boundingBoxGizmo = it->second;
+        EditorUtils::setGizmoVisible(world, boundingBoxGizmo, true);
+    } else
+    {
+        if (currentEditMode != EditMode::None)
+        {
+            EditorUtils::setGizmoVisible(world, getGizmo(currentEditMode), false);
+        }
+    }
+}
+
+void Editor::setSelection(World& world, std::span<const Entity> entities)
+{
+    // TODO(feature): Multi-selection
+    if (!entities.empty())
+        setSingleSelection(world, entities.front());
+}
+
+Editor::Selection& Editor::selection()
+{
+    return currentSelection;
+}
+
+std::span<const Entity> Editor::getSelection()
+{
+    return currentSelection.get();
+}
+
+void Editor::addPanel(std::unique_ptr<IPanel> panel)
+{
+    editorUi.addPanel(std::move(panel));
 }

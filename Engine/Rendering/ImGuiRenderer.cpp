@@ -1,4 +1,4 @@
-module ImGuiHelper;
+module Render.ImGui;
 import Render.QueueFamily;
 import UI.ImGui;
 import UI.PropertyDrawers;
@@ -9,7 +9,7 @@ static void check_vk_result(ImGui::VkResult result)
         log(std::format("ImGui Vulkan error: {}\n", static_cast<int>(result)));
 }
 
-void ImGuiHelper::init(WindowHandle window, const ImGuiInitInfo& initInfo)
+void ImGuiRenderer::init(WindowHandle window, const ImGuiInitInfo& initInfo)
 {
     if constexpr (!enabled)
         return;
@@ -32,8 +32,9 @@ void ImGuiHelper::init(WindowHandle window, const ImGuiInitInfo& initInfo)
               << "\n";
 
     (void)io;
-    io.ConfigFlags |= ImGui::ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-    io.ConfigFlags |= ImGui::ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
+    io.ConfigFlags |= ImGui::ImGuiConfigFlags_::ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGui::ImGuiConfigFlags_::ImGuiConfigFlags_NavEnableGamepad;
+    io.ConfigFlags |= ImGui::ImGuiConfigFlags_::ImGuiConfigFlags_DockingEnable;
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
@@ -100,7 +101,7 @@ void ImGuiHelper::init(WindowHandle window, const ImGuiInitInfo& initInfo)
     ImGui::ImGui_ImplVulkan_Init(&imguiInitInfo);
 }
 
-void ImGuiHelper::drawFrame()
+void ImGuiRenderer::beginFrame()
 {
     if constexpr (!enabled)
         return;
@@ -108,15 +109,10 @@ void ImGuiHelper::drawFrame()
     ImGui::ImGui_ImplVulkan_NewFrame();
     ImGui::ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-
-    for (auto& widget : m_widgets)
-    {
-        widget->draw();
-    }
 }
 
 // ReSharper disable once CppMemberFunctionMayBeStatic
-void ImGuiHelper::renderFrame(vk::CommandBuffer commandBuffer)
+void ImGuiRenderer::renderFrame(vk::CommandBuffer commandBuffer)
 {
     if constexpr (!enabled)
         return;
@@ -125,12 +121,12 @@ void ImGuiHelper::renderFrame(vk::CommandBuffer commandBuffer)
     ImGui::ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 }
 
-void ImGuiHelper::recreateSwapchain(std::size_t newSize)
+void ImGuiRenderer::recreateSwapchain(std::size_t newSize)
 {
     ImGui::ImGui_ImplVulkan_SetMinImageCount(static_cast<UInt32>(newSize));
 }
 
-void ImGuiHelper::shutdown()
+void ImGuiRenderer::shutdown()
 {
     if constexpr (!enabled)
         return;

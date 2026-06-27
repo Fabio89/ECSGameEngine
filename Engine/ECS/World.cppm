@@ -8,7 +8,6 @@ import Archetype;
 import Guid;
 import Render.RenderManager;
 import Serialization.Json;
-import UI.IWidget;
 
 constexpr int maxComponentsPerEntity = 64;
 
@@ -74,9 +73,6 @@ public:
 
     ComponentBase& editComponent(Entity entity, TypeId componentType) { return const_cast<ComponentBase&>(readComponent(entity, componentType)); }
 
-    template <typename T>
-    void addWidget() { addWidget(std::make_unique<T>(*this)); }
-
     ArchetypeChangedObserverHandle observeOnComponentAdded(ArchetypeChangedCallback observer);
     void unobserveOnComponentAdded(ArchetypeChangedObserverHandle observerHandle);
 
@@ -94,7 +90,6 @@ public:
     void printArchetypeStatus();
 
 private:
-    void addWidget(std::unique_ptr<IWidget> widget);
     const Archetype& readArchetype(const EntitySignature& signature) const;
     Archetype& editArchetype(const EntitySignature& signature);
     Archetype& editOrCreateArchetype(const EntitySignature& signature);

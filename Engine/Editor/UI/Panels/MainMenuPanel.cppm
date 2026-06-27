@@ -1,16 +1,14 @@
-export module UI.Widget.MainMenu;
+export module UI.Panel.MainMenu;
 import Engine;
 import FileSystem;
-import UI.ImGui;
-import UI.Widget;
-import World;
+import UI.Panel;
 
-export namespace Widgets
+export namespace Panels
 {
-    class MainMenuWidget : public Widget
+    class MainMenuPanel : public Panel
     {
     public:
-        using Widget::Widget;
+        using Panel::Panel;
 
     private:
         void doDraw(World& world) override;
@@ -23,7 +21,7 @@ export namespace Widgets
     };
 }
 
-void Widgets::MainMenuWidget::doDraw(World& world)
+void Panels::MainMenuPanel::doDraw(World& world)
 {
     if (!ImGui::BeginMainMenuBar())
         return;
@@ -37,7 +35,7 @@ void Widgets::MainMenuWidget::doDraw(World& world)
     ImGui::EndMainMenuBar();
 }
 
-void Widgets::MainMenuWidget::drawFileMenu(World& world)
+void Panels::MainMenuPanel::drawFileMenu(World& world)
 {
     if (!ImGui::BeginMenu("File"))
         return;
@@ -61,7 +59,7 @@ void Widgets::MainMenuWidget::drawFileMenu(World& world)
     ImGui::EndMenu();
 }
 
-void Widgets::MainMenuWidget::drawEditMenu(World& world) {}
-void Widgets::MainMenuWidget::drawViewMenu(World& world) {}
-void Widgets::MainMenuWidget::drawToolsMenu(World& world) {}
-void Widgets::MainMenuWidget::drawHelpMenu(World& world) {}
+void Panels::MainMenuPanel::drawEditMenu(World& world) {}
+void Panels::MainMenuPanel::drawViewMenu(World& world) {}
+void Panels::MainMenuPanel::drawToolsMenu(World& world) {}
+void Panels::MainMenuPanel::drawHelpMenu(World& world) {}

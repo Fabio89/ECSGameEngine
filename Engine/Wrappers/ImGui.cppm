@@ -350,7 +350,11 @@ export namespace ImGui
     using ImGui::GetItemRectMax;
     using ImGui::GetItemRectSize;
 
+    using ::ImGuiViewport;
     using ImGui::GetMainViewport;
+    using ImGui::DockSpaceOverViewport;
+    using ImGui::SetNextWindowViewport;
+    using ImGui::DockSpace;
 
     using ImGui::GetBackgroundDrawList;
     using ImGui::GetForegroundDrawList;
@@ -418,8 +422,8 @@ export namespace ImGui
 
     using VkSampleCountFlagBits::VK_SAMPLE_COUNT_1_BIT;
 
-    using ImGuiConfigFlags_::ImGuiConfigFlags_NavEnableKeyboard;
-    using ImGuiConfigFlags_::ImGuiConfigFlags_NavEnableGamepad;
+    using ::ImGuiConfigFlags_;
+    using ::ImGuiConfigFlags;
 
     using ImGuiChildFlags_::ImGuiChildFlags_Borders;
 
@@ -429,11 +433,18 @@ export namespace ImGui
     using ::ImGuiTreeNodeFlags_;
     using ::ImGuiTreeNodeFlags;
 
+    using ::ImGuiWindowFlags_;
+    using ::ImGuiWindowFlags;
+
+    using ::ImGuiDockNodeFlags_;
+    using ::ImGuiDockNodeFlags;
+
     using ImGuiStyleVar_::ImGuiStyleVar_ItemSpacing;
     using ImGuiStyleVar_::ImGuiStyleVar_ItemInnerSpacing;
 
     using ImGuiMouseCursor_::ImGuiMouseCursor_ResizeEW;
-    
+
+    using ::ImGuiID;
     using ::ImVec2;
     using ::ImGuiIO;
     using ::ImGui_ImplVulkan_InitInfo;

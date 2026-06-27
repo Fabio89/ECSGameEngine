@@ -75,11 +75,6 @@ void World::printArchetypeStatus()
     }
 }
 
-void World::addWidget(std::unique_ptr<IWidget> widget)
-{
-    m_renderManager.get().addWidget(std::move(widget));
-}
-
 const Archetype& World::readArchetype(const EntitySignature& signature) const
 {
     if (auto it = m_archetypes.find(signature); it != m_archetypes.end())
@@ -190,7 +185,7 @@ JsonObject World::serializeScene(Json::MemoryPoolAllocator<>& allocator) const
 
     for (Entity entity : m_entities | std::views::keys)
     {
-        if (hasComponent<TagsComponent>(entity) && std::ranges::contains(readComponent<TagsComponent>(entity).tags, Tag::notEditable))
+        if (hasComponent<TagsComponent>(entity) && std::ranges::contains(readComponent<TagsComponent>(entity).tags, Tag::editorOnly))
             continue;
         
         JsonObject jsonEntity{Json::kObjectType};

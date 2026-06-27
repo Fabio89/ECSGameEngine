@@ -33,6 +33,9 @@ void print(T&& message, ErrorType type)
         std::cerr << logColorRed << "Fatal Error: " << message << logColorReset << std::endl;
         break;
     }
+
+    const auto location = std::source_location::current();
+    std::cerr << std::format("{}:{} In function '{}'\n", location.file_name(), location.line(), location.function_name());
 }
 
 export template <typename T>

@@ -93,18 +93,6 @@ export using TypeId = Id<struct TypeIdTag, std::size_t>;
 // Generic type reflection
 //------------------------------------------------------------------------------------------------------------------------
 
-export struct TypeInfo
-{
-    TypeId id{};
-    std::string_view name{};
-};
-
-export template<typename T>
-struct TypeTraits
-{
-    static constexpr std::string_view name = "Unknown";
-};
-
 export template<typename T>
 constexpr std::string_view getTypeName()
 {
@@ -115,16 +103,6 @@ export template<typename T>
 consteval TypeId getTypeId()
 {
     return {getTypeHash<T>()};
-}
-
-export template<typename T>
-constexpr TypeInfo getTypeInfo()
-{
-    return
-    {
-        .id = getTypeId<T>(),
-        .name = getTypeName<T>()
-    };
 }
 
 //------------------------------------------------------------------------------------------------------------------------

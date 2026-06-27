@@ -83,6 +83,14 @@ target_compile_definitions(Engine
         VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
 )
 
+target_compile_features(Engine PUBLIC cxx_std_23)
+
+target_compile_options(Engine PRIVATE
+        -Wall
+        -Wextra
+        -Wpedantic
+)
+
 target_sources(Engine
         PRIVATE
         ${ENGINE_SOURCES}
@@ -133,6 +141,12 @@ target_link_libraries(Game
 )
 
 target_compile_features(Game PUBLIC cxx_std_23)
+
+target_compile_options(Game PRIVATE
+        -Wall
+        -Wextra
+        -Wpedantic
+)
 
 set_property(TARGET Game PROPERTY CXX_MODULE_STD ON)
 

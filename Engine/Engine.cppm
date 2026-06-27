@@ -5,6 +5,7 @@ module;
 export module Engine;
 export import Core;
 export import EngineComponents;
+export import EventBus;
 import ComponentRegistry;
 import FileSystem;
 import Input;
@@ -92,6 +93,12 @@ export namespace Engine
 
     template <ValidComponentData First, ValidComponentData ... Rest>
     ENGINE_API std::generator<std::tuple<Entity, First&, Rest&...>> view();
+
+    //------------------------------------------------------------------------------------------------------------------------
+    // Events
+    //------------------------------------------------------------------------------------------------------------------------
+
+    ENGINE_API EventBus& events();
 
     //------------------------------------------------------------------------------------------------------------------------
     // DEBUG -TEMPORARY

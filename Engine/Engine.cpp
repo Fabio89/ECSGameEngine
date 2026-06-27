@@ -1,5 +1,5 @@
 module Engine;
-import Editor; // TODO: remove this dependency
+import Editor; // TODO(refactoring): remove this dependency, use events?
 import EngineSystems;
 import Editor.Camera;
 import Platform;
@@ -16,6 +16,7 @@ namespace Engine
     std::thread renderThread;
     Player player;
     WindowHandle window;
+    EventBus eventBus;
 }
 
 void Engine::runRenderThread()
@@ -177,6 +178,11 @@ World& Engine::getWorld()
 void Engine::printArchetypeStatus()
 {
     world.printArchetypeStatus();
+}
+
+EventBus& Engine::events()
+{
+    return eventBus;
 }
 
 Player& Engine::getPlayer()

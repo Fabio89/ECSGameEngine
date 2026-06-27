@@ -131,12 +131,12 @@ bool Platform::Window::isWindowClosing(WindowHandle window)
 
 void Platform::Window::setKeyCallback(WindowHandle window, KeyFunction callback)
 {
-    getWindowData(window).keyEventCallbacks.push_back(std::move(callback));
+    getWindowData(window).keyEventCallbacks.push_back(callback);
 }
 
 void Platform::Window::setMouseButtonCallback(WindowHandle window, MouseButtonFunction callback)
 {
-    getWindowData(window).mouseEventCallbacks.push_back(std::move(callback));
+    getWindowData(window).mouseEventCallbacks.push_back(callback);
 }
 
 GLFWwindow* Platform::Window::getGlfwWindow(WindowHandle window)
@@ -158,8 +158,8 @@ void Platform::Window::keyCallback([[maybe_unused]] GLFWwindow* window, int key,
 {
     if (auto it = glfwWindowToHandle.find(window); it != glfwWindowToHandle.end())
     {
-        const KeyCode keyCode = static_cast<KeyCode>(key);
-        const KeyAction keyAction = static_cast<KeyAction>(action);
+        const auto keyCode = static_cast<KeyCode>(key);
+        const auto keyAction = static_cast<KeyAction>(action);
 
         for (const KeyFunction& callback : windows[it->second].keyEventCallbacks)
         {

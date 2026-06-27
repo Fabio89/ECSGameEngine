@@ -3,8 +3,8 @@ export import Render.Commands;
 import Core;
 import CoreTypes;
 import Guid;
-import ImGuiHelper;
 import Math;
+import Render.ImGui;
 import Render.Vulkan;
 import Render.Model;
 import Render.RenderObject;
@@ -36,7 +36,6 @@ public:
     template <typename T>
     void addCommand(T&& command);
 
-    void addWidget(std::unique_ptr<IWidget> widget);
     void setCamera(const Camera& camera);
     float getAspectRatio() const { return m_swapchainExtent.height > 0 ? m_swapchainExtent.width / static_cast<float>(m_swapchainExtent.height) : 1.f; }
 
@@ -88,7 +87,7 @@ private:
 
     vk::DebugUtilsMessengerEXT m_debugMessenger{};
 
-    ImGuiHelper m_imguiHelper;
+    ImGuiRenderer m_imguiHelper;
     DeltaTimeTracker m_deltaTime;
     std::atomic<bool> m_framebufferResized{};
     UInt32 m_currentFrame{0};

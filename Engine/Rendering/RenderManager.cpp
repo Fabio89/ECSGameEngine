@@ -3,6 +3,7 @@ module;
 #include <experimental/scope>
 
 module Render.RenderManager;
+import Editor;
 import Glfw;
 import Guid;
 import Render.Pipeline.Line;
@@ -234,11 +235,6 @@ void RenderManager::clear()
 void RenderManager::setCamera(const Camera& camera)
 {
     m_renderObjectManager.setCamera(camera);
-}
-
-void RenderManager::addWidget(std::unique_ptr<IWidget> widget)
-{
-    m_imguiHelper.addWidget(std::move(widget));
 }
 
 void RenderManager::createInstance()
@@ -700,7 +696,8 @@ void RenderManager::drawFrame()
 
     commandBuffer.beginRendering(imGuiRenderingInfo);
 
-    m_imguiHelper.drawFrame();
+    m_imguiHelper.beginFrame();
+    Editor::drawEditorUI();
     m_imguiHelper.renderFrame(commandBuffer);
 
     commandBuffer.endRendering();

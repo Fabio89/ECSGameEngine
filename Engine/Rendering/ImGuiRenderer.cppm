@@ -1,5 +1,5 @@
-export module ImGuiHelper;
-export import UI.IWidget;
+export module Render.ImGui;
+export import UI.IPanel;
 import Core;
 import Render.Vulkan;
 import Window;
@@ -18,18 +18,13 @@ export struct ImGuiInitInfo
     vk::Format depthFormat{};
 };
 
-export class ImGuiHelper
+export class ImGuiRenderer
 {
 public:
     static constexpr bool enabled = true;
     void init(WindowHandle window, const ImGuiInitInfo& initInfo);
 
-    template <typename T>
-    void addWidget() { m_widgets.emplace_back(std::make_unique<T>()); }
-
-    void addWidget(std::unique_ptr<IWidget> widget) { m_widgets.emplace_back(std::move(widget)); }
-
-    void drawFrame();
+    void beginFrame();
     void renderFrame(vk::CommandBuffer commandBuffer);
     void recreateSwapchain(std::size_t newSize);
     void shutdown();
@@ -37,5 +32,4 @@ public:
 private:
     vk::Device m_device{};
     vk::DescriptorPool m_descriptorPool{};
-    std::vector<std::unique_ptr<IWidget>> m_widgets;
 };

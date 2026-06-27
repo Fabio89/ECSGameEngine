@@ -22,7 +22,7 @@ Entity createTranslationGizmoAxis(World& world, Entity gizmo, std::string name, 
     world.addComponent<LineRenderComponent>(axis, std::move(vertices));
     world.addComponent<NameComponent>(axis, std::move(name));
     world.addComponent<HierarchyComponent>(axis);
-    world.addComponent<TagsComponent>(axis, {{Tag::notEditable}});
+    world.addComponent<TagsComponent>(axis, {{Tag::editorOnly}});
     world.addComponent<TransformComponent>(axis);
     HierarchyUtils::setParent(world, axis, gizmo);
     return axis;
@@ -33,7 +33,7 @@ Entity EditorUtils::createTranslationGizmo(World& world)
     const Entity gizmo = world.createEntity();
     world.addComponent<NameComponent>(gizmo, "Translation Gizmo");
     world.addComponent<HierarchyComponent>(gizmo);
-    world.addComponent<TagsComponent>(gizmo, {{Tag::notEditable}});
+    world.addComponent<TagsComponent>(gizmo, {{Tag::editorOnly}});
     world.addComponent<TransformComponent>(gizmo);
 
     static constexpr Vec3 xColor = {1.0f, 0.0f, 0.0f};
@@ -162,7 +162,7 @@ Entity EditorUtils::createBoundingBoxGizmo(World& world, Entity parentEntity)
     world.addComponent<NameComponent>(aabbGizmo, std::format("BoundingBoxGizmo_{}", name));
     world.addComponent<HierarchyComponent>(aabbGizmo);
     HierarchyUtils::setParent(world, aabbGizmo, parentEntity);
-    world.addComponent<TagsComponent>(aabbGizmo, {{Tag::notEditable}});
+    world.addComponent<TagsComponent>(aabbGizmo, {{Tag::editorOnly}});
     world.addComponent<TransformComponent>(aabbGizmo);
 
     return aabbGizmo;

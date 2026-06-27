@@ -5,7 +5,7 @@ import Serialization.Json;
 
 export namespace Tag
 {
-    const std::string notEditable = "NotEditable";
+    const std::string editorOnly = "EditorOnly";
 }
 
 export struct TagsComponent
