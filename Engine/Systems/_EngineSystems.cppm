@@ -1,10 +1,10 @@
 export module EngineSystems;
-import System;
 export import System.BoundingBox;
 export import System.Camera;
 export import System.LineRender;
 export import System.Model;
 export import System.Transform;
+import System;
 
 namespace EngineSystems
 {
