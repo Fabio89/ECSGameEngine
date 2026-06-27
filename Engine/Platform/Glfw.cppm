@@ -12,6 +12,7 @@ export using ::glfwGetFramebufferSize;
 export using ::glfwInit;
 export using ::glfwWindowHint;
 export using ::glfwCreateWindow;
+export using ::glfwMaximizeWindow;
 export using ::glfwGetWindowPos;
 export using ::glfwSetWindowPos;
 export using ::glfwGetWindowSize;

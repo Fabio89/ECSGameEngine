@@ -9,7 +9,9 @@ export using WindowHandle = Id<WindowHandleTag>;
 
 export enum class WindowMode
 {
-    Standalone,
+    Windowed,
+    Maximized,
+    Fullscreen,
     Embedded
 };
 
@@ -17,7 +19,7 @@ export struct WindowCreateInfo
 {
     int width = 1280;
     int height = 720;
-    WindowMode mode = WindowMode::Standalone;
+    WindowMode mode = WindowMode::Maximized;
 };
 
 export using ::KeyCodeCount;

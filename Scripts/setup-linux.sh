@@ -8,23 +8,26 @@ cd "$PROJECT_DIR"
 echo "Installing Fedora dependencies..."
 
 sudo dnf install -y \
-    ninja-build \
     cmake \
     gcc-c++ \
+    glslang \
+    glslc \
+    libXcursor-devel \
+    libXi-devel \
+    libXinerama-devel \
+    libXrandr-devel \
+    libasan \
+    libxkbcommon-devel \
+    mesa-libGL-devel \
+    ninja-build \
     pkgconf-pkg-config \
     vulkan-headers \
     vulkan-loader \
     vulkan-loader-devel \
+    vulkan-tools \
     vulkan-validation-layers \
     vulkan-validation-layers-devel \
-    vulkan-tools \
-    glslang \
-    glslc \
-    libasan \
-    libXinerama-devel \
-    libXcursor-devel \
-    libXrandr-devel \
-    libXi-devel
+    wayland-devel
 
 sudo dnf install -y glslc || true
 

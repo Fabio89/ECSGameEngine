@@ -13,8 +13,6 @@ import Render.TextureLoading;
 import Render.Utils;
 import Render.Vulkan;
 
-std::mutex updateLockMutex;
-
 [[nodiscard]]
 vk::PipelineLayout createPipelineLayout(vk::Device device, vk::DescriptorSetLayout descriptorSetLayout)
 {
@@ -115,7 +113,7 @@ void RenderManager::init(WindowHandle window)
         // Determine what API version is available
         const UInt32 apiVersion = vk::enumerateInstanceVersion();
         std::cout << "Loader/Runtime support detected for Vulkan " << vk::apiVersionMajor(apiVersion) << "." <<
-            vk::apiVersionMinor(apiVersion) << "\n";
+                vk::apiVersionMinor(apiVersion) << "\n";
 
         createInstance();
 
@@ -150,7 +148,7 @@ void RenderManager::init(WindowHandle window)
         .colorFormat = {vk::Format::eB8G8R8A8Srgb},
         .depthFormat = RenderUtils::findDepthFormat(m_physicalDevice),
     };
-    m_imguiHelper.init(m_window, imguiInfo);
+    m_imguiHelper.init(window, imguiInfo);
 
     m_renderObjectManager.init
     (
@@ -163,13 +161,21 @@ void RenderManager::init(WindowHandle window)
         m_commandPool
     );
 
+    GLFWwindow* glfwWindow = Platform::Window::getGlfwWindow(window);
+    glfwSetWindowUserPointer(glfwWindow, this);
+    glfwSetFramebufferSizeCallback(glfwWindow, [](GLFWwindow* w, int, int)
+    {
+        auto* self = static_cast<RenderManager*>(glfwGetWindowUserPointer(w));
+        self->m_framebufferResized = true;
+    });
+
     m_initialised = true;
 }
 
 void RenderManager::update()
 {
     {
-        std::lock_guard lock{updateLockMutex};
+        std::lock_guard lock{m_updateLockMutex};
 
         m_graphicsQueue.waitIdle(); // TODO(perf): Explore VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT.
 
@@ -187,7 +193,7 @@ void RenderManager::update()
 
 void RenderManager::shutdown()
 {
-    std::lock_guard lock{updateLockMutex};
+    std::lock_guard lock{m_updateLockMutex};
 
     m_terminated = true;
     m_device.waitIdle();
@@ -235,6 +241,11 @@ void RenderManager::clear()
 void RenderManager::setCamera(const Camera& camera)
 {
     m_renderObjectManager.setCamera(camera);
+}
+
+void RenderManager::updateFramebufferSize()
+{
+    m_framebufferResized = true;
 }
 
 void RenderManager::createInstance()
@@ -291,7 +302,7 @@ void RenderManager::createLogicalDevice()
     queueCreateInfos.reserve(indices.size());
 
     auto indexRange = indices | std::views::transform([&](auto&& index) { return *index; });
-    std::set<std::optional<UInt32>> uniqueQueueFamilies(indexRange.begin(), indexRange.end());
+    std::set<std::optional<UInt32> > uniqueQueueFamilies(indexRange.begin(), indexRange.end());
 
     for (std::optional<UInt32> queueFamily : uniqueQueueFamilies)
     {
@@ -407,8 +418,7 @@ void RenderManager::createSwapchain()
         createInfo.imageSharingMode = vk::SharingMode::eConcurrent;
         createInfo.queueFamilyIndexCount = 2;
         createInfo.pQueueFamilyIndices = queueFamilyIndices.data();
-    }
-    else
+    } else
     {
         createInfo.imageSharingMode = vk::SharingMode::eExclusive;
         createInfo.queueFamilyIndexCount = 0; // Optional
@@ -552,8 +562,7 @@ void RenderManager::pickPhysicalDevice()
         m_physicalDevice = *found;
         vk::PhysicalDeviceProperties properties = m_physicalDevice.getProperties();
         std::cout << "Using device: " << properties.deviceName << "\n";
-    }
-    else
+    } else
     {
         fatalError("failed to find a suitable GPU!");
     }
@@ -590,8 +599,7 @@ void RenderManager::drawFrame()
     {
         recreateSwapchain();
         return;
-    }
-    else if (imageResult.result != vk::Result::eSuccess && imageResult.result != vk::Result::eSuboptimalKHR)
+    } else if (imageResult.result != vk::Result::eSuccess && imageResult.result != vk::Result::eSuboptimalKHR)
     {
         fatalError("failed to acquire swap chain image!");
     }
@@ -755,8 +763,7 @@ void RenderManager::drawFrame()
     {
         const vk::Result result = m_presentQueue.presentKHR(presentInfo);
         shouldRecreateSwapchain = result == vk::Result::eSuboptimalKHR || m_framebufferResized.load();
-    }
-    catch (const vk::OutOfDateKHRError&)
+    } catch (const vk::OutOfDateKHRError&)
     {
         shouldRecreateSwapchain = true;
     }

@@ -39,7 +39,7 @@ public:
     void setCamera(const Camera& camera);
     float getAspectRatio() const { return m_swapchainExtent.height > 0 ? m_swapchainExtent.width / static_cast<float>(m_swapchainExtent.height) : 1.f; }
 
-    void updateFramebufferSize() { m_framebufferResized = true; }
+    void updateFramebufferSize();
     float getDeltaTime() const { return m_deltaTime; }
 
 private:
@@ -47,6 +47,7 @@ private:
     template <typename T>
     class RenderCommand;
 
+    std::mutex m_updateLockMutex;
     bool m_initialised{};
     RenderObjectManager m_renderObjectManager;
     ThreadSafeQueue<std::unique_ptr<RenderCommandBase>> m_commands;
@@ -89,9 +90,9 @@ private:
 
     ImGuiRenderer m_imguiHelper;
     DeltaTimeTracker m_deltaTime;
-    std::atomic<bool> m_framebufferResized{};
     UInt32 m_currentFrame{0};
     bool m_terminated{};
+    std::atomic<bool> m_framebufferResized{false};
 
     static std::vector<const char*> getRequiredExtensions();
 

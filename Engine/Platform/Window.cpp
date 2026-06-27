@@ -52,6 +52,9 @@ WindowHandle Platform::Window::createWindow(WindowCreateInfo info)
         nullptr
     );
 
+    if (info.mode == WindowMode::Maximized)
+        glfwMaximizeWindow(glfwWindow);
+
     glfwSetKeyCallback(glfwWindow, keyCallback);
     glfwSetMouseButtonCallback(glfwWindow, mouseButtonCallback);
 
