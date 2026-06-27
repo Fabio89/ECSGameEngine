@@ -1,9 +1,11 @@
-export module UI.Panel.ImGuiDemo;
-import UI.Panel;
+export module Editor.Panel.ImGuiDemo;
+import Editor.ImGui;
+import Editor.Panel;
+import World;
 
 export namespace Panels
 {
-    class ImGuiDemoPanel : public Panel
+    class ImGuiDemo : public Panel
     {
     public:
         using Panel::Panel;

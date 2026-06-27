@@ -1,9 +1,7 @@
-export module UI.Panel;
-export import World;
-export import UI.ImGui;
-import UI.IPanel;
+export module Editor.Panel;
+import World;
 
-export class Panel : public IPanel
+export class Panel
 {
 public:
     explicit Panel(World& world) : m_world{&world} {}
@@ -12,9 +10,9 @@ public:
     Panel(Panel&&) = delete;
     Panel& operator=(const Panel&) = delete;
     Panel& operator=(Panel&&) = delete;
-    ~Panel() override = default;
+    virtual ~Panel() = default;
     
-    void draw() final { doDraw(*m_world); }
+    void draw() { doDraw(*m_world); }
 
 private:
     virtual void doDraw(World& world) = 0;

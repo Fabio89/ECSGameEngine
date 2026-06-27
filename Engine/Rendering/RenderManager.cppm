@@ -42,12 +42,16 @@ public:
     void updateFramebufferSize();
     float getDeltaTime() const { return m_deltaTime; }
 
+    void setEditorDrawCallback(std::function<void()> callback);
+
 private:
     class RenderCommandBase;
     template <typename T>
     class RenderCommand;
 
     std::mutex m_updateLockMutex;
+    std::function<void()> m_editorDrawCallback;
+
     bool m_initialised{};
     RenderObjectManager m_renderObjectManager;
     ThreadSafeQueue<std::unique_ptr<RenderCommandBase>> m_commands;

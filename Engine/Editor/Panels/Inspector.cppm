@@ -1,17 +1,19 @@
-export module UI.Panel.Inspector;
+export module Editor.Panel.Inspector;
 import Core;
 import Component.Name;
-import Engine;
 import Editor;
+import Editor.ImGui;
+import Editor.Panel;
+import Engine;
 import Properties;
-import UI.Panel;
+import World;
 
 export namespace Panels
 {
-    class InspectorPanel : public Panel
+    class Inspector : public Panel
     {
     public:
-        InspectorPanel(World& world) : Panel{world} {}
+        Inspector(World& world) : Panel{world} {}
 
     private:
         void doDraw(World& world) override

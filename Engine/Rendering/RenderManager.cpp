@@ -248,6 +248,11 @@ void RenderManager::updateFramebufferSize()
     m_framebufferResized = true;
 }
 
+void RenderManager::setEditorDrawCallback(std::function<void()> callback)
+{
+    m_editorDrawCallback = std::move(callback);
+}
+
 void RenderManager::createInstance()
 {
     if constexpr (vk::EnableValidationLayers)
@@ -684,47 +689,50 @@ void RenderManager::drawFrame()
 
     commandBuffer.endRendering();
 
-    const vk::RenderingAttachmentInfo imGuiColorAttachmentInfo
+    if (m_editorDrawCallback)
     {
-        .imageView = m_swapchainImageViews[imageResult.value],
-        .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
-        .loadOp = vk::AttachmentLoadOp::eLoad,
-        .storeOp = vk::AttachmentStoreOp::eStore,
-        .clearValue = vk::ClearColorValue{0.0f, 0.0f, 0.0f, 1.0f}
-    };
+        const vk::RenderingAttachmentInfo imGuiColorAttachmentInfo
+        {
+            .imageView = m_swapchainImageViews[imageResult.value],
+            .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+            .loadOp = vk::AttachmentLoadOp::eLoad,
+            .storeOp = vk::AttachmentStoreOp::eStore,
+            .clearValue = vk::ClearColorValue{0.0f, 0.0f, 0.0f, 1.0f}
+        };
 
-    const vk::RenderingInfo imGuiRenderingInfo
-    {
-        .renderArea = vk::Rect2D{{0, 0}, m_swapchainExtent},
-        .layerCount = 1,
-        .colorAttachmentCount = 1,
-        .pColorAttachments = &imGuiColorAttachmentInfo,
-        .pDepthAttachment = nullptr,
-    };
+        const vk::RenderingInfo imGuiRenderingInfo
+        {
+            .renderArea = vk::Rect2D{{0, 0}, m_swapchainExtent},
+            .layerCount = 1,
+            .colorAttachmentCount = 1,
+            .pColorAttachments = &imGuiColorAttachmentInfo,
+            .pDepthAttachment = nullptr,
+        };
 
-    commandBuffer.beginRendering(imGuiRenderingInfo);
+        commandBuffer.beginRendering(imGuiRenderingInfo);
 
-    m_imguiHelper.beginFrame();
-    Editor::drawEditorUI();
-    m_imguiHelper.renderFrame(commandBuffer);
+        m_imguiHelper.beginFrame();
+        m_editorDrawCallback();
+        m_imguiHelper.renderFrame(commandBuffer);
 
-    commandBuffer.endRendering();
+        commandBuffer.endRendering();
 
-    RenderUtils::transitionImageLayout
-    (
-        commandBuffer,
-        m_swapchainImages[imageIndex],
-        m_swapchainLayouts[imageIndex],
-        vk::ImageLayout::ePresentSrcKHR,
-        vk::AccessFlagBits::eColorAttachmentWrite,
-        {},
-        vk::PipelineStageFlagBits::eColorAttachmentOutput,
-        vk::PipelineStageFlagBits::eBottomOfPipe
-    );
-    // std::cout << "Image " << imageIndex << " old layout = " << vk::to_string(m_swapchainLayouts[imageIndex]) << "\n";
-    m_swapchainLayouts[imageIndex] = vk::ImageLayout::ePresentSrcKHR;
+        RenderUtils::transitionImageLayout
+        (
+            commandBuffer,
+            m_swapchainImages[imageIndex],
+            m_swapchainLayouts[imageIndex],
+            vk::ImageLayout::ePresentSrcKHR,
+            vk::AccessFlagBits::eColorAttachmentWrite,
+            {},
+            vk::PipelineStageFlagBits::eColorAttachmentOutput,
+            vk::PipelineStageFlagBits::eBottomOfPipe
+        );
+        // std::cout << "Image " << imageIndex << " old layout = " << vk::to_string(m_swapchainLayouts[imageIndex]) << "\n";
+        m_swapchainLayouts[imageIndex] = vk::ImageLayout::ePresentSrcKHR;
 
-    commandBuffer.end();
+        commandBuffer.end();
+    }
 
     const vk::Semaphore waitSemaphores[] = {imageAvailableSemaphore};
     const vk::Semaphore signalSemaphores[] = {renderFinishedSemaphore};

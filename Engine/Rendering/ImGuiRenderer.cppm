@@ -1,5 +1,4 @@
 export module Render.ImGui;
-export import UI.IPanel;
 import Core;
 import Render.Vulkan;
 import Window;

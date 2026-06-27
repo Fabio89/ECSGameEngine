@@ -1,16 +1,16 @@
-export module UI.Panel.Hierarchy;
+export module Editor.Panel.Hierarchy;
 import Core;
 import Component.Hierarchy;
 import Component.Name;
 import Component.Model;
 import Component.Transform;
 import ComponentRegistry;
-import Engine;
 import Editor;
+import Editor.ImGui;
+import Editor.Panel;
+import Engine;
 import Math;
 import Properties;
-import UI.ImGui;
-import UI.Panel;
 import World;
 
 bool isEditorOnly(Entity entity)
@@ -20,10 +20,10 @@ bool isEditorOnly(Entity entity)
 
 export namespace Panels
 {
-    class HierarchyPanel : public Panel
+    class Hierarchy : public Panel
     {
     public:
-        HierarchyPanel(World& world) : Panel{world}
+        Hierarchy(World& world) : Panel{world}
         {
         }
 

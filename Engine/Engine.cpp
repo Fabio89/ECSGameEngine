@@ -177,6 +177,11 @@ EditorContext Engine::getEditorContext()
     return {.world = &world, .window = window };
 }
 
+void Engine::setEditorDrawCallback(std::function<void()> callback)
+{
+    renderManager.setEditorDrawCallback(std::move(callback));
+}
+
 Player& Engine::getPlayer()
 {
     return player;

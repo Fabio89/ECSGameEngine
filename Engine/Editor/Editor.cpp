@@ -5,14 +5,14 @@ import Editor.Camera;
 import Editor.Components;
 import Editor.Gizmos;
 import Editor.Events;
-import EditorUI;
+import Editor.ImGui;
+import Editor.Panel.Hierarchy;
+import Editor.Panel.Inspector;
+import Editor.Panel.MainMenu;
 import Engine;
 import Input;
 import Math;
 import Physics;
-import UI.Panel.Hierarchy;
-import UI.Panel.Inspector;
-import UI.Panel.MainMenu;
 import World;
 import World.Events;
 
@@ -24,6 +24,15 @@ enum class EditMode : UInt8
     None = 3
 };
 
+namespace Editor
+{
+    EventSubscription subscription;
+
+    void draw();
+    bool isMouseAvailable();
+    bool isKeyboardAvailable();
+}
+
 namespace
 {
     EditMode currentEditMode{EditMode::None};
@@ -32,7 +41,7 @@ namespace
     Entity selectedGizmoAxis;
     Editor::Selection currentSelection; // TODO(refactoring): transition to this from single Entity selection
     std::optional<Vec3> projectedCursorPositionLastFrame;
-    EditorUI editorUi;
+    std::vector<std::unique_ptr<Panel>> panels;
 }
 
 constexpr Entity& getGizmo(EditMode editMode)
@@ -121,14 +130,24 @@ void Editor::init(EditorContext context)
 {
     EditorComponents::init();
     editorContext = context;
-    addPanel<Panels::HierarchyPanel>();
-    addPanel<Panels::InspectorPanel>();
-    addPanel<Panels::MainMenuPanel>();
+    addPanel<Panels::Hierarchy>();
+    addPanel<Panels::Inspector>();
+    addPanel<Panels::MainMenu>();
 
-    Engine::events().subscribe([](const SceneLoadedEvent&)
+    Engine::setEditorDrawCallback(draw);
+
+    subscription += Engine::events().subscribe([](const SceneLoadedEvent&)
     {
+        entitiesToBoundingBoxGizmos.clear();
+        selectedGizmoAxis = {};
+        currentSelection.clear();
         createGizmos();
     });
+}
+
+void Editor::shutdown()
+{
+    subscription = {};
 }
 
 void Editor::createGizmos()
@@ -141,7 +160,7 @@ void Editor::createGizmos()
 void Editor::update(float deltaTime)
 {
     World& world = *editorContext.world;
-    if (EditorUI::isKeyboardAvailable())
+    if (isKeyboardAvailable())
     {
         if (Input::isKeyJustPressed(KeyCode::Q))
         {
@@ -158,7 +177,7 @@ void Editor::update(float deltaTime)
         }
     }
 
-    if (EditorUI::isMouseAvailable())
+    if (isMouseAvailable())
     {
         const Vec2 cursorPosition = Input::getCursorPosition(editorContext.window);
         const Ray ray = Physics::rayFromScreenPosition(world, Engine::getPlayer(), cursorPosition);
@@ -220,11 +239,6 @@ void Editor::update(float deltaTime)
     EditorCamera::update(editorContext.window, world, Engine::getPlayer(), deltaTime);
 }
 
-void Editor::drawEditorUI()
-{
-    editorUi.draw();
-}
-
 void Editor::setSingleSelection(Entity entity)
 {
     if (currentSelection.contains(entity) && currentSelection.get().size() == 1)
@@ -280,7 +294,51 @@ std::span<const Entity> Editor::getSelection()
     return currentSelection.get();
 }
 
-void Editor::addPanel(std::unique_ptr<IPanel> panel)
+void Editor::addPanel(std::unique_ptr<Panel> panel)
 {
-    editorUi.addPanel(std::move(panel));
+    panels.emplace_back(std::move(panel));
+}
+
+void Editor::draw()
+{
+    ImGui::ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+    ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(viewport->WorkSize);
+    ImGui::SetNextWindowViewport(viewport->ID);
+
+    static constexpr ImGui::ImGuiWindowFlags flags =
+        ImGui::ImGuiWindowFlags_::ImGuiWindowFlags_NoTitleBar |
+        ImGui::ImGuiWindowFlags_::ImGuiWindowFlags_NoCollapse |
+        ImGui::ImGuiWindowFlags_::ImGuiWindowFlags_NoResize |
+        ImGui::ImGuiWindowFlags_::ImGuiWindowFlags_NoMove |
+        ImGui::ImGuiWindowFlags_::ImGuiWindowFlags_NoBringToFrontOnFocus |
+        ImGui::ImGuiWindowFlags_::ImGuiWindowFlags_NoNavFocus |
+        ImGui::ImGuiWindowFlags_::ImGuiWindowFlags_NoBackground;
+
+    ImGui::Begin("DockSpace", nullptr, flags);
+
+    ImGui::DockSpace
+    (
+        ImGui::GetID("MainDockSpace"),
+        ImGui::ImVec2(0, 0),
+        ImGui::ImGuiDockNodeFlags_::ImGuiDockNodeFlags_PassthruCentralNode
+    );
+
+    ImGui::End();
+
+    for (auto& panel : panels)
+    {
+        panel->draw();
+    }
+}
+
+bool Editor::isMouseAvailable()
+{
+    return !ImGui::GetCurrentContext() || !ImGui::GetIO().WantCaptureMouse;
+}
+
+bool Editor::isKeyboardAvailable()
+{
+    return !ImGui::GetCurrentContext() || !ImGui::GetIO().WantCaptureKeyboard;
 }

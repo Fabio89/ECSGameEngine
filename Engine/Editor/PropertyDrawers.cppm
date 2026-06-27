@@ -1,7 +1,7 @@
-export module UI.PropertyDrawers;
+export module Editor.PropertyDrawers;
 import Math;
 import Properties;
-import UI.ImGui;
+import Editor.ImGui;
 
 export namespace UI
 {

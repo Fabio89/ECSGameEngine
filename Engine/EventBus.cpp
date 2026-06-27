@@ -36,6 +36,11 @@ void EventBus::Subscription::reset()
     }
 }
 
+void EventSubscription::operator+=(EventBus::Subscription&& subscription) noexcept
+{
+    m_subs.push_back(std::move(subscription));
+}
+
 EventBus::Subscription EventBus::subscribe(TypeId event, Callback callback)
 {
     const SubscriptionId id{m_nextSubscriptionId++};

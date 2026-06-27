@@ -31,7 +31,7 @@ export class EventBus
 public:
     class Subscription;
 
-    template<typename Func>
+    template<typename Func> [[nodiscard]]
     Subscription subscribe(Func&& callback);
 
     template<typename Event>
@@ -52,13 +52,9 @@ class EventBus::Subscription
 {
 public:
     Subscription() = default;
-
     Subscription(const Subscription&) = delete;
-
     Subscription& operator=(const Subscription&) = delete;
-
     Subscription(Subscription&&) noexcept;
-
     Subscription& operator=(Subscription&&) noexcept;
 
     Subscription(EventBus* bus, TypeId event, SubscriptionId id)
@@ -74,6 +70,15 @@ private:
     EventBus* m_bus{};
     TypeId m_event{};
     SubscriptionId m_id{};
+};
+
+export class EventSubscription
+{
+public:
+    void operator+=(EventBus::Subscription&&) noexcept;
+
+private:
+    std::vector<EventBus::Subscription> m_subs;
 };
 
 template<typename Func>

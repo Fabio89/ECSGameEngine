@@ -1,7 +1,7 @@
 module Render.ImGui;
 import Render.QueueFamily;
-import UI.ImGui;
-import UI.PropertyDrawers;
+import Editor.ImGui;
+import Editor.PropertyDrawers;
 
 static void check_vk_result(ImGui::VkResult result)
 {

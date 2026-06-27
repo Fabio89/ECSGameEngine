@@ -107,6 +107,8 @@ export namespace Engine
 
     ENGINE_API EditorContext getEditorContext();
 
+    ENGINE_API void setEditorDrawCallback(std::function<void()> callback);
+
     //------------------------------------------------------------------------------------------------------------------------
     // DEBUG -TEMPORARY
     //------------------------------------------------------------------------------------------------------------------------

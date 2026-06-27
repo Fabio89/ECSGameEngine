@@ -1,11 +1,13 @@
-export module UI.Panel.MainMenu;
+export module Editor.Panel.MainMenu;
+import Editor.ImGui;
+import Editor.Panel;
 import Engine;
 import FileSystem;
-import UI.Panel;
+import World;
 
 export namespace Panels
 {
-    class MainMenuPanel : public Panel
+    class MainMenu : public Panel
     {
     public:
         using Panel::Panel;
@@ -21,7 +23,7 @@ export namespace Panels
     };
 }
 
-void Panels::MainMenuPanel::doDraw(World& world)
+void Panels::MainMenu::doDraw(World& world)
 {
     if (!ImGui::BeginMainMenuBar())
         return;
@@ -35,7 +37,7 @@ void Panels::MainMenuPanel::doDraw(World& world)
     ImGui::EndMainMenuBar();
 }
 
-void Panels::MainMenuPanel::drawFileMenu(World& world)
+void Panels::MainMenu::drawFileMenu(World& world)
 {
     if (!ImGui::BeginMenu("File"))
         return;
@@ -59,7 +61,7 @@ void Panels::MainMenuPanel::drawFileMenu(World& world)
     ImGui::EndMenu();
 }
 
-void Panels::MainMenuPanel::drawEditMenu(World& world) {}
-void Panels::MainMenuPanel::drawViewMenu(World& world) {}
-void Panels::MainMenuPanel::drawToolsMenu(World& world) {}
-void Panels::MainMenuPanel::drawHelpMenu(World& world) {}
+void Panels::MainMenu::drawEditMenu(World& world) {}
+void Panels::MainMenu::drawViewMenu(World& world) {}
+void Panels::MainMenu::drawToolsMenu(World& world) {}
+void Panels::MainMenu::drawHelpMenu(World& world) {}

@@ -57,6 +57,7 @@ int main()
     Engine::printArchetypeStatus();
     
     waitTillClosed();
+    Editor::shutdown();
     Engine::shutdown();
     return 0;
 }
