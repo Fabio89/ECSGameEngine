@@ -3,7 +3,9 @@ import AssetManager;
 import ComponentRegistry;
 import Component.Name;
 import Component.Tags;
+import Engine;
 import Render.Model;
+import World.Events;
 
 template <typename T>
 std::vector<const T*> loadAssets(const JsonObject& json, const char* assetName)
@@ -165,6 +167,7 @@ void World::loadScene(const std::filesystem::path& path)
     const JsonObject& doc = Json::fromFile(path);
     deserializeScene(doc);
     std::cout << "Scene loading complete\n";
+    Engine::events().publish(SceneLoadedEvent{});
 }
 
 void World::unloadScene()

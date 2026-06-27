@@ -14,6 +14,7 @@ import UI.Panel.Hierarchy;
 import UI.Panel.Inspector;
 import UI.Panel.MainMenu;
 import World;
+import World.Events;
 
 enum class EditMode : UInt8
 {
@@ -116,24 +117,30 @@ std::span<const Entity> Editor::Selection::get() const
     return m_entities;
 }
 
-void Editor::init(World& world)
+void Editor::init(EditorContext context)
 {
     EditorComponents::init();
+    editorContext = context;
+    addPanel<Panels::HierarchyPanel>();
+    addPanel<Panels::InspectorPanel>();
+    addPanel<Panels::MainMenuPanel>();
 
-    addPanel<Panels::HierarchyPanel>(world);
-    addPanel<Panels::InspectorPanel>(world);
-    addPanel<Panels::MainMenuPanel>(world);
+    Engine::events().subscribe([](const SceneLoadedEvent&)
+    {
+        createGizmos();
+    });
 }
 
-void Editor::createGizmos(World& world)
+void Editor::createGizmos()
 {
-    getGizmo(EditMode::Translate) = EditorUtils::createTranslationGizmo(world);
-    getGizmo(EditMode::Rotate) = EditorUtils::createRotationGizmo(world);
-    getGizmo(EditMode::Scale) = EditorUtils::createScaleGizmo(world);
+    getGizmo(EditMode::Translate) = EditorUtils::createTranslationGizmo(*editorContext.world);
+    getGizmo(EditMode::Rotate) = EditorUtils::createRotationGizmo(*editorContext.world);
+    getGizmo(EditMode::Scale) = EditorUtils::createScaleGizmo(*editorContext.world);
 }
 
-void Editor::update(World& world, WindowHandle window, float deltaTime)
+void Editor::update(float deltaTime)
 {
+    World& world = *editorContext.world;
     if (EditorUI::isKeyboardAvailable())
     {
         if (Input::isKeyJustPressed(KeyCode::Q))
@@ -153,7 +160,7 @@ void Editor::update(World& world, WindowHandle window, float deltaTime)
 
     if (EditorUI::isMouseAvailable())
     {
-        const Vec2 cursorPosition = Input::getCursorPosition(window);
+        const Vec2 cursorPosition = Input::getCursorPosition(editorContext.window);
         const Ray ray = Physics::rayFromScreenPosition(world, Engine::getPlayer(), cursorPosition);
 
         Entity firstSelectedEntity = currentSelection.isEmpty() ? Entity{} : currentSelection.get().front();
@@ -205,12 +212,12 @@ void Editor::update(World& world, WindowHandle window, float deltaTime)
 
             const Entity hitEntity = Physics::lineTrace(world, ray, TraceChannelFlags::Default);
 
-            setSingleSelection(world, hitEntity);
+            setSingleSelection(hitEntity);
         }
     }
 
-    EditorCamera::setActive(window, Input::isKeyDown(KeyCode::MouseButtonRight));
-    EditorCamera::update(window, world, Engine::getPlayer(), deltaTime);
+    EditorCamera::setActive(editorContext.window, Input::isKeyDown(KeyCode::MouseButtonRight));
+    EditorCamera::update(editorContext.window, world, Engine::getPlayer(), deltaTime);
 }
 
 void Editor::drawEditorUI()
@@ -218,11 +225,12 @@ void Editor::drawEditorUI()
     editorUi.draw();
 }
 
-void Editor::setSingleSelection(World& world, Entity entity)
+void Editor::setSingleSelection(Entity entity)
 {
     if (currentSelection.contains(entity) && currentSelection.get().size() == 1)
         return;
 
+    World& world = *editorContext.world;
     for (Entity selected : currentSelection.get())
     {
         EditorUtils::setGizmoVisible(world, entitiesToBoundingBoxGizmos.at(selected), false);
@@ -255,11 +263,11 @@ void Editor::setSingleSelection(World& world, Entity entity)
     }
 }
 
-void Editor::setSelection(World& world, std::span<const Entity> entities)
+void Editor::setSelection(std::span<const Entity> entities)
 {
     // TODO(feature): Multi-selection
     if (!entities.empty())
-        setSingleSelection(world, entities.front());
+        setSingleSelection(entities.front());
 }
 
 Editor::Selection& Editor::selection()

@@ -71,7 +71,7 @@ export namespace Panels
             // Detect click on the row
             if (ImGui::IsItemClicked() | ImGui::IsItemFocused())
             {
-                Editor::setSingleSelection(world, entity);
+                Editor::setSingleSelection(entity);
             }
 
             if (opened)

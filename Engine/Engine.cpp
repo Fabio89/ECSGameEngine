@@ -1,5 +1,4 @@
 module Engine;
-import Editor; // TODO(refactoring): remove this dependency, use events?
 import EngineSystems;
 import Editor.Camera;
 import Platform;
@@ -8,11 +7,10 @@ import Serialization.Json;
 namespace Engine
 {
     void runRenderThread();
-    void updateEditorCamera(float deltaTime);
     Entity ensureCamera();
 
     bool shutdownRequested = false;
-    std::atomic<bool> engineShuttingDown = false;
+    std::atomic engineShuttingDown = false;
     std::thread renderThread;
     Player player;
     WindowHandle window;
@@ -71,7 +69,6 @@ void Engine::init(const WindowCreateInfo& info)
     Input::init(window);
     EngineComponents::init();
     EngineSystems::init(world);
-    Editor::init(world);
 }
 
 bool Engine::update(float deltaTime)
@@ -86,7 +83,6 @@ bool Engine::update(float deltaTime)
 
     Input::postUpdate();
     Platform::update();
-    Editor::update(world, window, deltaTime);
 
     return true;
 }
@@ -130,8 +126,6 @@ void Engine::openProject(std::filesystem::path path)
 
     Project::open(std::move(path), world);
 
-    Editor::createGizmos(world);
-
     player.setMainCamera(world, ensureCamera());
 }
 
@@ -170,11 +164,6 @@ ComponentBase& Engine::editComponent(Entity entity, TypeId componentType)
     return world.editComponent(entity, componentType);
 }
 
-World& Engine::getWorld()
-{
-    return world;
-}
-
 void Engine::printArchetypeStatus()
 {
     world.printArchetypeStatus();
@@ -185,13 +174,13 @@ EventBus& Engine::events()
     return eventBus;
 }
 
+EditorContext Engine::getEditorContext()
+{
+    return {.world = &world, .window = window };
+}
+
 Player& Engine::getPlayer()
 {
     return player;
-}
-
-void Engine::updateEditorCamera(float deltaTime)
-{
-    EditorCamera::update(window, world, player, deltaTime);
 }
 

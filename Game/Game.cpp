@@ -1,6 +1,5 @@
-import Engine;
-import ComponentArray;
 import Editor;
+import Engine;
 import std;
 
 void onUpdate(float deltaTime);
@@ -11,9 +10,11 @@ bool performLoops(int count)
     constexpr std::chrono::milliseconds deltaTime{8};
     for (int i = 0; i < count && running; ++i)
     {
-        running = Engine::update(static_cast<float>(deltaTime.count()) * 0.001f);
+        constexpr float deltaTimeMs = static_cast<float>(deltaTime.count()) * 0.001f;
+        running = Engine::update(deltaTimeMs);
         if (!running)
             return false;
+        Editor::update(deltaTimeMs);
         //std::this_thread::sleep_for(deltaTime);
     }
     return true;
@@ -26,10 +27,12 @@ void waitTillClosed()
     while (running)
     {
         std::this_thread::sleep_for(deltaTime);
-        onUpdate(static_cast<float>(deltaTime.count()) * 0.001f);
-        running = Engine::update(static_cast<float>(deltaTime.count()) * 0.001f);
+        constexpr float deltaTimeMs = static_cast<float>(deltaTime.count()) * 0.001f;
+        onUpdate(deltaTimeMs);
+        running = Engine::update(deltaTimeMs);
         if (!running)
             return;
+        Editor::update(deltaTimeMs);
     }
 }
 
@@ -40,6 +43,8 @@ void onUpdate(float deltaTime)
 int main()
 {
     Engine::init({2560, 1440});
+    Editor::init(Engine::getEditorContext());
+
     // openProject("C:/Users/march/Documents/Mashi Projects/MashiTestProject/project.ma");
     Engine::openProject("/home/Fabio/Projects/MashiTestProject/project.ma");
 
@@ -48,20 +53,6 @@ int main()
     Engine::addComponent<TransformComponent>(camera);
     Engine::addComponent<TagsComponent>(camera, {.tags = {"Uno", "Due", "Tre", "Quattro", "Cinque", "Sei"}});
     Engine::addComponent<CameraComponent>(camera);
-
-    // char buf[4096];
-    // serializeScene(buf, sizeof(buf));
-    // std::cout << buf;
-
-    std::vector<Entity> entities;
-    for (Entity entity : Engine::getEntitiesRange())
-    {
-        entities.push_back(entity);
-    }
-    for (Entity entity : entities)
-    {
-        
-    }
 
     Engine::printArchetypeStatus();
     

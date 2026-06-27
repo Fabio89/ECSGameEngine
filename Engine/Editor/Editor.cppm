@@ -3,10 +3,16 @@ module;
 #include "EngineExport.h"
 
 export module Editor;
+export import EditorContext;
 import Core;
 import UI.IPanel;
 import Window;
 import World;
+
+namespace Editor
+{
+    EditorContext editorContext{};
+}
 
 export namespace Editor
 {
@@ -26,17 +32,17 @@ export namespace Editor
         std::vector<Entity> m_entities;
     };
 
-    ENGINE_API void init(World& world);
+    ENGINE_API void init(EditorContext context);
 
-    ENGINE_API void createGizmos(World& world);
+    ENGINE_API void createGizmos();
 
-    ENGINE_API void update(World& world, WindowHandle window, float deltaTime);
+    ENGINE_API void update(float deltaTime);
 
     ENGINE_API void drawEditorUI();
 
-    ENGINE_API void setSingleSelection(World& world, Entity entity);
+    ENGINE_API void setSingleSelection(Entity entity);
 
-    ENGINE_API void setSelection(World& world, std::span<const Entity> entities);
+    ENGINE_API void setSelection(std::span<const Entity> entities);
 
     ENGINE_API Selection& selection();
 
@@ -45,5 +51,5 @@ export namespace Editor
     ENGINE_API void addPanel(std::unique_ptr<IPanel> panel);
 
     template<typename T>
-    ENGINE_API void addPanel(World& world) { addPanel(std::make_unique<T>(world)); }
+    ENGINE_API void addPanel() { addPanel(std::make_unique<T>(*editorContext.world)); }
 }

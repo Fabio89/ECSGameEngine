@@ -7,6 +7,7 @@ export import Core;
 export import EngineComponents;
 export import EventBus;
 import ComponentRegistry;
+import EditorContext;
 import FileSystem;
 import Input;
 import Log;
@@ -101,12 +102,16 @@ export namespace Engine
     ENGINE_API EventBus& events();
 
     //------------------------------------------------------------------------------------------------------------------------
+    // Editor Integration
+    //------------------------------------------------------------------------------------------------------------------------
+
+    ENGINE_API EditorContext getEditorContext();
+
+    //------------------------------------------------------------------------------------------------------------------------
     // DEBUG -TEMPORARY
     //------------------------------------------------------------------------------------------------------------------------
 
     ENGINE_API Player& getPlayer();
-
-    ENGINE_API World& getWorld();
 
     ENGINE_API void printArchetypeStatus();
 }
