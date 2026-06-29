@@ -675,6 +675,19 @@ bool RenderManager::checkValidationLayerSupport()
 
 void RenderManager::drawFrame()
 {
+    //--------------------------------------------------------------------------
+    // Build ImGui draw data
+    //--------------------------------------------------------------------------
+    if (m_editorDrawCallback)
+    {
+        m_imguiHelper.beginFrame();
+        m_editorDrawCallback();
+        m_imguiHelper.preRenderFrame();
+    }
+
+    //--------------------------------------------------------------------------
+    // Acquire next swapchain image and begin command buffer
+    //--------------------------------------------------------------------------
     const vk::Fence fence = m_inFlightFences[m_currentFrame];
     const vk::Semaphore imageAvailableSemaphore = m_imageAvailableSemaphores[m_currentFrame];
     const vk::Semaphore renderFinishedSemaphore = m_renderFinishedSemaphores[m_currentFrame];
@@ -691,27 +704,63 @@ void RenderManager::drawFrame()
     {
         recreateSwapchain();
         return;
-    } else if (imageResult.result != vk::Result::eSuccess && imageResult.result != vk::Result::eSuboptimalKHR)
-    {
-        fatalError("failed to acquire swap chain image!");
     }
+
+    if (imageResult.result != vk::Result::eSuccess && imageResult.result != vk::Result::eSuboptimalKHR)
+        fatalError("failed to acquire swap chain image!");
 
     if (m_device.resetFences(1, &fence) != vk::Result::eSuccess)
-    {
         fatalError("failed to reset fences!");
-    }
 
     commandBuffer.reset();
-
     commandBuffer.begin(vk::CommandBufferBeginInfo{});
 
+    const UInt32 imageIndex = imageResult.value;
+
+    //--------------------------------------------------------------------------
+    // Prepare swapchain image
+    //--------------------------------------------------------------------------
+    RenderUtils::transitionImageLayout
+    (
+        commandBuffer,
+        m_swapchainImages[imageIndex],
+        m_swapchainLayouts[imageIndex],
+        vk::ImageLayout::eTransferDstOptimal,
+        {},
+        vk::AccessFlagBits::eTransferWrite,
+        vk::PipelineStageFlagBits::eTopOfPipe,
+        vk::PipelineStageFlagBits::eTransfer
+    );
+    m_swapchainLayouts[imageIndex] = vk::ImageLayout::eTransferDstOptimal;
+
+    {
+        static constexpr std::array ranges
+        {
+            vk::ImageSubresourceRange
+            {
+                .aspectMask = vk::ImageAspectFlagBits::eColor,
+                .baseMipLevel = 0,
+                .levelCount = 1,
+                .baseArrayLayer = 0,
+                .layerCount = 1,
+            }
+        };
+
+        static constexpr vk::ClearColorValue clearColor{0.f, 0.f, 0.f, 1.f};
+
+        commandBuffer.clearColorImage(m_swapchainImages[imageIndex], vk::ImageLayout::eTransferDstOptimal, clearColor, ranges);
+    }
+
+    //--------------------------------------------------------------------------
+    // Render scene into offscreen viewport image
+    //--------------------------------------------------------------------------
     const vk::RenderingAttachmentInfo colorAttachmentInfo
     {
         .imageView = m_sceneViewport.view,
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .loadOp = vk::AttachmentLoadOp::eClear,
         .storeOp = vk::AttachmentStoreOp::eStore,
-        .clearValue = vk::ClearColorValue{0.0f, 0.0f, 0.0f, 1.0f}
+        .clearValue = vk::ClearColorValue{0.f, 0.f, 0.f, 1.f}
     };
 
     const vk::RenderingAttachmentInfo depthAttachmentInfo
@@ -720,67 +769,32 @@ void RenderManager::drawFrame()
         .imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal,
         .loadOp = vk::AttachmentLoadOp::eClear,
         .storeOp = vk::AttachmentStoreOp::eDontCare,
-        .clearValue = vk::ClearDepthStencilValue{1.0f, 0}
+        .clearValue = vk::ClearDepthStencilValue{1.f, 0}
     };
 
     const vk::RenderingInfo renderingInfo
     {
-        .renderArea = {{0, 0}, m_sceneViewport.extent},
+        .renderArea = {{0,0}, m_sceneViewport.extent},
         .layerCount = 1,
         .colorAttachmentCount = 1,
         .pColorAttachments = &colorAttachmentInfo,
         .pDepthAttachment = &depthAttachmentInfo,
     };
 
-    const UInt32 imageIndex = imageResult.value;
-
-    RenderUtils::transitionImageLayout
-    (
-        commandBuffer,
-        m_swapchainImages[imageIndex],
-        m_swapchainLayouts[imageIndex],
-        vk::ImageLayout::eColorAttachmentOptimal,
-        vk::AccessFlagBits::eTransferWrite,
-        vk::AccessFlagBits::eColorAttachmentWrite,
-        vk::PipelineStageFlagBits::eTransfer,
-        vk::PipelineStageFlagBits::eColorAttachmentOutput
-    );
-    m_swapchainLayouts[imageIndex] = vk::ImageLayout::eColorAttachmentOptimal;
-
-    if (m_editorDrawCallback)
-    {
-        const vk::RenderingAttachmentInfo imGuiColorAttachmentInfo
-        {
-            .imageView = m_swapchainImageViews[imageIndex],
-            .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
-            .loadOp = vk::AttachmentLoadOp::eClear,
-            .storeOp = vk::AttachmentStoreOp::eStore,
-            .clearValue = vk::ClearColorValue{0.0f, 0.0f, 0.0f, 1.0f}
-        };
-
-        const vk::RenderingInfo imGuiRenderingInfo
-        {
-            .renderArea = vk::Rect2D{{0, 0}, m_swapchainExtent},
-            .layerCount = 1,
-            .colorAttachmentCount = 1,
-            .pColorAttachments = &imGuiColorAttachmentInfo,
-            .pDepthAttachment = nullptr,
-        };
-
-        commandBuffer.beginRendering(imGuiRenderingInfo);
-
-        m_imguiHelper.beginFrame();
-        m_editorDrawCallback();
-        m_imguiHelper.preRenderFrame();
-        m_imguiHelper.renderFrame(commandBuffer);
-
-        commandBuffer.endRendering();
-    }
-
     if (m_sceneViewport.image)
     {
-        const IVec2 srcOffset{std::max(0, -m_sceneViewport.offset.x), std::max(0, -m_sceneViewport.offset.y)};
-        const IVec2 dstOffset{std::max(0, m_sceneViewport.offset.x), std::max(0, m_sceneViewport.offset.y)};
+        const IVec2 srcOffset
+        {
+            std::max(0, -m_sceneViewport.offset.x),
+            std::max(0, -m_sceneViewport.offset.y)
+        };
+
+        const IVec2 dstOffset
+        {
+            std::max(0,  m_sceneViewport.offset.x),
+            std::max(0,  m_sceneViewport.offset.y)
+        };
+
         const Size2D size
         {
             std::min(static_cast<int>(m_sceneViewport.extent.width) - srcOffset.x, static_cast<int>(m_swapchainExtent.width) - dstOffset.x),
@@ -810,16 +824,18 @@ void RenderManager::drawFrame()
                 .y = 0,
                 .width = static_cast<float>(m_sceneViewport.extent.width),
                 .height = static_cast<float>(m_sceneViewport.extent.height),
-                .minDepth = 0.0f,
-                .maxDepth = 1.0f,
+                .minDepth = 0.f,
+                .maxDepth = 1.f,
             };
+
             commandBuffer.setViewport(0, 1, &viewport);
 
             const vk::Rect2D scissor
             {
-                .offset = {0, 0},
+                .offset = {0,0},
                 .extent = m_sceneViewport.extent,
             };
+
             commandBuffer.setScissor(0, 1, &scissor);
 
             commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_graphicsPipeline);
@@ -830,67 +846,106 @@ void RenderManager::drawFrame()
 
             commandBuffer.endRendering();
 
-            // Copy viewport image into swapchain
-            {
-                RenderUtils::transitionImageLayout
-                (
-                    commandBuffer,
-                    m_sceneViewport.image,
-                    m_sceneViewport.layout,
-                    vk::ImageLayout::eTransferSrcOptimal,
-                    vk::AccessFlagBits::eColorAttachmentWrite,
-                    vk::AccessFlagBits::eTransferRead,
-                    vk::PipelineStageFlagBits::eColorAttachmentOutput,
-                    vk::PipelineStageFlagBits::eTransfer
-                );
+            //------------------------------------------------------------------
+            // Copy viewport into swapchain
+            //------------------------------------------------------------------
 
-                m_sceneViewport.layout = vk::ImageLayout::eTransferSrcOptimal;
+            RenderUtils::transitionImageLayout
+            (
+                commandBuffer,
+                m_sceneViewport.image,
+                m_sceneViewport.layout,
+                vk::ImageLayout::eTransferSrcOptimal,
+                vk::AccessFlagBits::eColorAttachmentWrite,
+                vk::AccessFlagBits::eTransferRead,
+                vk::PipelineStageFlagBits::eColorAttachmentOutput,
+                vk::PipelineStageFlagBits::eTransfer
+            );
+            m_sceneViewport.layout = vk::ImageLayout::eTransferSrcOptimal;
 
-                RenderUtils::transitionImageLayout
-                (
-                    commandBuffer,
-                    m_swapchainImages[imageIndex],
-                    m_swapchainLayouts[imageIndex],
-                    vk::ImageLayout::eTransferDstOptimal,
-                    vk::AccessFlagBits::eColorAttachmentWrite,
-                    vk::AccessFlagBits::eTransferWrite,
-                    vk::PipelineStageFlagBits::eColorAttachmentOutput,
-                    vk::PipelineStageFlagBits::eTransfer
-                );
-                m_swapchainLayouts[imageIndex] = vk::ImageLayout::eTransferDstOptimal;
+            RenderUtils::transitionImageLayout
+            (
+                commandBuffer,
+                m_swapchainImages[imageIndex],
+                m_swapchainLayouts[imageIndex],
+                vk::ImageLayout::eTransferDstOptimal,
+                vk::AccessFlagBits::eColorAttachmentWrite,
+                vk::AccessFlagBits::eTransferWrite,
+                vk::PipelineStageFlagBits::eColorAttachmentOutput,
+                vk::PipelineStageFlagBits::eTransfer
+            );
+            m_swapchainLayouts[imageIndex] = vk::ImageLayout::eTransferDstOptimal;
 
-                commandBuffer.copyImage
-                (
-                    m_sceneViewport.image,
-                    vk::ImageLayout::eTransferSrcOptimal,
-                    m_swapchainImages[imageIndex],
-                    vk::ImageLayout::eTransferDstOptimal,
-                    vk::ImageCopy
+            commandBuffer.copyImage
+            (
+                m_sceneViewport.image,
+                vk::ImageLayout::eTransferSrcOptimal,
+                m_swapchainImages[imageIndex],
+                vk::ImageLayout::eTransferDstOptimal,
+                vk::ImageCopy
+                {
+                    .srcSubresource =
                     {
-                        .srcSubresource =
-                        {
-                            .aspectMask = vk::ImageAspectFlagBits::eColor,
-                            .layerCount = 1
-                        },
-                        .srcOffset = {srcOffset.x, srcOffset.y, 0},
-                        .dstSubresource =
-                        {
-                            .aspectMask = vk::ImageAspectFlagBits::eColor,
-                            .layerCount = 1
-                        },
-                        .dstOffset = {dstOffset.x, dstOffset.y, 0},
-                        .extent =
-                        {
-                            size.width,
-                            size.height,
-                            1
-                        }
+                        .aspectMask = vk::ImageAspectFlagBits::eColor,
+                        .layerCount = 1
+                    },
+                    .srcOffset = {srcOffset.x, srcOffset.y, 0},
+                    .dstSubresource =
+                    {
+                        .aspectMask = vk::ImageAspectFlagBits::eColor,
+                        .layerCount = 1
+                    },
+                    .dstOffset = {dstOffset.x, dstOffset.y, 0},
+                    .extent =
+                    {
+                        size.width,
+                        size.height,
+                        1
                     }
-                );
-            }
+                }
+            );
         }
     }
 
+    //--------------------------------------------------------------------------
+    // Render ImGui over the swapchain
+    //--------------------------------------------------------------------------
+    RenderUtils::transitionImageLayout
+    (
+        commandBuffer,
+        m_swapchainImages[imageIndex],
+        m_swapchainLayouts[imageIndex],
+        vk::ImageLayout::eColorAttachmentOptimal,
+        vk::AccessFlagBits::eTransferWrite,
+        vk::AccessFlagBits::eColorAttachmentWrite,
+        vk::PipelineStageFlagBits::eTransfer,
+        vk::PipelineStageFlagBits::eColorAttachmentOutput
+    );
+    m_swapchainLayouts[imageIndex] = vk::ImageLayout::eColorAttachmentOptimal;
+
+    const vk::RenderingAttachmentInfo imGuiColorAttachmentInfo
+    {
+        .imageView = m_swapchainImageViews[imageIndex],
+        .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+        .loadOp = vk::AttachmentLoadOp::eLoad,
+        .storeOp = vk::AttachmentStoreOp::eStore,
+    };
+
+    const vk::RenderingInfo imGuiRenderingInfo
+    {
+        .renderArea = {{0, 0}, m_swapchainExtent},
+        .layerCount = 1,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &imGuiColorAttachmentInfo,
+    };
+
+    commandBuffer.beginRendering(imGuiRenderingInfo);
+    m_imguiHelper.renderFrame(commandBuffer);
+    commandBuffer.endRendering();
+
+    //--------------------------------------------------------------------------
+    // Transition to present
+    //--------------------------------------------------------------------------
     RenderUtils::transitionImageLayout
     (
         commandBuffer,
@@ -902,14 +957,19 @@ void RenderManager::drawFrame()
         vk::PipelineStageFlagBits::eColorAttachmentOutput,
         vk::PipelineStageFlagBits::eBottomOfPipe
     );
-    // std::cout << "Image " << imageIndex << " old layout = " << vk::to_string(m_swapchainLayouts[imageIndex]) << "\n";
     m_swapchainLayouts[imageIndex] = vk::ImageLayout::ePresentSrcKHR;
 
     commandBuffer.end();
 
-    const vk::Semaphore waitSemaphores[] = {imageAvailableSemaphore};
-    const vk::Semaphore signalSemaphores[] = {renderFinishedSemaphore};
-    static constexpr vk::PipelineStageFlags waitStages[] = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
+    //--------------------------------------------------------------------------
+    // Submit
+    //--------------------------------------------------------------------------
+    const vk::Semaphore waitSemaphores[] = { imageAvailableSemaphore };
+    const vk::Semaphore signalSemaphores[] = { renderFinishedSemaphore };
+    static constexpr vk::PipelineStageFlags waitStages[]
+    {
+        vk::PipelineStageFlagBits::eColorAttachmentOutput
+    };
 
     const vk::SubmitInfo submitInfo
     {
@@ -927,7 +987,10 @@ void RenderManager::drawFrame()
         fatalError("failed to submit draw command buffer!");
     }
 
-    vk::SwapchainKHR swapChains[] = {m_swapChain};
+    //--------------------------------------------------------------------------
+    // Present
+    //--------------------------------------------------------------------------
+    vk::SwapchainKHR swapChains[] = { m_swapChain };
 
     const vk::PresentInfoKHR presentInfo
     {
@@ -936,15 +999,16 @@ void RenderManager::drawFrame()
         .swapchainCount = 1,
         .pSwapchains = swapChains,
         .pImageIndices = &imageIndex,
-        .pResults = nullptr, // Optional
     };
 
     bool shouldRecreateSwapchain;
+
     try
     {
         const vk::Result result = m_presentQueue.presentKHR(presentInfo);
         shouldRecreateSwapchain = result == vk::Result::eSuboptimalKHR || m_framebufferResized.load();
-    } catch (const vk::OutOfDateKHRError&)
+    }
+    catch (const vk::OutOfDateKHRError&)
     {
         shouldRecreateSwapchain = true;
     }
@@ -955,6 +1019,7 @@ void RenderManager::drawFrame()
         recreateSwapchain();
         return;
     }
+
     m_currentFrame = (m_currentFrame + 1) % MaxFramesInFlight;
 }
 

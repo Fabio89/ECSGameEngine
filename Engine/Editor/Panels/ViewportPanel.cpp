@@ -81,6 +81,7 @@ Panels::ViewportPanel::ViewportPanel(const PanelCreateInfo& info)
 void Panels::ViewportPanel::doDraw()
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImGui::ImVec2{0, 0});
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::ImVec4{0, 0, 0, 0});
     ImGui::Begin("Viewport");
 
     const Rect viewportArea = calculateViewportArea(ViewportMode::Editor);
@@ -107,7 +108,8 @@ void Panels::ViewportPanel::doDraw()
     {
         const ImGui::ImVec2 mouse = ImGui::GetMousePos();
 
-        const Vec2 uv{
+        const Vec2 uv
+        {
             (mouse.x - viewportArea.position.x) / viewportArea.size.width,
             (mouse.y - viewportArea.position.y) / viewportArea.size.height
         };
@@ -124,6 +126,7 @@ void Panels::ViewportPanel::doDraw()
 
     ImGui::End();
     ImGui::PopStyleVar();
+    ImGui::PopStyleColor();
 }
 
 void Panels::ViewportPanel::setCurrentTool(EntityEditingMode type)

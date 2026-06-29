@@ -103,6 +103,7 @@ void Editor::draw()
         ImGuiWindowFlags_NoBackground;
 
     ImGui::Begin("DockSpace", nullptr, flags);
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::ImVec4{0, 0, 0, 0});
 
     ImGui::DockSpace
     (
@@ -111,6 +112,7 @@ void Editor::draw()
         ImGuiDockNodeFlags_PassthruCentralNode
     );
 
+    ImGui::PopStyleColor();
     ImGui::End();
 
     for (auto& panel : panels)

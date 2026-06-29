@@ -22,6 +22,7 @@ export namespace Panels
 
         std::reference_wrapper<ViewportController> m_controller;
         EventSubscription m_sub;
+        bool m_open{true};
     };
 }
 

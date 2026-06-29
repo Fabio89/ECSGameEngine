@@ -431,6 +431,7 @@ export namespace ImGui
 
     using ::ImGuiID;
     using ::ImVec2;
+    using ::ImVec4;
     using ::ImGuiIO;
     using ::ImFontConfig;
     using ::ImGui_ImplVulkan_InitInfo;
@@ -462,6 +463,8 @@ export
     using ::ImGuiDockNodeFlags;
 
     using ::ImGuiStyleVar_;
+
+    using ::ImGuiCol_;
 
     using ::ImGuiKey;
 
