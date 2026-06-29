@@ -5,6 +5,7 @@ import Component.Name;
 import Component.Tags;
 import Engine;
 import Render.Model;
+import Thread;
 import World.Events;
 
 template <typename T>
@@ -35,6 +36,7 @@ World::World(const WorldCreateInfo& info)
 
 Entity World::createEntity()
 {
+    Thread::assertGameThread();
     const Entity entity{m_nextEntityValue++};
     m_entities.try_emplace(entity);
     return entity;
@@ -143,6 +145,7 @@ Archetype& World::prepareArchetypeOnAddComponent(Entity entity, TypeId component
 
 void World::removeEntity(Entity entity)
 {
+    Thread::assertGameThread();
     auto it = m_entities.find(entity);
     if (it != m_entities.end())
     {
@@ -153,6 +156,11 @@ void World::removeEntity(Entity entity)
             m_archetypes.erase(it->second);
         }
         m_entities.erase(it);
+
+        for (SystemCallback& callback : m_systemCallbacks | std::views::values)
+            callback.onEntityRemoved(entity);
+
+        Engine::events().publish(Engine::EntityDestroyedEvent{.world = *this, .entity = entity});
     }
 }
 
@@ -167,7 +175,7 @@ void World::loadScene(const std::filesystem::path& path)
     const JsonObject& doc = Json::fromFile(path);
     deserializeScene(doc);
     std::cout << "Scene loading complete\n";
-    Engine::events().publish(SceneLoadedEvent{});
+    Engine::events().publish(Engine::SceneLoadedEvent{.world = *this});
 }
 
 void World::unloadScene()
@@ -307,14 +315,14 @@ Archetype::ComponentRange World::getComponentTypesInEntity(Entity entity) const
     return emptyMap | std::views::keys;
 }
 
-ArchetypeChangedObserverHandle World::observeOnComponentAdded(ArchetypeChangedCallback observer)
+SystemCallbackHandle World::registerSystem(SystemCallback callback)
 {
-    ArchetypeChangedObserverHandle handle = generateArchetypeObserverHandle();
-    m_archetypeChangeObservers.insert_or_assign(handle, std::move(observer));
+    SystemCallbackHandle handle = generateSystemCallbackHandle();
+    m_systemCallbacks.insert_or_assign(handle, std::move(callback));
     return handle;
 }
 
-void World::unobserveOnComponentAdded(ArchetypeChangedObserverHandle observerHandle)
+void World::unregisterSystem(SystemCallbackHandle observerHandle)
 {
-    m_archetypeChangeObservers.erase(observerHandle);
+    m_systemCallbacks.erase(observerHandle);
 }

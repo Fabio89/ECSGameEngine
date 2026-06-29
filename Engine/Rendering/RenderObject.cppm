@@ -93,8 +93,10 @@ public:
     void addMesh(MeshData&& data, Guid guid);
     void addTexture(TextureData&& textureData, Guid guid);
     void addRenderObject(Entity entity, Guid meshAsset, Guid textureAsset);
+    void removeRenderObject(Entity entity);
     void setObjectTransform(Entity entity, const Mat4& worldTransform);
     void addLineRenderObject(Entity entity, std::vector<LineVertex>&& vertices);
+    void removeLineRenderObject(Entity entity);
     void setObjectVisibility(Entity entity, bool visible);
     
     void renderFrame
@@ -116,6 +118,8 @@ private:
     void updateUniformBuffer(RenderObject& object, UInt32 currentImage);
     void updateUniformBuffer(LineRenderObject& object, UInt32 currentImage);
     void updateLineDescriptorSets(const LineRenderObject& object) const;
+    void removeRenderObject(const RenderObject& object);
+    void removeLineRenderObject(const LineRenderObject& object);
 
     std::vector<RenderObject> m_objects;
     std::vector<LineRenderObject> m_lineObjects;

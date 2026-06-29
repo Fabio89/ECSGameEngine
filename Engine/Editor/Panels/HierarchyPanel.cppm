@@ -1,5 +1,4 @@
-export module Editor.Panel.Hierarchy;
-import Core;
+export module Editor.Panels.Hierarchy;
 import Component.Hierarchy;
 import Component.Name;
 import Component.Model;
@@ -7,11 +6,11 @@ import Component.Transform;
 import ComponentRegistry;
 import Editor;
 import Editor.ImGui;
-import Editor.Panel;
+import Editor.Panel.Impl;
+import Editor.Requests;
 import Engine;
 import Math;
 import Properties;
-import World;
 
 bool isEditorOnly(Entity entity)
 {
@@ -20,16 +19,15 @@ bool isEditorOnly(Entity entity)
 
 export namespace Panels
 {
-    class Hierarchy : public Panel
+    class HierarchyPanel : public PanelImpl
     {
     public:
-        Hierarchy(World& world) : Panel{world}
-        {
-        }
-
+        using PanelImpl::PanelImpl;
+        
     private:
-        void doDraw(World& world) override
+        void doDraw() override
         {
+            World& world = context().world;
             ImGui::Begin("Hierarchy", &m_open);
 
             for (Entity entity : world.getEntitiesRange())
@@ -41,7 +39,7 @@ export namespace Panels
             ImGui::End();
         }
 
-        void drawEntity(World& world, Entity entity)
+        void drawEntity(const World& world, Entity entity)
         {
             if (isEditorOnly(entity))
                 return;
@@ -50,28 +48,28 @@ export namespace Panels
 
             ImGui::PushID(entity.value);
 
-            ImGui::ImGuiTreeNodeFlags flags =
-                ImGui::ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen |
-                ImGui::ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnArrow |
-                ImGui::ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_SpanFullWidth;
+            ImGuiTreeNodeFlags flags =
+                ImGuiTreeNodeFlags_DefaultOpen |
+                ImGuiTreeNodeFlags_OpenOnArrow |
+                ImGuiTreeNodeFlags_SpanFullWidth;
 
-            if (Editor::selection().contains(entity))
+            if (context().selection.contains(entity))
             {
-                flags |= ImGui::ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Selected;
+                flags |= ImGuiTreeNodeFlags_Selected;
             }
 
             if (!HierarchyUtils::hasChildren(world, entity)
                 || std::ranges::all_of(HierarchyUtils::children(world, entity), isEditorOnly))
             {
-                flags |= ImGui::ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Leaf;
+                flags |= ImGuiTreeNodeFlags_Leaf;
             }
 
             bool opened = ImGui::TreeNodeEx(nameComponent.name.c_str(), flags);
 
             // Detect click on the row
-            if (ImGui::IsItemClicked() | ImGui::IsItemFocused())
+            if (ImGui::IsItemClicked() || ImGui::IsItemFocused())
             {
-                Editor::setSingleSelection(entity);
+                Editor::request(Editor::Requests::ChangeSelection{.contextId = context().id, .entities = {entity}});
             }
 
             if (opened)

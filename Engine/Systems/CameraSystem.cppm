@@ -8,7 +8,7 @@ export class CameraSystem final : public System
 {
     void onUpdate(World& world, Player& player, [[maybe_unused]] float deltaTime) override
     {
-        const float aspectRatio = world.getRenderManager().getAspectRatio();
+        const float aspectRatio = world.getRenderManager().getViewportAspectRatio();
 
         Entity cameraEntity = player.getMainCamera();
         if (!world.isValid(cameraEntity))

@@ -3,7 +3,6 @@ module;
 #include <experimental/scope>
 
 module Render.RenderManager;
-import Editor;
 import Glfw;
 import Guid;
 import Render.Pipeline.Line;
@@ -127,13 +126,15 @@ void RenderManager::init(WindowHandle window)
         m_descriptorSetLayout = createDescriptorSetLayout(m_device);
         m_pipelineLayout = createPipelineLayout(m_device, m_descriptorSetLayout);
 
-        m_graphicsPipeline = createGraphicsPipeline(m_device, m_pipelineCache, m_pipelineLayout, m_swapchainExtent);
-        m_linePipeline = createLinePipeline(m_device, m_pipelineCache, m_pipelineLayout, m_swapchainExtent);
+        m_graphicsPipeline = createGraphicsPipeline(m_device, m_pipelineCache, m_pipelineLayout, m_sceneViewport.extent);
+        m_linePipeline = createLinePipeline(m_device, m_pipelineCache, m_pipelineLayout, m_sceneViewport.extent);
 
         createCommandPool();
         createDepthResources();
         createCommandBuffers();
         createSyncObjects();
+
+        recreateViewport();
     }
 
     const ImGuiInitInfo imguiInfo
@@ -179,11 +180,19 @@ void RenderManager::update()
 
         m_graphicsQueue.waitIdle(); // TODO(perf): Explore VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT.
 
-        auto cmd = m_commands.tryPop();
-        while (cmd.has_value())
+
+        if (m_requestedViewportArea.size.width != m_sceneViewport.extent.width
+            || m_requestedViewportArea.size.height != m_sceneViewport.extent.height
+            || m_requestedViewportArea.position.x != m_sceneViewport.offset.x
+            || m_requestedViewportArea.position.y != m_sceneViewport.offset.y)
         {
-            cmd->get()->process();
-            cmd = m_commands.tryPop();
+            updateViewport();
+        }
+
+        std::unique_ptr<RenderCommandBase> cmd;
+        while (m_commands.tryPop(cmd))
+        {
+            cmd->process();
         }
     }
 
@@ -202,6 +211,7 @@ void RenderManager::shutdown()
     m_imguiHelper.shutdown();
 
     cleanupSwapchain();
+    cleanupViewport();
 
     m_device.destroyDescriptorPool(m_descriptorPool);
     m_device.destroyDescriptorSetLayout(m_descriptorSetLayout);
@@ -251,6 +261,21 @@ void RenderManager::updateFramebufferSize()
 void RenderManager::setEditorDrawCallback(std::function<void()> callback)
 {
     m_editorDrawCallback = std::move(callback);
+}
+
+void RenderManager::setViewportArea(Rect area)
+{
+    m_requestedViewportArea = area;
+}
+
+Rect RenderManager::getViewportArea() const
+{
+    return m_requestedViewportArea;
+}
+
+float RenderManager::getViewportAspectRatio() const
+{
+    return m_sceneViewport.extent.height > 0 ? m_sceneViewport.extent.width / static_cast<float>(m_sceneViewport.extent.height) : 1.f;
 }
 
 void RenderManager::createInstance()
@@ -361,6 +386,61 @@ void RenderManager::createLogicalDevice()
     m_transferQueue = m_device.getQueue(*indices.get(QueueFamilyType::Transfer), 0);
 }
 
+void RenderManager::recreateViewport()
+{
+    cleanupViewport();
+
+    if (m_sceneViewport.extent.width == 0 || m_sceneViewport.extent.height == 0)
+        return;
+
+    std::tie(m_sceneViewport.image, m_sceneViewport.memory) = RenderUtils::createImage
+    (
+        m_device,
+        m_physicalDevice,
+        vk::MemoryPropertyFlagBits::eDeviceLocal,
+        m_sceneViewport.extent,
+        m_swapChainImageFormat,
+        vk::ImageTiling::eOptimal,
+        vk::ImageUsageFlagBits::eColorAttachment |
+        vk::ImageUsageFlagBits::eSampled |
+        vk::ImageUsageFlagBits::eTransferSrc
+    );
+
+    m_sceneViewport.view = RenderUtils::createImageView(m_device, m_sceneViewport.image, m_swapChainImageFormat);
+}
+
+void RenderManager::updateViewport()
+{
+    const auto [position, size] = m_requestedViewportArea;
+    m_sceneViewport.offset = vk::Offset2D{position.x, position.y};
+    m_sceneViewport.extent = vk::Extent2D{static_cast<UInt32>(size.width), static_cast<UInt32>(size.height)};
+
+    recreateViewport();
+}
+
+void RenderManager::cleanupViewport()
+{
+    if (m_sceneViewport.view)
+    {
+        m_device.destroyImageView(m_sceneViewport.view);
+        m_sceneViewport.view = nullptr;
+    }
+
+    if (m_sceneViewport.image)
+    {
+        m_device.destroyImage(m_sceneViewport.image);
+        m_sceneViewport.image = nullptr;
+    }
+
+    if (m_sceneViewport.memory)
+    {
+        m_device.freeMemory(m_sceneViewport.memory);
+        m_sceneViewport.memory = nullptr;
+    }
+
+    m_sceneViewport.layout = vk::ImageLayout::eUndefined;
+}
+
 void RenderManager::recreateSwapchain()
 {
     int width = 0, height = 0;
@@ -406,7 +486,7 @@ void RenderManager::createSwapchain()
         .imageColorSpace = surfaceFormat.colorSpace,
         .imageExtent = extent,
         .imageArrayLayers = 1,
-        .imageUsage = vk::ImageUsageFlagBits::eColorAttachment,
+        .imageUsage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferDst,
         .preTransform = swapChainSupport.capabilities.currentTransform,
         .compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque,
         .presentMode = presentMode,
@@ -456,12 +536,19 @@ void RenderManager::cleanupSwapchain()
 {
     for (vk::ImageView imageView : m_swapchainImageViews)
         m_device.destroyImageView(imageView);
+    m_swapchainImageViews.clear();
 
     m_device.destroySwapchainKHR(m_swapChain);
+    m_swapChain = nullptr;
 
     m_device.destroyImageView(m_depthImageView);
+    m_depthImageView = nullptr;
+
     m_device.destroyImage(m_depthImage);
+    m_depthImage = nullptr;
+
     m_device.freeMemory(m_depthImageMemory);
+    m_depthImageMemory = nullptr;
 
     m_swapchainImages.clear();
     m_swapchainLayouts.clear();
@@ -620,7 +707,7 @@ void RenderManager::drawFrame()
 
     const vk::RenderingAttachmentInfo colorAttachmentInfo
     {
-        .imageView = m_swapchainImageViews[imageResult.value],
+        .imageView = m_sceneViewport.view,
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .loadOp = vk::AttachmentLoadOp::eClear,
         .storeOp = vk::AttachmentStoreOp::eStore,
@@ -638,7 +725,7 @@ void RenderManager::drawFrame()
 
     const vk::RenderingInfo renderingInfo
     {
-        .renderArea = vk::Rect2D{{0, 0}, m_swapchainExtent},
+        .renderArea = {{0, 0}, m_sceneViewport.extent},
         .layerCount = 1,
         .colorAttachmentCount = 1,
         .pColorAttachments = &colorAttachmentInfo,
@@ -653,49 +740,20 @@ void RenderManager::drawFrame()
         m_swapchainImages[imageIndex],
         m_swapchainLayouts[imageIndex],
         vk::ImageLayout::eColorAttachmentOptimal,
-        {},
+        vk::AccessFlagBits::eTransferWrite,
         vk::AccessFlagBits::eColorAttachmentWrite,
-        vk::PipelineStageFlagBits::eColorAttachmentOutput,
+        vk::PipelineStageFlagBits::eTransfer,
         vk::PipelineStageFlagBits::eColorAttachmentOutput
     );
-    // std::cout << "Image " << imageIndex << " old layout = " << vk::to_string(m_swapchainLayouts[imageIndex]) << "\n";
     m_swapchainLayouts[imageIndex] = vk::ImageLayout::eColorAttachmentOptimal;
-
-    commandBuffer.beginRendering(renderingInfo);
-
-    const vk::Viewport viewport
-    {
-        .x = 0,
-        .y = 0,
-        .width = static_cast<float>(m_swapchainExtent.width),
-        .height = static_cast<float>(m_swapchainExtent.height),
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f,
-    };
-    commandBuffer.setViewport(0, 1, &viewport);
-
-    const vk::Rect2D scissor
-    {
-        .offset = {0, 0},
-        .extent = m_swapchainExtent,
-    };
-    commandBuffer.setScissor(0, 1, &scissor);
-
-    commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_graphicsPipeline);
-    m_renderObjectManager.renderFrame(commandBuffer, m_pipelineLayout, m_currentFrame);
-
-    commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_linePipeline);
-    m_renderObjectManager.renderLineFrame(commandBuffer, m_pipelineLayout, m_currentFrame);
-
-    commandBuffer.endRendering();
 
     if (m_editorDrawCallback)
     {
         const vk::RenderingAttachmentInfo imGuiColorAttachmentInfo
         {
-            .imageView = m_swapchainImageViews[imageResult.value],
+            .imageView = m_swapchainImageViews[imageIndex],
             .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
-            .loadOp = vk::AttachmentLoadOp::eLoad,
+            .loadOp = vk::AttachmentLoadOp::eClear,
             .storeOp = vk::AttachmentStoreOp::eStore,
             .clearValue = vk::ClearColorValue{0.0f, 0.0f, 0.0f, 1.0f}
         };
@@ -713,26 +771,141 @@ void RenderManager::drawFrame()
 
         m_imguiHelper.beginFrame();
         m_editorDrawCallback();
+        m_imguiHelper.preRenderFrame();
         m_imguiHelper.renderFrame(commandBuffer);
 
         commandBuffer.endRendering();
-
-        RenderUtils::transitionImageLayout
-        (
-            commandBuffer,
-            m_swapchainImages[imageIndex],
-            m_swapchainLayouts[imageIndex],
-            vk::ImageLayout::ePresentSrcKHR,
-            vk::AccessFlagBits::eColorAttachmentWrite,
-            {},
-            vk::PipelineStageFlagBits::eColorAttachmentOutput,
-            vk::PipelineStageFlagBits::eBottomOfPipe
-        );
-        // std::cout << "Image " << imageIndex << " old layout = " << vk::to_string(m_swapchainLayouts[imageIndex]) << "\n";
-        m_swapchainLayouts[imageIndex] = vk::ImageLayout::ePresentSrcKHR;
-
-        commandBuffer.end();
     }
+
+    if (m_sceneViewport.image)
+    {
+        const IVec2 srcOffset{std::max(0, -m_sceneViewport.offset.x), std::max(0, -m_sceneViewport.offset.y)};
+        const IVec2 dstOffset{std::max(0, m_sceneViewport.offset.x), std::max(0, m_sceneViewport.offset.y)};
+        const Size2D size
+        {
+            std::min(static_cast<int>(m_sceneViewport.extent.width) - srcOffset.x, static_cast<int>(m_swapchainExtent.width) - dstOffset.x),
+            std::min(static_cast<int>(m_sceneViewport.extent.height) - srcOffset.y, static_cast<int>(m_swapchainExtent.height) - dstOffset.y)
+        };
+
+        if (size.width > 0 && size.height > 0)
+        {
+            RenderUtils::transitionImageLayout
+            (
+                commandBuffer,
+                m_sceneViewport.image,
+                m_sceneViewport.layout,
+                vk::ImageLayout::eColorAttachmentOptimal,
+                {},
+                vk::AccessFlagBits::eColorAttachmentWrite,
+                vk::PipelineStageFlagBits::eTopOfPipe,
+                vk::PipelineStageFlagBits::eColorAttachmentOutput
+            );
+            m_sceneViewport.layout = vk::ImageLayout::eColorAttachmentOptimal;
+
+            commandBuffer.beginRendering(renderingInfo);
+
+            const vk::Viewport viewport
+            {
+                .x = 0,
+                .y = 0,
+                .width = static_cast<float>(m_sceneViewport.extent.width),
+                .height = static_cast<float>(m_sceneViewport.extent.height),
+                .minDepth = 0.0f,
+                .maxDepth = 1.0f,
+            };
+            commandBuffer.setViewport(0, 1, &viewport);
+
+            const vk::Rect2D scissor
+            {
+                .offset = {0, 0},
+                .extent = m_sceneViewport.extent,
+            };
+            commandBuffer.setScissor(0, 1, &scissor);
+
+            commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_graphicsPipeline);
+            m_renderObjectManager.renderFrame(commandBuffer, m_pipelineLayout, m_currentFrame);
+
+            commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, m_linePipeline);
+            m_renderObjectManager.renderLineFrame(commandBuffer, m_pipelineLayout, m_currentFrame);
+
+            commandBuffer.endRendering();
+
+            // Copy viewport image into swapchain
+            {
+                RenderUtils::transitionImageLayout
+                (
+                    commandBuffer,
+                    m_sceneViewport.image,
+                    m_sceneViewport.layout,
+                    vk::ImageLayout::eTransferSrcOptimal,
+                    vk::AccessFlagBits::eColorAttachmentWrite,
+                    vk::AccessFlagBits::eTransferRead,
+                    vk::PipelineStageFlagBits::eColorAttachmentOutput,
+                    vk::PipelineStageFlagBits::eTransfer
+                );
+
+                m_sceneViewport.layout = vk::ImageLayout::eTransferSrcOptimal;
+
+                RenderUtils::transitionImageLayout
+                (
+                    commandBuffer,
+                    m_swapchainImages[imageIndex],
+                    m_swapchainLayouts[imageIndex],
+                    vk::ImageLayout::eTransferDstOptimal,
+                    vk::AccessFlagBits::eColorAttachmentWrite,
+                    vk::AccessFlagBits::eTransferWrite,
+                    vk::PipelineStageFlagBits::eColorAttachmentOutput,
+                    vk::PipelineStageFlagBits::eTransfer
+                );
+                m_swapchainLayouts[imageIndex] = vk::ImageLayout::eTransferDstOptimal;
+
+                commandBuffer.copyImage
+                (
+                    m_sceneViewport.image,
+                    vk::ImageLayout::eTransferSrcOptimal,
+                    m_swapchainImages[imageIndex],
+                    vk::ImageLayout::eTransferDstOptimal,
+                    vk::ImageCopy
+                    {
+                        .srcSubresource =
+                        {
+                            .aspectMask = vk::ImageAspectFlagBits::eColor,
+                            .layerCount = 1
+                        },
+                        .srcOffset = {srcOffset.x, srcOffset.y, 0},
+                        .dstSubresource =
+                        {
+                            .aspectMask = vk::ImageAspectFlagBits::eColor,
+                            .layerCount = 1
+                        },
+                        .dstOffset = {dstOffset.x, dstOffset.y, 0},
+                        .extent =
+                        {
+                            size.width,
+                            size.height,
+                            1
+                        }
+                    }
+                );
+            }
+        }
+    }
+
+    RenderUtils::transitionImageLayout
+    (
+        commandBuffer,
+        m_swapchainImages[imageIndex],
+        m_swapchainLayouts[imageIndex],
+        vk::ImageLayout::ePresentSrcKHR,
+        vk::AccessFlagBits::eColorAttachmentWrite,
+        {},
+        vk::PipelineStageFlagBits::eColorAttachmentOutput,
+        vk::PipelineStageFlagBits::eBottomOfPipe
+    );
+    // std::cout << "Image " << imageIndex << " old layout = " << vk::to_string(m_swapchainLayouts[imageIndex]) << "\n";
+    m_swapchainLayouts[imageIndex] = vk::ImageLayout::ePresentSrcKHR;
+
+    commandBuffer.end();
 
     const vk::Semaphore waitSemaphores[] = {imageAvailableSemaphore};
     const vk::Semaphore signalSemaphores[] = {renderFinishedSemaphore};

@@ -28,6 +28,20 @@ export struct WorldCreateInfo
     RenderManager* renderManager{};
 };
 
+export using SystemCallbackHandle = int;
+
+export struct SystemCallback
+{
+    ArchetypeChangedCallback onComponentAdded;
+    std::function<void(Entity)> onEntityRemoved;
+};
+
+SystemCallbackHandle generateSystemCallbackHandle()
+{
+    static SystemCallbackHandle lastValue{-1};
+    return ++lastValue;
+}
+
 //------------------------------------------------------------------------------------------------------------------------
 // World
 //------------------------------------------------------------------------------------------------------------------------
@@ -73,8 +87,8 @@ public:
 
     ComponentBase& editComponent(Entity entity, TypeId componentType) { return const_cast<ComponentBase&>(readComponent(entity, componentType)); }
 
-    ArchetypeChangedObserverHandle observeOnComponentAdded(ArchetypeChangedCallback observer);
-    void unobserveOnComponentAdded(ArchetypeChangedObserverHandle observerHandle);
+    SystemCallbackHandle registerSystem(SystemCallback callback);
+    void unregisterSystem(SystemCallbackHandle handle);
 
     auto getEntitiesRange() const { return m_entities | std::views::keys; }
 
@@ -95,7 +109,7 @@ private:
     Archetype& editOrCreateArchetype(const EntitySignature& signature);
     Archetype& prepareArchetypeOnAddComponent(Entity entity, TypeId componentId);
     
-    std::unordered_map<ArchetypeChangedObserverHandle, ArchetypeChangedCallback> m_archetypeChangeObservers{};
+    std::unordered_map<SystemCallbackHandle, SystemCallback> m_systemCallbacks{};
     Entity::ValueType m_nextEntityValue{};
     std::unordered_map<Entity, EntitySignature> m_entities{};
     std::unordered_map<EntitySignature, Archetype> m_archetypes;
@@ -113,9 +127,9 @@ T& World::addComponent(Entity entity, Args&&... args)
     T& addedComponent = archetype.addComponent<T>(entity, T{std::forward<Args>(args)...});
     log(std::format("Added component {} to entity {}", getComponentName<T>(), entity));
 
-    for (auto& callback : m_archetypeChangeObservers | std::views::values)
+    for (SystemCallback& callback : m_systemCallbacks | std::views::values)
     {
-        callback(entity, Component<T>::typeId());
+        callback.onComponentAdded(entity, Component<T>::typeId());
     }
     return addedComponent;
 }

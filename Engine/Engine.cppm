@@ -7,8 +7,9 @@ export import Core;
 export import EngineComponents;
 export import EventBus;
 import ComponentRegistry;
-import EditorContext;
+import EditorUIContext;
 import FileSystem;
+import Geometry;
 import Input;
 import Log;
 import Math;
@@ -39,8 +40,6 @@ export namespace Engine
     ENGINE_API bool update(float deltaTime);
 
     ENGINE_API void shutdown();
-
-    ENGINE_API void setViewport(IVec2 position, IVec2 size);
 
     //------------------------------------------------------------------------------------------------------------------------
     // Input
@@ -105,9 +104,13 @@ export namespace Engine
     // Editor Integration
     //------------------------------------------------------------------------------------------------------------------------
 
-    ENGINE_API EditorContext getEditorContext();
+    ENGINE_API EditorUIContext getEditorContext();
 
     ENGINE_API void setEditorDrawCallback(std::function<void()> callback);
+
+    ENGINE_API void setViewportArea(Rect area);
+
+    ENGINE_API Ray getViewportCursorRay(const World& world);
 
     //------------------------------------------------------------------------------------------------------------------------
     // DEBUG -TEMPORARY

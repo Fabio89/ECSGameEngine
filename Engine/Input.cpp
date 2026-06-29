@@ -24,11 +24,9 @@ void Input::postUpdate()
     justReleasedKeys.reset();
 }
 
-Vec2 Input::getCursorPosition(WindowHandle window)
+Vec2 Input::getCursorScreenPosition(WindowHandle window)
 {
-    const Vec2 absolutePosition = Platform::Window::getCursorPosition(window);
-    const IVec2 windowSize = Platform::Window::getWindowSize(window);
-    return {absolutePosition.x / windowSize.x, absolutePosition.y / windowSize.y};
+    return Platform::Window::getCursorPosition(window);
 }
 
 bool Input::isKeyDown(KeyCode key)

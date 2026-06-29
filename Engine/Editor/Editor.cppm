@@ -3,53 +3,43 @@ module;
 #include "EngineExport.h"
 
 export module Editor;
-export import EditorContext;
+export import EditorUIContext;
 import Core;
+import Editor.Controller;
+import Editor.EditingContext;
 import Editor.Panel;
+import Editor.Requests;
+import Editor.Selection;
+import CoreTypes;
 import Window;
 import World;
 
 namespace Editor
 {
-    EditorContext editorContext{};
+    EditorUIContext editorContext{};
+    ThreadSafeQueue<EditorRequest> requests;
+    ControllerManager controllerManager;
+    EditingContextManager contextManager;
+
+    void addPanel(std::unique_ptr<Panel> panel);
 }
 
 export namespace Editor
 {
-    class ENGINE_API Selection
-    {
-    public:
-        void add(Entity entity);
-        void remove(Entity entity);
-        void clear();
-        void set(std::span<const Entity> entities);
-        void setSingle(Entity entity);
-        std::span<const Entity> get() const;
-        bool contains(Entity entity) const;
-        bool isEmpty() const;
-
-    private:
-        std::vector<Entity> m_entities;
-    };
-
-    ENGINE_API void init(EditorContext context);
+    ENGINE_API void init(EditorUIContext context);
 
     ENGINE_API void shutdown();
 
-    ENGINE_API void createGizmos();
-
     ENGINE_API void update(float deltaTime);
 
-    ENGINE_API void setSingleSelection(Entity entity);
-
-    ENGINE_API void setSelection(std::span<const Entity> entities);
-
-    ENGINE_API Selection& selection();
-
-    ENGINE_API std::span<const Entity> getSelection();
-
-    ENGINE_API void addPanel(std::unique_ptr<Panel> panel);
+    template<typename T>
+    ENGINE_API void request(T&& request) { requests.push(EditorRequest{std::forward<T>(request)}); }
 
     template<typename T>
-    ENGINE_API void addPanel() { addPanel(std::make_unique<T>(*editorContext.world)); }
+    ENGINE_API void addPanel(EditingContextId contextId) { addPanel(std::make_unique<T>(PanelCreateInfo{.contextId = contextId, .window = editorContext.window})); }
+
+    template<typename T>
+    ENGINE_API T& addController(EditingContextId contextId) { return controllerManager.addController<T>(contextManager.get(contextId)); }
+
+    ENGINE_API EditingContextManager& contexts() { return contextManager; }
 }

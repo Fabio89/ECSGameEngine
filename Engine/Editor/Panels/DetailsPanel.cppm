@@ -1,26 +1,25 @@
-export module Editor.Panel.Inspector;
-import Core;
+export module Editor.Panels.Details;
 import Component.Name;
 import Editor;
 import Editor.ImGui;
-import Editor.Panel;
+import Editor.Panel.Impl;
 import Engine;
 import Properties;
-import World;
 
 export namespace Panels
 {
-    class Inspector : public Panel
+    class DetailsPanel : public PanelImpl
     {
     public:
-        Inspector(World& world) : Panel{world} {}
+        using PanelImpl::PanelImpl;
 
     private:
-        void doDraw(World& world) override
+        void doDraw() override
         {
+            World& world = context().world;
             ImGui::Begin("Details", &m_open);
 
-            const Entity inspectedEntity = Editor::selection().isEmpty() ? Entity{} : Editor::selection().get().front();
+            const Entity inspectedEntity = context().selection.isEmpty() ? Entity{} : context().selection.get().front();
             if (world.isValid(inspectedEntity))
             {
                 for (const TypeId typeId : world.getComponentTypesInEntity(inspectedEntity))
@@ -39,15 +38,15 @@ export namespace Panels
         {
             ImGui::Separator();
 
-            ImGui::ImGuiTreeNodeFlags flags =
-                ImGui::ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_DefaultOpen |
-                ImGui::ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_OpenOnArrow |
-                ImGui::ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_SpanFullWidth;
+            ImGuiTreeNodeFlags flags =
+                ImGuiTreeNodeFlags_DefaultOpen |
+                ImGuiTreeNodeFlags_OpenOnArrow |
+                ImGuiTreeNodeFlags_SpanFullWidth;
 
             const ComponentTypeBase* componentType = ComponentRegistry::get(componentTypeId);
             if (!componentType->hasProperties())
             {
-                flags |= ImGui::ImGuiTreeNodeFlags_::ImGuiTreeNodeFlags_Leaf;
+                flags |= ImGuiTreeNodeFlags_Leaf;
             }
 
             if (const ComponentTypeBase* type = ComponentRegistry::get(componentTypeId))

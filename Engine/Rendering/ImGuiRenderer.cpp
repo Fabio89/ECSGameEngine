@@ -23,6 +23,20 @@ void ImGuiRenderer::init(WindowHandle window, const ImGuiInitInfo& initInfo)
     ImGui::CreateContext();
     ImGui::ImGuiIO& io = ImGui::GetIO();
 
+    // Set fonts
+    {
+        ImGui::ImFontConfig config;
+        config.OversampleH = 2;
+        config.OversampleV = 2;
+
+        io.Fonts->AddFontFromFileTTF(
+            "Editor/Assets/Fonts/NotoSans-Variable.ttf",
+            18.0f,
+            &config
+        );
+        io.FontDefault = io.Fonts->Fonts.back();
+    }
+
     std::cout << "BackendRendererName="
           << (io.BackendRendererName ? io.BackendRendererName : "null")
           << "\n";
@@ -111,13 +125,19 @@ void ImGuiRenderer::beginFrame()
     ImGui::NewFrame();
 }
 
+void ImGuiRenderer::preRenderFrame()
+{
+    if constexpr (!enabled)
+        return;
+    ImGui::Render();
+}
+
 // ReSharper disable once CppMemberFunctionMayBeStatic
 void ImGuiRenderer::renderFrame(vk::CommandBuffer commandBuffer)
 {
     if constexpr (!enabled)
         return;
 
-    ImGui::Render();
     ImGui::ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 }
 

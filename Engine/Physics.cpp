@@ -35,7 +35,7 @@ Entity Physics::lineTrace(const World& world, const Ray& ray, TraceChannelFlags 
     return hitEntity;
 }
 
-Ray Physics::rayFromScreenPosition(const World& world, const Player& player, Vec2 screenPosition)
+Ray Physics::rayFromViewportUV(const World& world, const Player& player, Vec2 uv)
 {
     const Entity cameraEntity = player.getMainCamera();
     if (!world.isValid(cameraEntity) || !world.hasComponent<CameraComponent>(cameraEntity))
@@ -45,8 +45,8 @@ Ray Physics::rayFromScreenPosition(const World& world, const Player& player, Vec
     const TransformComponent& cameraTransform = world.readComponent<TransformComponent>(cameraEntity);
 
     // Step 1: Get normalized device coordinates (NDC) of the cursor
-    float x = screenPosition.x * 2.0f - 1.0f; // Convert [0..1] to [-1..1]
-    float y = screenPosition.y * 2.0f - 1.0f; // Convert [0..1] to [-1..1]
+    float x = uv.x * 2.0f - 1.0f; // Convert [0..1] to [-1..1]
+    float y = uv.y * 2.0f - 1.0f; // Convert [0..1] to [-1..1]
     Vec4 rayClip = Vec4(x, y, -1.0f, 1.0f); // Camera clip space (near plane)
 
     // Step 2: Convert from clip space to view space
@@ -120,4 +120,22 @@ bool Physics::rayIntersectsAABB(const Ray& ray, const Vec3& aabbMin, const Vec3&
 
 void Physics::checkNormalized(const Vec3& vector)
 {
+}
+
+void TraceChannel::set(TraceChannelFlags channelFlags, bool value)
+{
+    using FlagsType = std::underlying_type_t<TraceChannelFlags>;
+    FlagsType result;
+    if (value)
+        result = static_cast<FlagsType>(m_mask) | static_cast<FlagsType>(channelFlags);
+    else
+        result = static_cast<FlagsType>(m_mask) & ~static_cast<FlagsType>(channelFlags);
+    m_mask = static_cast<TraceChannelFlags>(result);
+}
+
+void TraceChannel::reset(TraceChannelFlags channelFlags)
+{
+    using FlagsType = std::underlying_type_t<TraceChannelFlags>;
+    const auto result = static_cast<FlagsType>(m_mask) & ~static_cast<FlagsType>(channelFlags);
+    m_mask = static_cast<TraceChannelFlags>(result);
 }

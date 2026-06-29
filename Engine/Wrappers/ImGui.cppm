@@ -427,26 +427,12 @@ export namespace ImGui
 
     using ImGuiChildFlags_::ImGuiChildFlags_Borders;
 
-    using ::ImGuiTableFlags_;
-    using ::ImGuiTableFlags;
-
-    using ::ImGuiTreeNodeFlags_;
-    using ::ImGuiTreeNodeFlags;
-
-    using ::ImGuiWindowFlags_;
-    using ::ImGuiWindowFlags;
-
-    using ::ImGuiDockNodeFlags_;
-    using ::ImGuiDockNodeFlags;
-
-    using ImGuiStyleVar_::ImGuiStyleVar_ItemSpacing;
-    using ImGuiStyleVar_::ImGuiStyleVar_ItemInnerSpacing;
-
     using ImGuiMouseCursor_::ImGuiMouseCursor_ResizeEW;
 
     using ::ImGuiID;
     using ::ImVec2;
     using ::ImGuiIO;
+    using ::ImFontConfig;
     using ::ImGui_ImplVulkan_InitInfo;
     using ::ImGui_ImplVulkan_PipelineInfo;
     using ::ImGui_ImplGlfw_InitForVulkan;
@@ -459,4 +445,25 @@ export namespace ImGui
     using ::ImGui_ImplVulkan_Shutdown;
     
     void CheckVersion() { IMGUI_CHECKVERSION(); }
+}
+
+export
+{
+    using ::ImGuiTableFlags_;
+    using ::ImGuiTableFlags;
+
+    using ::ImGuiTreeNodeFlags_;
+    using ::ImGuiTreeNodeFlags;
+
+    using ::ImGuiWindowFlags_;
+    using ::ImGuiWindowFlags;
+
+    using ::ImGuiDockNodeFlags_;
+    using ::ImGuiDockNodeFlags;
+
+    using ::ImGuiStyleVar_;
+
+    using ::ImGuiKey;
+
+    using ::ImGuiMouseButton_;
 }

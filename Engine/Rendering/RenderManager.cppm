@@ -2,6 +2,7 @@ export module Render.RenderManager;
 export import Render.Commands;
 import Core;
 import CoreTypes;
+import Geometry;
 import Guid;
 import Math;
 import Render.ImGui;
@@ -15,6 +16,16 @@ export enum class RenderPipelineType
     Opaque,
     Textured,
     Transparent,
+};
+
+struct RenderTarget
+{
+    vk::Image image{};
+    vk::DeviceMemory memory{};
+    vk::ImageView view{};
+    vk::Extent2D extent{1000, 800};
+    vk::Offset2D offset{};
+    vk::ImageLayout layout{vk::ImageLayout::eUndefined};
 };
 
 export class RenderManager
@@ -37,14 +48,21 @@ public:
     void addCommand(T&& command);
 
     void setCamera(const Camera& camera);
-    float getAspectRatio() const { return m_swapchainExtent.height > 0 ? m_swapchainExtent.width / static_cast<float>(m_swapchainExtent.height) : 1.f; }
 
     void updateFramebufferSize();
     float getDeltaTime() const { return m_deltaTime; }
 
     void setEditorDrawCallback(std::function<void()> callback);
 
+    void setViewportArea(Rect area);
+    Rect getViewportArea() const;
+
+    float getViewportAspectRatio() const;
+
 private:
+    RenderTarget m_sceneViewport;
+    Rect m_requestedViewportArea;
+
     class RenderCommandBase;
     template <typename T>
     class RenderCommand;
@@ -104,11 +122,14 @@ private:
     void createSurface();
     void createLogicalDevice();
 
+    void recreateViewport();
+    void updateViewport();
+    void cleanupViewport();
+
     void recreateSwapchain();
     void createSwapchain();
     void createImageViews();
     void createDepthResources();
-
     void cleanupSwapchain();
 
     void createCommandPool();
@@ -183,9 +204,21 @@ void RenderManager::processCommand(RenderCommands::AddObject&& cmd)
 }
 
 template <>
+void RenderManager::processCommand(RenderCommands::RemoveObject&& cmd)
+{
+    m_renderObjectManager.removeRenderObject(cmd.entity);
+}
+
+template <>
 void RenderManager::processCommand(RenderCommands::AddLineObject&& cmd)
 {
     m_renderObjectManager.addLineRenderObject(cmd.entity, std::move(cmd.vertices));
+}
+
+template <>
+void RenderManager::processCommand(RenderCommands::RemoveLineObject&& cmd)
+{
+    m_renderObjectManager.removeLineRenderObject(cmd.entity);
 }
 
 template <>

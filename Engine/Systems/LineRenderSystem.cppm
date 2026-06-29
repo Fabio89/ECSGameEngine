@@ -16,4 +16,9 @@ export class LineRenderSystem final : public System
             world.getRenderManager().addCommand(RenderCommands::AddLineObject{entity, component.vertices});
         }
     }
+
+    void onEntityDestroyed(World& world, Entity entity) override
+    {
+        world.getRenderManager().addCommand(RenderCommands::RemoveLineObject{entity});
+    }
 };

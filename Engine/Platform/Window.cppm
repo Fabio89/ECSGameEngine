@@ -37,6 +37,7 @@ export namespace Platform::Window
     void destroyWindow(WindowHandle window);
 
     Vec2 getCursorPosition(WindowHandle window);
+    CursorMode getCursorMode(WindowHandle window);
     void setCursorMode(WindowHandle window, CursorMode mode);
     void setCursorType(WindowHandle window, CursorType type);
 

@@ -41,6 +41,15 @@ void EventSubscription::operator+=(EventBus::Subscription&& subscription) noexce
     m_subs.push_back(std::move(subscription));
 }
 
+void EventSubscription::operator+=(EventSubscription&& other) noexcept
+{
+    for (EventBus::Subscription& sub : other.m_subs)
+    {
+        m_subs.push_back(std::move(sub));
+    }
+    other.m_subs.clear();
+}
+
 EventBus::Subscription EventBus::subscribe(TypeId event, Callback callback)
 {
     const SubscriptionId id{m_nextSubscriptionId++};

@@ -30,23 +30,23 @@ public:
         m_condition.notify_one();
     }
 
-    std::optional<T> tryPop()
+    bool tryPop(T& item)
     {
-        std::optional<T> item;
         std::lock_guard lock{m_mutex};
-        if (!m_queue.empty())
-        {
-            item.emplace(std::move(m_queue.front()));
-            m_queue.pop();
-        }
-        return item;
+
+        if (m_queue.empty())
+            return false;
+
+        item = std::move(m_queue.front());
+        m_queue.pop();
+        return true;
     }
 
-    void waitAndPop(T& item)
+    void waitPop(T& item)
     {
-        std::lock_guard lock{m_mutex};
+        std::unique_lock lock{m_mutex};
         m_condition.wait(lock, [this] { return !m_queue.empty(); });
-        item = m_queue.front();
+        item = std::move(m_queue.front());
         m_queue.pop();
     }
 

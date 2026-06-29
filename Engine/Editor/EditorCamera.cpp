@@ -29,7 +29,7 @@ void updateCameraTransform(WindowHandle window, World& world, Entity camera, flo
         float dYaw = 0;
         float dPitch = 0;
 
-        const Vec2 cursorPosition = Input::getCursorPosition(window);
+        const Vec2 cursorPosition = Input::getCursorScreenPosition(window);
         dYaw = Math::clamp(rotationMultiplier * deltaTime * (cursorPosition.x - lastCursorPosition.x), -maxRotSpeed, maxRotSpeed);
         dPitch = Math::clamp(rotationMultiplier * deltaTime * (cursorPosition.y - lastCursorPosition.y), -maxRotSpeed, maxRotSpeed);
 
@@ -71,5 +71,5 @@ void EditorCamera::update(WindowHandle window, World& world, const Player& playe
     if (auto cameraEntity = player.getMainCamera(); world.isValid(cameraEntity))
         updateCameraTransform(window, world, cameraEntity, deltaTime, rotationCooldown == 0.f);
     
-    lastCursorPosition = Input::getCursorPosition(window);
+    lastCursorPosition = Input::getCursorScreenPosition(window);
 }

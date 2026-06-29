@@ -1,17 +1,16 @@
-export module Editor.Panel.ImGuiDemo;
+export module Editor.Panels.ImGuiDemo;
 import Editor.ImGui;
 import Editor.Panel;
-import World;
 
 export namespace Panels
 {
-    class ImGuiDemo : public Panel
+    class ImGuiDemoPanel : public Panel
     {
     public:
         using Panel::Panel;
 
     private:
-        void doDraw(World&) override
+        void doDraw() override
         {
             if (m_showDemoWindow)
                 ImGui::ShowDemoWindow(&m_showDemoWindow);

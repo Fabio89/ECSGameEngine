@@ -1,6 +1,7 @@
 module Engine;
 import EngineSystems;
 import Platform;
+import Thread;
 
 namespace Engine
 {
@@ -17,6 +18,7 @@ namespace Engine
 
 void Engine::runRenderThread()
 {
+    Thread::registerRenderThread();
     renderManager.init(window);
 
     while (!engineShuttingDown.load())
@@ -52,6 +54,7 @@ Entity Engine::ensureCamera()
 
 void Engine::init(const WindowCreateInfo& info)
 {
+    Thread::registerGameThread();
     Platform::init();
 
     if (!check(!window.isValid(), "Can't create more than one window!"))
@@ -92,6 +95,8 @@ void Engine::shutdown()
 
     std::cout << "[Application] Shutting down...\n";
 
+    EngineSystems::shutdown();
+
     if (renderThread.joinable())
     {
         std::cout << "[Application] Waiting for render thread to complete...\n";
@@ -104,18 +109,9 @@ void Engine::shutdown()
     std::cout << "[Application] Shutdown complete!\n";
 }
 
-void Engine::setViewport(IVec2 position, IVec2 size)
-{
-    if (check(window.isValid(), "Can't set viewport offset for null window!"))
-    {
-        Platform::Window::setWindowPosition(window, position);
-        Platform::Window::setWindowSize(window, size);
-    }
-}
-
 Entity Engine::getEntityUnderCursor()
 {
-    return Physics::lineTrace(world, Physics::rayFromScreenPosition(world, player, Input::getCursorPosition(window)), TraceChannelFlags::Default);
+    return Physics::lineTrace(world, Physics::rayFromViewportUV(world, player, Input::getCursorScreenPosition(window)), TraceChannelFlags::Default);
 }
 
 void Engine::openProject(std::filesystem::path path)
@@ -172,7 +168,7 @@ EventBus& Engine::events()
     return eventBus;
 }
 
-EditorContext Engine::getEditorContext()
+EditorUIContext Engine::getEditorContext()
 {
     return {.world = &world, .window = window };
 }
@@ -180,6 +176,25 @@ EditorContext Engine::getEditorContext()
 void Engine::setEditorDrawCallback(std::function<void()> callback)
 {
     renderManager.setEditorDrawCallback(std::move(callback));
+}
+
+void Engine::setViewportArea(Rect area)
+{
+    renderManager.setViewportArea(area);
+}
+
+Ray Engine::getViewportCursorRay(const World& world)
+{
+    const Vec2 cursor = Platform::Window::getCursorPosition(window);
+
+    const auto [position, size] = renderManager.getViewportArea();
+
+    const Vec2 uv {
+        (cursor.x - position.x) / size.width,
+        (cursor.y - position.y) / size.height
+    };
+
+    return Physics::rayFromViewportUV(world, player, uv);
 }
 
 Player& Engine::getPlayer()

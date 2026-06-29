@@ -20,7 +20,7 @@ std::generator<Entity> HierarchyUtils::children(const World& world, Entity paren
 {
     Entity child = getHierarchy(world, parent).firstChild;
 
-    while (child.isValid())
+    while (world.isValid(child))
     {
         co_yield child;
         child = getHierarchy(world, child).nextSibling;

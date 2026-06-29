@@ -6,10 +6,12 @@ export module Input;
 import Math;
 import Window;
 
+export using ::KeyCode;
+
 export namespace Input
 {
     ENGINE_API
-    Vec2 getCursorPosition(WindowHandle window);
+    Vec2 getCursorScreenPosition(WindowHandle window);
 
     ENGINE_API
     bool isKeyDown(KeyCode key);

@@ -15,20 +15,35 @@ import Render.Commands;
 import Render.Model;
 import Render.Primitives;
 
-Entity createTranslationGizmoAxis(World& world, Entity gizmo, std::string name, std::vector<LineVertex>&& vertices, BoundingBoxComponent boundingBox)
+namespace Gizmos
 {
-    const Entity axis = world.createEntity();
-    world.addComponent<BoundingBoxComponent>(axis, std::move(boundingBox));
-    world.addComponent<LineRenderComponent>(axis, std::move(vertices));
-    world.addComponent<NameComponent>(axis, std::move(name));
-    world.addComponent<HierarchyComponent>(axis);
-    world.addComponent<TagsComponent>(axis, {{Tag::editorOnly}});
-    world.addComponent<TransformComponent>(axis);
-    HierarchyUtils::setParent(world, axis, gizmo);
-    return axis;
+    Entity createTranslationGizmo(World& world);
+    Entity createTranslationGizmoAxis(World& world, Entity gizmo, std::string name, std::vector<LineVertex>&& vertices, BoundingBoxComponent boundingBox);
+
+    Entity createRotationGizmo(World& world);
+    Entity createScaleGizmo(World& world);
 }
 
-Entity EditorUtils::createTranslationGizmo(World& world)
+Entity Gizmos::createTransformGizmo(World& world, EntityEditingMode type)
+{
+    switch (type)
+    {
+        case EntityEditingMode::Translate:
+            return createTranslationGizmo(world);
+        case EntityEditingMode::Rotate:
+            return createRotationGizmo(world);
+        case EntityEditingMode::Scale:
+            return createScaleGizmo(world);
+        case EntityEditingMode::None:
+        default:
+        {
+            report("Tried to create invalid gizmo type");
+            return {};
+        }
+    }
+}
+
+Entity Gizmos::createTranslationGizmo(World& world)
 {
     const Entity gizmo = world.createEntity();
     world.addComponent<NameComponent>(gizmo, "Translation Gizmo");
@@ -47,7 +62,7 @@ Entity EditorUtils::createTranslationGizmo(World& world)
             LineVertex{{1.0f, 0.0f, 0.0f}, xColor}
         },
         {
-            .channel = TraceChannel{TraceChannelFlags::Gizmo},
+            .channel = {},
             .minLocal = {-0.2f, -0.2f, -0.2f},
             .maxLocal = {1.2f, 0.2f, 0.2f}
         }
@@ -64,7 +79,7 @@ Entity EditorUtils::createTranslationGizmo(World& world)
             LineVertex{{0.0f, 1.0f, 0.0f}, yColor}
         },
         {
-            .channel = TraceChannel{TraceChannelFlags::Gizmo},
+            .channel = {},
             .minLocal = {-0.2f, -0.2f, -0.2f},
             .maxLocal = {0.2f, 1.2f, 0.2f}
         }
@@ -81,7 +96,7 @@ Entity EditorUtils::createTranslationGizmo(World& world)
             LineVertex{{0.0f, 0.0f, 1.0f}, zColor}
         },
         {
-            .channel = TraceChannel{TraceChannelFlags::Gizmo},
+            .channel = {},
             .minLocal = {-0.2f, -0.2f, -0.2f},
             .maxLocal = {0.2f, 0.2f, 1.2f}
         }
@@ -93,32 +108,32 @@ Entity EditorUtils::createTranslationGizmo(World& world)
     return gizmo;
 }
 
-Entity EditorUtils::createRotationGizmo(World& world)
+Entity Gizmos::createTranslationGizmoAxis(World& world, Entity gizmo, std::string name, std::vector<LineVertex>&& vertices, BoundingBoxComponent boundingBox)
 {
-    return createTranslationGizmo(world);
-    // return createGizmo
-    // (
-    //     world,
-    //     Primitives::generateCone(1, 1, 30)
-    // );
+    const Entity axis = world.createEntity();
+    world.addComponent<BoundingBoxComponent>(axis, std::move(boundingBox));
+    world.addComponent<LineRenderComponent>(axis, std::move(vertices));
+    world.addComponent<NameComponent>(axis, std::move(name));
+    world.addComponent<HierarchyComponent>(axis);
+    world.addComponent<TagsComponent>(axis, {{Tag::editorOnly}});
+    world.addComponent<TransformComponent>(axis);
+    HierarchyUtils::setParent(world, axis, gizmo);
+
+    return axis;
 }
 
-Entity EditorUtils::createScaleGizmo(World& world)
+Entity Gizmos::createRotationGizmo(World& world)
 {
-    return createTranslationGizmo(world);
+    Entity gizmo = createTranslationGizmo(world);
+    world.editComponent<NameComponent>(gizmo).name = "Rotation Gizmo";
+    return gizmo;
 }
 
-void EditorUtils::setGizmoVisible(World& world, Entity gizmoEntity, bool visible)
+Entity Gizmos::createScaleGizmo(World& world)
 {
-    world.getRenderManager().addCommand(RenderCommands::SetObjectVisibility{gizmoEntity, visible});
-
-    if (world.hasComponent<GizmoComponent>(gizmoEntity))
-    {
-        const GizmoComponent& gizmoComponent = world.readComponent<GizmoComponent>(gizmoEntity);
-        world.getRenderManager().addCommand(RenderCommands::SetObjectVisibility{gizmoComponent.xAxisEntity, visible});
-        world.getRenderManager().addCommand(RenderCommands::SetObjectVisibility{gizmoComponent.yAxisEntity, visible});
-        world.getRenderManager().addCommand(RenderCommands::SetObjectVisibility{gizmoComponent.zAxisEntity, visible});
-    }
+    Entity gizmo = createTranslationGizmo(world);
+    world.editComponent<NameComponent>(gizmo).name = "Scale Gizmo";
+    return gizmo;
 }
 
 constexpr std::vector<LineVertex> generateAABBVertices(const Vec3& min, const Vec3& max)
@@ -152,7 +167,7 @@ constexpr std::vector<LineVertex> generateAABBVertices(const Vec3& min, const Ve
     return lineVertices;
 }
 
-Entity EditorUtils::createBoundingBoxGizmo(World& world, Entity parentEntity)
+Entity Gizmos::createBoundingBoxGizmo(World& world, Entity parentEntity)
 {
     const BoundingBoxComponent& aabb = world.readComponent<BoundingBoxComponent>(parentEntity);
     std::string_view name = NameUtils::getName(world, parentEntity);
@@ -166,4 +181,23 @@ Entity EditorUtils::createBoundingBoxGizmo(World& world, Entity parentEntity)
     world.addComponent<TransformComponent>(aabbGizmo);
 
     return aabbGizmo;
+}
+
+void Gizmos::setGizmoVisible(World& world, Entity gizmo, bool visible)
+{
+    auto setVisible = [&](Entity entity)
+    {
+        if (!entity.isValid()) return;
+        world.getRenderManager().addCommand(RenderCommands::SetObjectVisibility{entity, visible});
+    };
+
+    setVisible(gizmo);
+
+    if (world.hasComponent<GizmoComponent>(gizmo))
+    {
+        auto& gizmoComponent = world.editComponent<GizmoComponent>(gizmo);
+        setVisible(gizmoComponent.xAxisEntity);
+        setVisible(gizmoComponent.yAxisEntity);
+        setVisible(gizmoComponent.zAxisEntity);
+    }
 }

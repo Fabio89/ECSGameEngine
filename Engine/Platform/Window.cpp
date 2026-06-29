@@ -8,15 +8,19 @@ namespace Platform::Window
         GLFWwindow* glfwHandle{};
         std::vector<KeyFunction> keyEventCallbacks;
         std::vector<MouseButtonFunction> mouseEventCallbacks;
+        CursorMode cursorMode{CursorMode::Normal};
     };
 
     std::unordered_map<GLFWwindow*, WindowHandle> glfwWindowToHandle;
     std::unordered_map<WindowHandle, WindowData> windows;
     WindowHandle::ValueType nextWindowHandle = 0;
-    std::unordered_map<CursorType, GLFWcursor*> cursorTypes;
+    std::unordered_map<CursorType, GLFWcursor*> cursors;
+    GLFWcursor* currentCursor{};
 
     WindowData& getWindowData(WindowHandle handle);
+
     void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
     void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 }
 
@@ -26,11 +30,11 @@ void Platform::Window::init()
 
 void Platform::Window::shutdown()
 {
-    for (GLFWcursor* cursorType : cursorTypes | std::views::values)
+    for (GLFWcursor* cursorType : cursors | std::views::values)
     {
         glfwDestroyCursor(cursorType);
     }
-    cursorTypes.clear();
+    cursors.clear();
 }
 
 WindowHandle Platform::Window::createWindow(WindowCreateInfo info)
@@ -59,7 +63,12 @@ WindowHandle Platform::Window::createWindow(WindowCreateInfo info)
     glfwSetMouseButtonCallback(glfwWindow, mouseButtonCallback);
 
     const WindowHandle handle{nextWindowHandle++};
-    windows[handle].glfwHandle = glfwWindow;
+    windows[handle] =
+    {
+        .glfwHandle = glfwWindow,
+        .cursorMode = static_cast<CursorMode>(glfwGetInputMode(glfwWindow, static_cast<int>(InputMode::Cursor)))
+    };
+
     glfwWindowToHandle[glfwWindow] = handle;
 
     return handle;
@@ -81,26 +90,36 @@ Vec2 Platform::Window::getCursorPosition(WindowHandle window)
     return {x, y};
 }
 
+CursorMode Platform::Window::getCursorMode(WindowHandle window)
+{
+    return getWindowData(window).cursorMode;
+}
+
 void Platform::Window::setCursorMode(WindowHandle window, CursorMode mode)
 {
-    glfwSetInputMode(getWindowData(window).glfwHandle, static_cast<int>(InputMode::Cursor), static_cast<int>(mode));
+    WindowData& data = getWindowData(window);
+    data.cursorMode = mode;
+    glfwSetInputMode(data.glfwHandle, static_cast<int>(InputMode::Cursor), static_cast<int>(mode));
 }
 
 void Platform::Window::setCursorType(WindowHandle window, CursorType type)
 {
-    log(std::format("Set cursor type: {}", static_cast<int>(type)));
-
     GLFWcursor* cursor;
-    if (auto it = cursorTypes.find(type); it != cursorTypes.end())
+    if (auto it = cursors.find(type); it != cursors.end())
     {
         cursor = it->second;
-    }
-    else
+    } else
     {
         cursor = glfwCreateStandardCursor(static_cast<int>(type));
-        cursorTypes[type] = cursor;
+        cursors[type] = cursor;
     }
-    glfwSetCursor(getWindowData(window).glfwHandle, cursor);
+
+    if (cursor != currentCursor)
+    {
+        log(std::format("Set cursor type: {}", static_cast<int>(type)));
+        glfwSetCursor(getWindowData(window).glfwHandle, cursor);
+        currentCursor = cursor;
+    }
 }
 
 IVec2 Platform::Window::getWindowSize(WindowHandle window)

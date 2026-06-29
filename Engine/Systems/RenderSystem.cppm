@@ -12,8 +12,7 @@ export class RenderSystem final : public System
         {
             const auto& component = world.readComponent<ModelComponent>(entity);
             world.getRenderManager().addCommand(RenderCommands::AddObject{entity, component.mesh, component.texture});
-        }
-        else if (componentType == getComponentType<TransformComponent>())
+        } else if (componentType == getComponentType<TransformComponent>())
         {
             const auto& component = world.readComponent<TransformComponent>(entity);
             updateRenderTransform(world, entity, component);
@@ -26,6 +25,11 @@ export class RenderSystem final : public System
         {
             updateRenderTransform(world, entity, transform);
         }
+    }
+
+    void onEntityDestroyed(World& world, Entity entity) override
+    {
+        world.getRenderManager().addCommand(RenderCommands::RemoveObject{entity});
     }
 
     static void updateRenderTransform(World& world, Entity entity, const TransformComponent& transform)

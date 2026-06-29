@@ -58,13 +58,6 @@ private:
 };
 
 export using ArchetypeChangedCallback = std::function<void(Entity, TypeId)>;
-export using ArchetypeChangedObserverHandle = int;
-
-export ArchetypeChangedObserverHandle generateArchetypeObserverHandle()
-{
-    static ArchetypeChangedObserverHandle lastValue{-1};
-    return ++lastValue;
-}
 
 //------------------------------------------------------------------------------------------------------------------------
 // Archetype - Implementation

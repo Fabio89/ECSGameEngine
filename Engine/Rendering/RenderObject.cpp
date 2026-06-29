@@ -3,6 +3,12 @@ import Project;
 import Render.TextureLoading;
 import Render.Utils;
 
+template<typename T>
+auto findRenderObject(std::vector<T>& span, Entity entity)
+{
+    return std::ranges::find_if(span, [&](auto&& object) { return object.entity == entity; });
+}
+
 void RenderObjectManager::init
 (
     vk::Device device,
@@ -171,33 +177,11 @@ void RenderObjectManager::clear()
     m_textureMap.clear();
 
     for (const RenderObject& object : m_objects)
-    {
-        for (auto&& [buffer, memory] : std::views::zip(object.uniformBuffers, object.uniformBuffersMemory))
-        {
-            m_device.destroyBuffer(buffer);
-            m_device.freeMemory(memory);
-        }
-
-        check(std::in_range<UInt32>(object.descriptorSets.size()), "Truncating value of object.descriptorSets.size() when freeing descriptor sets!");
-        auto result = m_device.freeDescriptorSets(m_descriptorPool, static_cast<UInt32>(object.descriptorSets.size()), object.descriptorSets.data());
-        check(result == vk::Result::eSuccess, "[RenderObjectManager::clear] Failed to free descriptor sets!");
-    }
+        removeRenderObject(object);
     m_objects.clear();
 
-    for (const LineRenderObject& debugObject : m_lineObjects)
-    {
-        for (auto&& [buffer, memory] : std::views::zip(debugObject.uniformBuffers, debugObject.uniformBuffersMemory))
-        {
-            m_device.destroyBuffer(buffer);
-            m_device.freeMemory(memory);
-        }
-        m_device.destroyBuffer(debugObject.vertexBuffer);
-        m_device.freeMemory(debugObject.vertexBufferMemory);
-        
-        check(std::in_range<UInt32>(debugObject.descriptorSets.size()), "Truncating value of object.descriptorSets.size() when freeing descriptor sets!");
-        auto result = m_device.freeDescriptorSets(m_descriptorPool, static_cast<UInt32>(debugObject.descriptorSets.size()), debugObject.descriptorSets.data());
-        check(result == vk::Result::eSuccess, "[RenderObjectManager::clear] Failed to free descriptor sets!");
-    }
+    for (const LineRenderObject& lineObject : m_lineObjects)
+        removeLineRenderObject(lineObject);
     m_lineObjects.clear();
 
     for (const Mesh& mesh : m_meshes)
@@ -285,16 +269,23 @@ void RenderObjectManager::addRenderObject(Entity entity, Guid meshAsset, const G
     std::cout << "\tTexture: " << textureAsset << std::endl;
 }
 
+void RenderObjectManager::removeRenderObject(Entity entity)
+{
+    if (auto it = findRenderObject(m_objects, entity); it != m_objects.end())
+    {
+        removeRenderObject(*it);
+        m_objects.erase(it);
+    }
+}
+
 void RenderObjectManager::setObjectTransform(Entity entity, const Mat4& worldTransform)
 {
-    if (const auto it = std::ranges::find_if(m_objects,
-       [&](auto&& object) { return object.entity == entity; }); it != m_objects.end())
+    if (auto it = findRenderObject(m_objects, entity); it != m_objects.end())
     {
         it->model = worldTransform;
     }
 
-    if (const auto it = std::ranges::find_if(m_lineObjects,
-        [&](auto&& object){ return object.entity == entity; }); it != m_lineObjects.end())
+    if (auto it = findRenderObject(m_lineObjects, entity); it != m_lineObjects.end())
     {
         it->model = worldTransform;
     }   
@@ -358,16 +349,23 @@ void RenderObjectManager::addLineRenderObject(Entity entity, std::vector<LineVer
     log(std::format("Added debug render object for entity '{}'", entity));
 }
 
+void RenderObjectManager::removeLineRenderObject(Entity entity)
+{
+    if (auto it = findRenderObject(m_lineObjects, entity); it != m_lineObjects.end())
+    {
+        removeLineRenderObject(*it);
+        m_lineObjects.erase(it);
+    }
+}
+
 void RenderObjectManager::setObjectVisibility(Entity entity, bool visible)
 {
-    if (const auto it = std::ranges::find_if(m_objects, [&](auto&& object) { return object.entity == entity; });
-        it != m_objects.end())
+    if (auto it = findRenderObject(m_objects, entity); it != m_objects.end())
     {
         it->visible = visible;
         return;
     }
-    if (const auto it = std::ranges::find_if(m_lineObjects, [&](auto&& object){ return object.entity == entity; });
-        it != m_lineObjects.end())
+    if (auto it = findRenderObject(m_lineObjects, entity); it != m_lineObjects.end())
     {
         it->visible = visible;
     }
@@ -438,6 +436,34 @@ void RenderObjectManager::updateLineDescriptorSets(const LineRenderObject& objec
             nullptr
         );
     }
+}
+
+void RenderObjectManager::removeRenderObject(const RenderObject& object)
+{
+    for (auto&& [buffer, memory] : std::views::zip(object.uniformBuffers, object.uniformBuffersMemory))
+    {
+        m_device.destroyBuffer(buffer);
+        m_device.freeMemory(memory);
+    }
+
+    check(std::in_range<UInt32>(object.descriptorSets.size()), "Truncating value of object.descriptorSets.size() when freeing descriptor sets!");
+    auto result = m_device.freeDescriptorSets(m_descriptorPool, static_cast<UInt32>(object.descriptorSets.size()), object.descriptorSets.data());
+    check(result == vk::Result::eSuccess, "[RenderObjectManager::clear] Failed to free descriptor sets!");
+}
+
+void RenderObjectManager::removeLineRenderObject(const LineRenderObject& object)
+{
+    for (auto&& [buffer, memory] : std::views::zip(object.uniformBuffers, object.uniformBuffersMemory))
+    {
+        m_device.destroyBuffer(buffer);
+        m_device.freeMemory(memory);
+    }
+    m_device.destroyBuffer(object.vertexBuffer);
+    m_device.freeMemory(object.vertexBufferMemory);
+
+    check(std::in_range<UInt32>(object.descriptorSets.size()), "Truncating value of object.descriptorSets.size() when freeing descriptor sets!");
+    auto result = m_device.freeDescriptorSets(m_descriptorPool, static_cast<UInt32>(object.descriptorSets.size()), object.descriptorSets.data());
+    check(result == vk::Result::eSuccess, "[RenderObjectManager::clear] Failed to free descriptor sets!");
 }
 
 void RenderObjectManager::renderLineFrame(vk::CommandBuffer commandBuffer, vk::PipelineLayout pipelineLayout, UInt32 currentFrame)

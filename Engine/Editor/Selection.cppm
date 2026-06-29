@@ -1,0 +1,27 @@
+module;
+#include "EngineExport.h"
+export module Editor.Selection;
+import Core;
+import Editor.EditingContextId;
+
+export namespace Editor
+{
+    class ENGINE_API Selection
+    {
+    public:
+        Selection(EditingContextId contextId);
+
+        void add(Entity entity);
+        void remove(Entity entity);
+        void clear();
+        void set(std::span<const Entity> entities);
+        void setSingle(Entity entity);
+        std::span<const Entity> get() const;
+        bool contains(Entity entity) const;
+        bool isEmpty() const;
+
+    private:
+        EditingContextId m_contextId;
+        std::vector<Entity> m_entities;
+    };
+}

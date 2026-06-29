@@ -36,15 +36,17 @@ export
 class TraceChannel
 {
 public:
-    explicit TraceChannel(TraceChannelFlags channelFlags) : m_mask{static_cast<TraceChannelFlagsType>(channelFlags)}
-    {
-    }
+    TraceChannel() = default;
+    explicit TraceChannel(TraceChannelFlags channelFlags) : m_mask{static_cast<TraceChannelFlagsType>(channelFlags)} {}
+
+    void set(TraceChannelFlags channelFlags, bool value = true);
+    void reset(TraceChannelFlags channelFlags);
 
     [[nodiscard]] bool test(TraceChannelFlags flags) const { return (m_mask & flags) == flags; }
     [[nodiscard]] TraceChannelFlagsType toNumber() const { return static_cast<TraceChannelFlagsType>(m_mask); }
 
 private:
-    TraceChannelFlags m_mask;
+    TraceChannelFlags m_mask{};
 };
 
 export
@@ -60,7 +62,7 @@ namespace Physics
     Entity lineTrace(const World& world, const Ray& ray, TraceChannelFlags channel);
 
     export ENGINE_API
-    Ray rayFromScreenPosition(const World& world, const Player& player, Vec2 screenPosition);
+    Ray rayFromViewportUV(const World& world, const Player& player, Vec2 uv);
 
     export
     std::optional<Vec3> intersectRayPlane(const Ray& ray, const Plane& plane);

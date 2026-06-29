@@ -25,10 +25,20 @@ export namespace RenderCommands
         Guid texture;
     };
 
+    struct RemoveObject
+    {
+        Entity entity;
+    };
+
     struct AddLineObject
     {
         Entity entity;
         std::vector<LineVertex> vertices;
+    };
+
+    struct RemoveLineObject
+    {
+        Entity entity;
     };
 
     struct SetObjectVisibility

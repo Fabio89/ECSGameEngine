@@ -15,10 +15,12 @@ public:
     
     void update(World& world, Player& player, float deltaTime);
     void notifyComponentAdded(World&, Entity, TypeId);
+    void notifyEntityDestroyed(World&, Entity);
 
 private:
-    virtual void onComponentAdded(World& world, Entity entity, TypeId componentTypeId);
-    virtual void onUpdate(World& world, Player& player, float deltaTime);
+    virtual void onComponentAdded(World& world, Entity entity, TypeId componentTypeId) {}
+    virtual void onEntityDestroyed(World& world, Entity entity) {}
+    virtual void onUpdate(World& world, Player& player, float deltaTime) {}
 };
 
 void System::update(World& world, Player& player, float deltaTime)
@@ -31,10 +33,7 @@ void System::notifyComponentAdded(World& world, Entity entity, TypeId componentT
     onComponentAdded(world, entity, componentTypeId);
 }
 
-void System::onComponentAdded([[maybe_unused]] World& world, [[maybe_unused]] Entity entity, [[maybe_unused]] TypeId componentTypeId)
+void System::notifyEntityDestroyed(World& world, Entity entity)
 {
-}
-
-void System::onUpdate([[maybe_unused]] World& world, [[maybe_unused]] Player& player, [[maybe_unused]] float deltaTime)
-{
+    onEntityDestroyed(world, entity);
 }

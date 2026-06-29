@@ -26,8 +26,8 @@ export namespace UI
                 if (ImGui::BeginTable(
                     "Matrix",
                     4,
-                    ImGui::ImGuiTableFlags_::ImGuiTableFlags_Borders |
-                    ImGui::ImGuiTableFlags_::ImGuiTableFlags_SizingStretchSame))
+                    ImGuiTableFlags_Borders |
+                    ImGuiTableFlags_SizingStretchSame))
                 {
                     for (int row = 0; row < 4; ++row)
                     {

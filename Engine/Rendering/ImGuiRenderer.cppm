@@ -24,6 +24,7 @@ public:
     void init(WindowHandle window, const ImGuiInitInfo& initInfo);
 
     void beginFrame();
+    void preRenderFrame();
     void renderFrame(vk::CommandBuffer commandBuffer);
     void recreateSwapchain(std::size_t newSize);
     void shutdown();
