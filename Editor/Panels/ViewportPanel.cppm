@@ -1,6 +1,6 @@
 export module Editor.Panels.Viewport;
 import Editor.Controller;
-import Editor.ImGui;
+import ImGui;
 import Editor.Panel.Impl;
 import Editor.SelectionGizmo;
 import Editor.TransformTool;

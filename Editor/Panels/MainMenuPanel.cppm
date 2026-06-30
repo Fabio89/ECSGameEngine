@@ -1,6 +1,6 @@
 export module Editor.Panels.MainMenu;
 import Editor;
-import Editor.ImGui;
+import ImGui;
 import Editor.Panel;
 import Editor.Requests;
 import Engine;

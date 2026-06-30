@@ -1,7 +1,6 @@
 module Render.ImGui;
+import ImGui;
 import Render.QueueFamily;
-import Editor.ImGui;
-import Editor.PropertyDrawers;
 
 static void check_vk_result(ImGui::VkResult result)
 {
@@ -13,8 +12,6 @@ void ImGuiRenderer::init(WindowHandle window, const ImGuiInitInfo& initInfo)
 {
     if constexpr (!enabled)
         return;
-
-    Editor::initPropertyDrawers();
 
     m_device = initInfo.device;
 

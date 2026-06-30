@@ -1,5 +1,5 @@
 export module Editor.Panels.ImGuiDemo;
-import Editor.ImGui;
+import ImGui;
 import Editor.Panel;
 
 export namespace Panels

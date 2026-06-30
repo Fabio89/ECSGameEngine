@@ -120,6 +120,41 @@ target_compile_features(Engine PUBLIC cxx_std_23)
 
 set_property(TARGET Engine PROPERTY CXX_MODULE_STD ON)
 
+# ----------------------------------------------------------
+# Editor
+# ----------------------------------------------------------
+
+file(GLOB_RECURSE EDITOR_SOURCES CONFIGURE_DEPENDS
+        Editor/*.cpp
+)
+
+file(GLOB_RECURSE EDITOR_MODULES CONFIGURE_DEPENDS
+        Editor/*.cppm
+)
+
+add_library(Editor SHARED)
+
+target_sources(Editor
+        PRIVATE
+        ${EDITOR_SOURCES}
+
+        PUBLIC
+        FILE_SET CXX_MODULES
+        BASE_DIRS
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        FILES
+        ${EDITOR_MODULES}
+)
+
+target_link_libraries(Editor
+        PUBLIC
+        Engine
+        imgui::imgui
+)
+
+target_compile_features(Editor PUBLIC cxx_std_23)
+
+set_property(TARGET Editor PROPERTY CXX_MODULE_STD ON)
 
 # ----------------------------------------------------------
 # Game
@@ -138,6 +173,7 @@ set_target_properties(Game PROPERTIES
 target_link_libraries(Game
         PRIVATE
         Engine
+        Editor
 )
 
 target_compile_features(Game PUBLIC cxx_std_23)
@@ -165,6 +201,6 @@ add_dependencies(Game Game_shaders)
 
 add_custom_command(TARGET Game POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/Engine/Editor/Assets
+        ${CMAKE_SOURCE_DIR}/Editor/Assets
         $<TARGET_FILE_DIR:Game>/Editor/Assets
 )

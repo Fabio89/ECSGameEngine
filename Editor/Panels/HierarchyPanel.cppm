@@ -5,7 +5,7 @@ import Component.Model;
 import Component.Transform;
 import ComponentRegistry;
 import Editor;
-import Editor.ImGui;
+import ImGui;
 import Editor.Panel.Impl;
 import Editor.Requests;
 import Engine;

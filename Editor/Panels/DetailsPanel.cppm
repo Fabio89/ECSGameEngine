@@ -1,7 +1,7 @@
 export module Editor.Panels.Details;
 import Component.Name;
 import Editor;
-import Editor.ImGui;
+import ImGui;
 import Editor.Panel.Impl;
 import Editor.PropertyDrawers;
 import Editor.Requests;

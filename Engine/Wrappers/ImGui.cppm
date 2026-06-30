@@ -5,7 +5,7 @@ module;
 #include <imgui_impl_vulkan.h>
 #include <imgui_stdlib.h>
 
-export module Editor.ImGui;
+export module ImGui;
 
 export namespace ImGui
 {

@@ -1,6 +1,6 @@
 export module Editor.PropertyDrawers;
 export import Properties;
-import Editor.ImGui;
+import ImGui;
 import Math;
 import ComponentRegistry;
 

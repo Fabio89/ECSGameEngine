@@ -3,11 +3,12 @@ import Editor.Camera;
 import Editor.Components;
 import Editor.Controller;
 import Editor.Events;
-import Editor.ImGui;
+import ImGui;
 import Editor.Panels.Hierarchy;
 import Editor.Panels.Details;
 import Editor.Panels.MainMenu;
 import Editor.Panels.Viewport;
+import Editor.PropertyDrawers;
 import Engine;
 import Input;
 import Math;
@@ -53,6 +54,8 @@ void Editor::init(EditorUIContext context)
 {
     EditorComponents::init();
     editorContext = context;
+
+    initPropertyDrawers();
 
     const EditingContextId defaultContextId = contexts().add(*context.world);
     addPanel<Panels::HierarchyPanel>(defaultContextId);
