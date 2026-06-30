@@ -3,8 +3,9 @@ import Component.Name;
 import Editor;
 import Editor.ImGui;
 import Editor.Panel.Impl;
+import Editor.PropertyDrawers;
+import Editor.Requests;
 import Engine;
-import Properties;
 
 export namespace Panels
 {
@@ -26,7 +27,7 @@ export namespace Panels
                 {
                     if (typeId != Component<NameComponent>::typeId())
                     {
-                        drawComponent(world, inspectedEntity, typeId);
+                        drawComponent(context().id, inspectedEntity, typeId);
                     }
                 }
             }
@@ -34,32 +35,43 @@ export namespace Panels
             ImGui::End();
         }
 
-        void drawComponent(World& world, Entity entity, TypeId componentTypeId)
+        void drawComponent(EditingContextId contextId, Entity entity, TypeId componentTypeId)
         {
-            ImGui::Separator();
-
-            ImGuiTreeNodeFlags flags =
-                ImGuiTreeNodeFlags_DefaultOpen |
-                ImGuiTreeNodeFlags_OpenOnArrow |
-                ImGuiTreeNodeFlags_SpanFullWidth;
-
-            const ComponentTypeBase* componentType = ComponentRegistry::get(componentTypeId);
-            if (!componentType->hasProperties())
+            if (const ComponentTypeBase* componentType = ComponentRegistry::get(componentTypeId))
             {
-                flags |= ImGuiTreeNodeFlags_Leaf;
-            }
+                ImGui::Separator();
 
-            if (const ComponentTypeBase* type = ComponentRegistry::get(componentTypeId))
-            {
+                ImGuiTreeNodeFlags flags =
+                        ImGuiTreeNodeFlags_DefaultOpen |
+                        ImGuiTreeNodeFlags_OpenOnArrow |
+                        ImGuiTreeNodeFlags_SpanFullWidth;
+
+                if (!componentType->hasProperties())
+                {
+                    flags |= ImGuiTreeNodeFlags_Leaf;
+                }
+
                 ImGui::PushID(entity.value);
                 ImGui::PushID(componentTypeId.value);
 
-                if (ImGui::TreeNodeEx(type->getName().data(), flags))
+                if (ImGui::TreeNodeEx(componentType->getName().data(), flags))
                 {
+                    const ComponentBase& component = context().world.get().readComponent(entity, componentTypeId);
+
                     for (const PropertyDescriptorBase& property : componentType->getProperties())
                     {
-                        ComponentBase& component = world.editComponent(entity, componentTypeId);
-                        property.draw(&component);
+                        PropertyValue value = property.copy(&component);
+
+                        if (Editor::drawProperty(property, value))
+                        {
+                            Editor::request(Editor::SetProperty{
+                                .contextId = contextId,
+                                .entity = entity,
+                                .componentType = componentTypeId,
+                                .property = &property,
+                                .value = std::move(value)
+                            });
+                        }
                     }
 
                     ImGui::TreePop();

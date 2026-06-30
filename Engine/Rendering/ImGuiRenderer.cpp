@@ -14,7 +14,7 @@ void ImGuiRenderer::init(WindowHandle window, const ImGuiInitInfo& initInfo)
     if constexpr (!enabled)
         return;
 
-    UI::initPropertyDrawers();
+    Editor::initPropertyDrawers();
 
     m_device = initInfo.device;
 

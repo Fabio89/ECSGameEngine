@@ -36,7 +36,7 @@ World::World(const WorldCreateInfo& info)
 
 Entity World::createEntity()
 {
-    Thread::assertGameThread();
+    assertThread();
     const Entity entity{m_nextEntityValue++};
     m_entities.try_emplace(entity);
     return entity;
@@ -145,7 +145,7 @@ Archetype& World::prepareArchetypeOnAddComponent(Entity entity, TypeId component
 
 void World::removeEntity(Entity entity)
 {
-    Thread::assertGameThread();
+    assertThread();
     auto it = m_entities.find(entity);
     if (it != m_entities.end())
     {
@@ -171,6 +171,7 @@ bool World::isValid(Entity entity) const
 
 void World::loadScene(const std::filesystem::path& path)
 {
+    assertThread();
     std::cout << "Loading scene: " << path << '\n';
     const JsonObject& doc = Json::fromFile(path);
     deserializeScene(doc);
@@ -180,6 +181,7 @@ void World::loadScene(const std::filesystem::path& path)
 
 void World::unloadScene()
 {
+    assertThread();
     m_renderManager.get().addCommand<RenderCommands::ClearRenderObjects>({});
     m_entities.clear();
     m_archetypes.clear();
@@ -188,6 +190,7 @@ void World::unloadScene()
 [[nodiscard]]
 JsonObject World::serializeScene(Json::MemoryPoolAllocator<>& allocator) const
 {
+    assertThread();
     JsonObject jsonScene{Json::kObjectType};
     JsonObject jsonEntityArray{Json::kArrayType};
 
@@ -224,6 +227,7 @@ JsonObject World::serializeScene(Json::MemoryPoolAllocator<>& allocator) const
 
 void World::deserializeScene(const JsonObject& json)
 {
+    assertThread();
     unloadScene();
 
     if (!json.IsObject())
@@ -262,6 +266,7 @@ void World::deserializeScene(const JsonObject& json)
 
 void World::patchEntity(Entity entity, const JsonObject& json)
 {
+    assertThread();
     if (!json.IsObject())
     {
         log("Failed to patch entity!");
@@ -317,6 +322,7 @@ Archetype::ComponentRange World::getComponentTypesInEntity(Entity entity) const
 
 SystemCallbackHandle World::registerSystem(SystemCallback callback)
 {
+    assertThread();
     SystemCallbackHandle handle = generateSystemCallbackHandle();
     m_systemCallbacks.insert_or_assign(handle, std::move(callback));
     return handle;
@@ -324,5 +330,6 @@ SystemCallbackHandle World::registerSystem(SystemCallback callback)
 
 void World::unregisterSystem(SystemCallbackHandle observerHandle)
 {
+    assertThread();
     m_systemCallbacks.erase(observerHandle);
 }

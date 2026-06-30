@@ -69,7 +69,7 @@ export namespace Panels
             // Detect click on the row
             if (ImGui::IsItemClicked() || ImGui::IsItemFocused())
             {
-                Editor::request(Editor::Requests::ChangeSelection{.contextId = context().id, .entities = {entity}});
+                Editor::request(Editor::ChangeSelection{.contextId = context().id, .entities = {entity}});
             }
 
             if (opened)

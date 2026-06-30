@@ -1,25 +1,61 @@
 export module Editor.PropertyDrawers;
-import Math;
-import Properties;
+export import Properties;
 import Editor.ImGui;
+import Math;
+import ComponentRegistry;
 
-export namespace UI
+namespace
 {
+    class PropertyDrawerRegistry
+    {
+    public:
+        using DrawerFunc = std::function<bool(std::string_view, PropertyValue&)>;
+
+        template<typename T>
+        void registerDrawer(DrawerFunc drawer)
+        {
+            m_drawers[getTypeId<T>()] = std::move(drawer);
+        }
+
+        bool draw(const PropertyDescriptorBase& property, PropertyValue& value)
+        {
+            if (auto it = m_drawers.find(property.getTypeId()); it != m_drawers.end())
+                return it->second && (it->second)(property.getName(), value);
+            return false;
+        }
+    private:
+        std::unordered_map<TypeId, DrawerFunc> m_drawers;
+    } propertyDrawers;
+}
+
+export namespace Editor
+{
+    bool drawProperty(const PropertyDescriptorBase& property, PropertyValue& value)
+    {
+        return propertyDrawers.draw(property, value);
+    }
+
+    template<typename T>
+    void registerPropertyDrawer(std::function<bool(std::string_view, PropertyValue&)> drawer)
+    {
+        propertyDrawers.registerDrawer<T>(std::move(drawer));
+    }
+
     void initPropertyDrawers()
     {
-        registerDrawer<float>([](std::string_view name, void* value)
+        registerPropertyDrawer<float>([](std::string_view name, PropertyValue& value)
         {
-            ImGui::DragFloat(name.data(), static_cast<float*>(value));
+            return ImGui::DragFloat(name.data(), &std::any_cast<float&>(value));
         });
 
-        registerDrawer<Vec3>([](std::string_view name, void* value)
+        registerPropertyDrawer<Vec3>([](std::string_view name, PropertyValue& value)
         {
-            ImGui::DragFloat3(name.data(), &static_cast<Vec3*>(value)->x);
+            return ImGui::DragFloat3(name.data(), &std::any_cast<Vec3&>(value).x);
         });
 
-        registerDrawer<Mat4>([](std::string_view name, void* value)
+        registerPropertyDrawer<Mat4>([](std::string_view name, PropertyValue& value)
         {
-            auto& matrix = *static_cast<Mat4*>(value);
+            auto& matrix = std::any_cast<Mat4&>(value);
 
             if (ImGui::TreeNode(name.data()))
             {
@@ -46,17 +82,18 @@ export namespace UI
 
                 ImGui::TreePop();
             }
+            return true;
         });
 
-        registerDrawer<std::string>([](std::string_view name, void* value)
+        registerPropertyDrawer<std::string>([](std::string_view name, PropertyValue& value)
         {
-            auto& str = *static_cast<std::string*>(value);
-            ImGui::InputText(name.data(), &str);
+            auto& str = std::any_cast<std::string&>(value);
+            return ImGui::InputText(name.data(), &str);
         });
 
-        registerDrawer<std::vector<std::string>>([](std::string_view name, void* value)
+        registerPropertyDrawer<std::vector<std::string>>([](std::string_view name, PropertyValue& value)
         {
-            auto& tags = *static_cast<std::vector<std::string>*>(value);
+            auto& tags = std::any_cast<std::vector<std::string>&>(value);
 
             if (ImGui::TreeNode(name.data()))
             {
@@ -89,6 +126,7 @@ export namespace UI
 
                 ImGui::TreePop();
             }
+            return false;
         });
     }
 }

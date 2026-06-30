@@ -8,6 +8,7 @@ import Archetype;
 import Guid;
 import Render.RenderManager;
 import Serialization.Json;
+import Thread;
 
 constexpr int maxComponentsPerEntity = 64;
 
@@ -45,7 +46,7 @@ SystemCallbackHandle generateSystemCallbackHandle()
 //------------------------------------------------------------------------------------------------------------------------
 // World
 //------------------------------------------------------------------------------------------------------------------------
-export class ENGINE_API World
+export class ENGINE_API World : ThreadOwned
 {
 public:
     explicit World(const WorldCreateInfo&);
@@ -123,6 +124,7 @@ private:
 template <ValidComponentData T, typename... Args>
 T& World::addComponent(Entity entity, Args&&... args)
 {
+    assertThread();
     Archetype& archetype = prepareArchetypeOnAddComponent(entity, Component<T>::typeId());
     T& addedComponent = archetype.addComponent<T>(entity, T{std::forward<Args>(args)...});
     log(std::format("Added component {} to entity {}", getComponentName<T>(), entity));

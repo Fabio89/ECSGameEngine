@@ -1,16 +1,33 @@
 export module Editor.Requests;
 import Core;
 import Editor.EditingContextId;
+import Properties;
 
-export namespace Editor::Requests
+export namespace Editor
 {
     struct ChangeSelection
     {
         EditingContextId contextId;
         std::vector<Entity> entities;
     };
+
+    struct OpenProject
+    {
+        std::filesystem::path path;
+    };
+
+    struct SetProperty
+    {
+        EditingContextId contextId;
+        Entity entity;
+        TypeId componentType;
+        const PropertyDescriptorBase* property;
+        PropertyValue value;
+    };
 }
 
 export using EditorRequest = std::variant<
-    Editor::Requests::ChangeSelection
+    Editor::ChangeSelection,
+    Editor::OpenProject,
+    Editor::SetProperty
 >;

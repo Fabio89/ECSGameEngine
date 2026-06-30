@@ -2,39 +2,14 @@ export module Thread;
 import std;
 import Log;
 
-export namespace Thread
+export class ThreadOwned
 {
-    void registerGameThread();
-    void registerRenderThread();
+public:
+    void assertThread() const
+    {
+        check(std::this_thread::get_id() == m_owner, "Used on the wrong thread!");
+    }
 
-    void assertGameThread();
-    void assertRenderThread();
-}
-
-namespace Thread
-{
-    std::thread::id gameThread;
-    std::thread::id renderThread;
-}
-
-void Thread::registerGameThread()
-{
-    gameThread = std::this_thread::get_id();
-}
-
-void Thread::registerRenderThread()
-{
-    renderThread = std::this_thread::get_id();
-}
-
-void Thread::assertGameThread()
-{
-    if (std::this_thread::get_id() != gameThread)
-        fatalError("Expected to run on game thread!");
-}
-
-void Thread::assertRenderThread()
-{
-    if (std::this_thread::get_id() != renderThread)
-        fatalError("Expected to run on render thread!");
-}
+private:
+    std::thread::id m_owner{std::this_thread::get_id()};
+};

@@ -118,7 +118,7 @@ void Panels::ViewportPanel::doDraw()
 
         const Entity hitEntity = Physics::lineTrace(context().world, ray, TraceChannelFlags::Default);
 
-        Editor::request(Editor::Requests::ChangeSelection{.contextId = context().id, .entities = {hitEntity}});
+        Editor::request(Editor::ChangeSelection{.contextId = context().id, .entities = {hitEntity}});
     }
 
     const bool enableCameraControls = ImGui::IsWindowHovered() && ImGui::IsMouseDown(ImGuiMouseButton_Right);

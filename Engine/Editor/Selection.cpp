@@ -9,18 +9,26 @@ Editor::Selection::Selection(EditingContextId contextId) : m_contextId{contextId
 
 void Editor::Selection::add(Entity entity)
 {
+    assertThread();
     if (!contains(entity))
+    {
         m_entities.push_back(entity);
+        sendSelectionEvent();
+    }
 }
 
 void Editor::Selection::remove(Entity entity)
 {
+    assertThread();
     std::erase(m_entities, entity);
+    sendSelectionEvent();
 }
 
 void Editor::Selection::clear()
 {
+    assertThread();
     m_entities.clear();
+    sendSelectionEvent();
 }
 
 bool Editor::Selection::contains(Entity entity) const
@@ -35,7 +43,7 @@ bool Editor::Selection::isEmpty() const
 
 void Editor::Selection::set(std::span<const Entity> entities)
 {
-    Thread::assertGameThread();
+    assertThread();
 
     std::vector<Entity> newSelection;
     newSelection.reserve(entities.size());
@@ -51,7 +59,7 @@ void Editor::Selection::set(std::span<const Entity> entities)
 
     m_entities = std::move(newSelection);
 
-    Engine::events().publish(SelectionChangedEvent{.contextId = m_contextId, .selection = m_entities});
+    sendSelectionEvent();
 }
 
 void Editor::Selection::setSingle(Entity entity)
@@ -62,4 +70,9 @@ void Editor::Selection::setSingle(Entity entity)
 std::span<const Entity> Editor::Selection::get() const
 {
     return m_entities;
+}
+
+void Editor::Selection::sendSelectionEvent() const
+{
+    Engine::events().publish(SelectionChangedEvent{.contextId = m_contextId, .selection = m_entities});
 }

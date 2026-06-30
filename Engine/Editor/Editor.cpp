@@ -26,9 +26,26 @@ namespace Editor
 {
     void draw();
 
-    void execute(const Requests::ChangeSelection& event)
+    void execute(ChangeSelection&& request)
     {
-        contexts().get(event.contextId).selection.set(event.entities);
+        contexts().get(request.contextId).selection.set(request.entities);
+    }
+
+    void execute(OpenProject&& request)
+    {
+        Engine::openProject(std::move(request.path));
+    }
+
+    void execute(SetProperty&& request)
+    {
+        World& world = contexts().get(request.contextId).world.get();
+        if (!world.isValid(request.entity))
+            return;
+
+        if (!world.hasComponent(request.entity, request.componentType))
+            return;
+
+        request.property->set(&world.editComponent(request.entity, request.componentType), request.value);
     }
 }
 
@@ -72,7 +89,7 @@ void Editor::update(float deltaTime)
 
     while (requests.tryPop(request))
     {
-        std::visit(execute, request);
+        std::visit([]<typename Request>(Request&& r) { execute(std::forward<Request>(r)); }, std::move(request));
     }
 
     controllerManager.update(deltaTime);

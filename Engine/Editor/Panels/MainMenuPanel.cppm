@@ -1,6 +1,8 @@
 export module Editor.Panels.MainMenu;
+import Editor;
 import Editor.ImGui;
 import Editor.Panel;
+import Editor.Requests;
 import Engine;
 import FileSystem;
 import World;
@@ -46,7 +48,7 @@ void Panels::MainMenuPanel::drawFileMenu()
     {
         if (const auto path = FileSystem::openFileDialog())
         {
-            Engine::openProject(*path);
+            Editor::request(Editor::OpenProject{std::move(*path)});
         }
     }
 

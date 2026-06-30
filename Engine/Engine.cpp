@@ -14,11 +14,13 @@ namespace Engine
     Player player;
     WindowHandle window;
     EventBus eventBus;
+    ThreadOwned threadChecker;
 }
 
 void Engine::runRenderThread()
 {
-    Thread::registerRenderThread();
+    threadChecker.assertThread();
+
     renderManager.init(window);
 
     while (!engineShuttingDown.load())
@@ -31,6 +33,8 @@ void Engine::runRenderThread()
 
 Entity Engine::ensureCamera()
 {
+    threadChecker.assertThread();
+
     auto hasCamera = [](Entity entity) { return world.hasComponent<CameraComponent>(entity); };
     auto entities = world.getEntitiesRange();
     if (auto cameraEntityIt = std::ranges::find_if(entities, hasCamera); cameraEntityIt != entities.end())
@@ -54,7 +58,8 @@ Entity Engine::ensureCamera()
 
 void Engine::init(const WindowCreateInfo& info)
 {
-    Thread::registerGameThread();
+    threadChecker.assertThread();
+
     Platform::init();
 
     if (!check(!window.isValid(), "Can't create more than one window!"))
@@ -74,6 +79,8 @@ void Engine::init(const WindowCreateInfo& info)
 
 bool Engine::update(float deltaTime)
 {
+    threadChecker.assertThread();
+
     if (shutdownRequested || Platform::Window::isWindowClosing(window))
     {
         shutdown();
@@ -90,6 +97,8 @@ bool Engine::update(float deltaTime)
 
 void Engine::shutdown()
 {
+    threadChecker.assertThread();
+
     if (engineShuttingDown.exchange(true))
         return;
 
@@ -116,6 +125,8 @@ Entity Engine::getEntityUnderCursor()
 
 void Engine::openProject(std::filesystem::path path)
 {
+    threadChecker.assertThread();
+
     EngineSystems::reset();
 
     Project::open(std::move(path), world);
@@ -125,11 +136,15 @@ void Engine::openProject(std::filesystem::path path)
 
 void Engine::saveCurrentProject()
 {
+    threadChecker.assertThread();
+
     Project::saveToCurrent(world);
 }
 
 Entity Engine::createEntity()
 {
+    threadChecker.assertThread();
+
     return world.createEntity();
 }
 

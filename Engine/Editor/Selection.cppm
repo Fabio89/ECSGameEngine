@@ -3,10 +3,11 @@ module;
 export module Editor.Selection;
 import Core;
 import Editor.EditingContextId;
+import Thread;
 
 export namespace Editor
 {
-    class ENGINE_API Selection
+    class ENGINE_API Selection : ThreadOwned
     {
     public:
         Selection(EditingContextId contextId);
@@ -21,6 +22,7 @@ export namespace Editor
         bool isEmpty() const;
 
     private:
+        void sendSelectionEvent() const;
         EditingContextId m_contextId;
         std::vector<Entity> m_entities;
     };
