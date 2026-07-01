@@ -1,5 +1,5 @@
 module;
-#include "EngineExport.h"
+#include "EditorExport.h"
 export module Editor.Selection;
 import Core;
 import Editor.EditingContextId;
@@ -7,7 +7,7 @@ import Thread;
 
 export namespace Editor
 {
-    class ENGINE_API Selection : ThreadOwned
+    class EDITOR_API Selection : ThreadOwned
     {
     public:
         Selection(EditingContextId contextId);

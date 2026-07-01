@@ -3,7 +3,7 @@ import Editor.Camera;
 import Editor.Components;
 import Editor.Controller;
 import Editor.Events;
-import ImGui;
+import Editor.ImGuiUI;
 import Editor.Panels.Hierarchy;
 import Editor.Panels.Details;
 import Editor.Panels.MainMenu;
@@ -21,12 +21,11 @@ namespace
 {
     EventSubscription subscription;
     std::vector<std::unique_ptr<Panel>> panels;
+    std::vector<Panel*> panelView;
 }
 
 namespace Editor
 {
-    void draw();
-
     void execute(ChangeSelection&& request)
     {
         contexts().get(request.contextId).selection.set(request.entities);
@@ -48,6 +47,8 @@ namespace Editor
 
         request.property->set(&world.editComponent(request.entity, request.componentType), request.value);
     }
+
+    void rebuildPanelView();
 }
 
 void Editor::init(EditorUIContext context)
@@ -63,7 +64,10 @@ void Editor::init(EditorUIContext context)
     addPanel<Panels::MainMenuPanel>(defaultContextId);
     addPanel<Panels::ViewportPanel>(defaultContextId);
 
-    Engine::setEditorDrawCallback(draw);
+    Engine::setEditorCallbacks({
+        .imguiInit = ImGuiUI::init,
+        .draw = ImGuiUI::draw
+    });
 
     controllerManager.init();
 
@@ -86,7 +90,7 @@ void Editor::shutdown()
     controllerManager = {};
 }
 
-void Editor::update(float deltaTime)
+void Editor::update()
 {
     EditorRequest request;
 
@@ -95,48 +99,26 @@ void Editor::update(float deltaTime)
         std::visit([]<typename Request>(Request&& r) { execute(std::forward<Request>(r)); }, std::move(request));
     }
 
-    controllerManager.update(deltaTime);
+    controllerManager.update(Engine::getSimulationDeltaTime());
 
-    EditorCamera::update(editorContext.window, *editorContext.world, Engine::getPlayer(), deltaTime);
+    EditorCamera::update(editorContext.window, *editorContext.world, Engine::getPlayer(), Engine::getSimulationDeltaTime());
+}
+
+std::span<Panel*> Editor::getPanels()
+{
+    return panelView;
 }
 
 void Editor::addPanel(std::unique_ptr<Panel> panel)
 {
     panels.emplace_back(std::move(panel));
+    rebuildPanelView();
 }
 
-void Editor::draw()
+void Editor::rebuildPanelView()
 {
-    ImGui::ImGuiViewport* viewport = ImGui::GetMainViewport();
-
-    ImGui::SetNextWindowPos(viewport->WorkPos);
-    ImGui::SetNextWindowSize(viewport->WorkSize);
-    ImGui::SetNextWindowViewport(viewport->ID);
-
-    static constexpr ImGuiWindowFlags flags =
-        ImGuiWindowFlags_NoTitleBar |
-        ImGuiWindowFlags_NoCollapse |
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoBringToFrontOnFocus |
-        ImGuiWindowFlags_NoNavFocus |
-        ImGuiWindowFlags_NoBackground;
-
-    ImGui::Begin("DockSpace", nullptr, flags);
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::ImVec4{0, 0, 0, 0});
-
-    ImGui::DockSpace
-    (
-        ImGui::GetID("MainDockSpace"),
-        ImGui::ImVec2(0, 0),
-        ImGuiDockNodeFlags_PassthruCentralNode
-    );
-
-    ImGui::PopStyleColor();
-    ImGui::End();
+    panelView.clear();
 
     for (auto& panel : panels)
-    {
-        panel->draw();
-    }
+        panelView.push_back(panel.get());
 }

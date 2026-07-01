@@ -1,6 +1,6 @@
 module;
 
-#include "EngineExport.h"
+#include "EditorExport.h"
 
 export module Editor;
 export import EditorUIContext;
@@ -26,20 +26,22 @@ namespace Editor
 
 export namespace Editor
 {
-    ENGINE_API void init(EditorUIContext context);
+    EDITOR_API void init(EditorUIContext context);
 
-    ENGINE_API void shutdown();
+    EDITOR_API void shutdown();
 
-    ENGINE_API void update(float deltaTime);
-
-    template<typename T>
-    ENGINE_API void request(T&& request) { requests.push(EditorRequest{std::forward<T>(request)}); }
+    EDITOR_API void update();
 
     template<typename T>
-    ENGINE_API void addPanel(EditingContextId contextId) { addPanel(std::make_unique<T>(PanelCreateInfo{.contextId = contextId, .window = editorContext.window})); }
+    EDITOR_API void request(T&& request) { requests.push(EditorRequest{std::forward<T>(request)}); }
 
     template<typename T>
-    ENGINE_API T& addController(EditingContextId contextId) { return controllerManager.addController<T>(contextManager.get(contextId)); }
+    EDITOR_API void addPanel(EditingContextId contextId) { addPanel(std::make_unique<T>(PanelCreateInfo{.contextId = contextId, .window = editorContext.window})); }
 
-    ENGINE_API EditingContextManager& contexts() { return contextManager; }
+    std::span<Panel*> getPanels();
+
+    template<typename T>
+    EDITOR_API T& addController(EditingContextId contextId) { return controllerManager.addController<T>(contextManager.get(contextId)); }
+
+    EDITOR_API EditingContextManager& contexts() { return contextManager; }
 }

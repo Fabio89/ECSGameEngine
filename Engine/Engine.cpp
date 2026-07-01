@@ -1,13 +1,12 @@
 module Engine;
+import Engine.Config;
+import Engine.FrameTimer;
 import EngineSystems;
 import Platform;
 import Thread;
 
-namespace Engine
+namespace
 {
-    void runRenderThread();
-    Entity ensureCamera();
-
     bool shutdownRequested = false;
     std::atomic engineShuttingDown = false;
     std::thread renderThread;
@@ -15,6 +14,14 @@ namespace Engine
     WindowHandle window;
     EventBus eventBus;
     ThreadOwned threadChecker;
+    FrameTimer frameTimer;
+    Engine::Config config;
+}
+
+namespace Engine
+{
+    void runRenderThread();
+    Entity ensureCamera();
 }
 
 void Engine::runRenderThread()
@@ -56,30 +63,39 @@ Entity Engine::ensureCamera()
     return camera;
 }
 
-void Engine::init(const WindowCreateInfo& info)
+void Engine::init()
 {
     threadChecker.assertThread();
+
+    config = loadConfig();
 
     Platform::init();
 
     if (!check(!window.isValid(), "Can't create more than one window!"))
         return;
 
-    window = Platform::Window::createWindow(info);
-
-    renderThread = std::thread
-    {
-        runRenderThread
-    };
+    window = Platform::Window::createWindow({
+        .size = config.window.size,
+        .mode = config.window.maximized ? WindowMode::Maximized : WindowMode::Windowed
+    });
 
     Input::init(window);
     EngineComponents::init();
     EngineSystems::init(world);
 }
 
-bool Engine::update(float deltaTime)
+void Engine::start()
 {
     threadChecker.assertThread();
+    renderThread = std::thread{runRenderThread};
+}
+
+bool Engine::update()
+{
+    threadChecker.assertThread();
+
+    frameTimer.waitForTarget(config.simulationHz);
+    const float deltaTime = frameTimer.tick();
 
     if (shutdownRequested || Platform::Window::isWindowClosing(window))
     {
@@ -89,10 +105,20 @@ bool Engine::update(float deltaTime)
 
     EngineSystems::update(world, player, deltaTime);
 
-    Input::postUpdate();
+    Input::postUpdate(window);
     Platform::update();
 
     return true;
+}
+
+float Engine::getSimulationDeltaTime()
+{
+    return frameTimer.deltaTime();
+}
+
+float Engine::getRenderDeltaTime()
+{
+    return renderManager.getDeltaTime();
 }
 
 void Engine::shutdown()
@@ -173,11 +199,6 @@ ComponentBase& Engine::editComponent(Entity entity, TypeId componentType)
     return world.editComponent(entity, componentType);
 }
 
-void Engine::printArchetypeStatus()
-{
-    world.printArchetypeStatus();
-}
-
 EventBus& Engine::events()
 {
     return eventBus;
@@ -188,9 +209,9 @@ EditorUIContext Engine::getEditorContext()
     return {.world = &world, .window = window };
 }
 
-void Engine::setEditorDrawCallback(std::function<void()> callback)
+void Engine::setEditorCallbacks(EditorCallbacks callbacks)
 {
-    renderManager.setEditorDrawCallback(std::move(callback));
+    renderManager.setEditorCallbacks(std::move(callbacks));
 }
 
 void Engine::setViewportArea(Rect area)
@@ -217,3 +238,7 @@ Player& Engine::getPlayer()
     return player;
 }
 
+void Engine::printArchetypeStatus()
+{
+    world.printArchetypeStatus();
+}

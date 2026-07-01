@@ -3,42 +3,44 @@ import Core;
 
 namespace
 {
-    Vec2 lastCursorPosition;
     bool isActive{};
+    float delayBeforeDrag = 0.1f;
+    float movementSpeed = 10.f;
 }
 
 void updateCameraTransform(WindowHandle window, World& world, Entity camera, float deltaTime, bool allowRotation)
 {
-    float speed = 3.0f * deltaTime;
-    float xMovement = (static_cast<int>(Input::isKeyDown(KeyCode::D)) - static_cast<int>(Input::isKeyDown(KeyCode::A))) * speed;
-    float yMovement = (static_cast<int>(Input::isKeyDown(KeyCode::E)) - static_cast<int>(Input::isKeyDown(KeyCode::Q))) * speed;
-    float zMovement = (static_cast<int>(Input::isKeyDown(KeyCode::W)) - static_cast<int>(Input::isKeyDown(KeyCode::S))) * speed;
-    
+    const Vec3 movement
+    {
+        (static_cast<int>(Input::isKeyDown(KeyCode::D)) - static_cast<int>(Input::isKeyDown(KeyCode::A))),
+        (static_cast<int>(Input::isKeyDown(KeyCode::E)) - static_cast<int>(Input::isKeyDown(KeyCode::Q))),
+        (static_cast<int>(Input::isKeyDown(KeyCode::W)) - static_cast<int>(Input::isKeyDown(KeyCode::S)))
+    };
+
     auto& transform = world.editComponent<TransformComponent>(camera);
     const Vec3 forward = TransformUtils::forward(transform);
     const Vec3 right = TransformUtils::right(transform);
     const Vec3 up = TransformUtils::up(transform);
 
-    const Vec3 targetPosition = transform.position + right * xMovement + up * yMovement + forward * zMovement;
-    transform.position = Math::lerp(transform.position, targetPosition, locationSmoothingSpeed * deltaTime);
-    
+    Vec3 velocity = (right * movement.x + up * movement.y + forward * movement.z) * movementSpeed;
+    //cameraVelocity = Math::lerp(cameraVelocity, targetVelocity, 1.0f - std::exp(-acceleration * deltaTime));
+    transform.position += velocity * deltaTime;
+
     if (allowRotation)
     {
-        float rotationMultiplier = 300.0f;
-        float maxRotSpeed = 300.f * deltaTime;
+        float rotationMultiplier = 0.0015f;
         float dYaw = 0;
         float dPitch = 0;
 
-        const Vec2 cursorPosition = Input::getCursorScreenPosition(window);
-        dYaw = Math::clamp(rotationMultiplier * deltaTime * (cursorPosition.x - lastCursorPosition.x), -maxRotSpeed, maxRotSpeed);
-        dPitch = Math::clamp(rotationMultiplier * deltaTime * (cursorPosition.y - lastCursorPosition.y), -maxRotSpeed, maxRotSpeed);
+        const Vec2 cursorDelta = Input::getCursorDelta(window);
+        dYaw = rotationMultiplier * cursorDelta.x;
+        dPitch = rotationMultiplier * cursorDelta.y;
 
-        Quat yawQuat = Math::angleAxis(dYaw, Vec3(0.0f, 1.0f, 0.0f));
-        Quat pitchQuat = Math::angleAxis(dPitch, right);
-
-        Quat targetRotation = Math::normalize(yawQuat * pitchQuat * transform.rotation);
-        //transform.rotation = Math::normalize(Math::slerp(transform.rotation, targetRotation, rotationSmoothingSpeed * deltaTime));
-        transform.rotation = targetRotation;
+        Quat yawQuat = Math::angleAxis(dYaw, Vec3(0,1,0));
+        transform.rotation = yawQuat * transform.rotation;
+        Vec3 newRight = TransformUtils::right(transform);
+        Quat pitchQuat = Math::angleAxis(dPitch, newRight);
+        transform.rotation = Math::normalize(pitchQuat * transform.rotation);
     }
 }
 
@@ -70,6 +72,4 @@ void EditorCamera::update(WindowHandle window, World& world, const Player& playe
 
     if (auto cameraEntity = player.getMainCamera(); world.isValid(cameraEntity))
         updateCameraTransform(window, world, cameraEntity, deltaTime, rotationCooldown == 0.f);
-    
-    lastCursorPosition = Input::getCursorScreenPosition(window);
 }

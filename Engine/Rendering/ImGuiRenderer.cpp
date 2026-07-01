@@ -2,9 +2,9 @@ module Render.ImGui;
 import ImGui;
 import Render.QueueFamily;
 
-static void check_vk_result(ImGui::VkResult result)
+static void check_vk_result(VkResult result)
 {
-    if (result != ImGui::VkResult::VK_SUCCESS)
+    if (result != VkResult::VK_SUCCESS)
         log(std::format("ImGui Vulkan error: {}\n", static_cast<int>(result)));
 }
 
@@ -15,43 +15,10 @@ void ImGuiRenderer::init(WindowHandle window, const ImGuiInitInfo& initInfo)
 
     m_device = initInfo.device;
 
-    // Setup Dear ImGui context
     ImGui::CheckVersion();
     ImGui::CreateContext();
-    ImGui::ImGuiIO& io = ImGui::GetIO();
 
-    // Set fonts
-    {
-        ImGui::ImFontConfig config;
-        config.OversampleH = 2;
-        config.OversampleV = 2;
-
-        io.Fonts->AddFontFromFileTTF(
-            "Editor/Assets/Fonts/NotoSans-Variable.ttf",
-            18.0f,
-            &config
-        );
-        io.FontDefault = io.Fonts->Fonts.back();
-    }
-
-    std::cout << "BackendRendererName="
-          << (io.BackendRendererName ? io.BackendRendererName : "null")
-          << "\n";
-
-    std::cout << "BackendFlags="
-              << io.BackendFlags
-              << "\n";
-
-    (void)io;
-    io.ConfigFlags |= ImGui::ImGuiConfigFlags_::ImGuiConfigFlags_NavEnableKeyboard;
-    io.ConfigFlags |= ImGui::ImGuiConfigFlags_::ImGuiConfigFlags_NavEnableGamepad;
-    io.ConfigFlags |= ImGui::ImGuiConfigFlags_::ImGuiConfigFlags_DockingEnable;
-
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-
-    // Init ImGui
-    ImGui::ImGui_ImplGlfw_InitForVulkan(Platform::Window::getGlfwWindow(window), true);
+    ImGui_ImplGlfw_InitForVulkan(Platform::Window::getGlfwWindow(window), true);
 
     static constexpr std::array imguiPoolSizes
     {
@@ -87,13 +54,13 @@ void ImGuiRenderer::init(WindowHandle window, const ImGuiInitInfo& initInfo)
         .stencilAttachmentFormat = vk::Format::eUndefined
     };
 
-    ImGui::ImGui_ImplVulkan_PipelineInfo pipelineInfo
+    ImGui_ImplVulkan_PipelineInfo pipelineInfo
     {
-        .MSAASamples = ImGui::VK_SAMPLE_COUNT_1_BIT,
+        .MSAASamples = VkSampleCountFlagBits::VK_SAMPLE_COUNT_1_BIT,
         .PipelineRenderingCreateInfo = renderingCreateInfo
     };
 
-    ImGui::ImGui_ImplVulkan_InitInfo imguiInitInfo
+    ImGui_ImplVulkan_InitInfo imguiInitInfo
     {
         .Instance = initInfo.instance,
         .PhysicalDevice = initInfo.physicalDevice,
@@ -109,7 +76,7 @@ void ImGuiRenderer::init(WindowHandle window, const ImGuiInitInfo& initInfo)
         .Allocator = nullptr,
         .CheckVkResultFn = check_vk_result,
     };
-    ImGui::ImGui_ImplVulkan_Init(&imguiInitInfo);
+    ImGui_ImplVulkan_Init(&imguiInitInfo);
 }
 
 void ImGuiRenderer::beginFrame()
@@ -117,8 +84,8 @@ void ImGuiRenderer::beginFrame()
     if constexpr (!enabled)
         return;
 
-    ImGui::ImGui_ImplVulkan_NewFrame();
-    ImGui::ImGui_ImplGlfw_NewFrame();
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 }
 
@@ -135,12 +102,12 @@ void ImGuiRenderer::renderFrame(vk::CommandBuffer commandBuffer)
     if constexpr (!enabled)
         return;
 
-    ImGui::ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 }
 
 void ImGuiRenderer::recreateSwapchain(std::size_t newSize)
 {
-    ImGui::ImGui_ImplVulkan_SetMinImageCount(static_cast<UInt32>(newSize));
+    ImGui_ImplVulkan_SetMinImageCount(static_cast<UInt32>(newSize));
 }
 
 void ImGuiRenderer::shutdown()
@@ -148,8 +115,8 @@ void ImGuiRenderer::shutdown()
     if constexpr (!enabled)
         return;
 
-    ImGui::ImGui_ImplVulkan_Shutdown();
-    ImGui::ImGui_ImplGlfw_Shutdown();
+    ImGui_ImplVulkan_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 
     m_device.destroy(m_descriptorPool);

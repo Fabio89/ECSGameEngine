@@ -23,12 +23,13 @@ export namespace Panels
     {
     public:
         using PanelImpl::PanelImpl;
-        
+        static constexpr auto Name = "Hierarchy";
+
     private:
         void doDraw() override
         {
             World& world = context().world;
-            ImGui::Begin("Hierarchy", &m_open);
+            ImGui::Begin(Name, &m_open);
 
             for (Entity entity : world.getEntitiesRange())
             {

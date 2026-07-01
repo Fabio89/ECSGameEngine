@@ -13,12 +13,13 @@ export namespace Panels
     {
     public:
         using PanelImpl::PanelImpl;
+        static constexpr auto Name = "Details";
 
     private:
         void doDraw() override
         {
             World& world = context().world;
-            ImGui::Begin("Details", &m_open);
+            ImGui::Begin(Name, &m_open);
 
             const Entity inspectedEntity = context().selection.isEmpty() ? Entity{} : context().selection.get().front();
             if (world.isValid(inspectedEntity))

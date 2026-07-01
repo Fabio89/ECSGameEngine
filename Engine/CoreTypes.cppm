@@ -1,24 +1,6 @@
 export module CoreTypes;
 import std;
 
-export class DeltaTimeTracker
-{
-public:
-    operator float() const { return getDeltaTime(); }
-    float getDeltaTime() const { return m_deltaTime; }
-    float update()
-    {
-        const auto currentTime = std::chrono::steady_clock::now();
-        const std::chrono::duration<float> delta = currentTime - m_lastFrameTime;
-        m_lastFrameTime = currentTime;
-        return m_deltaTime = delta.count();
-    }
-    
-private:
-    std::chrono::steady_clock::time_point m_lastFrameTime{};
-    float m_deltaTime{};
-};
-
 export template <typename T>
 class ThreadSafeQueue
 {

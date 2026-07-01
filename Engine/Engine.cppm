@@ -16,9 +16,10 @@ import Math;
 import Physics;
 import Player;
 import Project;
+import Render.EditorCallbacks;
+import Render.RenderManager;
 import Window;
 import World;
-import Render.RenderManager;
 
 namespace Engine
 {
@@ -35,9 +36,15 @@ export namespace Engine
     using ::WindowMode;
     using ::WindowCreateInfo;
 
-    ENGINE_API void init(const WindowCreateInfo& info);
+    ENGINE_API void init();
 
-    ENGINE_API bool update(float deltaTime);
+    ENGINE_API void start();
+
+    ENGINE_API bool update();
+
+    ENGINE_API float getSimulationDeltaTime();
+
+    ENGINE_API float getRenderDeltaTime();
 
     ENGINE_API void shutdown();
 
@@ -106,7 +113,7 @@ export namespace Engine
 
     ENGINE_API EditorUIContext getEditorContext();
 
-    ENGINE_API void setEditorDrawCallback(std::function<void()> callback);
+    ENGINE_API void setEditorCallbacks(EditorCallbacks callbacks);
 
     ENGINE_API void setViewportArea(Rect area);
 

@@ -49,8 +49,8 @@ WindowHandle Platform::Window::createWindow(WindowCreateInfo info)
 
     GLFWwindow* glfwWindow = glfwCreateWindow
     (
-        info.width,
-        info.height,
+        info.size.width,
+        info.size.height,
         "Engine",
         nullptr,
         nullptr

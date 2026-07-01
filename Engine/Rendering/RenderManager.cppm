@@ -2,9 +2,11 @@ export module Render.RenderManager;
 export import Render.Commands;
 import Core;
 import CoreTypes;
+import Engine.FrameTimer;
 import Geometry;
 import Guid;
 import Math;
+import Render.EditorCallbacks;
 import Render.ImGui;
 import Render.Vulkan;
 import Render.Model;
@@ -50,9 +52,9 @@ public:
     void setCamera(const Camera& camera);
 
     void updateFramebufferSize();
-    float getDeltaTime() const { return m_deltaTime; }
+    float getDeltaTime() const { return m_frameTimer.deltaTime(); }
 
-    void setEditorDrawCallback(std::function<void()> callback);
+    void setEditorCallbacks(EditorCallbacks callback);
 
     void setViewportArea(Rect area);
     Rect getViewportArea() const;
@@ -68,7 +70,7 @@ private:
     class RenderCommand;
 
     std::mutex m_updateLockMutex;
-    std::function<void()> m_editorDrawCallback;
+    EditorCallbacks m_editorCallbacks;
 
     bool m_initialised{};
     RenderObjectManager m_renderObjectManager;
@@ -111,7 +113,7 @@ private:
     vk::DebugUtilsMessengerEXT m_debugMessenger{};
 
     ImGuiRenderer m_imguiHelper;
-    DeltaTimeTracker m_deltaTime;
+    FrameTimer m_frameTimer;
     UInt32 m_currentFrame{0};
     bool m_terminated{};
     std::atomic<bool> m_framebufferResized{false};

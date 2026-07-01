@@ -151,6 +151,9 @@ void RenderManager::init(WindowHandle window)
     };
     m_imguiHelper.init(window, imguiInfo);
 
+    if (m_editorCallbacks.imguiInit)
+        m_editorCallbacks.imguiInit();
+
     m_renderObjectManager.init
     (
         m_device,
@@ -180,7 +183,6 @@ void RenderManager::update()
 
         m_graphicsQueue.waitIdle(); // TODO(perf): Explore VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT.
 
-
         if (m_requestedViewportArea.size.width != m_sceneViewport.extent.width
             || m_requestedViewportArea.size.height != m_sceneViewport.extent.height
             || m_requestedViewportArea.position.x != m_sceneViewport.offset.x
@@ -196,8 +198,8 @@ void RenderManager::update()
         }
     }
 
-    m_deltaTime.update();
     drawFrame();
+    m_frameTimer.tick();
 }
 
 void RenderManager::shutdown()
@@ -258,9 +260,9 @@ void RenderManager::updateFramebufferSize()
     m_framebufferResized = true;
 }
 
-void RenderManager::setEditorDrawCallback(std::function<void()> callback)
+void RenderManager::setEditorCallbacks(EditorCallbacks callbacks)
 {
-    m_editorDrawCallback = std::move(callback);
+    m_editorCallbacks = std::move(callbacks);
 }
 
 void RenderManager::setViewportArea(Rect area)
@@ -678,10 +680,10 @@ void RenderManager::drawFrame()
     //--------------------------------------------------------------------------
     // Build ImGui draw data
     //--------------------------------------------------------------------------
-    if (m_editorDrawCallback)
+    if (m_editorCallbacks.draw)
     {
         m_imguiHelper.beginFrame();
-        m_editorDrawCallback();
+        m_editorCallbacks.draw();
         m_imguiHelper.preRenderFrame();
     }
 

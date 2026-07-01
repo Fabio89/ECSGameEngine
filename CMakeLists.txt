@@ -120,6 +120,12 @@ target_compile_features(Engine PUBLIC cxx_std_23)
 
 set_property(TARGET Engine PROPERTY CXX_MODULE_STD ON)
 
+add_custom_command(TARGET Engine POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/Engine/Config
+        $<TARGET_FILE_DIR:Engine>/Engine/Config
+)
+
 # ----------------------------------------------------------
 # Editor
 # ----------------------------------------------------------
@@ -156,6 +162,12 @@ target_compile_features(Editor PUBLIC cxx_std_23)
 
 set_property(TARGET Editor PROPERTY CXX_MODULE_STD ON)
 
+add_custom_command(TARGET Editor POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/Editor/Assets
+        $<TARGET_FILE_DIR:Editor>/Editor/Assets
+)
+
 # ----------------------------------------------------------
 # Game
 # ----------------------------------------------------------
@@ -172,7 +184,6 @@ set_target_properties(Game PROPERTIES
 
 target_link_libraries(Game
         PRIVATE
-        Engine
         Editor
 )
 
@@ -199,8 +210,3 @@ add_dependencies(Game Game_shaders)
 # Editor
 # ----------------------------------------------------------
 
-add_custom_command(TARGET Game POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/Editor/Assets
-        $<TARGET_FILE_DIR:Game>/Editor/Assets
-)

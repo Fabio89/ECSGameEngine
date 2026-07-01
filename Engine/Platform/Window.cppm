@@ -1,5 +1,6 @@
 export module Window;
 import Core;
+import Geometry;
 import Glfw;
 import Math;
 import std;
@@ -17,8 +18,7 @@ export enum class WindowMode
 
 export struct WindowCreateInfo
 {
-    int width = 1280;
-    int height = 720;
+    Size2D size;
     WindowMode mode = WindowMode::Maximized;
 };
 

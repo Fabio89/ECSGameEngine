@@ -14,6 +14,9 @@ export namespace Input
     Vec2 getCursorScreenPosition(WindowHandle window);
 
     ENGINE_API
+    Vec2 getCursorDelta(WindowHandle window);
+
+    ENGINE_API
     bool isKeyDown(KeyCode key);
 
     ENGINE_API
@@ -29,5 +32,5 @@ export namespace Input
     void setCursorType(WindowHandle window, CursorType type);
 
     void init(WindowHandle window);
-    void postUpdate();
+    void postUpdate(WindowHandle window);
 }

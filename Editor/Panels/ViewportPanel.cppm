@@ -15,10 +15,12 @@ export namespace Panels
     {
     public:
         explicit ViewportPanel(const PanelCreateInfo& info);
+        static constexpr auto Name = "Viewport";
 
     private:
         void doDraw() override;
         void setCurrentTool(EntityEditingMode type);
+        void drawFpsCounter() const;
 
         std::reference_wrapper<ViewportController> m_controller;
         EventSubscription m_sub;

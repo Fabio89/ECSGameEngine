@@ -3,14 +3,13 @@ module;
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
+#include <imgui_internal.h>
 #include <imgui_stdlib.h>
 
 export module ImGui;
 
 export namespace ImGui
 {
-    using ::VkResult;
-
     // ReSharper disable CppClangTidyMiscUnusedUsingDecls
     using ImGui::CreateContext;
     using ImGui::DestroyContext;
@@ -355,6 +354,12 @@ export namespace ImGui
     using ImGui::DockSpaceOverViewport;
     using ImGui::SetNextWindowViewport;
     using ImGui::DockSpace;
+    using ImGui::DockBuilderAddNode;
+    using ImGui::DockBuilderDockWindow;
+    using ImGui::DockBuilderFinish;
+    using ImGui::DockBuilderRemoveNode;
+    using ImGui::DockBuilderSetNodeSize;
+    using ImGui::DockBuilderSplitNode;
 
     using ImGui::GetBackgroundDrawList;
     using ImGui::GetForegroundDrawList;
@@ -419,20 +424,18 @@ export namespace ImGui
     using ImGui::GetAllocatorFunctions;
     using ImGui::MemAlloc;
     using ImGui::MemFree;
+    
+    void CheckVersion() { IMGUI_CHECKVERSION(); }
+}
 
-    using VkSampleCountFlagBits::VK_SAMPLE_COUNT_1_BIT;
-
-    using ::ImGuiConfigFlags_;
-    using ::ImGuiConfigFlags;
-
-    using ImGuiChildFlags_::ImGuiChildFlags_Borders;
-
-    using ImGuiMouseCursor_::ImGuiMouseCursor_ResizeEW;
-
+export
+{
     using ::ImGuiID;
     using ::ImVec2;
     using ::ImVec4;
+    using ::ImColor;
     using ::ImGuiIO;
+    using ::ImDrawList;
     using ::ImFontConfig;
     using ::ImGui_ImplVulkan_InitInfo;
     using ::ImGui_ImplVulkan_PipelineInfo;
@@ -444,12 +447,19 @@ export namespace ImGui
     using ::ImGui_ImplVulkan_RenderDrawData;
     using ::ImGui_ImplVulkan_SetMinImageCount;
     using ::ImGui_ImplVulkan_Shutdown;
-    
-    void CheckVersion() { IMGUI_CHECKVERSION(); }
-}
 
-export
-{
+    using ::ImGuiID;
+    using ::ImGuiDir;
+
+    using ::ImGuiChildFlags_;
+    using ::ImGuiChildFlags;
+
+    using ::ImGuiConfigFlags_;
+    using ::ImGuiConfigFlags;
+
+    using ::ImGuiMouseCursor_;
+    using ::ImGuiMouseCursor;
+
     using ::ImGuiTableFlags_;
     using ::ImGuiTableFlags;
 
@@ -460,6 +470,7 @@ export
     using ::ImGuiWindowFlags;
 
     using ::ImGuiDockNodeFlags_;
+    using ::ImGuiDockNodeFlagsPrivate_;
     using ::ImGuiDockNodeFlags;
 
     using ::ImGuiStyleVar_;
@@ -469,4 +480,7 @@ export
     using ::ImGuiKey;
 
     using ::ImGuiMouseButton_;
+
+    using ::VkSampleCountFlagBits;
+    using ::VkResult;
 }

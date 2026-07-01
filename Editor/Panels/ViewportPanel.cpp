@@ -16,10 +16,16 @@ enum class ViewportMode
     GameCamera
 };
 
+namespace
+{
+    float smoothedGameDeltaTime = 0.016f;
+    float smoothedRenderDeltaTime = 0.016f;
+}
+
 Rect calculateViewportArea(ViewportMode mode)
 {
-    const ImGui::ImVec2 panelPosition = ImGui::GetCursorScreenPos();
-    const ImGui::ImVec2 availableSize = ImGui::GetContentRegionAvail();
+    const ImVec2 panelPosition = ImGui::GetCursorScreenPos();
+    const ImVec2 availableSize = ImGui::GetContentRegionAvail();
 
     switch (mode)
     {
@@ -80,9 +86,11 @@ Panels::ViewportPanel::ViewportPanel(const PanelCreateInfo& info)
 
 void Panels::ViewportPanel::doDraw()
 {
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImGui::ImVec2{0, 0});
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::ImVec4{0, 0, 0, 0});
-    ImGui::Begin("Viewport");
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{0, 0});
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4{0, 0, 0, 0});
+    ImGui::Begin(Name);
+
+    drawFpsCounter();
 
     const Rect viewportArea = calculateViewportArea(ViewportMode::Editor);
     Engine::setViewportArea(viewportArea);
@@ -106,7 +114,7 @@ void Panels::ViewportPanel::doDraw()
 
     if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
     {
-        const ImGui::ImVec2 mouse = ImGui::GetMousePos();
+        const ImVec2 mouse = ImGui::GetMousePos();
 
         const Vec2 uv
         {
@@ -121,8 +129,10 @@ void Panels::ViewportPanel::doDraw()
         Editor::request(Editor::ChangeSelection{.contextId = context().id, .entities = {hitEntity}});
     }
 
-    const bool enableCameraControls = ImGui::IsWindowHovered() && ImGui::IsMouseDown(ImGuiMouseButton_Right);
-    EditorCamera::setActive(getWindow(),  enableCameraControls);
+    if (ImGui::IsMouseReleased(ImGuiMouseButton_Right))
+        EditorCamera::setActive(getWindow(), false);
+    else if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+        EditorCamera::setActive(getWindow(), true);
 
     ImGui::End();
     ImGui::PopStyleVar();
@@ -132,6 +142,36 @@ void Panels::ViewportPanel::doDraw()
 void Panels::ViewportPanel::setCurrentTool(EntityEditingMode type)
 {
     m_controller.get().tools().setCurrentTool(type);
+}
+
+void Panels::ViewportPanel::drawFpsCounter() const
+{
+    constexpr float smoothing = 5.0f;
+
+    const ImVec2 min = ImGui::GetCursorScreenPos();
+    const ImVec2 max = {min.x + ImGui::GetContentRegionAvail().x, min.y + ImGui::GetContentRegionAvail().y};
+
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
+
+    static constexpr ImColor color{255,255,255};
+    ImVec2 pos = {max.x - 200.0f, min.y + 10.0f};
+
+    const float labelWidth = ImGui::CalcTextSize("Simulation:").x;
+
+    auto getFpsString = [](float dt) { return std::format("{:.0f} FPS ({:.1f} ms)", 1 / dt, dt * 1000); };
+
+    const float dt = ImGui::GetIO().DeltaTime;
+    const float t = 1.0f - std::exp(-smoothing * dt);
+
+    smoothedGameDeltaTime = Math::lerp(smoothedGameDeltaTime, Engine::getSimulationDeltaTime(), t);
+    drawList->AddText(pos, color, "Simulation:");
+    drawList->AddText({pos.x + labelWidth + 10.0f, pos.y}, color, getFpsString(smoothedGameDeltaTime).c_str());
+
+    pos.y += ImGui::GetTextLineHeight();
+
+    smoothedRenderDeltaTime = Math::lerp(smoothedRenderDeltaTime, Engine::getRenderDeltaTime(), t);
+    drawList->AddText(pos, color, "Render:");
+    drawList->AddText({pos.x + labelWidth + 10.0f, pos.y}, color, getFpsString(smoothedRenderDeltaTime).c_str());
 }
 
 ViewportController::ViewportController(EditingContext& context)

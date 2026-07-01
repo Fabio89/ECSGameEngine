@@ -2,31 +2,30 @@ module Input;
 import Core;
 import Window;
 
-namespace Input
+namespace
 {
     std::bitset<KeyCodeCount> heldKeys{};
     std::bitset<KeyCodeCount> justPressedKeys{};
     std::bitset<KeyCodeCount> justReleasedKeys{};
 
+    Vec2 cursorScreenPositionLastFrame;
+    bool firstFrame = true;
+}
+
+namespace Input
+{
     void keyCallback(KeyCode key, KeyAction action);
     void mouseButtonCallback(KeyCode button, KeyAction action);
-}
-
-void Input::init(WindowHandle window)
-{
-    Platform::Window::setKeyCallback(window, keyCallback);
-    Platform::Window::setMouseButtonCallback(window, mouseButtonCallback);
-}
-
-void Input::postUpdate()
-{
-    justPressedKeys.reset();
-    justReleasedKeys.reset();
 }
 
 Vec2 Input::getCursorScreenPosition(WindowHandle window)
 {
     return Platform::Window::getCursorPosition(window);
+}
+
+Vec2 Input::getCursorDelta(WindowHandle window)
+{
+    return firstFrame ? Vec2{} : getCursorScreenPosition(window) - cursorScreenPositionLastFrame;
 }
 
 bool Input::isKeyDown(KeyCode key)
@@ -52,6 +51,21 @@ void Input::setCursorMode(WindowHandle window, CursorMode mode)
 void Input::setCursorType(WindowHandle window, CursorType type)
 {
     return Platform::Window::setCursorType(window, type);
+}
+
+void Input::init(WindowHandle window)
+{
+    Platform::Window::setKeyCallback(window, keyCallback);
+    Platform::Window::setMouseButtonCallback(window, mouseButtonCallback);
+}
+
+void Input::postUpdate(WindowHandle window)
+{
+    justPressedKeys.reset();
+    justReleasedKeys.reset();
+
+    cursorScreenPositionLastFrame = getCursorScreenPosition(window);
+    firstFrame = false;
 }
 
 void Input::keyCallback(KeyCode key, KeyAction action)

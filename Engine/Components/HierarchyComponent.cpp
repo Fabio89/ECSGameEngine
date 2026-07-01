@@ -2,7 +2,7 @@ module Component.Hierarchy;
 
 const HierarchyComponent& HierarchyUtils::getHierarchy(const World& world, Entity entity)
 {
-    if (!world.hasComponent<HierarchyComponent>(entity))
+    if (!world.isValid(entity) || !world.hasComponent<HierarchyComponent>(entity))
     {
         static constexpr HierarchyComponent noHierarchy{};
         return noHierarchy;
