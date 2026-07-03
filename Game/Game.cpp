@@ -6,12 +6,10 @@ void onUpdate(float deltaTime);
 
 void waitTillClosed()
 {
-    bool running{true};
-    while (running)
+    while (true)
     {
         //std::this_thread::sleep_for(Engine::getDeltaTime());
-        running = Engine::update();
-        if (!running)
+        if (!Engine::update())
             return;
         Editor::update();
     }

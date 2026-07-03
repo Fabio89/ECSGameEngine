@@ -1,7 +1,7 @@
-[Window]
-Width = 800
-Height = 600
-Maximized = true
+[window]
+width = 800
+height = 600
+maximized = true
 
-[Time]
-SimulationHz = 60
+[time]
+simulation_hz = 60

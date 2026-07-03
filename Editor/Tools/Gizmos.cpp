@@ -124,6 +124,7 @@ Entity Gizmos::createTranslationGizmoAxis(World& world, Entity gizmo, std::strin
 
 Entity Gizmos::createRotationGizmo(World& world)
 {
+    // TODO(feature): Implement rotation gizmo
     Entity gizmo = createTranslationGizmo(world);
     world.editComponent<NameComponent>(gizmo).name = "Rotation Gizmo";
     return gizmo;
@@ -131,6 +132,7 @@ Entity Gizmos::createRotationGizmo(World& world)
 
 Entity Gizmos::createScaleGizmo(World& world)
 {
+    // TODO(feature): Implement scale gizmo
     Entity gizmo = createTranslationGizmo(world);
     world.editComponent<NameComponent>(gizmo).name = "Scale Gizmo";
     return gizmo;
