@@ -1,7 +1,7 @@
 export module Render.Primitives;
+import Assets.Mesh;
 import Core;
 import Math;
-import Render.Model;
 
 export namespace Primitives
 {

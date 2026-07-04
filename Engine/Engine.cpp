@@ -1,4 +1,6 @@
 module Engine;
+import AssetLoader.Mesh;
+import AssetManager;
 import Engine.Config;
 import Engine.FrameTimer;
 import EngineSystems;
@@ -82,6 +84,9 @@ void Engine::init()
     Input::init(window);
     EngineComponents::init();
     EngineSystems::init(world);
+
+    AssetManager::registerLoader<MeshData>(std::make_unique<MeshAssetLoader>());
+    AssetManager::registerLoader<TextureData>(std::make_unique<TextureAssetLoader>());
 }
 
 void Engine::start()
@@ -149,22 +154,12 @@ Entity Engine::getEntityUnderCursor()
     return Physics::lineTrace(world, Physics::rayFromViewportUV(world, player, Input::getCursorScreenPosition(window)), TraceChannelFlags::Default);
 }
 
-void Engine::openProject(std::filesystem::path path)
+void Engine::openScene(const std::filesystem::path& path)
 {
     threadChecker.assertThread();
-
     EngineSystems::reset();
-
-    Project::open(std::move(path), world);
-
+    world.loadScene(path);
     player.setMainCamera(world, ensureCamera());
-}
-
-void Engine::saveCurrentProject()
-{
-    threadChecker.assertThread();
-
-    Project::saveToCurrent(world);
 }
 
 Entity Engine::createEntity()

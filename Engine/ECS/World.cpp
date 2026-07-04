@@ -1,33 +1,13 @@
 module World;
+import Assets.Mesh;
+import Assets.Texture;
 import AssetManager;
 import ComponentRegistry;
 import Component.Name;
 import Component.Tags;
 import Engine;
-import Render.Model;
 import Thread;
 import World.Events;
-
-template <typename T>
-std::vector<const T*> loadAssets(const JsonObject& json, const char* assetName)
-{
-    std::vector<const T*> loadedAssets;
-
-    if (json.IsObject())
-    {
-        if (const auto assets = json.FindMember(assetName); assets != json.MemberEnd())
-        {
-            loadedAssets.reserve(assets->value.Size());
-            for (const JsonObject& element : assets->value.GetArray())
-            {
-                if (const T* asset = AssetManager::loadAsset<T>(element))
-                    loadedAssets.push_back(asset);
-            }
-        }
-    }
-
-    return loadedAssets;
-}
 
 World::World(const WorldCreateInfo& info)
     : m_renderManager{*info.renderManager}
@@ -233,14 +213,15 @@ void World::deserializeScene(const JsonObject& json)
     if (!json.IsObject())
         return;
 
-    for (const MeshAsset* mesh : loadAssets<MeshAsset>(json, "meshes"))
-    {
-        m_renderManager.get().addCommand(RenderCommands::AddMesh{mesh->getGuid(), mesh->getData()});
-    }
-    for (const TextureAsset* texture : loadAssets<TextureAsset>(json, "textures"))
-    {
-        m_renderManager.get().addCommand(RenderCommands::AddTexture{texture->getGuid(), texture->getData()});
-    }
+    // OLD CODE
+    // for (const MeshAsset* mesh : loadAssets<MeshAsset>(json, "meshes"))
+    // {
+    //     m_renderManager.get().addCommand(RenderCommands::AddMesh{mesh->getGuid(), mesh->getData()});
+    // }
+    // for (const TextureAsset* texture : loadAssets<TextureAsset>(json, "textures"))
+    // {
+    //     m_renderManager.get().addCommand(RenderCommands::AddTexture{texture->getGuid(), texture->getData()});
+    // }
     
     if (auto entities = json.FindMember("entities"); entities != json.MemberEnd())
     {

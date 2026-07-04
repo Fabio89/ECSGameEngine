@@ -1,23 +1,12 @@
 export module Render.Commands;
+import Assets.Mesh;
+import Assets.Texture;
 import Core;
 import Guid;
 import Math;
-import Render.Model;
 
 export namespace RenderCommands
 {
-    struct AddMesh
-    {
-        Guid guid;
-        MeshData data;
-    };
-
-    struct AddTexture
-    {
-        Guid guid;
-        TextureData data;
-    };
-    
     struct AddObject
     {
         Entity entity;

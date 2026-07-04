@@ -15,7 +15,6 @@ import Log;
 import Math;
 import Physics;
 import Player;
-import Project;
 import Render.EditorCallbacks;
 import Render.RenderManager;
 import Window;
@@ -55,12 +54,10 @@ export namespace Engine
     ENGINE_API Entity getEntityUnderCursor();
 
     //------------------------------------------------------------------------------------------------------------------------
-    // Project
+    // Scene
     //------------------------------------------------------------------------------------------------------------------------
 
-    ENGINE_API void openProject(std::filesystem::path path);
-
-    ENGINE_API void saveCurrentProject();
+    ENGINE_API void openScene(const std::filesystem::path& path);
 
     //------------------------------------------------------------------------------------------------------------------------
     // ECS

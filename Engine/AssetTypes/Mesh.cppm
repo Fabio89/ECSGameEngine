@@ -1,11 +1,8 @@
-export module Render.Model;
-import AssetManager;
+export module Assets.Mesh;
 import Core;
 import Math;
-import Serialization.Json;
 import Render.Vulkan;
-
-using InstanceId = std::size_t;
+import Serialization.Json;
 
 //------------------------------------------------------------------------------------------------------------------------
 // Vertex
@@ -29,26 +26,10 @@ template <>
 struct std::hash<Vertex>;
 
 //------------------------------------------------------------------------------------------------------------------------
-// Texture
-//------------------------------------------------------------------------------------------------------------------------
-
-export using TextureId = InstanceId;
-
-export struct TextureData
-{
-    std::filesystem::path path{};
-};
-
-export using TextureAsset = Asset<TextureData>;
-
-template <>
-TextureData deserialize(const JsonObject& serializedData);
-
-//------------------------------------------------------------------------------------------------------------------------
 // Mesh
 //------------------------------------------------------------------------------------------------------------------------
 
-export using MeshId = InstanceId;
+export using MeshId = std::size_t;
 
 export struct MeshData
 {
@@ -58,7 +39,8 @@ export struct MeshData
     static constexpr auto indexType{vk::IndexType::eUint32};
 };
 
-export using MeshAsset = Asset<MeshData>;
+template<>
+constexpr std::string_view getTypeName<MeshData>() { return "Mesh"; }
 
 template <>
 MeshData deserialize(const JsonObject& serializedData);

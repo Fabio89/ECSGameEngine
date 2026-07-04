@@ -1,8 +1,6 @@
 export module Component.Model;
 import Core;
-import AssetManager;
 import Guid;
-import Render.Model;
 import Serialization.Json;
 
 export struct ModelComponent

@@ -20,9 +20,9 @@ std::filesystem::path FileSystem::executablePath()
     return std::filesystem::path{std::string_view{buffer.data(), static_cast<std::size_t>(length)}};
 }
 
-std::optional<std::filesystem::path> FileSystem::openFileDialog()
+std::optional<std::filesystem::path> openPathDialog(const char* command)
 {
-    FILE* pipe = popen("zenity --file-selection", "r");
+    FILE* pipe = popen(command, "r");
 
     if (!pipe)
         return std::nullopt;
@@ -51,6 +51,16 @@ std::optional<std::filesystem::path> FileSystem::openFileDialog()
         return std::nullopt;
 
     return std::filesystem::path(result);
+}
+
+std::optional<std::filesystem::path> FileSystem::openFileDialog()
+{
+    return openPathDialog("zenity --file-selection");
+}
+
+std::optional<std::filesystem::path> FileSystem::openFolderDialog()
+{
+    return openPathDialog("zenity --file-selection --directory");
 }
 
 #endif

@@ -22,7 +22,7 @@ int main()
     Engine::start();
 
     // openProject("C:/Users/march/Documents/Mashi Projects/MashiTestProject/project.ma");
-    Engine::openProject("/home/Fabio/Projects/MashiTestProject/project.ma");
+    Editor::openProject("/home/Fabio/Projects/MashiTestProject");
 
     Entity camera = Engine::createEntity();
     Engine::addComponent<NameComponent>(camera, "TestCamera");

@@ -8,4 +8,6 @@ export namespace FileSystem
     std::filesystem::path executableDirectory();
 
     std::optional<std::filesystem::path> openFileDialog();
+
+    std::optional<std::filesystem::path> openFolderDialog();
 }

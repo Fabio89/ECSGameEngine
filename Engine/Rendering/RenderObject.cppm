@@ -1,9 +1,10 @@
 export module Render.RenderObject;
+import Assets.Mesh;
+import Assets.Texture;
 import Core;
 import CoreTypes;
 import Guid;
 import Math;
-import Render.Model;
 import Render.Vulkan;
 
 export struct Camera
@@ -90,8 +91,6 @@ public:
     void clear();
     void setCamera(const Camera& camera);
 
-    void addMesh(MeshData&& data, Guid guid);
-    void addTexture(TextureData&& textureData, Guid guid);
     void addRenderObject(Entity entity, Guid meshAsset, Guid textureAsset);
     void removeRenderObject(Entity entity);
     void setObjectTransform(Entity entity, const Mat4& worldTransform);
@@ -114,6 +113,8 @@ public:
     );
 
 private:
+    void addMeshIfMissing(const Guid& guid);
+    void addTextureIfMissing(const Guid& guid);
     void updateDescriptorSets(const RenderObject& object) const;
     void updateUniformBuffer(RenderObject& object, UInt32 currentImage);
     void updateUniformBuffer(LineRenderObject& object, UInt32 currentImage);

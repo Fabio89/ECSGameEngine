@@ -9,7 +9,6 @@ import Math;
 import Render.EditorCallbacks;
 import Render.ImGui;
 import Render.Vulkan;
-import Render.Model;
 import Render.RenderObject;
 import Window;
 
@@ -185,18 +184,6 @@ template <typename T>
 void RenderManager::RenderCommand<T>::process()
 {
     m_renderManager->processCommand<T>(std::forward<T>(m_data));
-}
-
-template <>
-void RenderManager::processCommand(RenderCommands::AddMesh&& cmd)
-{
-    m_renderObjectManager.addMesh(std::move(cmd.data), cmd.guid);
-}
-
-template <>
-void RenderManager::processCommand(RenderCommands::AddTexture&& cmd)
-{
-    m_renderObjectManager.addTexture(std::move(cmd.data), cmd.guid);
 }
 
 template <>

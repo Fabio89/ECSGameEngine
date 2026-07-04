@@ -46,7 +46,7 @@ void Panels::MainMenuPanel::drawFileMenu()
 
     if (ImGui::MenuItem("Open Project..."))
     {
-        if (const auto path = FileSystem::openFileDialog())
+        if (const auto path = FileSystem::openFolderDialog())
         {
             Editor::request(Editor::OpenProject{std::move(*path)});
         }

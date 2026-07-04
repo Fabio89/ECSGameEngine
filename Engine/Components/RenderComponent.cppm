@@ -1,8 +1,9 @@
 export module Component.Render;
+import Assets.Mesh;
+import Assets.Texture;
 import Core;
 import Math;
 import Properties;
-import Render.Model;
 import Serialization.Json;
 
 export struct RenderComponent

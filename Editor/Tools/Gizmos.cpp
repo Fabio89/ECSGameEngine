@@ -1,4 +1,5 @@
 module Editor.Gizmos;
+import Assets.Mesh;
 import Component.LineRender;
 import Component.BoundingBox;
 import Component.Gizmo;
@@ -12,7 +13,6 @@ import Guid;
 import Math;
 import Physics;
 import Render.Commands;
-import Render.Model;
 import Render.Primitives;
 
 namespace Gizmos

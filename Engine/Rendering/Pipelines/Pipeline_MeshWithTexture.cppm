@@ -2,10 +2,9 @@ module;
 #include <cstddef>
 
 export module Render.Pipeline.MeshWithTexture;
+import Assets.Mesh;
 import Core;
-import Render.Model;
 import Render.Utils;
-import Project;
 import Render.Vulkan;
 
 export vk::Pipeline createGraphicsPipeline(vk::Device device, vk::PipelineCache pipelineCache, vk::PipelineLayout pipelineLayout, vk::Extent2D swapchainExtent)

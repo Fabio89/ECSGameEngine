@@ -1,4 +1,5 @@
 module Editor;
+import AssetManager;
 import Editor.Camera;
 import Editor.Components;
 import Editor.Controller;
@@ -8,6 +9,7 @@ import Editor.Panels.Hierarchy;
 import Editor.Panels.Details;
 import Editor.Panels.MainMenu;
 import Editor.Panels.Viewport;
+import Editor.Project;
 import Editor.PropertyDrawers;
 import Engine;
 import Input;
@@ -33,7 +35,15 @@ namespace Editor
 
     void execute(OpenProject&& request)
     {
-        Engine::openProject(std::move(request.path));
+        const ProjectConfig config = loadProjectConfig(request.path / "project.toml");
+
+        AssetManager::setContentRoot(request.path / config.contentRoot);
+        AssetManager::loadDatabase(request.path / config.assetDatabase);
+
+        if (const std::filesystem::path startupScenePath = request.path / config.startupScene; std::filesystem::exists(startupScenePath))
+        {
+            Engine::openScene(startupScenePath);
+        }
     }
 
     void execute(SetProperty&& request)
@@ -102,6 +112,11 @@ void Editor::update()
     controllerManager.update(Engine::getSimulationDeltaTime());
 
     EditorCamera::update(editorContext.window, *editorContext.world, Engine::getPlayer(), Engine::getSimulationDeltaTime());
+}
+
+void Editor::openProject(std::filesystem::path path)
+{
+    request(OpenProject{path = std::move(path)});
 }
 
 std::span<Panel*> Editor::getPanels()

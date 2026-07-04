@@ -1,6 +1,6 @@
 export module Component.LineRender;
+import Assets.Mesh;
 import Core;
-import Render.Model;
 
 export struct LineRenderComponent
 {

@@ -32,6 +32,8 @@ export namespace Editor
 
     EDITOR_API void update();
 
+    EDITOR_API void openProject(std::filesystem::path path);
+
     template<typename T>
     EDITOR_API void request(T&& request) { requests.push(EditorRequest{std::forward<T>(request)}); }
 
