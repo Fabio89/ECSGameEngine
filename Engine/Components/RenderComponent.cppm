@@ -9,8 +9,8 @@ import Serialization.Json;
 export struct RenderComponent
 {
     bool visible{true};
-    MeshId mesh{};
-    TextureId texture{};
+    std::size_t mesh{};
+    std::size_t texture{};
     Mat4 model{1};
 };
 

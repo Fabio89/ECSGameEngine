@@ -58,6 +58,12 @@ std::optional<std::filesystem::path> FileSystem::openFileDialog()
     return openPathDialog("zenity --file-selection");
 }
 
+std::optional<std::filesystem::path> FileSystem::openFileDialog(std::string_view filter)
+{
+    std::string command = std::format("zenity --file-selection --file-filter='{}'", filter);
+    return openPathDialog(command.c_str());
+}
+
 std::optional<std::filesystem::path> FileSystem::openFolderDialog()
 {
     return openPathDialog("zenity --file-selection --directory");

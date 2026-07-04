@@ -46,6 +46,14 @@ namespace Editor
         }
     }
 
+    void execute(OpenScene&& request)
+    {
+        if (std::filesystem::exists(request.path))
+        {
+            Engine::openScene(request.path);
+        }
+    }
+
     void execute(SetProperty&& request)
     {
         World& world = contexts().get(request.contextId).world.get();

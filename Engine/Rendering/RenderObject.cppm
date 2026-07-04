@@ -15,7 +15,7 @@ export struct Camera
 
 struct Texture
 {
-    TextureId id{};
+    std::size_t id{};
     vk::Image image{};
     vk::DeviceMemory memory{};
     vk::ImageView view{};
@@ -24,7 +24,7 @@ struct Texture
 
 struct Mesh
 {
-    MeshId id{};
+    std::size_t id{};
     MeshData data;
     vk::Buffer vertexBuffer{};
     vk::DeviceMemory vertexBufferMemory{};
@@ -34,7 +34,7 @@ struct Mesh
 
 struct LineMesh
 {
-    MeshId id{};
+    std::size_t id{};
     std::vector<LineVertex> vertices;
     vk::Buffer vertexBuffer{};
     vk::DeviceMemory vertexBufferMemory{};
@@ -51,8 +51,8 @@ struct RenderObject
 {
     Entity entity{};
     bool visible{true};
-    MeshId mesh{};
-    TextureId texture{};
+    std::size_t mesh{};
+    std::size_t texture{};
     Mat4 model{1};
     std::vector<vk::Buffer> uniformBuffers;
     std::vector<vk::DeviceMemory> uniformBuffersMemory;
@@ -127,8 +127,8 @@ private:
     std::vector<Mesh> m_meshes;
     std::vector<Texture> m_textures;
 
-    std::unordered_map<Guid, MeshId> m_meshMap;
-    std::unordered_map<Guid, TextureId> m_textureMap;
+    std::unordered_map<Guid, std::size_t> m_meshMap;
+    std::unordered_map<Guid, std::size_t> m_textureMap;
 
     vk::Device m_device{};
     vk::PhysicalDevice m_physicalDevice{};

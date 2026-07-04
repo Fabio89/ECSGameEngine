@@ -52,6 +52,14 @@ void Panels::MainMenuPanel::drawFileMenu()
         }
     }
 
+    if (ImGui::MenuItem("Open Scene..."))
+    {
+        if (const auto path = FileSystem::openFileDialog("*.scene"))
+        {
+            Editor::request(Editor::OpenScene{std::move(*path)});
+        }
+    }
+
     ImGui::Separator();
 
     if (ImGui::MenuItem("Exit"))

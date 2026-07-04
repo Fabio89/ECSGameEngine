@@ -16,6 +16,11 @@ export namespace Editor
         std::filesystem::path path;
     };
 
+    struct OpenScene
+    {
+        std::filesystem::path path;
+    };
+
     struct SetProperty
     {
         EditingContextId contextId;
@@ -29,5 +34,6 @@ export namespace Editor
 export using EditorRequest = std::variant<
     Editor::ChangeSelection,
     Editor::OpenProject,
+    Editor::OpenScene,
     Editor::SetProperty
 >;

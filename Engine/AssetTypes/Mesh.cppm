@@ -2,7 +2,6 @@ export module Assets.Mesh;
 import Core;
 import Math;
 import Render.Vulkan;
-import Serialization.Json;
 
 //------------------------------------------------------------------------------------------------------------------------
 // Vertex
@@ -29,8 +28,6 @@ struct std::hash<Vertex>;
 // Mesh
 //------------------------------------------------------------------------------------------------------------------------
 
-export using MeshId = std::size_t;
-
 export struct MeshData
 {
     std::vector<Vertex> vertices{};
@@ -41,6 +38,3 @@ export struct MeshData
 
 template<>
 constexpr std::string_view getTypeName<MeshData>() { return "Mesh"; }
-
-template <>
-MeshData deserialize(const JsonObject& serializedData);
