@@ -13,11 +13,13 @@ export namespace Editor
 
     struct OpenProject
     {
+        EditingContextId contextId;
         std::filesystem::path path;
     };
 
     struct OpenScene
     {
+        EditingContextId contextId;
         std::filesystem::path path;
     };
 

@@ -28,6 +28,10 @@ namespace
 
 namespace Editor
 {
+    void rebuildPanelView();
+    Entity ensureCamera(World& world);
+    void loadScene(EditingContextId contextId, const std::filesystem::path& path);
+
     void execute(ChangeSelection&& request)
     {
         contexts().get(request.contextId).selection.set(request.entities);
@@ -40,23 +44,17 @@ namespace Editor
         AssetManager::setContentRoot(request.path / config.contentRoot);
         AssetManager::loadDatabase(request.path / config.assetDatabase);
 
-        if (const std::filesystem::path startupScenePath = request.path / config.startupScene; std::filesystem::exists(startupScenePath))
-        {
-            Engine::openScene(startupScenePath);
-        }
+        loadScene(request.contextId, request.path / config.startupScene);
     }
 
     void execute(OpenScene&& request)
     {
-        if (std::filesystem::exists(request.path))
-        {
-            Engine::openScene(request.path);
-        }
+        loadScene(request.contextId, request.path);
     }
 
     void execute(SetProperty&& request)
     {
-        World& world = contexts().get(request.contextId).world.get();
+        World& world = Engine::getWorld(contexts().get(request.contextId).world);
         if (!world.isValid(request.entity))
             return;
 
@@ -65,18 +63,27 @@ namespace Editor
 
         request.property->set(&world.editComponent(request.entity, request.componentType), request.value);
     }
-
-    void rebuildPanelView();
 }
 
-void Editor::init(EditorUIContext context)
+void Editor::addPanel(std::unique_ptr<Panel> panel)
 {
+    panels.emplace_back(std::move(panel));
+    rebuildPanelView();
+}
+
+void Editor::init()
+{
+    Engine::init();
+
     EditorComponents::init();
-    editorContext = context;
+
+    editorContext = {.world = Engine::createWorld(), .window = Engine::getWindow()};
+
+    //WorldHandle world2 = Engine::createWorld();
 
     initPropertyDrawers();
 
-    const EditingContextId defaultContextId = contexts().add(*context.world);
+    const EditingContextId defaultContextId = contexts().add(editorContext.world);
     addPanel<Panels::HierarchyPanel>(defaultContextId);
     addPanel<Panels::DetailsPanel>(defaultContextId);
     addPanel<Panels::MainMenuPanel>(defaultContextId);
@@ -87,55 +94,61 @@ void Editor::init(EditorUIContext context)
         .draw = ImGuiUI::draw
     });
 
-    controllerManager.init();
+    for (ControllerManager& controllerManager : controllerManagers | std::views::values)
+        controllerManager.init();
 
     subscription += Engine::events().subscribe([](const Engine::SceneLoadedEvent& event)
     {
         for (EditingContext& context : contexts().getAll())
         {
-            if (&context.world.get() == &event.world.get())
+            if (&context.world == &event.world)
             {
                 context.selection.clear();
             }
         }
     });
+
+    Engine::start();
 }
 
 void Editor::shutdown()
 {
     subscription = {};
     panels.clear();
-    controllerManager = {};
+    controllerManagers.clear();
+    Engine::shutdown();
 }
 
-void Editor::update()
+bool Editor::update()
 {
+    if (!Engine::update())
+        return false;
+
     EditorRequest request;
 
     while (requests.tryPop(request))
-    {
         std::visit([]<typename Request>(Request&& r) { execute(std::forward<Request>(r)); }, std::move(request));
-    }
 
-    controllerManager.update(Engine::getSimulationDeltaTime());
+    for (auto& [contextId, controllerManager] : controllerManagers)
+        controllerManager.update(Engine::getSimulationDeltaTime(), contexts().get(contextId).snapshotPublisher);
 
-    EditorCamera::update(editorContext.window, *editorContext.world, Engine::getPlayer(), Engine::getSimulationDeltaTime());
+    EditorCamera::update(editorContext.window, Engine::getWorld(editorContext.world), Engine::getPlayer(), Engine::getSimulationDeltaTime());
+
+    return true;
 }
 
-void Editor::openProject(std::filesystem::path path)
+void Editor::run()
 {
-    request(OpenProject{path = std::move(path)});
+    init();
+
+    while (update()) {}
+
+    shutdown();
 }
 
 std::span<Panel*> Editor::getPanels()
 {
     return panelView;
-}
-
-void Editor::addPanel(std::unique_ptr<Panel> panel)
-{
-    panels.emplace_back(std::move(panel));
-    rebuildPanelView();
 }
 
 void Editor::rebuildPanelView()
@@ -144,4 +157,37 @@ void Editor::rebuildPanelView()
 
     for (auto& panel : panels)
         panelView.push_back(panel.get());
+}
+
+Entity Editor::ensureCamera(World& world)
+{
+    auto hasCamera = [&world](Entity entity) { return world.hasComponent<CameraComponent>(entity); };
+    auto entities = world.getEntitiesRange();
+    if (auto cameraEntityIt = std::ranges::find_if(entities, hasCamera); cameraEntityIt != entities.end())
+    {
+        return *cameraEntityIt;
+    }
+
+    const Entity camera = world.createEntity();
+    world.addComponent<CameraComponent>(camera, CameraComponent{.fov = 60.f});
+    world.addComponent<NameComponent>(camera, "Main Camera");
+    world.addComponent<TransformComponent>(camera);
+
+    auto& transform = world.editComponent<TransformComponent>(camera);
+    transform.position = {2.f, 2.f, 2.f};
+    const Vec3 dir = Math::normalize(-transform.position);
+    const Quat rot = Math::rotation(forwardVector(), dir);
+    transform.rotation = rot;
+
+    return camera;
+}
+
+void Editor::loadScene(EditingContextId contextId, const std::filesystem::path& path)
+{
+    if (!std::filesystem::exists(path))
+        return;
+
+    World& world = Engine::getWorld(contexts().get(contextId).world);
+    world.loadScene(path);
+    Engine::getPlayer().setMainCamera(world, ensureCamera(world));
 }

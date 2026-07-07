@@ -6,13 +6,13 @@ import ComponentRegistry;
 import Component.Name;
 import Component.Tags;
 import Engine;
+import EngineSystems;
 import Thread;
 import World.Events;
 
 World::World(const WorldCreateInfo& info)
-    : m_renderManager{*info.renderManager}
-{
-}
+    : m_handle{info.handle},
+      m_renderManager{info.renderManager} {}
 
 Entity World::createEntity()
 {
@@ -140,7 +140,7 @@ void World::removeEntity(Entity entity)
         for (SystemCallback& callback : m_systemCallbacks | std::views::values)
             callback.onEntityRemoved(entity);
 
-        Engine::events().publish(Engine::EntityDestroyedEvent{.world = *this, .entity = entity});
+        Engine::events().publish(Engine::EntityDestroyedEvent{.world = m_handle, .entity = entity});
     }
 }
 
@@ -156,13 +156,13 @@ void World::loadScene(const std::filesystem::path& path)
     const JsonObject& doc = Json::fromFile(path);
     deserializeScene(doc);
     std::cout << "Scene loading complete\n";
-    Engine::events().publish(Engine::SceneLoadedEvent{.world = *this});
+    Engine::events().publish(Engine::SceneLoadedEvent{.world = m_handle});
 }
 
 void World::unloadScene()
 {
     assertThread();
-    m_renderManager.get().addCommand<RenderCommands::ClearRenderObjects>({});
+    m_renderManager->addCommand<RenderCommands::ClearRenderObjects>({});
     m_entities.clear();
     m_archetypes.clear();
 }
@@ -212,16 +212,6 @@ void World::deserializeScene(const JsonObject& json)
 
     if (!json.IsObject())
         return;
-
-    // OLD CODE
-    // for (const MeshAsset* mesh : loadAssets<MeshAsset>(json, "meshes"))
-    // {
-    //     m_renderManager.get().addCommand(RenderCommands::AddMesh{mesh->getGuid(), mesh->getData()});
-    // }
-    // for (const TextureAsset* texture : loadAssets<TextureAsset>(json, "textures"))
-    // {
-    //     m_renderManager.get().addCommand(RenderCommands::AddTexture{texture->getGuid(), texture->getData()});
-    // }
     
     if (auto entities = json.FindMember("entities"); entities != json.MemberEnd())
     {

@@ -18,32 +18,32 @@ namespace Editor
 {
     EditorUIContext editorContext{};
     ThreadSafeQueue<EditorRequest> requests;
-    ControllerManager controllerManager;
     EditingContextManager contextManager;
+    std::unordered_map<EditingContextId, ControllerManager> controllerManagers;
 
     void addPanel(std::unique_ptr<Panel> panel);
+
+    void init();
+
+    void shutdown();
+
+    bool update();
 }
 
 export namespace Editor
 {
-    EDITOR_API void init(EditorUIContext context);
-
-    EDITOR_API void shutdown();
-
-    EDITOR_API void update();
-
-    EDITOR_API void openProject(std::filesystem::path path);
+    EDITOR_API void run();
 
     template<typename T>
     EDITOR_API void request(T&& request) { requests.push(EditorRequest{std::forward<T>(request)}); }
 
     template<typename T>
-    EDITOR_API void addPanel(EditingContextId contextId) { addPanel(std::make_unique<T>(PanelCreateInfo{.contextId = contextId, .window = editorContext.window})); }
+    void addPanel(EditingContextId contextId) { addPanel(std::make_unique<T>(PanelCreateInfo{.contextId = contextId, .window = editorContext.window})); }
 
     std::span<Panel*> getPanels();
 
     template<typename T>
-    EDITOR_API T& addController(EditingContextId contextId) { return controllerManager.addController<T>(contextManager.get(contextId)); }
+    T& addController(EditingContextId contextId) { return controllerManagers[contextId].addController<T>(contextManager.get(contextId)); }
 
-    EDITOR_API EditingContextManager& contexts() { return contextManager; }
+    EditingContextManager& contexts() { return contextManager; }
 }

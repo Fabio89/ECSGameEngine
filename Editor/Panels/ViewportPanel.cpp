@@ -1,7 +1,6 @@
 module Editor.Panels.Viewport;
 import Editor;
 import Editor.Requests;
-import Editor.TransformTool;
 import Engine;
 import Geometry;
 import Math;
@@ -78,7 +77,7 @@ Panels::ViewportPanel::ViewportPanel(const PanelCreateInfo& info)
 {
     m_controller.get().tools().createTools();
 
-    m_sub += Engine::events().subscribe([this, contextId = info.contextId](const Engine::SceneLoadedEvent&)
+    m_sub += Engine::events().subscribe([this](const Engine::SceneLoadedEvent&)
     {
         m_controller.get().tools().createTools();
     });
@@ -122,9 +121,9 @@ void Panels::ViewportPanel::doDraw()
             (mouse.y - viewportArea.position.y) / viewportArea.size.height
         };
 
-        const Ray ray = Physics::rayFromViewportUV(context().world, Engine::getPlayer(), uv);
-
-        const Entity hitEntity = Physics::lineTrace(context().world, ray, TraceChannelFlags::Default);
+        const World& world = Engine::getWorld(context().world);
+        const Ray ray = Physics::rayFromViewportUV(world, Engine::getPlayer(), uv);
+        const Entity hitEntity = Physics::lineTrace(world, ray, TraceChannelFlags::Default);
 
         Editor::request(Editor::ChangeSelection{.contextId = context().id, .entities = {hitEntity}});
     }
@@ -175,14 +174,20 @@ void Panels::ViewportPanel::drawFpsCounter() const
 }
 
 ViewportController::ViewportController(EditingContext& context)
-    : EditorController{context},
+    : EditorControllerImpl{context},
       m_tools{context},
       m_selectionGizmos{context}
 {
 }
 
-void ViewportController::update(float dt)
+void ViewportController::update(float dt, Editor::SnapshotFrame& frame)
 {
-    EditorController::update(dt);
+    EditorControllerImpl::update(dt, frame);
     m_tools.update();
+
+}
+
+ViewportSnapshot ViewportController::buildSnapshot(const EditingContext& context)
+{
+    return {};
 }

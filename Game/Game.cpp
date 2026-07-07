@@ -4,36 +4,23 @@ import std;
 
 void onUpdate(float deltaTime);
 
-void waitTillClosed()
-{
-    while (true)
-    {
-        //std::this_thread::sleep_for(Engine::getDeltaTime());
-        if (!Engine::update())
-            return;
-        Editor::update();
-    }
-}
-
 int main()
 {
-    Engine::init();
-    Editor::init(Engine::getEditorContext());
-    Engine::start();
+    Editor::run();
 
     // openProject("C:/Users/march/Documents/Mashi Projects/MashiTestProject/project.ma");
-    Editor::openProject("/home/Fabio/Projects/MashiTestProject");
+    //Editor::openProject("/home/Fabio/Projects/MashiTestProject");
 
-    Entity camera = Engine::createEntity();
-    Engine::addComponent<NameComponent>(camera, "TestCamera");
-    Engine::addComponent<TransformComponent>(camera);
-    Engine::addComponent<TagsComponent>(camera, {.tags = {"Uno", "Due", "Tre", "Quattro", "Cinque", "Sei"}});
-    Engine::addComponent<CameraComponent>(camera);
+    // Entity camera = Engine::createEntity();
+    // Engine::addComponent<NameComponent>(camera, "TestCamera");
+    // Engine::addComponent<TransformComponent>(camera);
+    // Engine::addComponent<TagsComponent>(camera, {.tags = {"Uno", "Due", "Tre", "Quattro", "Cinque", "Sei"}});
+    // Engine::addComponent<CameraComponent>(camera);
 
-    Engine::printArchetypeStatus();
-
-    waitTillClosed();
-    Editor::shutdown();
-    Engine::shutdown();
+    // Engine::printArchetypeStatus();
+    //
+    // waitTillClosed();
+    // Editor::shutdown();
+    // Engine::shutdown();
     return 0;
 }

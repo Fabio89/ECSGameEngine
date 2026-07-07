@@ -1,7 +1,7 @@
 export module Editor.Panels.MainMenu;
 import Editor;
 import ImGui;
-import Editor.Panel;
+import Editor.Panel.Impl;
 import Editor.Requests;
 import Engine;
 import FileSystem;
@@ -9,10 +9,10 @@ import World;
 
 export namespace Panels
 {
-    class MainMenuPanel : public Panel
+    class MainMenuPanel : public PanelImpl
     {
     public:
-        using Panel::Panel;
+        using PanelImpl::PanelImpl;
 
     private:
         void doDraw() override;
@@ -48,7 +48,7 @@ void Panels::MainMenuPanel::drawFileMenu()
     {
         if (const auto path = FileSystem::openFolderDialog())
         {
-            Editor::request(Editor::OpenProject{std::move(*path)});
+            Editor::request(Editor::OpenProject{context().id, std::move(*path)});
         }
     }
 
@@ -56,7 +56,7 @@ void Panels::MainMenuPanel::drawFileMenu()
     {
         if (const auto path = FileSystem::openFileDialog("*.scene"))
         {
-            Editor::request(Editor::OpenScene{std::move(*path)});
+            Editor::request(Editor::OpenScene{context().id, std::move(*path)});
         }
     }
 

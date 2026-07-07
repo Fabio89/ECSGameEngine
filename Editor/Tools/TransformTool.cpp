@@ -65,7 +65,7 @@ void TransformToolManager::update()
 
 TransformTool::TransformTool(EditingContext& context, EntityEditingMode type)
     : m_context{context},
-      m_gizmo{Gizmos::createTransformGizmo(context.world, type)} {}
+      m_gizmo{Gizmos::createTransformGizmo(Engine::getWorld(context.world), type)} {}
 
 void TransformTool::update()
 {
@@ -74,7 +74,7 @@ void TransformTool::update()
 
 void TransformTool::setActive(bool active)
 {
-    World& world = m_context.get().world;
+    World& world = Engine::getWorld(m_context.get().world);
     if (!active)
         Gizmos::setGizmoVisible(world, m_gizmo, false);
 
@@ -106,7 +106,7 @@ void TransformTool::attachToSelection()
     Entity firstSelected = context().selection.isEmpty() ? Entity{} : context().selection.get().front();
     if (firstSelected.isValid() && firstSelected != m_attachedTo)
     {
-        World& world = m_context.get().world;
+        World& world = Engine::getWorld(m_context.get().world);
         HierarchyUtils::setParent(world, m_gizmo, firstSelected);
         world.editComponent<TransformComponent>(m_gizmo).scale = 0.2f / world.readComponent<TransformComponent>(firstSelected).scale;
     }
@@ -116,13 +116,13 @@ void TranslateTool::update()
 {
     TransformTool::update();
 
-    World& world = context().world;
+    World& world = Engine::getWorld(context().world);
 
     if (context().selection.isEmpty())
         return;
 
     Entity firstSelectedEntity = context().selection.get().front();
-    if (Engine::isValid(firstSelectedEntity) && Engine::isValid(m_selectedGizmoAxis) && Input::isKeyDown(KeyCode::MouseButtonLeft))
+    if (world.isValid(firstSelectedEntity) && world.isValid(m_selectedGizmoAxis) && Input::isKeyDown(KeyCode::MouseButtonLeft))
     {
         TransformComponent& transform = world.editComponent<TransformComponent>(firstSelectedEntity);
 

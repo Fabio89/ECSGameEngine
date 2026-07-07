@@ -1,87 +1,50 @@
 export module Editor.Panels.Details;
 import Component.Name;
 import Editor;
-import ImGui;
+import Editor.Controller;
 import Editor.Panel.Impl;
 import Editor.PropertyDrawers;
 import Editor.Requests;
+import Editor.SnapshotFrame;
 import Engine;
+import ImGui;
 
 export namespace Panels
 {
+    struct PropertySnapshot
+    {
+        const PropertyDescriptorBase* descriptor{};
+        PropertyValue value;
+    };
+
+    struct ComponentSnapshot
+    {
+        const ComponentTypeBase* type{};
+        std::vector<PropertySnapshot> properties;
+    };
+
+    struct DetailsSnapshot
+    {
+        Entity entity;
+        std::vector<ComponentSnapshot> components;
+    };
+
+    class DetailsController : public EditorControllerImpl<DetailsSnapshot>
+    {
+    public:
+        using EditorControllerImpl::EditorControllerImpl;
+    private:
+        DetailsSnapshot buildSnapshot(const EditingContext& context) override;
+    };
+
     class DetailsPanel : public PanelImpl
     {
     public:
-        using PanelImpl::PanelImpl;
+        DetailsPanel(const PanelCreateInfo& info);
         static constexpr auto Name = "Details";
 
     private:
-        void doDraw() override
-        {
-            World& world = context().world;
-            ImGui::Begin(Name, &m_open);
-
-            const Entity inspectedEntity = context().selection.isEmpty() ? Entity{} : context().selection.get().front();
-            if (world.isValid(inspectedEntity))
-            {
-                for (const TypeId typeId : world.getComponentTypesInEntity(inspectedEntity))
-                {
-                    if (typeId != Component<NameComponent>::typeId())
-                    {
-                        drawComponent(context().id, inspectedEntity, typeId);
-                    }
-                }
-            }
-
-            ImGui::End();
-        }
-
-        void drawComponent(EditingContextId contextId, Entity entity, TypeId componentTypeId)
-        {
-            if (const ComponentTypeBase* componentType = ComponentRegistry::get(componentTypeId))
-            {
-                ImGui::Separator();
-
-                ImGuiTreeNodeFlags flags =
-                        ImGuiTreeNodeFlags_DefaultOpen |
-                        ImGuiTreeNodeFlags_OpenOnArrow |
-                        ImGuiTreeNodeFlags_SpanFullWidth;
-
-                if (!componentType->hasProperties())
-                {
-                    flags |= ImGuiTreeNodeFlags_Leaf;
-                }
-
-                ImGui::PushID(entity.value);
-                ImGui::PushID(componentTypeId.value);
-
-                if (ImGui::TreeNodeEx(componentType->getName().data(), flags))
-                {
-                    const ComponentBase& component = context().world.get().readComponent(entity, componentTypeId);
-
-                    for (const PropertyDescriptorBase& property : componentType->getProperties())
-                    {
-                        PropertyValue value = property.copy(&component);
-
-                        if (Editor::drawProperty(property, value))
-                        {
-                            Editor::request(Editor::SetProperty{
-                                .contextId = contextId,
-                                .entity = entity,
-                                .componentType = componentTypeId,
-                                .property = &property,
-                                .value = std::move(value)
-                            });
-                        }
-                    }
-
-                    ImGui::TreePop();
-                }
-
-                ImGui::PopID();
-                ImGui::PopID();
-            }
-        }
+        void doDraw() override;
 
         bool m_open{true};
     };

@@ -7,14 +7,14 @@ import World.Events;
 
 SelectionGizmoManager::SelectionGizmoManager(EditingContext& context)
 {
-    m_sub += Engine::events().subscribe([this, context](const Editor::SelectionChangedEvent& event)
+    m_sub += Engine::events().subscribe([this, &context](const Editor::SelectionChangedEvent& event)
     {
-        setSelectedEntities(context.world, event.selection);
+        setSelectedEntities(Engine::getWorld(context.world), event.selection);
     });
 
     m_sub += Engine::events().subscribe([this](const Engine::SceneLoadedEvent& event)
     {
-        setSelectedEntities(event.world, {});
+        setSelectedEntities(Engine::getWorld(event.world), {});
         check(m_entitiesToBoundingBoxGizmos.empty(), "`SelectionGizmoManager::m_entitiesToBoundingBoxGizmos` should have been empty at this point!");
     });
 }

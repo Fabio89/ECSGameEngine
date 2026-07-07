@@ -1,16 +1,17 @@
 export module World.Events;
-import World;
+import Core;
+import WorldHandle;
 
 export namespace Engine
 {
     struct SceneLoadedEvent
     {
-        std::reference_wrapper<World> world;
+        WorldHandle world;
     };
 
     struct EntityDestroyedEvent
     {
-        std::reference_wrapper<World> world;
+        WorldHandle world;
         Entity entity;
     };
 }

@@ -3,6 +3,7 @@ import AssetLoader.Mesh;
 import AssetManager;
 import Engine.Config;
 import Engine.FrameTimer;
+import Engine.WorldManager;
 import EngineSystems;
 import Platform;
 import Thread;
@@ -18,18 +19,18 @@ namespace
     ThreadOwned threadChecker;
     FrameTimer frameTimer;
     Engine::Config config;
+
+    RenderManager renderManager;
+    WorldManager worldManager;
 }
 
 namespace Engine
 {
     void runRenderThread();
-    Entity ensureCamera();
 }
 
 void Engine::runRenderThread()
 {
-    threadChecker.assertThread();
-
     renderManager.init(window);
 
     while (!engineShuttingDown.load())
@@ -38,31 +39,6 @@ void Engine::runRenderThread()
     }
 
     renderManager.shutdown();
-}
-
-Entity Engine::ensureCamera()
-{
-    threadChecker.assertThread();
-
-    auto hasCamera = [](Entity entity) { return world.hasComponent<CameraComponent>(entity); };
-    auto entities = world.getEntitiesRange();
-    if (auto cameraEntityIt = std::ranges::find_if(entities, hasCamera); cameraEntityIt != entities.end())
-    {
-        return *cameraEntityIt;
-    }
-
-    const Entity camera = world.createEntity();
-    world.addComponent<CameraComponent>(camera, CameraComponent{.fov = 60.f});
-    world.addComponent<NameComponent>(camera, "Main Camera");
-    world.addComponent<TransformComponent>(camera);
-
-    auto& transform = world.editComponent<TransformComponent>(camera);
-    transform.position = {2.f, 2.f, 2.f};
-    const Vec3 dir = Math::normalize(-transform.position);
-    const Quat rot = Math::rotation(forwardVector(), dir);
-    transform.rotation = rot;
-
-    return camera;
 }
 
 void Engine::init()
@@ -83,7 +59,6 @@ void Engine::init()
 
     Input::init(window);
     EngineComponents::init();
-    EngineSystems::init(world);
 
     AssetManager::registerLoader<MeshData>(std::make_unique<MeshAssetLoader>());
     AssetManager::registerLoader<TextureData>(std::make_unique<TextureAssetLoader>());
@@ -108,7 +83,10 @@ bool Engine::update()
         return false;
     }
 
-    EngineSystems::update(world, player, deltaTime);
+    worldManager.forEachWorld([deltaTime](World& world)
+    {
+        EngineSystems::update(world, player, deltaTime);
+    });
 
     Input::postUpdate(window);
     Platform::update();
@@ -149,59 +127,24 @@ void Engine::shutdown()
     std::cout << "[Application] Shutdown complete!\n";
 }
 
-Entity Engine::getEntityUnderCursor()
+WindowHandle Engine::getWindow()
 {
-    return Physics::lineTrace(world, Physics::rayFromViewportUV(world, player, Input::getCursorScreenPosition(window)), TraceChannelFlags::Default);
+    return window;
 }
 
-void Engine::openScene(const std::filesystem::path& path)
+WorldHandle Engine::createWorld()
 {
-    threadChecker.assertThread();
-    EngineSystems::reset();
-    world.loadScene(path);
-    player.setMainCamera(world, ensureCamera());
+    return worldManager.createWorld(renderManager);
 }
 
-Entity Engine::createEntity()
+World& Engine::getWorld(WorldHandle handle)
 {
-    threadChecker.assertThread();
-
-    return world.createEntity();
-}
-
-void Engine::removeEntity(Entity entity)
-{
-    return world.removeEntity(entity);
-}
-
-bool Engine::isValid(Entity entity)
-{
-    return world.isValid(entity);
-}
-
-bool Engine::hasComponent(Entity entity, TypeId componentTypeId)
-{
-    return world.hasComponent(entity, componentTypeId);
-}
-
-const ComponentBase& Engine::readComponent(Entity entity, TypeId componentType)
-{
-    return world.readComponent(entity, componentType);
-}
-
-ComponentBase& Engine::editComponent(Entity entity, TypeId componentType)
-{
-    return world.editComponent(entity, componentType);
+    return worldManager.get(handle);
 }
 
 EventBus& Engine::events()
 {
     return eventBus;
-}
-
-EditorUIContext Engine::getEditorContext()
-{
-    return {.world = &world, .window = window };
 }
 
 void Engine::setEditorCallbacks(EditorCallbacks callbacks)
@@ -220,7 +163,7 @@ Ray Engine::getViewportCursorRay(const World& world)
 
     const auto [position, size] = renderManager.getViewportArea();
 
-    const Vec2 uv {
+    const Vec2 uv{
         (cursor.x - position.x) / size.width,
         (cursor.y - position.y) / size.height
     };
@@ -231,9 +174,4 @@ Ray Engine::getViewportCursorRay(const World& world)
 Player& Engine::getPlayer()
 {
     return player;
-}
-
-void Engine::printArchetypeStatus()
-{
-    world.printArchetypeStatus();
 }

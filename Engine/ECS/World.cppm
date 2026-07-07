@@ -4,6 +4,7 @@ module;
 
 export module World;
 export import Core;
+export import WorldHandle;
 import Archetype;
 import Guid;
 import Render.RenderManager;
@@ -26,6 +27,7 @@ struct std::hash<EntitySignature>
 
 export struct WorldCreateInfo
 {
+    WorldHandle handle{};
     RenderManager* renderManager{};
 };
 
@@ -49,6 +51,7 @@ SystemCallbackHandle generateSystemCallbackHandle()
 export class ENGINE_API World : ThreadOwned
 {
 public:
+    World() = default;
     explicit World(const WorldCreateInfo&);
     World(const World&) = delete;
     World& operator=(const World&) = delete;
@@ -99,8 +102,8 @@ public:
     template <ValidComponentData First, ValidComponentData ... Rest>
     std::generator<std::tuple<Entity, First&, Rest&...>> view();
 
-    const RenderManager& getRenderManager() const { return m_renderManager.get(); }
-    RenderManager& getRenderManager() { return m_renderManager.get(); }
+    const RenderManager& getRenderManager() const { return *m_renderManager; }
+    RenderManager& getRenderManager() { return *m_renderManager; }
 
     void printArchetypeStatus();
 
@@ -109,12 +112,13 @@ private:
     Archetype& editArchetype(const EntitySignature& signature);
     Archetype& editOrCreateArchetype(const EntitySignature& signature);
     Archetype& prepareArchetypeOnAddComponent(Entity entity, TypeId componentId);
-    
+
+    WorldHandle m_handle;
     std::unordered_map<SystemCallbackHandle, SystemCallback> m_systemCallbacks{};
     Entity::ValueType m_nextEntityValue{};
     std::unordered_map<Entity, EntitySignature> m_entities{};
     std::unordered_map<EntitySignature, Archetype> m_archetypes;
-    std::reference_wrapper<RenderManager> m_renderManager;
+    RenderManager* m_renderManager{};
 };
 
 //------------------------------------------------------------------------------------------------------------------------

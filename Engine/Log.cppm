@@ -42,7 +42,12 @@ bool check(bool expression, T&& message, ErrorType type = ErrorType::Error)
     {
         print(std::forward<T>(message), type);
         if (type == ErrorType::FatalError)
+#if defined(__GNUC__) || defined(__clang__)
+            __builtin_trap();
+#else
             std::abort();
+#endif
+
         return false;
     }
     return true;

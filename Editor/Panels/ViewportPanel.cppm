@@ -3,11 +3,32 @@ import Editor.Controller;
 import ImGui;
 import Editor.Panel.Impl;
 import Editor.SelectionGizmo;
+import Editor.SnapshotFrame;
 import Editor.TransformTool;
 import EventBus;
 import std;
 
-class ViewportController;
+struct ViewportSnapshot
+{
+    Entity hitEntity;
+};
+
+class ViewportController : public EditorControllerImpl<ViewportSnapshot>
+{
+public:
+    explicit ViewportController(EditingContext& context);
+
+    void update(float dt, Editor::SnapshotFrame& frame) override;
+
+    [[nodiscard]] TransformToolManager& tools() { return m_tools; }
+    [[nodiscard]] const TransformToolManager& tools() const { return m_tools; }
+
+private:
+    ViewportSnapshot buildSnapshot(const EditingContext& context) override;
+
+    TransformToolManager m_tools;
+    SelectionGizmoManager m_selectionGizmos;
+};
 
 export namespace Panels
 {
@@ -27,18 +48,3 @@ export namespace Panels
         bool m_open{true};
     };
 }
-
-class ViewportController : public EditorController
-{
-public:
-    explicit ViewportController(EditingContext& context);
-
-    void update(float dt) override;
-
-    [[nodiscard]] TransformToolManager& tools() { return m_tools; }
-    [[nodiscard]] const TransformToolManager& tools() const { return m_tools; }
-
-private:
-    TransformToolManager m_tools;
-    SelectionGizmoManager m_selectionGizmos;
-};

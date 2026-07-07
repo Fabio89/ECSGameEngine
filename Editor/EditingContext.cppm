@@ -1,21 +1,23 @@
 export module Editor.EditingContext;
 export import Editor.EditingContextId;
+import Core;
 import Editor.Selection;
-import World;
-import std;
+import Editor.SnapshotFrame;
+import WorldHandle;
 
 export struct EditingContext
 {
     EditingContextId id;
-    std::reference_wrapper<World> world;
+    WorldHandle world;
     Editor::Selection selection;
+    Editor::SnapshotPublisher snapshotPublisher;
     Entity camera;
 };
 
 export class EditingContextManager
 {
 public:
-    EditingContextId add(World& world);
+    EditingContextId add(WorldHandle world);
 
     EditingContext& get(EditingContextId id);
 

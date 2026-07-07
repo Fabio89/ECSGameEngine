@@ -1,11 +1,11 @@
 module;
 #include "EngineExport.h"
 export module EditorUIContext;
-import World;
 import Window;
+import WorldHandle;
 
 export struct ENGINE_API EditorUIContext
 {
-    World* world{};
-    WindowHandle window{};
+    WorldHandle world;
+    WindowHandle window;
 };
