@@ -7,7 +7,7 @@ import Core;
 import Render.Utils;
 import Render.Vulkan;
 
-export vk::Pipeline createLinePipeline(vk::Device device, vk::PipelineCache pipelineCache, vk::PipelineLayout pipelineLayout, vk::Extent2D swapchainExtent)
+export vk::Pipeline createLinePipeline(vk::Device device, vk::PipelineCache pipelineCache, vk::PipelineLayout pipelineLayout)
 {
     // Rasterization for lines
     static constexpr vk::PipelineRasterizationStateCreateInfo rasterizerInfo
@@ -127,32 +127,14 @@ export vk::Pipeline createLinePipeline(vk::Device device, vk::PipelineCache pipe
 
     vk::PipelineShaderStageCreateInfo shaderStages[]{vertShaderStageInfo, fragShaderStageInfo};
 
-    const vk::Viewport viewport
-    {
-        .x = 0,
-        .y = 0,
-        .width = static_cast<float>(swapchainExtent.width),
-        .height = static_cast<float>(swapchainExtent.height),
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f,
-    };
-
-    const vk::Rect2D scissor
-    {
-        .offset = {0, 0},
-        .extent = swapchainExtent,
-    };
-
-    const vk::PipelineViewportStateCreateInfo viewportStateInfo
+    static constexpr vk::PipelineViewportStateCreateInfo viewportStateInfo
     {
         .viewportCount = 1,
-        .pViewports = &viewport,
-        .scissorCount = 1,
-        .pScissors = &scissor
+        .scissorCount = 1
     };
 
-    static constexpr vk::Format colorFormat{vk::Format::eB8G8R8A8Srgb};
-    static constexpr vk::Format depthFormat{vk::Format::eD32Sfloat};
+    static constexpr auto colorFormat{vk::Format::eB8G8R8A8Srgb};
+    static constexpr auto depthFormat{vk::Format::eD32Sfloat};
     
     static constexpr vk::PipelineRenderingCreateInfo renderingCreateInfo
     {

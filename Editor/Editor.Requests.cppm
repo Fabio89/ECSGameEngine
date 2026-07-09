@@ -2,6 +2,7 @@ export module Editor.Requests;
 import Core;
 import Editor.EditingContextId;
 import Properties;
+import Window;
 
 export namespace Editor
 {
@@ -9,6 +10,11 @@ export namespace Editor
     {
         EditingContextId contextId;
         std::vector<Entity> entities;
+    };
+
+    struct SelectEntityUnderCursor
+    {
+        WindowHandle window;
     };
 
     struct OpenProject

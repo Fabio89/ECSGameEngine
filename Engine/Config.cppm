@@ -27,6 +27,7 @@ export namespace Engine
     {
         if (!std::filesystem::exists(configPath))
         {
+            std::filesystem::create_directories(configPath.parent_path());
             const auto defaultConfig = Toml::fromFile(defaultConfigPath);
             Toml::toFile(defaultConfig, configPath);
         }

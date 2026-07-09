@@ -2,6 +2,7 @@ export module System.Camera;
 import Component.Camera;
 import Component.Transform;
 import Math;
+import Render.Commands;
 import System;
 
 export class CameraSystem final : public System
@@ -21,12 +22,12 @@ export class CameraSystem final : public System
         const TransformComponent& transform = world.readComponent<TransformComponent>(cameraEntity);
         CameraComponent& camera = world.editComponent<CameraComponent>(cameraEntity);
 
-        camera.projectionMatrix = Math::perspective( Math::radians(camera.fov), aspectRatio, camera.nearPlane, camera.farPlane);
+        camera.projectionMatrix = Math::perspective(Math::radians(camera.fov), aspectRatio, camera.nearPlane, camera.farPlane);
         camera.projectionMatrix[1][1] *= -1.0f;
 
         const Vec3 forward = Math::rotate(transform.rotation, forwardVector());
         camera.viewMatrix = Math::lookAt(transform.position, transform.position + forward, upVector());
 
-        world.getRenderManager().setCamera({camera.viewMatrix, camera.projectionMatrix});
+        world.getRenderManager().addCommand(RenderCommands::SetCamera{.world = world.getHandle(), .camera = {camera.viewMatrix, camera.projectionMatrix}});
     }
 };

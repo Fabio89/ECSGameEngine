@@ -147,14 +147,19 @@ EventBus& Engine::events()
     return eventBus;
 }
 
+ViewportId Engine::createViewport(WorldHandle world, Rect area)
+{
+    return renderManager.createViewport(world, area);
+}
+
 void Engine::setEditorCallbacks(EditorCallbacks callbacks)
 {
     renderManager.setEditorCallbacks(std::move(callbacks));
 }
 
-void Engine::setViewportArea(Rect area)
+void Engine::setViewportArea(ViewportId id, Rect area)
 {
-    renderManager.setViewportArea(area);
+    renderManager.setViewportArea(id, area);
 }
 
 Ray Engine::getViewportCursorRay(const World& world)

@@ -7,6 +7,7 @@ export import Core;
 export import EngineComponents;
 export import EventBus;
 import ComponentRegistry;
+import Engine.Viewport;
 import FileSystem;
 import Geometry;
 import Input;
@@ -61,9 +62,11 @@ export namespace Engine
     // Editor Integration
     //------------------------------------------------------------------------------------------------------------------------
 
+    ENGINE_API ViewportId createViewport(WorldHandle world, Rect area);
+
     ENGINE_API void setEditorCallbacks(EditorCallbacks callbacks);
 
-    ENGINE_API void setViewportArea(Rect area);
+    ENGINE_API void setViewportArea(ViewportId id, Rect area);
 
     ENGINE_API Ray getViewportCursorRay(const World& world);
 

@@ -77,6 +77,7 @@ private:
         const WorldHandle handle{index, slot.generation};
         slot.alive = true;
         slot.world = World{{handle, &renderManager}};
+        renderManager.addCommand(RenderCommands::AddWorld{.world = handle});
         EngineSystems::init(slot.world);
         return handle;
     }

@@ -1,4 +1,4 @@
-export module CoreTypes;
+export module ThreadSafeQueue;
 import std;
 
 export template <typename T>

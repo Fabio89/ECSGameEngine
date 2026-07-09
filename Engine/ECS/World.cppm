@@ -57,7 +57,8 @@ public:
     World& operator=(const World&) = delete;
     World(World&&) noexcept = default;
     World& operator=(World&&) noexcept = default;
-    
+
+    [[nodiscard]] WorldHandle getHandle() const { return m_handle; }
     Entity createEntity();
     void removeEntity(Entity entity);
     bool isValid(Entity entity) const;

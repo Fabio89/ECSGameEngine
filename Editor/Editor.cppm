@@ -10,7 +10,7 @@ import Editor.EditingContext;
 import Editor.Panel;
 import Editor.Requests;
 import Editor.Selection;
-import CoreTypes;
+import ThreadSafeQueue;
 import Window;
 import World;
 
@@ -22,12 +22,6 @@ namespace Editor
     std::unordered_map<EditingContextId, ControllerManager> controllerManagers;
 
     void addPanel(std::unique_ptr<Panel> panel);
-
-    void init();
-
-    void shutdown();
-
-    bool update();
 }
 
 export namespace Editor

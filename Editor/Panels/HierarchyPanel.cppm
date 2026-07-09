@@ -32,6 +32,9 @@ struct HierarchySnapshot
     std::vector<HierarchyNode> nodes;
 };
 
+template<>
+constexpr std::string_view getTypeName<HierarchySnapshot>() { return "HierarchySnapshot"; }
+
 class HierarchyController : public EditorControllerImpl<HierarchySnapshot>
 {
 public:
@@ -122,12 +125,14 @@ export namespace Panels
             if (node.children.empty())
                 flags |= ImGuiTreeNodeFlags_Leaf;
 
+            const bool expanded = ImGui::TreeNodeEx(node.name.c_str(), flags);
+
             if (ImGui::IsItemClicked() || ImGui::IsItemFocused())
             {
                 Editor::request(Editor::ChangeSelection{.contextId = context().id, .entities = {node.entity}});
             }
 
-            if (ImGui::TreeNodeEx(node.name.c_str(), flags))
+            if (expanded)
             {
                 for(const HierarchyNode& child : node.children)
                     drawEntity(child);

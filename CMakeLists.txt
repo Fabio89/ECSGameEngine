@@ -140,6 +140,12 @@ file(GLOB_RECURSE EDITOR_MODULES CONFIGURE_DEPENDS
 
 add_library(Editor SHARED)
 
+set_target_properties(Editor PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+)
+
 target_sources(Editor
         PRIVATE
         ${EDITOR_SOURCES}
@@ -164,8 +170,12 @@ set_property(TARGET Editor PROPERTY CXX_MODULE_STD ON)
 
 add_custom_command(TARGET Editor POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/Editor/Assets
-        $<TARGET_FILE_DIR:Editor>/Editor/Assets
+        ${CMAKE_CURRENT_SOURCE_DIR}/Editor/Assets
+        $<TARGET_FILE_DIR:Engine>/Editor/Assets
+
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/Editor/Config
+        $<TARGET_FILE_DIR:Engine>/Editor/Config
 )
 
 # ----------------------------------------------------------
@@ -205,8 +215,4 @@ set_property(TARGET Game PROPERTY CXX_MODULE_STD ON)
 add_subdirectory(Engine/Rendering/Shaders)
 
 add_dependencies(Game Game_shaders)
-
-# ----------------------------------------------------------
-# Editor
-# ----------------------------------------------------------
 

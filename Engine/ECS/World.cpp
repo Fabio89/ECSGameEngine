@@ -162,7 +162,7 @@ void World::loadScene(const std::filesystem::path& path)
 void World::unloadScene()
 {
     assertThread();
-    m_renderManager->addCommand<RenderCommands::ClearRenderObjects>({});
+    m_renderManager->addCommand<RenderCommands::ClearRenderObjects>({.world = m_handle});
     m_entities.clear();
     m_archetypes.clear();
 }

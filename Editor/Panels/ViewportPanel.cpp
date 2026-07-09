@@ -71,6 +71,27 @@ Rect calculateViewportArea(ViewportMode mode)
     }
 }
 
+ViewportController::ViewportController(EditingContext& context)
+    : EditorControllerImpl{context},
+      m_tools{context},
+      m_selectionGizmos{context}
+{
+}
+
+void ViewportController::update(float dt, Editor::SnapshotFrame& frame)
+{
+    EditorControllerImpl::update(dt, frame);
+    m_tools.update();
+
+}
+
+void ViewportController::selectEntityUnderCursor() {}
+
+ViewportSnapshot ViewportController::buildSnapshot(const EditingContext& context)
+{
+    return {};
+}
+
 Panels::ViewportPanel::ViewportPanel(const PanelCreateInfo& info)
     : PanelImpl{info},
       m_controller{Editor::addController<ViewportController>(info.contextId)}
@@ -89,10 +110,14 @@ void Panels::ViewportPanel::doDraw()
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4{0, 0, 0, 0});
     ImGui::Begin(Name);
 
-    drawFpsCounter();
-
     const Rect viewportArea = calculateViewportArea(ViewportMode::Editor);
-    Engine::setViewportArea(viewportArea);
+
+    if (!m_id)
+        m_id = Engine::createViewport(context().world, viewportArea);
+    else
+        Engine::setViewportArea(m_id, viewportArea);
+
+    drawFpsCounter();
 
     if (ImGui::IsKeyPressed(ImGuiKey_Q))
     {
@@ -171,23 +196,4 @@ void Panels::ViewportPanel::drawFpsCounter() const
     smoothedRenderDeltaTime = Math::lerp(smoothedRenderDeltaTime, Engine::getRenderDeltaTime(), t);
     drawList->AddText(pos, color, "Render:");
     drawList->AddText({pos.x + labelWidth + 10.0f, pos.y}, color, getFpsString(smoothedRenderDeltaTime).c_str());
-}
-
-ViewportController::ViewportController(EditingContext& context)
-    : EditorControllerImpl{context},
-      m_tools{context},
-      m_selectionGizmos{context}
-{
-}
-
-void ViewportController::update(float dt, Editor::SnapshotFrame& frame)
-{
-    EditorControllerImpl::update(dt, frame);
-    m_tools.update();
-
-}
-
-ViewportSnapshot ViewportController::buildSnapshot(const EditingContext& context)
-{
-    return {};
 }

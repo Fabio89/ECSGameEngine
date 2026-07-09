@@ -190,7 +190,7 @@ void Gizmos::setGizmoVisible(World& world, Entity gizmo, bool visible)
     auto setVisible = [&](Entity entity)
     {
         if (!entity.isValid()) return;
-        world.getRenderManager().addCommand(RenderCommands::SetObjectVisibility{entity, visible});
+        world.getRenderManager().addCommand(RenderCommands::SetObjectVisibility{world.getHandle(), entity, visible});
     };
 
     setVisible(gizmo);

@@ -10,7 +10,7 @@ export class ModelSystem final : public System
         if (componentType == getComponentType<ModelComponent>())
         {
             const ModelComponent& model = world.readComponent<ModelComponent>(entity);
-            world.getRenderManager().addCommand(RenderCommands::AddObject{entity, model.mesh, model.texture});
+            world.getRenderManager().addCommand(RenderCommands::AddObject{world.getHandle(), entity, model.mesh, model.texture});
         }
     }
 };

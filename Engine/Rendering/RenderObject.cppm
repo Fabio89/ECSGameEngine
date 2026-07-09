@@ -2,7 +2,7 @@ export module Render.RenderObject;
 import Assets.Mesh;
 import Assets.Texture;
 import Core;
-import CoreTypes;
+import ThreadSafeQueue;
 import Guid;
 import Math;
 import Render.Vulkan;

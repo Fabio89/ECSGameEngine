@@ -33,7 +33,7 @@ export class TransformSystem final : public System
     {
         computeWorldTransform(world, entity, transform);
          
-        world.getRenderManager().addCommand(RenderCommands::SetTransform{entity, transform.runtimeData.worldMatrix});
+        world.getRenderManager().addCommand(RenderCommands::SetTransform{world.getHandle(), entity, transform.runtimeData.worldMatrix});
     }
 
     static void computeWorldTransform(World& world, Entity entity, TransformComponent& transform)

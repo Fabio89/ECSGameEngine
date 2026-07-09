@@ -58,7 +58,7 @@ void Panels::DetailsPanel::doDraw()
     ImGui::End();
 }
 
-Panels::DetailsSnapshot Panels::DetailsController::buildSnapshot(const EditingContext& context)
+DetailsSnapshot DetailsController::buildSnapshot(const EditingContext& context)
 {
     const World& world = Engine::getWorld(context.world);
     const Entity entity = context.selection.isEmpty() ? Entity{} : context.selection.get().front();

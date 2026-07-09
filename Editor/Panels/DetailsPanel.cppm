@@ -9,34 +9,37 @@ import Editor.SnapshotFrame;
 import Engine;
 import ImGui;
 
+struct PropertySnapshot
+{
+    const PropertyDescriptorBase* descriptor{};
+    PropertyValue value;
+};
+
+struct ComponentSnapshot
+{
+    const ComponentTypeBase* type{};
+    std::vector<PropertySnapshot> properties;
+};
+
+struct DetailsSnapshot
+{
+    Entity entity;
+    std::vector<ComponentSnapshot> components;
+};
+
+template<>
+constexpr std::string_view getTypeName<DetailsSnapshot>() { return "DetailsSnapshot"; }
+
+class DetailsController : public EditorControllerImpl<DetailsSnapshot>
+{
+public:
+    using EditorControllerImpl::EditorControllerImpl;
+private:
+    DetailsSnapshot buildSnapshot(const EditingContext& context) override;
+};
+
 export namespace Panels
 {
-    struct PropertySnapshot
-    {
-        const PropertyDescriptorBase* descriptor{};
-        PropertyValue value;
-    };
-
-    struct ComponentSnapshot
-    {
-        const ComponentTypeBase* type{};
-        std::vector<PropertySnapshot> properties;
-    };
-
-    struct DetailsSnapshot
-    {
-        Entity entity;
-        std::vector<ComponentSnapshot> components;
-    };
-
-    class DetailsController : public EditorControllerImpl<DetailsSnapshot>
-    {
-    public:
-        using EditorControllerImpl::EditorControllerImpl;
-    private:
-        DetailsSnapshot buildSnapshot(const EditingContext& context) override;
-    };
-
     class DetailsPanel : public PanelImpl
     {
     public:

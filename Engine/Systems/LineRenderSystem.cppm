@@ -13,12 +13,12 @@ export class LineRenderSystem final : public System
         if (componentType == getComponentType<LineRenderComponent>())
         {
             const auto& component = world.readComponent<LineRenderComponent>(entity);
-            world.getRenderManager().addCommand(RenderCommands::AddLineObject{entity, component.vertices});
+            world.getRenderManager().addCommand(RenderCommands::AddLineObject{world.getHandle(), entity, component.vertices});
         }
     }
 
     void onEntityDestroyed(World& world, Entity entity) override
     {
-        world.getRenderManager().addCommand(RenderCommands::RemoveLineObject{entity});
+        world.getRenderManager().addCommand(RenderCommands::RemoveLineObject{world.getHandle(), entity});
     }
 };

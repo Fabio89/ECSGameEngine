@@ -1,17 +1,21 @@
 export module Editor.Panels.Viewport;
 import Editor.Controller;
-import ImGui;
 import Editor.Panel.Impl;
 import Editor.SelectionGizmo;
 import Editor.SnapshotFrame;
 import Editor.TransformTool;
+import Engine.Viewport;
 import EventBus;
+import ImGui;
 import std;
 
 struct ViewportSnapshot
 {
     Entity hitEntity;
 };
+
+template<>
+constexpr std::string_view getTypeName<ViewportSnapshot>() { return "ViewportSnapshot"; }
 
 class ViewportController : public EditorControllerImpl<ViewportSnapshot>
 {
@@ -22,6 +26,8 @@ public:
 
     [[nodiscard]] TransformToolManager& tools() { return m_tools; }
     [[nodiscard]] const TransformToolManager& tools() const { return m_tools; }
+
+    void selectEntityUnderCursor();
 
 private:
     ViewportSnapshot buildSnapshot(const EditingContext& context) override;
@@ -43,6 +49,7 @@ export namespace Panels
         void setCurrentTool(EntityEditingMode type);
         void drawFpsCounter() const;
 
+        ViewportId m_id;
         std::reference_wrapper<ViewportController> m_controller;
         EventSubscription m_sub;
         bool m_open{true};

@@ -2,6 +2,7 @@ module Editor;
 import AssetManager;
 import Editor.Camera;
 import Editor.Components;
+import Editor.Config;
 import Editor.Controller;
 import Editor.Events;
 import Editor.ImGuiUI;
@@ -31,20 +32,45 @@ namespace Editor
     void rebuildPanelView();
     Entity ensureCamera(World& world);
     void loadScene(EditingContextId contextId, const std::filesystem::path& path);
+    void init();
+    void shutdown();
+    bool update();
 
     void execute(ChangeSelection&& request)
     {
         contexts().get(request.contextId).selection.set(request.entities);
     }
 
+    void execute(SelectEntityUnderCursor&& request)
+    {
+        // const Vec2 screenPosition{Input::getCursorScreenPosition(request.window)};
+        //
+        // const Vec2 uv
+        // {
+        //     (screenPosition.x - viewportArea.position.x) / viewportArea.size.width,
+        //     (screenPosition.y - viewportArea.position.y) / viewportArea.size.height
+        // };
+        //
+        // const World& world = Engine::getWorld(context().world);
+        // const Ray ray = Physics::rayFromViewportUV(world, Engine::getPlayer(), uv);
+        // const Entity hitEntity = Physics::lineTrace(world, ray, TraceChannelFlags::Default);
+        //
+        //
+        // contexts().get(request.contextId).selection.set(request.entities);
+    }
+
     void execute(OpenProject&& request)
     {
-        const ProjectConfig config = loadProjectConfig(request.path / "project.toml");
+        const ProjectConfig projectConfig = loadProjectConfig(request.path / "project.toml");
 
-        AssetManager::setContentRoot(request.path / config.contentRoot);
-        AssetManager::loadDatabase(request.path / config.assetDatabase);
+        AssetManager::setContentRoot(request.path / projectConfig.contentRoot);
+        AssetManager::loadDatabase(request.path / projectConfig.assetDatabase);
 
-        loadScene(request.contextId, request.path / config.startupScene);
+        loadScene(request.contextId, request.path / projectConfig.startupScene);
+
+        EditorConfig editorConfig = loadEditorConfig();
+        editorConfig.lastProject = request.path;
+        saveEditorConfig(editorConfig);
     }
 
     void execute(OpenScene&& request)
@@ -108,6 +134,16 @@ void Editor::init()
         }
     });
 
+    if (EditorConfig config = loadEditorConfig(); !config.lastProject.empty())
+    {
+        if (std::filesystem::exists(config.lastProject))
+            execute(OpenProject{.contextId = defaultContextId, .path = config.lastProject});
+        else
+        {
+            config.lastProject = "";
+            saveEditorConfig(config);
+        }
+    }
     Engine::start();
 }
 
