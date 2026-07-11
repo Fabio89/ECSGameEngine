@@ -10,9 +10,9 @@ import Math;
 import Physics;
 import World;
 
-TransformToolManager::TransformToolManager(EditingContext& context) : m_context{context}
+TransformToolManager::TransformToolManager(EditorServices& services, EditingContext& context) : m_services{services}, m_context{context}
 {
-    m_sub += Engine::events().subscribe([this](const Editor::SelectionChangedEvent& event)
+    m_sub += services.events.subscribe([this](const EditorEvents::SelectionChanged& event)
     {
         if (m_currentToolType != EntityEditingMode::None)
         {
@@ -56,7 +56,7 @@ void TransformToolManager::update()
     if (m_currentToolType != EntityEditingMode::None)
     {
         TransformTool& currentTool = *m_tools[static_cast<std::size_t>(m_currentToolType)];
-        if (m_context.get().selection.isEmpty())
+        if (m_context.selection.isEmpty())
             currentTool.setActive(false);
         else
             currentTool.update();
@@ -74,7 +74,7 @@ void TransformTool::update()
 
 void TransformTool::setActive(bool active)
 {
-    World& world = Engine::getWorld(m_context.get().world);
+    World& world = Engine::getWorld(m_context.world);
     if (!active)
         Gizmos::setGizmoVisible(world, m_gizmo, false);
 
@@ -106,7 +106,7 @@ void TransformTool::attachToSelection()
     Entity firstSelected = context().selection.isEmpty() ? Entity{} : context().selection.get().front();
     if (firstSelected.isValid() && firstSelected != m_attachedTo)
     {
-        World& world = Engine::getWorld(m_context.get().world);
+        World& world = Engine::getWorld(m_context.world);
         HierarchyUtils::setParent(world, m_gizmo, firstSelected);
         world.editComponent<TransformComponent>(m_gizmo).scale = 0.2f / world.readComponent<TransformComponent>(firstSelected).scale;
     }
@@ -144,7 +144,7 @@ void TranslateTool::update()
         {
             .point = transform.position,
             .normal = Math::cross(
-                TransformUtils::right(world.readComponent<TransformComponent>(Engine::getPlayer().getMainCamera())),
+                TransformUtils::right(world.readComponent<TransformComponent>(world.getActiveCamera())),
                 gizmoAxisDirection)
         };
 

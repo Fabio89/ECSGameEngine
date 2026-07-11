@@ -3,7 +3,6 @@ import Editor;
 import ImGui;
 import Editor.Panel.Impl;
 import Editor.Requests;
-import Engine;
 import FileSystem;
 import World;
 

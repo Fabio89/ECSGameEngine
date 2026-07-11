@@ -4,7 +4,6 @@ module;
 
 export module Physics;
 import Math;
-import Player;
 import World;
 
 export
@@ -62,7 +61,7 @@ namespace Physics
     Entity lineTrace(const World& world, const Ray& ray, TraceChannelFlags channel);
 
     export ENGINE_API
-    Ray rayFromViewportUV(const World& world, const Player& player, Vec2 uv);
+    Ray rayFromViewportUV(const World& world, Vec2 uv);
 
     export
     std::optional<Vec3> intersectRayPlane(const Ray& ray, const Plane& plane);

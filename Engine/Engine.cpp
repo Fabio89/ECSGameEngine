@@ -3,25 +3,25 @@ import AssetLoader.Mesh;
 import AssetManager;
 import Engine.Config;
 import Engine.FrameTimer;
-import Engine.WorldManager;
-import EngineSystems;
+import Input;
 import Platform;
+import Render.RenderManager;
 import Thread;
 
 namespace
 {
+    bool initialized = false;
     bool shutdownRequested = false;
     std::atomic engineShuttingDown = false;
     std::thread renderThread;
-    Player player;
     WindowHandle window;
-    EventBus eventBus;
     ThreadOwned threadChecker;
     FrameTimer frameTimer;
     Engine::Config config;
 
     RenderManager renderManager;
     WorldManager worldManager;
+    SystemManager systemManager{{.worlds = worldManager, .renderCommands = renderManager.getCommandQueue()}};
 }
 
 namespace Engine
@@ -62,6 +62,9 @@ void Engine::init()
 
     AssetManager::registerLoader<MeshData>(std::make_unique<MeshAssetLoader>());
     AssetManager::registerLoader<TextureData>(std::make_unique<TextureAssetLoader>());
+
+    systemManager.init();
+    initialized = true;
 }
 
 void Engine::start()
@@ -83,10 +86,7 @@ bool Engine::update()
         return false;
     }
 
-    worldManager.forEachWorld([deltaTime](World& world)
-    {
-        EngineSystems::update(world, player, deltaTime);
-    });
+    systemManager.update(deltaTime);
 
     Input::postUpdate(window);
     Platform::update();
@@ -113,7 +113,7 @@ void Engine::shutdown()
 
     std::cout << "[Application] Shutting down...\n";
 
-    EngineSystems::shutdown();
+    systemManager.shutdown();
 
     if (renderThread.joinable())
     {
@@ -134,7 +134,7 @@ WindowHandle Engine::getWindow()
 
 WorldHandle Engine::createWorld()
 {
-    return worldManager.createWorld(renderManager);
+    return worldManager.createWorld();
 }
 
 World& Engine::getWorld(WorldHandle handle)
@@ -142,9 +142,14 @@ World& Engine::getWorld(WorldHandle handle)
     return worldManager.get(handle);
 }
 
-EventBus& Engine::events()
+WorldManager& Engine::worlds()
 {
-    return eventBus;
+    return worldManager;
+}
+
+void Engine::addSystem(SystemCallbacks callbacks)
+{
+    systemManager.add(std::move(callbacks));
 }
 
 ViewportId Engine::createViewport(WorldHandle world, Rect area)
@@ -173,10 +178,15 @@ Ray Engine::getViewportCursorRay(const World& world)
         (cursor.y - position.y) / size.height
     };
 
-    return Physics::rayFromViewportUV(world, player, uv);
+    return Physics::rayFromViewportUV(world, uv);
 }
 
-Player& Engine::getPlayer()
+RenderCommandQueue& Engine::getRenderCommandQueue()
 {
-    return player;
+    return renderManager.getCommandQueue();
+}
+
+float Engine::getViewportAspectRatio()
+{
+    return renderManager.getViewportAspectRatio();
 }

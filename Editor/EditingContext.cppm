@@ -1,6 +1,8 @@
 export module Editor.EditingContext;
 export import Editor.EditingContextId;
 import Core;
+import Editor.Services;
+import Engine.WorldManager;
 import Editor.Selection;
 import Editor.SnapshotFrame;
 import WorldHandle;
@@ -17,6 +19,8 @@ export struct EditingContext
 export class EditingContextManager
 {
 public:
+    EditingContextManager(EditorServices& services);
+
     EditingContextId add(WorldHandle world);
 
     EditingContext& get(EditingContextId id);
@@ -33,6 +37,7 @@ public:
     }
 
 private:
+    EditorServices& m_services;
     EditingContextId::ValueType m_lastId{0};
     std::unordered_map<EditingContextId::ValueType, std::unique_ptr<EditingContext>> m_contexts;
 };

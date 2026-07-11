@@ -15,6 +15,11 @@ export namespace RenderCommands
         WorldHandle world;
     };
 
+    struct RemoveWorld
+    {
+        WorldHandle world;
+    };
+
     struct AddObject
     {
         WorldHandle world;

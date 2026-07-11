@@ -10,6 +10,7 @@ import Editor.EditingContext;
 import Editor.Panel;
 import Editor.Requests;
 import Editor.Selection;
+import Editor.Services;
 import ThreadSafeQueue;
 import Window;
 import World;
@@ -18,10 +19,9 @@ namespace Editor
 {
     EditorUIContext editorContext{};
     ThreadSafeQueue<EditorRequest> requests;
-    EditingContextManager contextManager;
-    std::unordered_map<EditingContextId, ControllerManager> controllerManagers;
 
     void addPanel(std::unique_ptr<Panel> panel);
+    ControllerManager& ensureControllerManager(EditingContextId contextId);
 }
 
 export namespace Editor
@@ -36,8 +36,12 @@ export namespace Editor
 
     std::span<Panel*> getPanels();
 
-    template<typename T>
-    T& addController(EditingContextId contextId) { return controllerManagers[contextId].addController<T>(contextManager.get(contextId)); }
+    EditingContextManager& contexts();
 
-    EditingContextManager& contexts() { return contextManager; }
+    template<typename T>
+    void addController(EditingContextId contextId)
+    {
+        auto factory = [](EditorServices& services, EditingContext& context) { return std::make_unique<T>(services, context); };
+        request(AddController{.contextId = contextId, .factory = std::move(factory)});
+    }
 }

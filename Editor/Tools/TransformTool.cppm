@@ -1,19 +1,21 @@
 export module Editor.TransformTool;
 export import Editor.EntityEditingMode;
 import Editor.EditingContext;
+import Editor.Services;
 import EventBus;
 import Math;
 
 export class TransformToolManager
 {
 public:
-    TransformToolManager(EditingContext& context);
+    TransformToolManager(EditorServices& services, EditingContext& context);
     void createTools();
     void setCurrentTool(EntityEditingMode type);
     void update();
 
 private:
-    std::reference_wrapper<EditingContext> m_context;
+    EditorServices& m_services;
+    EditingContext& m_context;
     EntityEditingMode m_currentToolType{EntityEditingMode::None};
     std::array<std::unique_ptr<class TransformTool>, 3> m_tools;
     EventSubscription m_sub;
@@ -34,7 +36,7 @@ protected:
 private:
     void attachToSelection();
 
-    std::reference_wrapper<EditingContext> m_context;
+    EditingContext& m_context;
     Entity m_attachedTo;
     Entity m_gizmo;
 };

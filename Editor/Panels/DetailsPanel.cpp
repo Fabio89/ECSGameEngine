@@ -1,4 +1,5 @@
 module Editor.Panels.Details;
+import World;
 
 namespace Panels
 {
@@ -74,7 +75,7 @@ DetailsSnapshot DetailsController::buildSnapshot(const EditingContext& context)
 
         for (const TypeId typeId : componentTypes)
         {
-            if (typeId != Component<NameComponent>::typeId())
+            if (typeId != getTypeId<NameComponent>())
             {
                 const ComponentBase& component = world.readComponent(entity, typeId);
                 const ComponentTypeBase* componentType = ComponentRegistry::get(typeId);

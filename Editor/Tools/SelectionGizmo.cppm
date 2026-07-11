@@ -1,6 +1,7 @@
 export module Editor.SelectionGizmo;
 import Core;
 import Editor.EditingContext;
+import Editor.Services;
 import EditorUIContext;
 import EventBus;
 import World;
@@ -19,7 +20,7 @@ private:
 export class SelectionGizmoManager
 {
 public:
-    SelectionGizmoManager(EditingContext& context);
+    SelectionGizmoManager(EditorServices& services, EditingContext& context);
 
 private:
     void setSelectedEntities(World& world, std::span<const Entity> entities);

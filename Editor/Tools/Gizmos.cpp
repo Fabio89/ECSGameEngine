@@ -9,6 +9,7 @@ import Component.Hierarchy;
 import Component.Render;
 import Component.Tags;
 import Component.Transform;
+import Engine;
 import Guid;
 import Math;
 import Physics;
@@ -190,7 +191,7 @@ void Gizmos::setGizmoVisible(World& world, Entity gizmo, bool visible)
     auto setVisible = [&](Entity entity)
     {
         if (!entity.isValid()) return;
-        world.getRenderManager().addCommand(RenderCommands::SetObjectVisibility{world.getHandle(), entity, visible});
+        Engine::getRenderCommandQueue().addCommand(RenderCommands::SetObjectVisibility{world.getHandle(), entity, visible});
     };
 
     setVisible(gizmo);

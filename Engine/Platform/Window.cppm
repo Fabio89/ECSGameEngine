@@ -3,10 +3,14 @@ import Core;
 import Geometry;
 import Glfw;
 import Math;
-import std;
 
-struct WindowHandleTag{};
-export using WindowHandle = Id<WindowHandleTag>;
+export struct WindowHandle : Id<struct WindowHandleTag> {};
+
+template<>
+struct std::hash<WindowHandle>
+{
+    constexpr std::size_t operator()(const WindowHandle& id) const noexcept { return std::hash<Id<WindowHandleTag>>{}(id); }
+};
 
 export enum class WindowMode
 {

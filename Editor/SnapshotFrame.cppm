@@ -18,25 +18,25 @@ export namespace Editor
         template<typename T>
         void set(T value)
         {
-            const auto id = getTypeName<T>();
+            const auto id = getTypeId<T>();
             m_data[id] = std::move(value);
         }
 
         template<typename T>
         bool contains() const
         {
-            const auto id = getTypeName<T>();
+            const auto id = getTypeId<T>();
             return m_data.contains(id);
         }
 
         template<typename T>
         const T& get() const
         {
-            return std::any_cast<const T&>(m_data.at(getTypeName<T>()));
+            return std::any_cast<const T&>(m_data.at(getTypeId<T>()));
         }
 
     private:
-        std::unordered_map<std::string_view, std::any> m_data;
+        std::unordered_map<TypeId, std::any> m_data;
     };
 
     class SnapshotPublisher

@@ -47,7 +47,7 @@ public:
 
 private:
     template <ValidComponentData T>
-    const ComponentArray<T>& getComponentArray() { return static_cast<const ComponentArray<T>&>(*m_componentArrays.at(Component<T>::typeId())); }
+    const ComponentArray<T>& getComponentArray() { return static_cast<const ComponentArray<T>&>(*m_componentArrays.at(getTypeId<T>())); }
 
     std::unordered_map<TypeId, std::unique_ptr<ComponentArrayBase>> m_componentArrays;
     std::unordered_map<Entity, std::size_t> m_entityToIndex;
@@ -115,7 +115,7 @@ bool Archetype::ViewIterator<Components...>::operator!=(const ViewIterator& othe
 template <ValidComponentData T>
 T& Archetype::addComponent(Entity entity, T&& component)
 {
-    auto& arr = m_componentArrays[Component<T>::typeId()];
+    auto& arr = m_componentArrays[getTypeId<T>()];
     if (!arr)
         arr = std::make_unique<ComponentArray<T>>();
 
@@ -138,7 +138,7 @@ template <ValidComponentData T>
 {
     if (auto indexIt = m_entityToIndex.find(entity); indexIt != m_entityToIndex.end())
     {
-        if (auto it = m_componentArrays.find(Component<T>::typeId()); it != m_componentArrays.end())
+        if (auto it = m_componentArrays.find(getTypeId<T>()); it != m_componentArrays.end())
         {
             return static_cast<const ComponentArray<T>&>(*it->second).get(indexIt->second).data;
         }
@@ -151,7 +151,7 @@ template <ValidComponentData T>
 template <ValidComponentData ... Components>
 [[nodiscard]] bool Archetype::matches() const
 {
-    return (... && (m_componentArrays.contains(Component<Components>::typeId())));
+    return (... && (m_componentArrays.contains(getTypeId<Components>())));
 }
 
 template <ValidComponentData ... Components>

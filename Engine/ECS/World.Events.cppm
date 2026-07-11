@@ -1,17 +1,53 @@
 export module World.Events;
+export import EventBus;
+export import WorldHandle;
 import Core;
-import WorldHandle;
 
-export namespace Engine
+export namespace WorldEvents
 {
-    struct SceneLoadedEvent
+    struct WorldCreated
     {
         WorldHandle world;
     };
 
-    struct EntityDestroyedEvent
+    struct WorldDestroyed
+    {
+        WorldHandle world;
+    };
+
+    struct SceneLoaded
+    {
+        WorldHandle world;
+    };
+
+    struct SceneUnloaded
+    {
+        WorldHandle world;
+    };
+
+    struct EntityCreated
     {
         WorldHandle world;
         Entity entity;
+    };
+
+    struct EntityDestroyed
+    {
+        WorldHandle world;
+        Entity entity;
+    };
+
+    struct ComponentAdded
+    {
+        WorldHandle world;
+        Entity entity;
+        TypeId componentType;
+    };
+
+    struct ComponentRemoved
+    {
+        WorldHandle world;
+        Entity entity;
+        TypeId componentType;
     };
 }

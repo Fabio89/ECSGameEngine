@@ -1,20 +1,22 @@
 module Editor.SelectionGizmo;
 import Editor;
-import Engine;
+import Engine.WorldManager;
 import Editor.Events;
 import Editor.Gizmos;
 import World.Events;
 
-SelectionGizmoManager::SelectionGizmoManager(EditingContext& context)
+SelectionGizmoManager::SelectionGizmoManager(EditorServices& services, EditingContext& context)
 {
-    m_sub += Engine::events().subscribe([this, &context](const Editor::SelectionChangedEvent& event)
+    WorldManager& worldManager = services.worlds;
+
+    m_sub += services.events.subscribe([this, &worldManager, &context](const EditorEvents::SelectionChanged& event)
     {
-        setSelectedEntities(Engine::getWorld(context.world), event.selection);
+        setSelectedEntities(worldManager.get(context.world), event.selection);
     });
 
-    m_sub += Engine::events().subscribe([this](const Engine::SceneLoadedEvent& event)
+    m_sub += worldManager.subscribe([this, &worldManager](const WorldEvents::SceneLoaded& event)
     {
-        setSelectedEntities(Engine::getWorld(event.world), {});
+        setSelectedEntities(worldManager.get(event.world), {});
         check(m_entitiesToBoundingBoxGizmos.empty(), "`SelectionGizmoManager::m_entitiesToBoundingBoxGizmos` should have been empty at this point!");
     });
 }

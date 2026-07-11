@@ -1,55 +1,76 @@
 export module System.Transform;
 import Component.Hierarchy;
 import Component.Transform;
+import Engine.SystemManager;
+import Engine;
 import Math;
+import Render.CommandProcessor;
 import Render.Commands;
-import System;
+import World.Events;
 
-export class TransformSystem final : public System
+void computeWorldTransform(World& world, Entity entity, TransformComponent& transform)
 {
-    void onComponentAdded(World& world, Entity entity, TypeId componentType) override
+    if (transform.runtimeData.calculatedThisFrame)
+        return;
+
+    transform.runtimeData.worldMatrix = TransformUtils::toMatrix(transform);
+
+    if (const Entity parent = HierarchyUtils::getParent(world, entity); world.isValid(parent))
     {
-        if (componentType == getComponentType<TransformComponent>())
-        {
-            auto& component = world.editComponent<TransformComponent>(entity);
-            updateRenderTransform(world, entity, component);
-        }
+        TransformComponent& parentTransform = world.editComponent<TransformComponent>(parent);
+        computeWorldTransform(world, parent, parentTransform);
+        transform.runtimeData.worldMatrix = parentTransform.runtimeData.worldMatrix * transform.runtimeData.worldMatrix;
     }
 
-    void onUpdate(World& world, [[maybe_unused]] Player& player, [[maybe_unused]] float deltaTime) override
+    transform.runtimeData.calculatedThisFrame = true;
+}
+
+void updateRenderTransform(World& world, RenderCommandQueue& renderQueue, Entity entity, TransformComponent& transform)
+{
+    computeWorldTransform(world, entity, transform);
+    renderQueue.addCommand(RenderCommands::SetTransform{world.getHandle(), entity, transform.runtimeData.worldMatrix});
+}
+
+namespace
+{
+    EventSubscription subscription;
+}
+
+void init(SystemContext& context)
+{
+    subscription += context.worlds.subscribe([&context](const WorldEvents::ComponentAdded& event)
+    {
+        World& world = context.worlds.get(event.world);
+        if (event.componentType == getTypeId<TransformComponent>())
+        {
+            auto& component = world.editComponent<TransformComponent>(event.entity);
+            updateRenderTransform(world, context.renderCommands, event.entity, component);
+        }
+    });
+}
+
+void update(SystemContext& context, float)
+{
+    context.worlds.forEachWorld([&renderQueue = context.renderCommands](World& world)
     {
         for (auto&& [entity, transform] : world.view<TransformComponent>())
         {
-            updateRenderTransform(world, entity, transform);
+            updateRenderTransform(world, renderQueue, entity, transform);
         }
 
         for (auto&& [entity, transform] : world.view<TransformComponent>())
         {
             transform.runtimeData.calculatedThisFrame = false;
         }
-    }
+    });
+}
 
-    static void updateRenderTransform(World& world, Entity entity, TransformComponent& transform)
-    {
-        computeWorldTransform(world, entity, transform);
-         
-        world.getRenderManager().addCommand(RenderCommands::SetTransform{world.getHandle(), entity, transform.runtimeData.worldMatrix});
-    }
+void shutdown(SystemContext&)
+{
+    subscription.clear();
+}
 
-    static void computeWorldTransform(World& world, Entity entity, TransformComponent& transform)
-    {
-        if (transform.runtimeData.calculatedThisFrame)
-            return;
-        
-        transform.runtimeData.worldMatrix = TransformUtils::toMatrix(transform);
-        
-        if (const Entity parent = HierarchyUtils::getParent(world, entity); world.isValid(parent))
-        {
-            TransformComponent& parentTransform = world.editComponent<TransformComponent>(parent);
-            computeWorldTransform(world, parent, parentTransform);
-            transform.runtimeData.worldMatrix = parentTransform.runtimeData.worldMatrix * transform.runtimeData.worldMatrix;
-        }
-
-        transform.runtimeData.calculatedThisFrame = true;
-    }
-};
+export namespace TransformSystem
+{
+    SystemCallbacks callbacks{.init = init, .update = update, .shutdown = shutdown};
+}

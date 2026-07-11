@@ -1,12 +1,16 @@
 module Editor.EditingContext;
 
+EditingContextManager::EditingContextManager(EditorServices& services) : m_services{services}
+{
+}
+
 EditingContextId EditingContextManager::add(WorldHandle world)
 {
     const EditingContextId id{m_lastId++};
     m_contexts[id.value] = std::make_unique<EditingContext>(EditingContext{
         .id = id,
         .world = world,
-        .selection = Editor::Selection{id},
+        .selection = Editor::Selection{m_services.events, id},
         .camera = {}
     });
     return id;
@@ -20,7 +24,7 @@ const EditingContext& EditingContextManager::get(EditingContextId id) const
         return *it->second;
 
     report(std::format("Requested invalid EditingContextId: {}", id.value));
-    static EditingContext invalidContext{.world = {}, .selection = Editor::Selection{EditingContextId{}}};
+    static EditingContext invalidContext{.world = {}, .selection = Editor::Selection{m_services.events, EditingContextId{}}};
     return invalidContext;
 }
 

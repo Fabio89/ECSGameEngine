@@ -1,87 +1,51 @@
 export module Engine.WorldManager;
-import Render.RenderManager;
+import EventBus;
 import World;
-import WorldHandle;
-import EngineSystems;
-
-struct WorldSlot
-{
-    World world;
-    UInt32 generation{};
-    bool alive{false};
-};
 
 export class WorldManager
 {
 public:
-    WorldHandle createWorld(RenderManager& renderManager)
-    {
-        if (!m_freeList.empty())
-        {
-            const UInt32 index = m_freeList.back();
-            m_freeList.pop_back();
+    [[nodiscard]] WorldHandle createWorld();
 
-            return prepareWorld(index, renderManager);
-        }
+    void destroyWorld(WorldHandle handle);
 
-        const UInt32 index = static_cast<UInt32>(m_worlds.size());
-        m_worlds.emplace_back();
-
-        return prepareWorld(index, renderManager);
-    }
-
-    void destroyWorld(WorldHandle handle)
-    {
-        if (!isValid(handle))
-            return;
-
-        WorldSlot& slot = m_worlds[handle.index];
-
-        slot.world = World{};
-        slot.alive = false;
-        slot.generation++;
-
-        m_freeList.push_back(handle.index);
-    }
-
-    World& get(WorldHandle handle)
-    {
-        check(isValid(handle), "");
-        return m_worlds[handle.index].world;
-    }
+    [[nodiscard]] World& get(WorldHandle handle);
 
     template <typename Fn>
-    void forEachWorld(Fn&& fn)
-    {
-        for (auto& slot : m_worlds)
-        {
-            if (slot.alive)
-                fn(slot.world);
-        }
-    }
+    void forEachWorld(Fn&& fn);
 
-    bool isValid(WorldHandle handle) const
-    {
-        if (handle.index >= m_worlds.size())
-            return false;
+    [[nodiscard]] bool isValid(WorldHandle handle) const;
 
-        const WorldSlot& slot = m_worlds[handle.index];
-
-        return slot.alive && slot.generation == handle.generation;
-    }
+    template<typename Func> [[nodiscard]]
+    EventBus::Subscription subscribe(Func&& callback);
 
 private:
-    WorldHandle prepareWorld(UInt32 index, RenderManager& renderManager)
+    WorldHandle prepareWorld(UInt32 index);
+    void subscribeToWorldEvents(World& world);
+
+    struct WorldSlot
     {
-        WorldSlot& slot = m_worlds[index];
-        const WorldHandle handle{index, slot.generation};
-        slot.alive = true;
-        slot.world = World{{handle, &renderManager}};
-        renderManager.addCommand(RenderCommands::AddWorld{.world = handle});
-        EngineSystems::init(slot.world);
-        return handle;
-    }
+        World world;
+        UInt32 generation{};
+        bool alive{false};
+    };
 
     std::vector<WorldSlot> m_worlds;
     std::vector<UInt32> m_freeList;
+    EventBus m_eventBus;
+    EventSubscription m_subscription;
 };
+
+template<typename Fn>
+void WorldManager::forEachWorld(Fn&& fn)
+{
+    for (auto& slot : m_worlds)
+        if (slot.alive)
+            fn(slot.world);
+}
+
+template<typename Func>
+EventBus::Subscription WorldManager::subscribe(Func&& callback)
+{
+    return m_eventBus.subscribe(std::forward<Func>(callback));
+}

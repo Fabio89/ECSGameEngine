@@ -35,9 +35,9 @@ Entity Physics::lineTrace(const World& world, const Ray& ray, TraceChannelFlags 
     return hitEntity;
 }
 
-Ray Physics::rayFromViewportUV(const World& world, const Player& player, Vec2 uv)
+Ray Physics::rayFromViewportUV(const World& world, Vec2 uv)
 {
-    const Entity cameraEntity = player.getMainCamera();
+    const Entity cameraEntity = world.getActiveCamera();
     if (!world.isValid(cameraEntity) || !world.hasComponent<CameraComponent>(cameraEntity))
         return {};
 

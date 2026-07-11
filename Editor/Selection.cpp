@@ -3,7 +3,7 @@ import Editor.Events;
 import Engine;
 import Thread;
 
-Editor::Selection::Selection(EditingContextId contextId) : m_contextId{contextId}
+Editor::Selection::Selection(EventBus& events, EditingContextId contextId) : m_events{events}, m_contextId{contextId}
 {
 }
 
@@ -29,16 +29,6 @@ void Editor::Selection::clear()
     assertThread();
     m_entities.clear();
     sendSelectionEvent();
-}
-
-bool Editor::Selection::contains(Entity entity) const
-{
-    return std::ranges::contains(m_entities, entity);
-}
-
-bool Editor::Selection::isEmpty() const
-{
-    return m_entities.empty();
 }
 
 void Editor::Selection::set(std::span<const Entity> entities)
@@ -72,7 +62,17 @@ std::span<const Entity> Editor::Selection::get() const
     return m_entities;
 }
 
+bool Editor::Selection::contains(Entity entity) const
+{
+    return std::ranges::contains(m_entities, entity);
+}
+
+bool Editor::Selection::isEmpty() const
+{
+    return m_entities.empty();
+}
+
 void Editor::Selection::sendSelectionEvent() const
 {
-    Engine::events().publish(SelectionChangedEvent{.contextId = m_contextId, .selection = m_entities});
+    m_events.publish(EditorEvents::SelectionChanged{.contextId = m_contextId, .selection = m_entities});
 }

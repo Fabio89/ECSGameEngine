@@ -2,12 +2,13 @@ export module Editor.Panels.Viewport;
 import Editor.Controller;
 import Editor.Panel.Impl;
 import Editor.SelectionGizmo;
+import Editor.Services;
 import Editor.SnapshotFrame;
 import Editor.TransformTool;
 import Engine.Viewport;
 import EventBus;
 import ImGui;
-import std;
+import Core;
 
 struct ViewportSnapshot
 {
@@ -20,20 +21,19 @@ constexpr std::string_view getTypeName<ViewportSnapshot>() { return "ViewportSna
 class ViewportController : public EditorControllerImpl<ViewportSnapshot>
 {
 public:
-    explicit ViewportController(EditingContext& context);
+    explicit ViewportController(EditorServices& services, EditingContext& context);
 
     void update(float dt, Editor::SnapshotFrame& frame) override;
 
     [[nodiscard]] TransformToolManager& tools() { return m_tools; }
     [[nodiscard]] const TransformToolManager& tools() const { return m_tools; }
 
-    void selectEntityUnderCursor();
-
 private:
     ViewportSnapshot buildSnapshot(const EditingContext& context) override;
 
     TransformToolManager m_tools;
     SelectionGizmoManager m_selectionGizmos;
+    EventSubscription m_subscription;
 };
 
 export namespace Panels
@@ -50,7 +50,6 @@ export namespace Panels
         void drawFpsCounter() const;
 
         ViewportId m_id;
-        std::reference_wrapper<ViewportController> m_controller;
         EventSubscription m_sub;
         bool m_open{true};
     };

@@ -50,6 +50,11 @@ void EventSubscription::operator+=(EventSubscription&& other) noexcept
     other.m_subs.clear();
 }
 
+void EventSubscription::clear()
+{
+    m_subs.clear();
+}
+
 EventBus::Subscription EventBus::subscribe(TypeId event, Callback callback)
 {
     const SubscriptionId id{m_nextSubscriptionId++};

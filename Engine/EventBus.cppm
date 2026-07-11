@@ -77,6 +77,7 @@ export class EventSubscription
 public:
     void operator+=(EventBus::Subscription&&) noexcept;
     void operator+=(EventSubscription&&) noexcept;
+    void clear();
 
 private:
     std::vector<EventBus::Subscription> m_subs;

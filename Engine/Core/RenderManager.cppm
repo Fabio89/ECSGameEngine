@@ -40,7 +40,8 @@ public:
     void clear();
 
     template <typename T>
-    void addCommand(T&& command) { m_commandProcessor.addCommand(std::forward<T>(command)); }
+    void addCommand(T&& command) { m_commandProcessor.getQueue().addCommand(std::forward<T>(command)); }
+    RenderCommandQueue& getCommandQueue() { return m_commandProcessor.getQueue(); }
 
     void updateFramebufferSize();
     float getDeltaTime() const { return m_frameTimer.deltaTime(); }

@@ -7,7 +7,7 @@ import Geometry;
 import Glfw;
 import Guid;
 import Render.Pipeline.Line;
-import Render.Pipeline.MeshWithTexture;
+import Render.Pipeline.Mesh;
 import Render.QueueFamily;
 import Render.TextureLoading;
 import Render.Utils;

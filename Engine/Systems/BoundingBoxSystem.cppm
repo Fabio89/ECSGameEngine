@@ -1,8 +1,15 @@
 export module System.BoundingBox;
 import Component.BoundingBox;
 import Component.Transform;
+import Engine.WorldManager;
+import Engine.SystemManager;
 import Math;
-import System;
+import World.Events;
+
+namespace
+{
+    EventSubscription subscription;
+}
 
 constexpr std::vector<Vec3> computeCorners(const BoundingBoxComponent& aabb)
 {
@@ -37,23 +44,37 @@ void computeWorldCorners(BoundingBoxComponent& aabb, const Mat4& worldTransform)
     aabb.maxWorld = maxWorld;
 }
 
-export class BoundingBoxSystem final : public System
+void init(SystemContext& context)
 {
-    void onComponentAdded(World& world, Entity entity, TypeId componentType) override
+    subscription += context.worlds.subscribe([&worlds = context.worlds](const WorldEvents::ComponentAdded& event)
     {
-        if (componentType == getComponentType<BoundingBoxComponent>())
+        if (event.componentType == getTypeId<BoundingBoxComponent>())
         {
-            auto& aabb = world.editComponent<BoundingBoxComponent>(entity);
-            const auto& transform = world.readComponent<TransformComponent>(entity);
+            World& world = worlds.get(event.world);
+            auto& aabb = world.editComponent<BoundingBoxComponent>(event.entity);
+            const auto& transform = world.readComponent<TransformComponent>(event.entity);
             computeWorldCorners(aabb, transform.runtimeData.worldMatrix);
         }
-    }
+    });
+}
 
-    void onUpdate(World& world, [[maybe_unused]] Player& player, [[maybe_unused]] float deltaTime) override
+void update(SystemContext& context, float)
+{
+    context.worlds.forEachWorld([](World& world)
     {
         for (auto&& [entity, aabb, transform] : world.view<BoundingBoxComponent, TransformComponent>())
         {
             computeWorldCorners(aabb, transform.runtimeData.worldMatrix);
         }
-    }
-};
+    });
+}
+
+void shutdown(SystemContext&)
+{
+    subscription.clear();
+}
+
+export namespace BoundingBoxSystem
+{
+    SystemCallbacks callbacks{.init = init, .update = update, .shutdown = shutdown};
+}

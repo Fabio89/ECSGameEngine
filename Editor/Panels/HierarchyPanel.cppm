@@ -6,13 +6,14 @@ import Component.Transform;
 import ComponentRegistry;
 import Editor;
 import Editor.Controller;
+import Editor.Selection;
 import ImGui;
 import Editor.Panel.Impl;
 import Editor.Requests;
 import Engine;
 import Math;
 import Properties;
-import Editor.Selection;
+import World;
 
 namespace Panels
 {

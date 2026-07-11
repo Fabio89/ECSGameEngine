@@ -1,11 +1,3 @@
-module;
-
-#ifdef _MSC_VER
-#define FUNCTION_SIGNATURE __FUNCSIG__
-#else
-#define FUNCTION_SIGNATURE __PRETTY_FUNCTION__
-#endif
-
 export module Core;
 export import Log;
 export import std;
@@ -64,27 +56,6 @@ struct std::formatter<Id<Tag, T>>
     }
 };
 
-using TypeHash = std::uint64_t;
-
-consteval TypeHash hash_fnv1a(std::string_view str)
-{
-    TypeHash hash = 14695981039346656037ull;
-
-    for (char c : str)
-    {
-        hash ^= static_cast<std::uint8_t>(c);
-        hash *= 1099511628211ull;
-    }
-
-    return hash;
-}
-
-template <typename T>
-consteval std::size_t getTypeHash()
-{
-    return hash_fnv1a(FUNCTION_SIGNATURE);
-}
-
 export using Entity = Id<struct EntityTag>;
 
 export using TypeId = Id<struct TypeIdTag, std::size_t>;
@@ -93,6 +64,24 @@ export using TypeId = Id<struct TypeIdTag, std::size_t>;
 // Generic type reflection
 //------------------------------------------------------------------------------------------------------------------------
 
+class TypeRegistry
+{
+public:
+    template<typename T>
+    static TypeId id()
+    {
+        static const TypeId value{next()};
+        return value;
+    }
+
+private:
+    static TypeId next()
+    {
+        static std::atomic<UInt64> counter = 0;
+        return {counter++};
+    }
+};
+
 export template<typename T>
 constexpr std::string_view getTypeName()
 {
@@ -100,9 +89,10 @@ constexpr std::string_view getTypeName()
 }
 
 export template<typename T>
-consteval TypeId getTypeId()
+constexpr TypeId getTypeId()
 {
-    return {getTypeHash<T>()};
+    using U = std::remove_cvref_t<T>;
+    return { TypeRegistry::id<U>() };
 }
 
 //------------------------------------------------------------------------------------------------------------------------
@@ -122,18 +112,3 @@ struct Component : ComponentBase
     static consteval TypeId typeId();
     T data;
 };
-
-export template <typename T>
-concept ValidComponent = std::is_base_of_v<Component<T>, T>;
-
-export template <ValidComponentData T>
-constexpr std::string_view getComponentName() { return getTypeName<T>(); }
-
-export template <ValidComponentData T>
-constexpr TypeId getComponentType() { return Component<T>::typeId(); }
-
-template <ValidComponentData T>
-consteval TypeId Component<T>::typeId()
-{
-    return {getTypeHash<T>()};
-}

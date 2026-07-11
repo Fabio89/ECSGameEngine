@@ -1,7 +1,7 @@
 module;
 #include <cstddef>
 
-export module Render.Pipeline.MeshWithTexture;
+export module Render.Pipeline.Mesh;
 import Assets.Mesh;
 import Core;
 import Render.Utils;

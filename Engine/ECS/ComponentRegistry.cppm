@@ -41,13 +41,13 @@ public:
     [[nodiscard]]
     TypeId getTypeId() const override
     {
-        return Component<T>::typeId();
+        return ::getTypeId<T>();
     }
 
     [[nodiscard]]
     std::string_view getName() const override
     {
-        return getComponentName<T>();
+        return getTypeName<T>();
     }
 
     void createInstance(World& world, Entity entity, const JsonObject& json) const override { world.addComponent<T>(entity, ::deserialize<T>(json)); }
@@ -78,11 +78,11 @@ namespace ComponentRegistry
     export template <ValidComponentData T>
     void init()
     {
-        check(std::ranges::none_of(componentTypes, [](auto&& type) { return type->getTypeId() == Component<T>::typeId(); }), "Tried to init components more than once!");
+        check(std::ranges::none_of(componentTypes, [](auto&& type) { return type->getTypeId() == getTypeId<T>(); }), "Tried to init components more than once!");
         const std::unique_ptr<const ComponentTypeBase>& type = componentTypes.emplace_back(std::make_unique<ComponentType<T>>());
         byId[type->getTypeId()] = type.get();
-        byName[getComponentName<T>()] = type.get();
-        log(std::format("Registered component: {} (id={})", getComponentName<T>(), type->getTypeId()));
+        byName[getTypeName<T>()] = type.get();
+        log(std::format("Registered component: {} (id={})", getTypeName<T>(), type->getTypeId()));
     }
     
     export const ComponentTypeBase* get(TypeId typeId)

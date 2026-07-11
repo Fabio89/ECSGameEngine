@@ -12,10 +12,15 @@ import Editor.Panels.MainMenu;
 import Editor.Panels.Viewport;
 import Editor.Project;
 import Editor.PropertyDrawers;
+import Editor.Services;
 import Engine;
 import Input;
 import Math;
 import Physics;
+import System.BoundingBox;
+import System.Hierarchy;
+import System.RenderSynchronizer;
+import System.Transform;
 import Thread;
 import World;
 import World.Events;
@@ -25,6 +30,12 @@ namespace
     EventSubscription subscription;
     std::vector<std::unique_ptr<Panel>> panels;
     std::vector<Panel*> panelView;
+    EventBus events;
+
+    EditorServices services{.worlds = Engine::worlds(), .events = events, .renderCommands = Engine::getRenderCommandQueue()};
+
+    EditingContextManager contextManager{services};
+    std::unordered_map<EditingContextId, Editor::ControllerManager> controllerManagers;
 }
 
 namespace Editor
@@ -41,22 +52,33 @@ namespace Editor
         contexts().get(request.contextId).selection.set(request.entities);
     }
 
+    void execute(SetEntityEditingMode&& request)
+    {
+        events.publish(EditorEvents::EntityEditingModeChanged{request.contextId, request.mode});
+    }
+
     void execute(SelectEntityUnderCursor&& request)
     {
-        // const Vec2 screenPosition{Input::getCursorScreenPosition(request.window)};
-        //
-        // const Vec2 uv
-        // {
-        //     (screenPosition.x - viewportArea.position.x) / viewportArea.size.width,
-        //     (screenPosition.y - viewportArea.position.y) / viewportArea.size.height
-        // };
-        //
-        // const World& world = Engine::getWorld(context().world);
-        // const Ray ray = Physics::rayFromViewportUV(world, Engine::getPlayer(), uv);
-        // const Entity hitEntity = Physics::lineTrace(world, ray, TraceChannelFlags::Default);
-        //
-        //
-        // contexts().get(request.contextId).selection.set(request.entities);
+        check(request.window.isValid(), "");
+
+        const Vec2 screenPosition{Input::getCursorScreenPosition(request.window)};
+
+        const Vec2 uv
+        {
+            (screenPosition.x - request.viewportArea.position.x) / request.viewportArea.size.width,
+            (screenPosition.y - request.viewportArea.position.y) / request.viewportArea.size.height
+        };
+
+        const World& world = services.worlds.get(contextManager.get(request.contextId).world);
+        const Ray ray = Physics::rayFromViewportUV(world, uv);
+        const Entity hitEntity = Physics::lineTrace(world, ray, TraceChannelFlags::Default);
+
+        execute(ChangeSelection{.contextId = request.contextId, .entities = {hitEntity}});
+    }
+
+    void execute(AddController&& request)
+    {
+        ensureControllerManager(request.contextId).addController(request.factory(services, contexts().get(request.contextId)));
     }
 
     void execute(OpenProject&& request)
@@ -89,6 +111,11 @@ namespace Editor
 
         request.property->set(&world.editComponent(request.entity, request.componentType), request.value);
     }
+
+    void execute(SetCameraMouseLookEnabled&& request)
+    {
+        EditorCamera::setActive(request.window, request.enabled);
+    }
 }
 
 void Editor::addPanel(std::unique_ptr<Panel> panel)
@@ -97,8 +124,21 @@ void Editor::addPanel(std::unique_ptr<Panel> panel)
     rebuildPanelView();
 }
 
+Editor::ControllerManager& Editor::ensureControllerManager(EditingContextId contextId)
+{
+    auto it = controllerManagers.find(contextId);
+    if (it == controllerManagers.end())
+        it = controllerManagers.try_emplace(contextId, services).first;
+    return it->second;
+}
+
 void Editor::init()
 {
+    Engine::addSystem(BoundingBoxSystem::callbacks);
+    Engine::addSystem(HierarchySystem::callbacks);
+    Engine::addSystem(RenderSynchronizer::callbacks);
+    Engine::addSystem(TransformSystem::callbacks);
+
     Engine::init();
 
     EditorComponents::init();
@@ -123,7 +163,7 @@ void Editor::init()
     for (ControllerManager& controllerManager : controllerManagers | std::views::values)
         controllerManager.init();
 
-    subscription += Engine::events().subscribe([](const Engine::SceneLoadedEvent& event)
+    subscription += services.worlds.subscribe([](const WorldEvents::SceneLoaded& event)
     {
         for (EditingContext& context : contexts().getAll())
         {
@@ -168,7 +208,7 @@ bool Editor::update()
     for (auto& [contextId, controllerManager] : controllerManagers)
         controllerManager.update(Engine::getSimulationDeltaTime(), contexts().get(contextId).snapshotPublisher);
 
-    EditorCamera::update(editorContext.window, Engine::getWorld(editorContext.world), Engine::getPlayer(), Engine::getSimulationDeltaTime());
+    EditorCamera::update(editorContext.window, Engine::getWorld(editorContext.world), Engine::getSimulationDeltaTime());
 
     return true;
 }
@@ -186,6 +226,8 @@ std::span<Panel*> Editor::getPanels()
 {
     return panelView;
 }
+
+EditingContextManager& Editor::contexts() { return contextManager; }
 
 void Editor::rebuildPanelView()
 {
@@ -223,7 +265,7 @@ void Editor::loadScene(EditingContextId contextId, const std::filesystem::path& 
     if (!std::filesystem::exists(path))
         return;
 
-    World& world = Engine::getWorld(contexts().get(contextId).world);
+    World& world = services.worlds.get(contexts().get(contextId).world);
     world.loadScene(path);
-    Engine::getPlayer().setMainCamera(world, ensureCamera(world));
+    world.setActiveCamera(ensureCamera(world));
 }

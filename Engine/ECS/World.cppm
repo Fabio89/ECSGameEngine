@@ -6,10 +6,11 @@ export module World;
 export import Core;
 export import WorldHandle;
 import Archetype;
+import EventBus;
 import Guid;
-import Render.RenderManager;
 import Serialization.Json;
 import Thread;
+import World.Events;
 
 constexpr int maxComponentsPerEntity = 64;
 
@@ -28,22 +29,7 @@ struct std::hash<EntitySignature>
 export struct WorldCreateInfo
 {
     WorldHandle handle{};
-    RenderManager* renderManager{};
 };
-
-export using SystemCallbackHandle = int;
-
-export struct SystemCallback
-{
-    ArchetypeChangedCallback onComponentAdded;
-    std::function<void(Entity)> onEntityRemoved;
-};
-
-SystemCallbackHandle generateSystemCallbackHandle()
-{
-    static SystemCallbackHandle lastValue{-1};
-    return ++lastValue;
-}
 
 //------------------------------------------------------------------------------------------------------------------------
 // World
@@ -92,19 +78,19 @@ public:
 
     ComponentBase& editComponent(Entity entity, TypeId componentType) { return const_cast<ComponentBase&>(readComponent(entity, componentType)); }
 
-    SystemCallbackHandle registerSystem(SystemCallback callback);
-    void unregisterSystem(SystemCallbackHandle handle);
+    template<typename Func> [[nodiscard]]
+    EventBus::Subscription subscribe(Func&& callback);
 
     auto getEntitiesRange() const { return m_entities | std::views::keys; }
+
+    Entity getActiveCamera() const;
+    void setActiveCamera(Entity entity);
 
     template <ValidComponentData First, ValidComponentData ... Rest>
     std::generator<std::tuple<Entity, const First&, const Rest&...>> view() const;
 
     template <ValidComponentData First, ValidComponentData ... Rest>
     std::generator<std::tuple<Entity, First&, Rest&...>> view();
-
-    const RenderManager& getRenderManager() const { return *m_renderManager; }
-    RenderManager& getRenderManager() { return *m_renderManager; }
 
     void printArchetypeStatus();
 
@@ -115,11 +101,11 @@ private:
     Archetype& prepareArchetypeOnAddComponent(Entity entity, TypeId componentId);
 
     WorldHandle m_handle;
-    std::unordered_map<SystemCallbackHandle, SystemCallback> m_systemCallbacks{};
     Entity::ValueType m_nextEntityValue{};
     std::unordered_map<Entity, EntitySignature> m_entities{};
     std::unordered_map<EntitySignature, Archetype> m_archetypes;
-    RenderManager* m_renderManager{};
+    EventBus m_eventBus;
+    Entity m_activeCamera;
 };
 
 //------------------------------------------------------------------------------------------------------------------------
@@ -130,14 +116,11 @@ template <ValidComponentData T, typename... Args>
 T& World::addComponent(Entity entity, Args&&... args)
 {
     assertThread();
-    Archetype& archetype = prepareArchetypeOnAddComponent(entity, Component<T>::typeId());
+    Archetype& archetype = prepareArchetypeOnAddComponent(entity, getTypeId<T>());
     T& addedComponent = archetype.addComponent<T>(entity, T{std::forward<Args>(args)...});
-    log(std::format("Added component {} to entity {}", getComponentName<T>(), entity));
+    log(std::format("Added component {} to entity {}", getTypeName<T>(), entity));
+    m_eventBus.publish(WorldEvents::ComponentAdded{.world = getHandle(), .entity = entity, .componentType = getTypeId<T>()});
 
-    for (SystemCallback& callback : m_systemCallbacks | std::views::values)
-    {
-        callback.onComponentAdded(entity, Component<T>::typeId());
-    }
     return addedComponent;
 }
 
@@ -165,9 +148,15 @@ template <ValidComponentData T>
     {
         return readArchetype(it->second).readComponent<T>(entity);
     }
-    fatalError(std::format("Couldn't find component: {}", getComponentName<T>()));
+    fatalError(std::format("Couldn't find component: {}", getTypeName<T>()));
     static const T invalid{};
     return invalid;
+}
+
+template<typename Func>
+EventBus::Subscription World::subscribe(Func&& callback)
+{
+    return m_eventBus.subscribe(std::forward<Func>(callback));
 }
 
 template <ValidComponentData First, ValidComponentData ... Rest>

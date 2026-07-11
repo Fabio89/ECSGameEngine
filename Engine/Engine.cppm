@@ -5,21 +5,18 @@ module;
 export module Engine;
 export import Core;
 export import EngineComponents;
-export import EventBus;
 import ComponentRegistry;
+import Engine.SystemManager;
 import Engine.Viewport;
-import FileSystem;
+import Engine.WorldManager;
 import Geometry;
-import Input;
 import Log;
 import Math;
 import Physics;
-import Player;
+import Render.CommandProcessor;
 import Render.EditorCallbacks;
-import Render.RenderManager;
 import Window;
 import World;
-import WorldHandle;
 
 export namespace Engine
 {
@@ -52,11 +49,9 @@ export namespace Engine
 
     ENGINE_API World& getWorld(WorldHandle handle);
 
-    //------------------------------------------------------------------------------------------------------------------------
-    // Events
-    //------------------------------------------------------------------------------------------------------------------------
+    ENGINE_API WorldManager& worlds();
 
-    ENGINE_API EventBus& events();
+    ENGINE_API void addSystem(SystemCallbacks callbacks);
 
     //------------------------------------------------------------------------------------------------------------------------
     // Editor Integration
@@ -71,8 +66,14 @@ export namespace Engine
     ENGINE_API Ray getViewportCursorRay(const World& world);
 
     //------------------------------------------------------------------------------------------------------------------------
+    // Rendering
+    //------------------------------------------------------------------------------------------------------------------------
+
+    ENGINE_API RenderCommandQueue& getRenderCommandQueue();
+
+    //------------------------------------------------------------------------------------------------------------------------
     // DEBUG -TEMPORARY
     //------------------------------------------------------------------------------------------------------------------------
 
-    ENGINE_API Player& getPlayer();
+    ENGINE_API float getViewportAspectRatio();
 }

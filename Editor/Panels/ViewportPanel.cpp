@@ -1,5 +1,6 @@
 module Editor.Panels.Viewport;
 import Editor;
+import Editor.Events;
 import Editor.Requests;
 import Engine;
 import Geometry;
@@ -71,11 +72,24 @@ Rect calculateViewportArea(ViewportMode mode)
     }
 }
 
-ViewportController::ViewportController(EditingContext& context)
-    : EditorControllerImpl{context},
-      m_tools{context},
-      m_selectionGizmos{context}
+ViewportController::ViewportController(EditorServices& services, EditingContext& context)
+    : EditorControllerImpl{services, context},
+      m_tools{services, context},
+      m_selectionGizmos{services, context}
 {
+    m_tools.createTools();
+
+    m_subscription += services.events.subscribe([this, contextId = context.id](const EditorEvents::EntityEditingModeChanged& event)
+    {
+        if (event.contextId == contextId)
+            m_tools.setCurrentTool(event.mode);
+    });
+
+    m_subscription += services.worlds.subscribe([this, &worlds = services.worlds, worldHandle = context.world](const WorldEvents::SceneLoaded& event)
+    {
+        if (worlds.get(event.world).getHandle() == worldHandle)
+            m_tools.createTools();
+    });
 }
 
 void ViewportController::update(float dt, Editor::SnapshotFrame& frame)
@@ -85,23 +99,15 @@ void ViewportController::update(float dt, Editor::SnapshotFrame& frame)
 
 }
 
-void ViewportController::selectEntityUnderCursor() {}
-
 ViewportSnapshot ViewportController::buildSnapshot(const EditingContext& context)
 {
     return {};
 }
 
 Panels::ViewportPanel::ViewportPanel(const PanelCreateInfo& info)
-    : PanelImpl{info},
-      m_controller{Editor::addController<ViewportController>(info.contextId)}
+    : PanelImpl{info}
 {
-    m_controller.get().tools().createTools();
-
-    m_sub += Engine::events().subscribe([this](const Engine::SceneLoadedEvent&)
-    {
-        m_controller.get().tools().createTools();
-    });
+    Editor::addController<ViewportController>(info.contextId);
 }
 
 void Panels::ViewportPanel::doDraw()
@@ -138,25 +144,13 @@ void Panels::ViewportPanel::doDraw()
 
     if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
     {
-        const ImVec2 mouse = ImGui::GetMousePos();
-
-        const Vec2 uv
-        {
-            (mouse.x - viewportArea.position.x) / viewportArea.size.width,
-            (mouse.y - viewportArea.position.y) / viewportArea.size.height
-        };
-
-        const World& world = Engine::getWorld(context().world);
-        const Ray ray = Physics::rayFromViewportUV(world, Engine::getPlayer(), uv);
-        const Entity hitEntity = Physics::lineTrace(world, ray, TraceChannelFlags::Default);
-
-        Editor::request(Editor::ChangeSelection{.contextId = context().id, .entities = {hitEntity}});
+        Editor::request(Editor::SelectEntityUnderCursor{.contextId = context().id, .window = getWindow(), .viewportArea = viewportArea});
     }
 
     if (ImGui::IsMouseReleased(ImGuiMouseButton_Right))
-        EditorCamera::setActive(getWindow(), false);
+        Editor::request(Editor::SetCameraMouseLookEnabled{getWindow(), false});
     else if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-        EditorCamera::setActive(getWindow(), true);
+        Editor::request(Editor::SetCameraMouseLookEnabled{getWindow(), true});
 
     ImGui::End();
     ImGui::PopStyleVar();
@@ -165,7 +159,7 @@ void Panels::ViewportPanel::doDraw()
 
 void Panels::ViewportPanel::setCurrentTool(EntityEditingMode type)
 {
-    m_controller.get().tools().setCurrentTool(type);
+    Editor::request(Editor::SetEntityEditingMode{.contextId = context().id, .mode = type});
 }
 
 void Panels::ViewportPanel::drawFpsCounter() const

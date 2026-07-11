@@ -3,22 +3,21 @@ import Assets.Mesh;
 import Assets.Texture;
 import AssetManager;
 import ComponentRegistry;
+import Component.Camera;
 import Component.Name;
 import Component.Tags;
-import Engine;
-import EngineSystems;
 import Thread;
 import World.Events;
 
 World::World(const WorldCreateInfo& info)
-    : m_handle{info.handle},
-      m_renderManager{info.renderManager} {}
+    : m_handle{info.handle} {}
 
 Entity World::createEntity()
 {
     assertThread();
     const Entity entity{m_nextEntityValue++};
     m_entities.try_emplace(entity);
+    m_eventBus.publish(WorldEvents::EntityCreated{.world = m_handle, .entity = entity});
     return entity;
 }
 
@@ -132,15 +131,14 @@ void World::removeEntity(Entity entity)
         Archetype& archetype = editArchetype(it->second);
         archetype.removeEntity(entity);
         if (archetype.isEmpty())
-        {
             m_archetypes.erase(it->second);
-        }
+
         m_entities.erase(it);
 
-        for (SystemCallback& callback : m_systemCallbacks | std::views::values)
-            callback.onEntityRemoved(entity);
+        if (m_activeCamera == entity)
+            m_activeCamera = {};
 
-        Engine::events().publish(Engine::EntityDestroyedEvent{.world = m_handle, .entity = entity});
+        m_eventBus.publish(WorldEvents::EntityDestroyed{.world = m_handle, .entity = entity});
     }
 }
 
@@ -156,15 +154,15 @@ void World::loadScene(const std::filesystem::path& path)
     const JsonObject& doc = Json::fromFile(path);
     deserializeScene(doc);
     std::cout << "Scene loading complete\n";
-    Engine::events().publish(Engine::SceneLoadedEvent{.world = m_handle});
+    m_eventBus.publish(WorldEvents::SceneLoaded{.world = m_handle});
 }
 
 void World::unloadScene()
 {
     assertThread();
-    m_renderManager->addCommand<RenderCommands::ClearRenderObjects>({.world = m_handle});
     m_entities.clear();
     m_archetypes.clear();
+    m_eventBus.publish(WorldEvents::SceneUnloaded{.world = m_handle});
 }
 
 [[nodiscard]]
@@ -291,16 +289,13 @@ Archetype::ComponentRange World::getComponentTypesInEntity(Entity entity) const
     return emptyMap | std::views::keys;
 }
 
-SystemCallbackHandle World::registerSystem(SystemCallback callback)
+Entity World::getActiveCamera() const
 {
-    assertThread();
-    SystemCallbackHandle handle = generateSystemCallbackHandle();
-    m_systemCallbacks.insert_or_assign(handle, std::move(callback));
-    return handle;
+    return m_activeCamera;
 }
 
-void World::unregisterSystem(SystemCallbackHandle observerHandle)
+void World::setActiveCamera(Entity entity)
 {
-    assertThread();
-    m_systemCallbacks.erase(observerHandle);
+    check(!entity.isValid() || hasComponent<CameraComponent>(entity), "Tried to set an entity with no CameraComponent as the active camera!");
+    m_activeCamera = entity;
 }

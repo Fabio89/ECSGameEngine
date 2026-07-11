@@ -3,6 +3,7 @@ module;
 export module Editor.Selection;
 import Core;
 import Editor.EditingContextId;
+import EventBus;
 import Thread;
 
 export namespace Editor
@@ -10,7 +11,7 @@ export namespace Editor
     class EDITOR_API Selection : ThreadOwned
     {
     public:
-        Selection(EditingContextId contextId);
+        Selection(EventBus& events, EditingContextId contextId);
 
         void add(Entity entity);
         void remove(Entity entity);
@@ -23,6 +24,7 @@ export namespace Editor
 
     private:
         void sendSelectionEvent() const;
+        EventBus& m_events;
         EditingContextId m_contextId;
         std::vector<Entity> m_entities;
     };

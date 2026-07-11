@@ -1,14 +1,31 @@
 export module System.PersistentId;
 import Component.PersistentId;
-import System;
+import Engine.SystemManager;
+import World.Events;
 
-export class PersistentIdSystem final : public System
+namespace
 {
-    void onComponentAdded(World& world, Entity entity, TypeId componentType) override
+    EventSubscription subscription;
+}
+
+void init(SystemContext& context)
+{
+    subscription += context.worlds.subscribe([&context](const WorldEvents::ComponentAdded& event)
     {
-        if (componentType == getComponentType<PersistentIdComponent>())
+        World& world = context.worlds.get(event.world);
+        if (event.componentType == getTypeId<PersistentIdComponent>())
         {
-            PersistentIdUtils::registerEntity(entity, world.readComponent<PersistentIdComponent>(entity).id);
+            PersistentIdUtils::registerEntity(event.entity, world.readComponent<PersistentIdComponent>(event.entity).id);
         }
-    }
-};
+    });
+}
+
+void shutdown(SystemContext&)
+{
+    subscription.clear();
+}
+
+export namespace PersistentIdSystem
+{
+    SystemCallbacks callbacks{.init = init, .shutdown = shutdown};
+}
