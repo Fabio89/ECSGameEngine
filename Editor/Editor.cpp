@@ -250,14 +250,15 @@ Entity Editor::ensureCamera(World& world)
     const Entity camera = world.createEntity();
     world.addComponent<CameraComponent>(camera, CameraComponent{.fov = 60.f});
     world.addComponent<NameComponent>(camera, "Main Camera");
-    world.addComponent<TransformComponent>(camera);
 
-    auto transform = world.editComponent<TransformComponent>(camera);
-    transform->position = {2.f, 2.f, 2.f};
-    const Vec3 dir = Math::normalize(-transform->position);
-    const Quat rot = Math::rotation(forwardVector(), dir);
-    transform->rotation = rot;
+    constexpr Vec3 position{2.f, 2.f, 2.f};
+    const Vec3 direction{Math::normalize(-position)};
+    const Quat rotation{Math::rotation(forwardVector(), direction)};
 
+    world.addComponent<TransformComponent>(camera, {
+                                               .position = position,
+                                               .rotation = rotation
+                                           });
     return camera;
 }
 

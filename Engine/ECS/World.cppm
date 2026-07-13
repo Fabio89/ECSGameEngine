@@ -75,7 +75,7 @@ public:
         void skipEmptyArchetypes();
 
         template<typename AccessSpec>
-        auto makeAccess(Entity entity) const;
+        decltype(auto) makeAccess(Entity entity) const;
 
         WorldType& m_world;
         const std::vector<ArchetypeType*>& m_archetypes;
@@ -240,15 +240,14 @@ void QueryImpl<Const, Access...>::Iterator::skipEmptyArchetypes()
 
 template<bool Const, typename... Access> requires ValidQueryAccess<Const, Access...>
 template<typename AccessSpec>
-auto QueryImpl<Const, Access...>::Iterator::makeAccess(Entity entity) const
+decltype(auto) QueryImpl<Const, Access...>::Iterator::makeAccess(Entity entity) const
 {
     using T = AccessTraits<AccessSpec>::ComponentType;
-    using Normalized = AccessTraits<AccessSpec>::AccessType;
 
     if constexpr (std::same_as<AccessSpec, Edit<T>>)
         return m_world.template editComponent<T>(entity);
     else
-        return Normalized{m_world.template readComponent<T>(entity)};
+        return m_world.template readComponent<T>(entity);
 }
 
 template<bool Const, typename... Access> requires ValidQueryAccess<Const, Access...>
