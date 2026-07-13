@@ -49,6 +49,12 @@ bool WorldManager::isValid(WorldHandle handle) const
     return slot.alive && slot.generation == handle.generation;
 }
 
+void WorldManager::nextFrame()
+{
+    for (WorldSlot& slot : m_worlds)
+        slot.world.nextFrame();
+}
+
 WorldHandle WorldManager::prepareWorld(UInt32 index)
 {
     WorldSlot& slot = m_worlds[index];

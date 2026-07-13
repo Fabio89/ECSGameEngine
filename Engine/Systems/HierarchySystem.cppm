@@ -22,12 +22,12 @@ void init(SystemContext& context)
                 link = {};
         };
 
-        for (auto&& [entity, hierarchy] : world.view<HierarchyComponent>())
+        for (auto&& [entity, hierarchy] : world.query<Edit<HierarchyComponent>>())
         {
-            checkLink(hierarchy.parent);
-            checkLink(hierarchy.firstChild);
-            checkLink(hierarchy.nextSibling);
-            checkLink(hierarchy.previousSibling);
+            checkLink(hierarchy->parent);
+            checkLink(hierarchy->firstChild);
+            checkLink(hierarchy->nextSibling);
+            checkLink(hierarchy->previousSibling);
         }
     });
 }

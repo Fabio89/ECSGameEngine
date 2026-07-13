@@ -91,6 +91,8 @@ bool Engine::update()
     Input::postUpdate(window);
     Platform::update();
 
+    worldManager.nextFrame();
+
     return true;
 }
 

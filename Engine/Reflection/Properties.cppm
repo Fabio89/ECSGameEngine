@@ -1,5 +1,6 @@
 export module Properties;
 import Core;
+import World;
 
 export using PropertyValue = std::any;
 
@@ -17,6 +18,8 @@ export struct PropertyDescriptorBase
     virtual void* get(void* object) const = 0;
 
     virtual void set(void* object, const PropertyValue& value) const = 0;
+
+    virtual void set(BaseEdit& object, const PropertyValue& value) const = 0;
 
     virtual PropertyValue copy(const void* object) const = 0;
 };
@@ -42,6 +45,12 @@ struct PropertyDescriptor : PropertyDescriptorBase
     {
         auto& instance = *static_cast<T*>(object);
         instance.*member = std::any_cast<M>(value);
+    }
+
+    void set(BaseEdit& object, const PropertyValue& value) const override
+    {
+        Edit<T> instance = object.as<T>();
+        instance.operator->()->*member = std::any_cast<M>(value);
     }
 
     PropertyValue copy(const void* object) const override

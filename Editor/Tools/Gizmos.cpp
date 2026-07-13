@@ -127,7 +127,7 @@ Entity Gizmos::createRotationGizmo(World& world)
 {
     // TODO(feature): Implement rotation gizmo
     Entity gizmo = createTranslationGizmo(world);
-    world.editComponent<NameComponent>(gizmo).name = "Rotation Gizmo";
+    world.editComponent<NameComponent>(gizmo)->name = "Rotation Gizmo";
     return gizmo;
 }
 
@@ -135,7 +135,7 @@ Entity Gizmos::createScaleGizmo(World& world)
 {
     // TODO(feature): Implement scale gizmo
     Entity gizmo = createTranslationGizmo(world);
-    world.editComponent<NameComponent>(gizmo).name = "Scale Gizmo";
+    world.editComponent<NameComponent>(gizmo)->name = "Scale Gizmo";
     return gizmo;
 }
 
@@ -198,7 +198,7 @@ void Gizmos::setGizmoVisible(World& world, Entity gizmo, bool visible)
 
     if (world.hasComponent<GizmoComponent>(gizmo))
     {
-        auto& gizmoComponent = world.editComponent<GizmoComponent>(gizmo);
+        const auto& gizmoComponent = world.readComponent<GizmoComponent>(gizmo);
         setVisible(gizmoComponent.xAxisEntity);
         setVisible(gizmoComponent.yAxisEntity);
         setVisible(gizmoComponent.zAxisEntity);

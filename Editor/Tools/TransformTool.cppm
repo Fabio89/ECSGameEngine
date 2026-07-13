@@ -5,7 +5,7 @@ import Editor.Services;
 import EventBus;
 import Math;
 
-export class TransformToolManager
+export class TransformToolManager : EditorServiceConsumer
 {
 public:
     TransformToolManager(EditorServices& services, EditingContext& context);
@@ -14,24 +14,23 @@ public:
     void update();
 
 private:
-    EditorServices& m_services;
     EditingContext& m_context;
     EntityEditingMode m_currentToolType{EntityEditingMode::None};
     std::array<std::unique_ptr<class TransformTool>, 3> m_tools;
     EventSubscription m_sub;
 };
 
-class TransformTool
+class TransformTool : EditorServiceConsumer
 {
 public:
-    TransformTool(EditingContext& context, EntityEditingMode type);
+    TransformTool(EditorServices& services, EditingContext& context, EntityEditingMode type);
     virtual ~TransformTool() = default;
     virtual void update();
     void setActive(bool active);
 
 protected:
     EditingContext& context() { return m_context; }
-    [[nodiscard]] const EditingContext& getWorld() const { return m_context; }
+    [[nodiscard]] const EditingContext& context() const { return m_context; }
 
 private:
     void attachToSelection();
@@ -41,10 +40,17 @@ private:
     Entity m_gizmo;
 };
 
-class TranslateTool : public TransformTool
+template<EntityEditingMode mode>
+class TransformToolImpl : public TransformTool
 {
 public:
-    explicit TranslateTool(EditingContext& context) : TransformTool{context, EntityEditingMode::Translate} {}
+    explicit TransformToolImpl(EditorServices& services, EditingContext& context) : TransformTool{services, context, mode} {}
+};
+
+class TranslateTool : public TransformToolImpl<EntityEditingMode::Translate>
+{
+public:
+    using TransformToolImpl::TransformToolImpl;
     void update() override;
 
 private:
@@ -52,14 +58,14 @@ private:
     std::optional<Vec3> m_projectedCursorPositionLastFrame;
 };
 
-class RotateTool : public TransformTool
+class RotateTool : public TransformToolImpl<EntityEditingMode::Rotate>
 {
 public:
-    explicit RotateTool(EditingContext& context) : TransformTool{context, EntityEditingMode::Rotate} {}
+    using TransformToolImpl::TransformToolImpl;
 };
 
-class ScaleTool : public TransformTool
+class ScaleTool : public TransformToolImpl<EntityEditingMode::Scale>
 {
 public:
-    explicit ScaleTool(EditingContext& context) : TransformTool{context, EntityEditingMode::Scale} {}
+    using TransformToolImpl::TransformToolImpl;
 };

@@ -33,9 +33,6 @@ struct HierarchySnapshot
     std::vector<HierarchyNode> nodes;
 };
 
-template<>
-constexpr std::string_view getTypeName<HierarchySnapshot>() { return "HierarchySnapshot"; }
-
 class HierarchyController : public EditorControllerImpl<HierarchySnapshot>
 {
 public:
@@ -63,7 +60,7 @@ void traverseNode(HierarchyNode& node, Entity entity, const World& world, const 
 
 HierarchySnapshot HierarchyController::buildSnapshot(const EditingContext& context)
 {
-    World& world = Engine::getWorld(context.world);
+    World& world = services().worlds.get(context.world);
 
     HierarchySnapshot snapshot;
     auto entitiesRange = world.getEntitiesRange();

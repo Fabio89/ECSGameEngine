@@ -11,6 +11,16 @@ export using UInt16 = std::uint16_t;
 export using UInt32 = std::uint32_t;
 export using UInt64 = std::uint64_t;
 
+template<typename T>
+concept NumericType = std::integral<T> || std::floating_point<T>;
+
+export template<NumericType TargetType, NumericType CurrentType>
+TargetType narrow_cast(CurrentType number)
+{
+    check(std::in_range<TargetType>(number), "Numeric cast overflow!");
+    return static_cast<TargetType>(number);
+}
+
 export template<typename Tag, typename T = UInt32>
 struct Id
 {
@@ -33,7 +43,7 @@ struct Id
     auto operator<=>(const Id&) const = default;
 };
 
-template<typename Tag, typename T>
+export template<typename Tag, typename T>
 struct std::hash<Id<Tag, T>>
 {
     constexpr std::size_t operator()(const Id<Tag, T>& id) const noexcept
@@ -42,7 +52,7 @@ struct std::hash<Id<Tag, T>>
     }
 };
 
-template<typename Tag, typename T>
+export template<typename Tag, typename T>
 struct std::formatter<Id<Tag, T>>
 {
     constexpr auto parse(std::format_parse_context& ctx)
@@ -56,9 +66,11 @@ struct std::formatter<Id<Tag, T>>
     }
 };
 
-export using Entity = Id<struct EntityTag>;
+export struct EntityTag {};
+export using Entity = Id<EntityTag>;
 
-export using TypeId = Id<struct TypeIdTag, std::size_t>;
+export struct TypeIdTag {};
+export using TypeId = Id<TypeIdTag, std::size_t>;
 
 //------------------------------------------------------------------------------------------------------------------------
 // Generic type reflection
@@ -89,7 +101,7 @@ constexpr std::string_view getTypeName()
 }
 
 export template<typename T>
-constexpr TypeId getTypeId()
+TypeId getTypeId()
 {
     using U = std::remove_cvref_t<T>;
     return { TypeRegistry::id<U>() };
@@ -109,6 +121,5 @@ export struct ComponentBase
 export template <ValidComponentData T>
 struct Component : ComponentBase
 {
-    static consteval TypeId typeId();
     T data;
 };

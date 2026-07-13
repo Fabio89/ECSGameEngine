@@ -16,7 +16,7 @@ Entity Physics::lineTrace(const World& world, const Ray& ray, TraceChannelFlags 
     float closestHit = std::numeric_limits<float>::max();
     Entity hitEntity;
 
-    for (auto&& [entity, aabb] : world.view<BoundingBoxComponent>())
+    for (auto&& [entity, aabb] : world.query<BoundingBoxComponent>())
     {
         if (!aabb.channel.test(channel))
             continue;

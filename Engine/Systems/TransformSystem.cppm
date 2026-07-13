@@ -8,27 +8,27 @@ import Render.CommandProcessor;
 import Render.Commands;
 import World.Events;
 
-void computeWorldTransform(World& world, Entity entity, TransformComponent& transform)
+void computeWorldTransform(World& world, Entity entity, Edit<TransformComponent>& transform)
 {
-    if (transform.runtimeData.calculatedThisFrame)
+    if (transform->runtimeData.calculatedThisFrame)
         return;
 
-    transform.runtimeData.worldMatrix = TransformUtils::toMatrix(transform);
+    transform->runtimeData.worldMatrix = TransformUtils::toMatrix(transform.get());
 
     if (const Entity parent = HierarchyUtils::getParent(world, entity); world.isValid(parent))
     {
-        TransformComponent& parentTransform = world.editComponent<TransformComponent>(parent);
+        Edit<TransformComponent> parentTransform = world.editComponent<TransformComponent>(parent);
         computeWorldTransform(world, parent, parentTransform);
-        transform.runtimeData.worldMatrix = parentTransform.runtimeData.worldMatrix * transform.runtimeData.worldMatrix;
+        transform->runtimeData.worldMatrix = parentTransform->runtimeData.worldMatrix * transform->runtimeData.worldMatrix;
     }
 
-    transform.runtimeData.calculatedThisFrame = true;
+    transform->runtimeData.calculatedThisFrame = true;
 }
 
-void updateRenderTransform(World& world, RenderCommandQueue& renderQueue, Entity entity, TransformComponent& transform)
+void updateRenderTransform(World& world, RenderCommandQueue& renderQueue, Entity entity, Edit<TransformComponent>& transform)
 {
     computeWorldTransform(world, entity, transform);
-    renderQueue.addCommand(RenderCommands::SetTransform{world.getHandle(), entity, transform.runtimeData.worldMatrix});
+    renderQueue.addCommand(RenderCommands::SetTransform{world.getHandle(), entity, transform->runtimeData.worldMatrix});
 }
 
 namespace
@@ -43,7 +43,7 @@ void init(SystemContext& context)
         World& world = context.worlds.get(event.world);
         if (event.componentType == getTypeId<TransformComponent>())
         {
-            auto& component = world.editComponent<TransformComponent>(event.entity);
+            auto component = world.editComponent<TransformComponent>(event.entity);
             updateRenderTransform(world, context.renderCommands, event.entity, component);
         }
     });
@@ -53,14 +53,14 @@ void update(SystemContext& context, float)
 {
     context.worlds.forEachWorld([&renderQueue = context.renderCommands](World& world)
     {
-        for (auto&& [entity, transform] : world.view<TransformComponent>())
+        for (auto&& [entity, transform] : world.query<Edit<TransformComponent>>())
         {
             updateRenderTransform(world, renderQueue, entity, transform);
         }
 
-        for (auto&& [entity, transform] : world.view<TransformComponent>())
+        for (auto&& [entity, transform] : world.query<Edit<TransformComponent>>())
         {
-            transform.runtimeData.calculatedThisFrame = false;
+            transform->runtimeData.calculatedThisFrame = false;
         }
     });
 }

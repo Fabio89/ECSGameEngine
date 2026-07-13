@@ -4,23 +4,19 @@ import Editor.Services;
 import Editor.SnapshotFrame;
 import std;
 
-export class EditorController
+export class EditorController : protected EditorServiceConsumer
 {
 public:
-    explicit EditorController(EditorServices& services, EditingContext& contextId) : m_services{services}, m_context{contextId} {}
+    explicit EditorController(EditorServices& services, EditingContext& contextId) : EditorServiceConsumer{services}, m_context{contextId} {}
     virtual ~EditorController() = default;
 
     virtual void update(float dt, Editor::SnapshotFrame& frame) {}
 
 protected:
-    EditorServices& services() { return m_services; }
-    const EditorServices& services() const { return m_services; }
-
     EditingContext& context() { return m_context; }
     const EditingContext& context() const { return m_context; }
 
 private:
-    EditorServices& m_services;
     EditingContext& m_context;
 };
 
@@ -42,10 +38,10 @@ private:
 
 namespace Editor
 {
-    export class ControllerManager
+    export class ControllerManager : EditorServiceConsumer
     {
     public:
-        explicit ControllerManager(EditorServices& services) : m_services{services} {}
+        explicit ControllerManager(EditorServices& services) : EditorServiceConsumer{services} {}
 
         template<typename T>
         void addController(EditingContext& context);
@@ -55,7 +51,6 @@ namespace Editor
         void update(float dt, SnapshotPublisher& snapshotPublisher);
 
     private:
-        EditorServices& m_services;
         std::vector<std::unique_ptr<EditorController>> m_controllers;
     };
 }
@@ -63,7 +58,7 @@ namespace Editor
 template<typename T>
 void Editor::ControllerManager::addController(EditingContext& context)
 {
-    addController(std::make_unique<T>(m_services, context));
+    addController(std::make_unique<T>(services(), context));
 }
 
 void Editor::ControllerManager::addController(std::unique_ptr<EditorController> controller)

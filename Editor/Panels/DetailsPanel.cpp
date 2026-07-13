@@ -61,7 +61,7 @@ void Panels::DetailsPanel::doDraw()
 
 DetailsSnapshot DetailsController::buildSnapshot(const EditingContext& context)
 {
-    const World& world = Engine::getWorld(context.world);
+    const World& world = services().worlds.get(context.world);
     const Entity entity = context.selection.isEmpty() ? Entity{} : context.selection.get().front();
 
     DetailsSnapshot snapshot;

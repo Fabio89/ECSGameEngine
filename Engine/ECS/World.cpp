@@ -21,6 +21,11 @@ Entity World::createEntity()
     return entity;
 }
 
+void World::nextFrame()
+{
+    m_dirtyTracker.nextFrame();
+}
+
 void World::printArchetypeStatus()
 {
     for (const Archetype& archetype : m_archetypes | std::views::values)
@@ -189,7 +194,7 @@ JsonObject World::serializeScene(Json::MemoryPoolAllocator<>& allocator) const
 
         for (auto componentType : components)
         {
-            const ComponentBase& component = readComponent(entity, componentType);
+            const ComponentBase& component = getComponent(entity, componentType);
             const ComponentTypeBase& componentTypeInfo = *ComponentRegistry::get(componentType);
             JsonObject jsonComponent = componentTypeInfo.serialize(component, allocator);
             jsonComponentDict.AddMember(Json::GenericStringRef{componentTypeInfo.getName().data()}, jsonComponent, allocator);
@@ -266,7 +271,7 @@ bool World::hasComponent(Entity entity, TypeId componentTypeId) const
 }
 
 [[nodiscard]]
-const ComponentBase& World::readComponent(Entity entity, TypeId componentType) const
+const ComponentBase& World::getComponent(Entity entity, TypeId componentType) const
 {
     if (auto it = m_entities.find(entity); it != m_entities.end())
     {

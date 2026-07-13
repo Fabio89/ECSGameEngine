@@ -10,17 +10,14 @@ import Math;
 import Physics;
 import World;
 
-TransformToolManager::TransformToolManager(EditorServices& services, EditingContext& context) : m_services{services}, m_context{context}
+TransformToolManager::TransformToolManager(EditorServices& services, EditingContext& context) : EditorServiceConsumer{services}, m_context{context}
 {
     m_sub += services.events.subscribe([this](const EditorEvents::SelectionChanged& event)
     {
         if (m_currentToolType != EntityEditingMode::None)
         {
             TransformTool& currentTool = *m_tools[static_cast<std::size_t>(m_currentToolType)];
-            if (event.selection.empty())
-            {
-
-            }
+            currentTool.setActive(!event.selection.empty());
         }
     });
 
@@ -29,13 +26,16 @@ TransformToolManager::TransformToolManager(EditorServices& services, EditingCont
 
 void TransformToolManager::createTools()
 {
-    m_tools[static_cast<int>(EntityEditingMode::Translate)] = std::make_unique<TranslateTool>(m_context);
-    m_tools[static_cast<int>(EntityEditingMode::Rotate)] = std::make_unique<RotateTool>(m_context);
-    m_tools[static_cast<int>(EntityEditingMode::Scale)] = std::make_unique<ScaleTool>(m_context);
+    m_tools[static_cast<int>(EntityEditingMode::Translate)] = std::make_unique<TranslateTool>(services(), m_context);
+    m_tools[static_cast<int>(EntityEditingMode::Rotate)] = std::make_unique<RotateTool>(services(), m_context);
+    m_tools[static_cast<int>(EntityEditingMode::Scale)] = std::make_unique<ScaleTool>(services(), m_context);
 }
 
 void TransformToolManager::setCurrentTool(EntityEditingMode type)
 {
+    if (m_currentToolType == type)
+        return;
+
     if (m_currentToolType != EntityEditingMode::None)
     {
         TransformTool& previousTool = *m_tools[static_cast<std::size_t>(m_currentToolType)];
@@ -56,15 +56,13 @@ void TransformToolManager::update()
     if (m_currentToolType != EntityEditingMode::None)
     {
         TransformTool& currentTool = *m_tools[static_cast<std::size_t>(m_currentToolType)];
-        if (m_context.selection.isEmpty())
-            currentTool.setActive(false);
-        else
-            currentTool.update();
+        currentTool.update();
     }
 }
 
-TransformTool::TransformTool(EditingContext& context, EntityEditingMode type)
-    : m_context{context},
+TransformTool::TransformTool(EditorServices& services, EditingContext& context, EntityEditingMode type)
+    : EditorServiceConsumer{services},
+      m_context{context},
       m_gizmo{Gizmos::createTransformGizmo(Engine::getWorld(context.world), type)} {}
 
 void TransformTool::update()
@@ -83,11 +81,11 @@ void TransformTool::setActive(bool active)
         auto setAxis = [active, &world](Entity axis)
         {
             if (!axis.isValid()) return;
-            auto& collision = world.editComponent<BoundingBoxComponent>(axis);
-            collision.channel.set(TraceChannelFlags::Gizmo, active);
+            auto collision = world.editComponent<BoundingBoxComponent>(axis);
+            collision->channel.set(TraceChannelFlags::Gizmo, active);
         };
 
-        auto& gizmoComponent = world.editComponent<GizmoComponent>(m_gizmo);
+        auto& gizmoComponent = world.readComponent<GizmoComponent>(m_gizmo);
 
         setAxis(gizmoComponent.xAxisEntity);
         setAxis(gizmoComponent.yAxisEntity);
@@ -97,7 +95,7 @@ void TransformTool::setActive(bool active)
     if (active)
     {
         attachToSelection();
-        Gizmos::setGizmoVisible(world, m_gizmo, true);
+        Gizmos::setGizmoVisible(world, m_gizmo, !context().selection.isEmpty());
     }
 }
 
@@ -108,7 +106,7 @@ void TransformTool::attachToSelection()
     {
         World& world = Engine::getWorld(m_context.world);
         HierarchyUtils::setParent(world, m_gizmo, firstSelected);
-        world.editComponent<TransformComponent>(m_gizmo).scale = 0.2f / world.readComponent<TransformComponent>(firstSelected).scale;
+        world.editComponent<TransformComponent>(m_gizmo)->scale = 0.2f / world.readComponent<TransformComponent>(firstSelected).scale;
     }
 }
 
@@ -124,7 +122,7 @@ void TranslateTool::update()
     Entity firstSelectedEntity = context().selection.get().front();
     if (world.isValid(firstSelectedEntity) && world.isValid(m_selectedGizmoAxis) && Input::isKeyDown(KeyCode::MouseButtonLeft))
     {
-        TransformComponent& transform = world.editComponent<TransformComponent>(firstSelectedEntity);
+        const TransformComponent& transform = world.readComponent<TransformComponent>(firstSelectedEntity);
 
         const Vec3 gizmoAxisDirection = [&]
         {
@@ -153,9 +151,9 @@ void TranslateTool::update()
 
         if (m_projectedCursorPositionLastFrame.has_value() && projectedCursorPosition.has_value())
         {
-            const auto delta = Math::dot(*projectedCursorPosition - *m_projectedCursorPositionLastFrame,
-                                         gizmoAxisDirection);
-            transform.position += gizmoAxisDirection * delta;
+            const auto delta = Math::dot(*projectedCursorPosition - *m_projectedCursorPositionLastFrame, gizmoAxisDirection);
+            auto transformEditor = world.editComponent<TransformComponent>(firstSelectedEntity);
+            transformEditor->position += gizmoAxisDirection * delta;
             m_projectedCursorPositionLastFrame = *projectedCursorPosition;
         }
         m_projectedCursorPositionLastFrame = projectedCursorPosition;

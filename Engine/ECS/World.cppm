@@ -4,8 +4,10 @@ module;
 
 export module World;
 export import Core;
+export import Engine.ComponentAccess;
 export import WorldHandle;
 import Archetype;
+import Engine.DirtyTracker;
 import EventBus;
 import Guid;
 import Serialization.Json;
@@ -30,6 +32,73 @@ export struct WorldCreateInfo
 {
     WorldHandle handle{};
 };
+
+//------------------------------------------------------------------------------------------------------------------------
+// Query
+//------------------------------------------------------------------------------------------------------------------------
+
+export class World;
+
+template<bool Const, typename... Access>
+concept ValidQueryAccess = !Const || (... && std::same_as<typename AccessTraits<Access>::AccessType, const typename AccessTraits<Access>::ComponentType&>);
+
+template<bool Const, typename... Access> requires ValidQueryAccess<Const, Access...>
+class QueryImpl
+{
+public:
+    static_assert(!(Const && (... || AccessTraits<Access>::writable)), "Edit<T> cannot be used with a const World query.");
+
+    using Components = std::tuple<typename AccessTraits<Access>::ComponentType...>;
+    using ArchetypeType = std::conditional_t<Const, const Archetype, Archetype>;
+    using WorldType = std::conditional_t<Const, const World, World>;
+
+    struct Iterator
+    {
+        Iterator(WorldType& world, const std::vector<ArchetypeType*>& archetypes, std::size_t archetypeIndex, Int32 entityIndex)
+            : m_world{world},
+              m_archetypes{archetypes},
+              m_archetypeIndex{archetypeIndex},
+              m_entityIndex{entityIndex}
+        {
+            skipEmptyArchetypes();
+        }
+
+        Iterator& operator++();
+
+        auto operator*() const;
+
+        bool operator==(const Iterator& other) const;
+
+    private:
+        ArchetypeType& getCurrentArchetype() const { return *m_archetypes[m_archetypeIndex]; }
+
+        void skipEmptyArchetypes();
+
+        template<typename AccessSpec>
+        auto makeAccess(Entity entity) const;
+
+        WorldType& m_world;
+        const std::vector<ArchetypeType*>& m_archetypes;
+        std::size_t m_archetypeIndex{};
+        Int32 m_entityIndex{};
+    };
+
+    explicit QueryImpl(WorldType& world);
+
+    Iterator begin();
+
+    Iterator end();
+
+private:
+    WorldType& m_world;
+    std::vector<ArchetypeType*> m_archetypes;
+};
+
+export template<typename... Access>
+using Query = QueryImpl<false, Access...>;
+
+export template<typename... Access>
+using ConstQuery = QueryImpl<true, Access...>;
 
 //------------------------------------------------------------------------------------------------------------------------
 // World
@@ -66,17 +135,15 @@ public:
     bool hasComponent(Entity entity) const;
     bool hasComponent(Entity entity, TypeId componentTypeId) const;
 
-    template <ValidComponentData T>
-    const T& readComponent(Entity entity) const;
-
-    const ComponentBase& readComponent(Entity entity, TypeId componentType) const;
-
     Archetype::ComponentRange getComponentTypesInEntity(Entity entity) const;
 
-    template <ValidComponentData T>
-    T& editComponent(Entity entity) { return const_cast<T&>(readComponent<T>(entity)); }
+    template<typename T>
+    const T& readComponent(Entity entity) const { return getComponent<T>(entity); }
+    const ComponentBase& readComponent(Entity entity, TypeId componentType) const { return getComponent(entity, componentType); }
 
-    ComponentBase& editComponent(Entity entity, TypeId componentType) { return const_cast<ComponentBase&>(readComponent(entity, componentType)); }
+    template<typename T>
+    Edit<T> editComponent(Entity entity) { return Edit<T>{entity, getComponent<T>(entity), m_dirtyTracker}; }
+    BaseEdit editComponent(Entity entity, TypeId componentType) { return BaseEdit{entity, const_cast<ComponentBase&>(getComponent(entity, componentType)), m_dirtyTracker}; }
 
     template<typename Func> [[nodiscard]]
     EventBus::Subscription subscribe(Func&& callback);
@@ -86,12 +153,19 @@ public:
     Entity getActiveCamera() const;
     void setActiveCamera(Entity entity);
 
-    template <ValidComponentData First, ValidComponentData ... Rest>
-    std::generator<std::tuple<Entity, const First&, const Rest&...>> view() const;
+    template<typename... Access>
+    auto query() { return Query<Access...>{*this}; }
 
-    template <ValidComponentData First, ValidComponentData ... Rest>
-    std::generator<std::tuple<Entity, First&, Rest&...>> view();
+    template<typename... Access>
+    auto query() const { return ConstQuery<Access...>{*this}; }
 
+    void nextFrame();
+
+    template<typename T>
+    std::span<const Entity> dirty();
+
+    auto archetypes() { return m_archetypes | std::views::values; }
+    auto archetypes() const { return m_archetypes | std::views::values; }
     void printArchetypeStatus();
 
 private:
@@ -100,19 +174,112 @@ private:
     Archetype& editOrCreateArchetype(const EntitySignature& signature);
     Archetype& prepareArchetypeOnAddComponent(Entity entity, TypeId componentId);
 
+    template<ValidComponentData T>
+    const T& getComponent(Entity entity) const;
+
+    template<ValidComponentData T>
+    T& getComponent(Entity entity);
+
+    const ComponentBase& getComponent(Entity entity, TypeId componentType) const;
+
     WorldHandle m_handle;
     Entity::ValueType m_nextEntityValue{};
     std::unordered_map<Entity, EntitySignature> m_entities{};
     std::unordered_map<EntitySignature, Archetype> m_archetypes;
+
+    DirtyTracker m_dirtyTracker;
+
     EventBus m_eventBus;
     Entity m_activeCamera;
 };
 
 //------------------------------------------------------------------------------------------------------------------------
+// Query - Implementation
+//------------------------------------------------------------------------------------------------------------------------
+
+template<bool Const, typename... Access> requires ValidQueryAccess<Const, Access...>
+QueryImpl<Const, Access...>::Iterator& QueryImpl<Const, Access...>::Iterator::operator++()
+{
+    ++m_entityIndex;
+
+    if (m_entityIndex >= getCurrentArchetype().getSize())
+    {
+        m_entityIndex = 0;
+        ++m_archetypeIndex;
+
+        skipEmptyArchetypes();
+    }
+
+    return *this;
+}
+
+template<bool Const, typename... Access> requires ValidQueryAccess<Const, Access...>
+auto QueryImpl<Const, Access...>::Iterator::operator*() const
+{
+    const Entity entity = getCurrentArchetype().getEntityAt(m_entityIndex);
+    return std::tuple<Entity, typename AccessTraits<Access>::AccessType...>(entity, makeAccess<Access>(entity)...);
+}
+
+template<bool Const, typename... Access> requires ValidQueryAccess<Const, Access...>
+bool QueryImpl<Const, Access...>::Iterator::operator==(const Iterator& other) const
+{
+    return m_archetypeIndex == other.m_archetypeIndex && m_entityIndex == other.m_entityIndex;
+}
+
+template<bool Const, typename... Access> requires ValidQueryAccess<Const, Access...>
+void QueryImpl<Const, Access...>::Iterator::skipEmptyArchetypes()
+{
+    while (m_archetypeIndex < m_archetypes.size())
+    {
+        if (getCurrentArchetype().getSize() > 0)
+            return;
+
+        ++m_archetypeIndex;
+    }
+}
+
+template<bool Const, typename... Access> requires ValidQueryAccess<Const, Access...>
+template<typename AccessSpec>
+auto QueryImpl<Const, Access...>::Iterator::makeAccess(Entity entity) const
+{
+    using T = AccessTraits<AccessSpec>::ComponentType;
+    using Normalized = AccessTraits<AccessSpec>::AccessType;
+
+    if constexpr (std::same_as<AccessSpec, Edit<T>>)
+        return m_world.template editComponent<T>(entity);
+    else
+        return Normalized{m_world.template readComponent<T>(entity)};
+}
+
+template<bool Const, typename... Access> requires ValidQueryAccess<Const, Access...>
+QueryImpl<Const, Access...>::QueryImpl(WorldType& world) : m_world{world}
+{
+    for (ArchetypeType& archetype : m_world.archetypes())
+    {
+        if (archetype.template matches<typename AccessTraits<Access>::ComponentType...>())
+        {
+            m_archetypes.push_back(&archetype);
+        }
+    }
+}
+
+template<bool Const, typename... Access> requires ValidQueryAccess<Const, Access...>
+QueryImpl<Const, Access...>::Iterator QueryImpl<Const, Access...>::begin()
+{
+    return Iterator{m_world, m_archetypes, 0, 0};
+}
+
+template<bool Const, typename... Access> requires ValidQueryAccess<Const, Access...>
+QueryImpl<Const, Access...>::Iterator QueryImpl<Const, Access...>::end()
+{
+    return Iterator{m_world, m_archetypes, m_archetypes.size(), 0};
+}
+
+//------------------------------------------------------------------------------------------------------------------------
 // World - Implementation
 //------------------------------------------------------------------------------------------------------------------------
 
-template <ValidComponentData T, typename... Args>
+template<ValidComponentData T, typename... Args>
 T& World::addComponent(Entity entity, Args&&... args)
 {
     assertThread();
@@ -141,8 +308,20 @@ bool World::hasComponent(Entity entity) const
     return false;
 }
 
+template<typename Func>
+EventBus::Subscription World::subscribe(Func&& callback)
+{
+    return m_eventBus.subscribe(std::forward<Func>(callback));
+}
+
+template<typename T>
+std::span<const Entity> World::dirty()
+{
+    return m_dirtyTracker.dirty<T>();
+}
+
 template <ValidComponentData T>
-[[nodiscard]] const T& World::readComponent(Entity entity) const
+const T& World::getComponent(Entity entity) const
 {
     if (auto it = m_entities.find(entity); it != m_entities.end())
     {
@@ -153,38 +332,8 @@ template <ValidComponentData T>
     return invalid;
 }
 
-template<typename Func>
-EventBus::Subscription World::subscribe(Func&& callback)
+template<ValidComponentData T>
+T& World::getComponent(Entity entity)
 {
-    return m_eventBus.subscribe(std::forward<Func>(callback));
-}
-
-template <ValidComponentData First, ValidComponentData ... Rest>
-std::generator<std::tuple<Entity, const First&, const Rest&...>> World::view() const
-{
-    for (auto& archetype : m_archetypes | std::views::values)
-    {
-        if (archetype.matches<First, Rest...>())
-        {
-            for (auto&& entityComponents : archetype.view<First, Rest...>())
-            {
-                co_yield entityComponents;
-            }
-        }
-    }
-}
-
-template <ValidComponentData First, ValidComponentData ... Rest>
-std::generator<std::tuple<Entity, First&, Rest&...>> World::view()
-{
-    for (auto& archetype : m_archetypes | std::views::values)
-    {
-        if (archetype.matches<First, Rest...>())
-        {
-            for (auto&& entityComponents : archetype.view<First, Rest...>())
-            {
-                co_yield entityComponents;
-            }
-        }
-    }
+    return const_cast<T&>(std::as_const(*this).getComponent<T>(entity));
 }

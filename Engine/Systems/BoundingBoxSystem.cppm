@@ -26,9 +26,9 @@ constexpr std::vector<Vec3> computeCorners(const BoundingBoxComponent& aabb)
     };
 }
 
-void computeWorldCorners(BoundingBoxComponent& aabb, const Mat4& worldTransform)
+void computeWorldCorners(Edit<BoundingBoxComponent>& aabb, const Mat4& worldTransform)
 {
-    const std::vector<Vec3>& corners = computeCorners(aabb);
+    const std::vector<Vec3>& corners = computeCorners(aabb.get());
 
     Vec3 minWorld{std::numeric_limits<float>::max()};
     Vec3 maxWorld{std::numeric_limits<float>::lowest()};
@@ -40,8 +40,8 @@ void computeWorldCorners(BoundingBoxComponent& aabb, const Mat4& worldTransform)
         maxWorld = Math::max(maxWorld, worldPos);
     }
 
-    aabb.minWorld = minWorld;
-    aabb.maxWorld = maxWorld;
+    aabb->minWorld = minWorld;
+    aabb->maxWorld = maxWorld;
 }
 
 void init(SystemContext& context)
@@ -51,7 +51,7 @@ void init(SystemContext& context)
         if (event.componentType == getTypeId<BoundingBoxComponent>())
         {
             World& world = worlds.get(event.world);
-            auto& aabb = world.editComponent<BoundingBoxComponent>(event.entity);
+            auto aabb = world.editComponent<BoundingBoxComponent>(event.entity);
             const auto& transform = world.readComponent<TransformComponent>(event.entity);
             computeWorldCorners(aabb, transform.runtimeData.worldMatrix);
         }
@@ -62,7 +62,7 @@ void update(SystemContext& context, float)
 {
     context.worlds.forEachWorld([](World& world)
     {
-        for (auto&& [entity, aabb, transform] : world.view<BoundingBoxComponent, TransformComponent>())
+        for (auto&& [entity, aabb, transform] : world.query<Edit<BoundingBoxComponent>, TransformComponent>())
         {
             computeWorldCorners(aabb, transform.runtimeData.worldMatrix);
         }

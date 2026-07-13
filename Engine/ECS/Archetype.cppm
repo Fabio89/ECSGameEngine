@@ -3,6 +3,15 @@ export import Core;
 export import Log;
 import ComponentArray;
 
+template<bool Const, ValidComponentData... Components>
+class ArchetypeViewImpl;
+
+export template<ValidComponentData... Components>
+using ArchetypeView = ArchetypeViewImpl<false, Components...>;
+
+export template<ValidComponentData... Components>
+using ConstArchetypeView = ArchetypeViewImpl<true, Components...>;
+
 //------------------------------------------------------------------------------------------------------------------------
 // Archetype
 //------------------------------------------------------------------------------------------------------------------------
@@ -18,6 +27,7 @@ public:
     using ComponentArrayMap = std::unordered_map<TypeId, std::unique_ptr<ComponentArrayBase>>;
     using ComponentRange = std::ranges::elements_view<std::ranges::ref_view<const ComponentArrayMap>, 0>;
 
+    Int32 getSize() const { return narrow_cast<Int32>(m_indexToEntity.size()); }
     [[nodiscard]] bool isEmpty() const;
 
     template <ValidComponentData T>
@@ -27,6 +37,14 @@ public:
     [[nodiscard]] const T& readComponent(Entity entity) const;
 
     [[nodiscard]] const ComponentBase& readComponent(Entity entity, TypeId componentType) const;
+
+    template<ValidComponentData T>
+    T& getComponentAt(Int32 index);
+
+    template<ValidComponentData T>
+    const T& getComponentAt(Int32 index) const;
+
+    Entity getEntityAt(Int32 index) const;
 
     void removeEntity(Entity entity);
 
@@ -39,22 +57,16 @@ public:
     template <ValidComponentData... Components>
     [[nodiscard]] bool matches() const;
 
-    template <ValidComponentData ... Components>
-    std::generator<std::tuple<Entity, const Components&...>> view() const;
+    template<ValidComponentData... Components>
+    auto view() const { return ConstArchetypeView<Components...>{*this}; }
 
-    template <ValidComponentData ... Components>
-    std::generator<std::tuple<Entity, Components&...>> view();
+    template<ValidComponentData... Components>
+    auto view() { return ArchetypeView<Components...>{*this}; }
 
 private:
-    template <ValidComponentData T>
-    const ComponentArray<T>& getComponentArray() { return static_cast<const ComponentArray<T>&>(*m_componentArrays.at(getTypeId<T>())); }
-
     std::unordered_map<TypeId, std::unique_ptr<ComponentArrayBase>> m_componentArrays;
     std::unordered_map<Entity, std::size_t> m_entityToIndex;
     std::vector<Entity> m_indexToEntity;
-
-    template <ValidComponentData ... Components>
-    class ViewIterator;
 };
 
 export using ArchetypeChangedCallback = std::function<void(Entity, TypeId)>;
@@ -63,56 +75,60 @@ export using ArchetypeChangedCallback = std::function<void(Entity, TypeId)>;
 // Archetype - Implementation
 //------------------------------------------------------------------------------------------------------------------------
 
-template <ValidComponentData ... Components>
-class Archetype::ViewIterator
+template <bool Const, ValidComponentData... Components>
+class ViewIterator
 {
 public:
-    ViewIterator(const Archetype* archetype, std::size_t index);
+    using ArchetypeType = std::conditional_t<Const, const Archetype, Archetype>;
 
-    // Dereference to get the current entity and its components
-    auto operator*() const;
+    ViewIterator(ArchetypeType& archetype, Int32 index)
+        : m_archetype(archetype),
+          m_index(index) {}
 
-    // Move to the next valid entity
-    ViewIterator& operator++();
+    auto operator*() const
+    {
+        const Entity entity = m_archetype.getEntityAt(m_index);
+        return std::tuple<Entity, std::conditional_t<Const, const Components&, Components&>...>{entity, m_archetype.template getComponentAt<Components>(m_index)...};
+    }
 
-    bool operator!=(const ViewIterator& other) const;
-
-private:
-    const Archetype* m_archetype;
-    std::size_t m_index{};
-};
-
-template <ValidComponentData ... Components>
-Archetype::ViewIterator<Components...>::ViewIterator(const Archetype* archetype, std::size_t index)
-    : m_archetype(archetype), m_index(index)
-{
-}
-
-template <ValidComponentData ... Components>
-auto Archetype::ViewIterator<Components...>::operator*() const
-{
-    Entity entity = m_archetype->m_indexToEntity[m_index];
-    return std::tuple<Entity, const Components&...>(entity, m_archetype->readComponent<Components>(entity)...);
-}
-
-template <ValidComponentData ... Components>
-Archetype::ViewIterator<Components...>& Archetype::ViewIterator<Components...>::operator++()
-{
-    do
+    ViewIterator& operator++()
     {
         ++m_index;
+        return *this;
     }
-    while (m_index < m_archetype->m_indexToEntity.size() && !m_archetype->matches<Components...>());
-    return *this;
-}
 
-template <ValidComponentData ... Components>
-bool Archetype::ViewIterator<Components...>::operator!=(const ViewIterator& other) const
+    bool operator==(const ViewIterator& other) const
+    {
+        return m_index == other.m_index;
+    }
+
+private:
+    ArchetypeType& m_archetype;
+    Int32 m_index;
+};
+
+[[nodiscard]] bool Archetype::isEmpty() const
 {
-    return m_index != other.m_index;
+    return m_entityToIndex.empty();
 }
 
-template <ValidComponentData T>
+template<bool Const, ValidComponentData... Components>
+class ArchetypeViewImpl
+{
+public:
+    using Iterator = ViewIterator<Const, Components...>;
+    using ArchetypeType = std::conditional_t<Const, const Archetype, Archetype>;
+
+    explicit ArchetypeViewImpl(ArchetypeType& archetype) : m_archetype{archetype} {}
+
+    auto begin() { return Iterator{m_archetype, 0}; }
+    auto end() { return Iterator{m_archetype, m_archetype.getSize()}; }
+
+private:
+    ArchetypeType& m_archetype;
+};
+
+template<ValidComponentData T>
 T& Archetype::addComponent(Entity entity, T&& component)
 {
     auto& arr = m_componentArrays[getTypeId<T>()];
@@ -148,35 +164,6 @@ template <ValidComponentData T>
     return invalid;
 }
 
-template <ValidComponentData ... Components>
-[[nodiscard]] bool Archetype::matches() const
-{
-    return (... && (m_componentArrays.contains(getTypeId<Components>())));
-}
-
-template <ValidComponentData ... Components>
-std::generator<std::tuple<Entity, const Components&...>> Archetype::view() const
-{
-    for (Entity entity : m_indexToEntity)
-    {
-        co_yield std::tuple<Entity, const Components&...>(entity, readComponent<Components>(entity)...);
-    }
-}
-
-template <ValidComponentData ... Components>
-std::generator<std::tuple<Entity, Components&...>> Archetype::view()
-{
-    for (Entity entity : m_indexToEntity)
-    {
-        co_yield std::tuple<Entity, Components&...>(entity, const_cast<Components&>(readComponent<Components>(entity))...);
-    }
-}
-
-[[nodiscard]] bool Archetype::isEmpty() const
-{
-    return m_entityToIndex.empty();
-}
-
 [[nodiscard]] const ComponentBase& Archetype::readComponent(Entity entity, TypeId componentType) const
 {
     if (auto indexIt = m_entityToIndex.find(entity); indexIt != m_entityToIndex.end())
@@ -189,6 +176,24 @@ std::generator<std::tuple<Entity, Components&...>> Archetype::view()
 
     static constexpr ComponentBase invalid{};
     return invalid;
+}
+
+template<ValidComponentData T>
+T& Archetype::getComponentAt(Int32 index)
+{
+    return const_cast<T&>(std::as_const(*this).getComponentAt<T>(index));
+}
+
+template<ValidComponentData T>
+const T& Archetype::getComponentAt(Int32 index) const
+{
+    auto& array = static_cast<ComponentArray<T>&>(*m_componentArrays.at(getTypeId<T>()));
+    return array.get(index).data;
+}
+
+Entity Archetype::getEntityAt(Int32 index) const
+{
+    return m_indexToEntity.at(narrow_cast<std::size_t>(index));
 }
 
 void Archetype::removeEntity(Entity entity)
@@ -260,4 +265,10 @@ void Archetype::steal(Archetype& other, Entity entity)
             componentArray->move(otherArchetypeLastEntityIndex, indexToRemoveFromOther);
         }
     }
+}
+
+template <ValidComponentData ... Components>
+[[nodiscard]] bool Archetype::matches() const
+{
+    return (... && (m_componentArrays.contains(getTypeId<Components>())));
 }

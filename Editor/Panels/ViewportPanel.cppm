@@ -15,9 +15,6 @@ struct ViewportSnapshot
     Entity hitEntity;
 };
 
-template<>
-constexpr std::string_view getTypeName<ViewportSnapshot>() { return "ViewportSnapshot"; }
-
 class ViewportController : public EditorControllerImpl<ViewportSnapshot>
 {
 public:

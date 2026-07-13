@@ -102,14 +102,15 @@ namespace Editor
 
     void execute(SetProperty&& request)
     {
-        World& world = Engine::getWorld(contexts().get(request.contextId).world);
+        World& world = services.worlds.get(contexts().get(request.contextId).world);
         if (!world.isValid(request.entity))
             return;
 
         if (!world.hasComponent(request.entity, request.componentType))
             return;
 
-        request.property->set(&world.editComponent(request.entity, request.componentType), request.value);
+        auto component = world.editComponent(request.entity, request.componentType);
+        request.property->set(component, request.value);
     }
 
     void execute(SetCameraMouseLookEnabled&& request)
@@ -134,10 +135,10 @@ Editor::ControllerManager& Editor::ensureControllerManager(EditingContextId cont
 
 void Editor::init()
 {
+    Engine::addSystem(TransformSystem::callbacks);
     Engine::addSystem(BoundingBoxSystem::callbacks);
     Engine::addSystem(HierarchySystem::callbacks);
     Engine::addSystem(RenderSynchronizer::callbacks);
-    Engine::addSystem(TransformSystem::callbacks);
 
     Engine::init();
 
@@ -208,7 +209,7 @@ bool Editor::update()
     for (auto& [contextId, controllerManager] : controllerManagers)
         controllerManager.update(Engine::getSimulationDeltaTime(), contexts().get(contextId).snapshotPublisher);
 
-    EditorCamera::update(editorContext.window, Engine::getWorld(editorContext.world), Engine::getSimulationDeltaTime());
+    EditorCamera::update(editorContext.window, services.worlds.get(editorContext.world), Engine::getSimulationDeltaTime());
 
     return true;
 }
@@ -251,11 +252,11 @@ Entity Editor::ensureCamera(World& world)
     world.addComponent<NameComponent>(camera, "Main Camera");
     world.addComponent<TransformComponent>(camera);
 
-    auto& transform = world.editComponent<TransformComponent>(camera);
-    transform.position = {2.f, 2.f, 2.f};
-    const Vec3 dir = Math::normalize(-transform.position);
+    auto transform = world.editComponent<TransformComponent>(camera);
+    transform->position = {2.f, 2.f, 2.f};
+    const Vec3 dir = Math::normalize(-transform->position);
     const Quat rot = Math::rotation(forwardVector(), dir);
-    transform.rotation = rot;
+    transform->rotation = rot;
 
     return camera;
 }

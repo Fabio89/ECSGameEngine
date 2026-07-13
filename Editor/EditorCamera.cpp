@@ -17,14 +17,14 @@ void updateCameraTransform(WindowHandle window, World& world, Entity camera, flo
         (static_cast<int>(Input::isKeyDown(KeyCode::W)) - static_cast<int>(Input::isKeyDown(KeyCode::S)))
     };
 
-    auto& transform = world.editComponent<TransformComponent>(camera);
-    const Vec3 forward = TransformUtils::forward(transform);
-    const Vec3 right = TransformUtils::right(transform);
-    const Vec3 up = TransformUtils::up(transform);
+    auto transform = world.editComponent<TransformComponent>(camera);
+    const Vec3 forward = TransformUtils::forward(*transform);
+    const Vec3 right = TransformUtils::right(*transform);
+    const Vec3 up = TransformUtils::up(*transform);
 
     Vec3 velocity = (right * movement.x + up * movement.y + forward * movement.z) * movementSpeed;
     //cameraVelocity = Math::lerp(cameraVelocity, targetVelocity, 1.0f - std::exp(-acceleration * deltaTime));
-    transform.position += velocity * deltaTime;
+    transform->position += velocity * deltaTime;
 
     if (allowRotation)
     {
@@ -37,10 +37,10 @@ void updateCameraTransform(WindowHandle window, World& world, Entity camera, flo
         dPitch = rotationMultiplier * cursorDelta.y;
 
         Quat yawQuat = Math::angleAxis(dYaw, Vec3(0,1,0));
-        transform.rotation = yawQuat * transform.rotation;
-        Vec3 newRight = TransformUtils::right(transform);
+        transform->rotation = yawQuat * transform->rotation;
+        Vec3 newRight = TransformUtils::right(*transform);
         Quat pitchQuat = Math::angleAxis(dPitch, newRight);
-        transform.rotation = Math::normalize(pitchQuat * transform.rotation);
+        transform->rotation = Math::normalize(pitchQuat * transform->rotation);
     }
 }
 

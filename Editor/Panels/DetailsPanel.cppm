@@ -27,9 +27,6 @@ struct DetailsSnapshot
     std::vector<ComponentSnapshot> components;
 };
 
-template<>
-constexpr std::string_view getTypeName<DetailsSnapshot>() { return "DetailsSnapshot"; }
-
 class DetailsController : public EditorControllerImpl<DetailsSnapshot>
 {
 public:

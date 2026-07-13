@@ -19,6 +19,8 @@ public:
     template<typename Func> [[nodiscard]]
     EventBus::Subscription subscribe(Func&& callback);
 
+    void nextFrame();
+
 private:
     WorldHandle prepareWorld(UInt32 index);
     void subscribeToWorldEvents(World& world);
