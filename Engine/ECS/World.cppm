@@ -126,10 +126,10 @@ public:
     void patchEntity(Entity entity, const JsonObject& json);
 
     template <ValidComponentData T, typename... Args>
-    T& addComponent(Entity entity, Args&&... args);
+    const T& addComponent(Entity entity, Args&&... args);
 
     template <ValidComponentData T>
-    T& addComponent(Entity entity, T&& args);
+    const T& addComponent(Entity entity, T&& args);
 
     template <ValidComponentData T>
     bool hasComponent(Entity entity) const;
@@ -137,11 +137,11 @@ public:
 
     Archetype::ComponentRange getComponentTypesInEntity(Entity entity) const;
 
-    template<typename T>
+    template<ValidComponentData T>
     const T& readComponent(Entity entity) const { return getComponent<T>(entity); }
     const ComponentBase& readComponent(Entity entity, TypeId componentType) const { return getComponent(entity, componentType); }
 
-    template<typename T>
+    template<ValidComponentData T>
     Edit<T> editComponent(Entity entity) { return Edit<T>{entity, getComponent<T>(entity), m_dirtyTracker}; }
     BaseEdit editComponent(Entity entity, TypeId componentType) { return BaseEdit{entity, const_cast<ComponentBase&>(getComponent(entity, componentType)), m_dirtyTracker}; }
 
@@ -161,8 +161,14 @@ public:
 
     void nextFrame();
 
-    template<typename T>
-    std::span<const Entity> dirty();
+    template<typename Tag>
+    std::span<const Entity> getMarked() { return m_dirtyTracker.getDirty<Tag>(); }
+
+    template<typename Tag>
+    bool isMarked(Entity entity) const { return m_dirtyTracker.isDirty<Tag>(entity); }
+
+    template<typename Tag>
+    void mark(Entity entity) { m_dirtyTracker.markDirty<Tag>(entity); }
 
     auto archetypes() { return m_archetypes | std::views::values; }
     auto archetypes() const { return m_archetypes | std::views::values; }
@@ -187,7 +193,7 @@ private:
     std::unordered_map<Entity, EntitySignature> m_entities{};
     std::unordered_map<EntitySignature, Archetype> m_archetypes;
 
-    DirtyTracker m_dirtyTracker;
+    DirtyTrackerManager m_dirtyTracker;
 
     EventBus m_eventBus;
     Entity m_activeCamera;
@@ -279,19 +285,20 @@ QueryImpl<Const, Access...>::Iterator QueryImpl<Const, Access...>::end()
 //------------------------------------------------------------------------------------------------------------------------
 
 template<ValidComponentData T, typename... Args>
-T& World::addComponent(Entity entity, Args&&... args)
+const T& World::addComponent(Entity entity, Args&&... args)
 {
     assertThread();
     Archetype& archetype = prepareArchetypeOnAddComponent(entity, getTypeId<T>());
     T& addedComponent = archetype.addComponent<T>(entity, T{std::forward<Args>(args)...});
     log(std::format("Added component {} to entity {}", getTypeName<T>(), entity));
+    m_dirtyTracker.markDirty<T>(entity);
     m_eventBus.publish(WorldEvents::ComponentAdded{.world = getHandle(), .entity = entity, .componentType = getTypeId<T>()});
 
     return addedComponent;
 }
 
 template <ValidComponentData T>
-T& World::addComponent(Entity entity, T&& args)
+const T& World::addComponent(Entity entity, T&& args)
 {
     return addComponent<T, T>(entity, std::forward<T>(args));
 }
@@ -303,7 +310,7 @@ bool World::hasComponent(Entity entity) const
     {
         return readArchetype(it->second).matches<T>();
     }
-    report(std::format("{} was requested for an entity that doesn't exist", getTypeName<T>()));
+    report(std::format("{} was requested for entity {} which doesn't exist", getTypeName<T>(), entity));
     return false;
 }
 
@@ -311,12 +318,6 @@ template<typename Func>
 EventBus::Subscription World::subscribe(Func&& callback)
 {
     return m_eventBus.subscribe(std::forward<Func>(callback));
-}
-
-template<typename T>
-std::span<const Entity> World::dirty()
-{
-    return m_dirtyTracker.dirty<T>();
 }
 
 template <ValidComponentData T>

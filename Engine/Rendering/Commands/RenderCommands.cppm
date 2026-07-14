@@ -26,6 +26,7 @@ export namespace RenderCommands
         Entity entity;
         Guid mesh;
         Guid texture;
+        Mat4 worldTransform{1};
     };
 
     struct RemoveObject
@@ -39,6 +40,8 @@ export namespace RenderCommands
         WorldHandle world;
         Entity entity;
         std::vector<LineVertex> vertices;
+        Mat4 worldTransform{1};
+        bool hidden{};
     };
 
     struct RemoveLineObject

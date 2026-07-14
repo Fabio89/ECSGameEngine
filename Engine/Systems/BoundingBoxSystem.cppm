@@ -52,8 +52,8 @@ void init(SystemContext& context)
         {
             World& world = worlds.get(event.world);
             auto aabb = world.editComponent<BoundingBoxComponent>(event.entity);
-            const auto& transform = world.readComponent<TransformComponent>(event.entity);
-            computeWorldCorners(aabb, transform.runtimeData.worldMatrix);
+            const auto& transform = world.readComponent<RuntimeTransformComponent>(event.entity);
+            computeWorldCorners(aabb, transform.worldMatrix);
         }
     });
 }
@@ -62,9 +62,9 @@ void update(SystemContext& context, float)
 {
     context.worlds.forEachWorld([](World& world)
     {
-        for (auto&& [entity, aabb, transform] : world.query<Edit<BoundingBoxComponent>, TransformComponent>())
+        for (auto&& [entity, aabb, transform] : world.query<Edit<BoundingBoxComponent>, RuntimeTransformComponent>())
         {
-            computeWorldCorners(aabb, transform.runtimeData.worldMatrix);
+            computeWorldCorners(aabb, transform.worldMatrix);
         }
     });
 }

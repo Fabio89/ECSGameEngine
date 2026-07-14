@@ -143,6 +143,8 @@ void World::removeEntity(Entity entity)
         if (m_activeCamera == entity)
             m_activeCamera = {};
 
+        m_dirtyTracker.remove(entity);
+
         m_eventBus.publish(WorldEvents::EntityDestroyed{.world = m_handle, .entity = entity});
     }
 }
@@ -266,7 +268,7 @@ bool World::hasComponent(Entity entity, TypeId componentTypeId) const
     {
         return std::ranges::contains(readArchetype(it->second).getComponentTypes(), componentTypeId);
     }
-    report(std::format("{} was requested for an entity that doesn't exist", ComponentRegistry::get(componentTypeId)->getName()));
+    report(std::format("{} was requested for entity {} which doesn't exist", ComponentRegistry::get(componentTypeId)->getName(), entity));
     return false;
 }
 

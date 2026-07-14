@@ -90,7 +90,7 @@ void RenderCommandProcessor::process(RenderCommands::RemoveWorld&& cmd)
 template<>
 void RenderCommandProcessor::process(RenderCommands::AddObject&& cmd)
 {
-    m_context.renderWorldManager.getObjectManager(cmd.world).addRenderObject(cmd.entity, cmd.mesh, cmd.texture);
+    m_context.renderWorldManager.getObjectManager(cmd.world).addRenderObject(cmd.entity, std::move(cmd.mesh), std::move(cmd.texture), std::move(cmd.worldTransform));
 }
 
 template<>
@@ -102,7 +102,7 @@ void RenderCommandProcessor::process(RenderCommands::RemoveObject&& cmd)
 template<>
 void RenderCommandProcessor::process(RenderCommands::AddLineObject&& cmd)
 {
-    m_context.renderWorldManager.getObjectManager(cmd.world).addLineRenderObject(cmd.entity, std::move(cmd.vertices));
+    m_context.renderWorldManager.getObjectManager(cmd.world).addLineRenderObject(cmd.entity, std::move(cmd.vertices), std::move(cmd.worldTransform));
 }
 
 template<>

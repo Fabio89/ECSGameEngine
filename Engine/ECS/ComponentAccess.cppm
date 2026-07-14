@@ -17,7 +17,7 @@ export template<typename T>
 class Edit
 {
 public:
-    Edit(Entity entity, T& component, DirtyTracker& dirtyTracker) : m_entity{entity}, m_component{component}, m_dirtyTracker{dirtyTracker} {}
+    Edit(Entity entity, T& component, DirtyTrackerManager& dirtyTracker) : m_entity{entity}, m_component{component}, m_dirtyTracker{dirtyTracker} {}
     ~Edit();
 
     T* operator->() { return &m_component; }
@@ -51,13 +51,13 @@ public:
 private:
     Entity m_entity;
     T& m_component;
-    DirtyTracker& m_dirtyTracker;
+    DirtyTrackerManager& m_dirtyTracker;
 };
 
 export class BaseEdit
 {
 public:
-    BaseEdit(Entity entity, ComponentBase& component, DirtyTracker& dirtyTracker) : m_entity{entity}, m_component{component}, m_dirtyTracker{dirtyTracker} {}
+    BaseEdit(Entity entity, ComponentBase& component, DirtyTrackerManager& dirtyTracker) : m_entity{entity}, m_component{component}, m_dirtyTracker{dirtyTracker} {}
 
     template<ValidComponentData T>
     Edit<T> as() const { return Edit<T>{m_entity, static_cast<Component<T>&>(m_component).data, m_dirtyTracker}; }
@@ -65,7 +65,7 @@ public:
 private:
     Entity m_entity;
     ComponentBase& m_component;
-    DirtyTracker& m_dirtyTracker;
+    DirtyTrackerManager& m_dirtyTracker;
 };
 
 export template<typename T>

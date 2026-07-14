@@ -69,7 +69,7 @@ void RenderObjectManager::setCamera(const Camera& camera)
     m_camera = std::move(camera);
 }
 
-void RenderObjectManager::addRenderObject(Entity entity, Guid meshAsset, Guid textureAsset)
+void RenderObjectManager::addRenderObject(Entity entity, Guid meshAsset, Guid textureAsset, Mat4 transform)
 {
     addMeshIfMissing(meshAsset);
     addTextureIfMissing(textureAsset);
@@ -101,6 +101,7 @@ void RenderObjectManager::addRenderObject(Entity entity, Guid meshAsset, Guid te
     }
 
     object.entity = entity;
+    object.model = std::move(transform);
     object.uniformBuffers = std::vector<vk::Buffer>(MaxFramesInFlight);
     object.uniformBuffersMemory = std::vector<vk::DeviceMemory>(MaxFramesInFlight);
     object.uniformBuffersMapped = std::vector<void*>(MaxFramesInFlight);
@@ -160,7 +161,7 @@ void RenderObjectManager::setObjectTransform(Entity entity, const Mat4& worldTra
     }
 }
 
-void RenderObjectManager::addLineRenderObject(Entity entity, std::vector<LineVertex>&& vertices)
+void RenderObjectManager::addLineRenderObject(Entity entity, std::vector<LineVertex>&& vertices, Mat4 transform)
 {
     check(!std::ranges::any_of(m_lineObjects, [&](const LineRenderObject& object) { return object.entity == entity; }), "Added a line render object more than once!");
 
@@ -178,6 +179,7 @@ void RenderObjectManager::addLineRenderObject(Entity entity, std::vector<LineVer
 
     object.entity = entity;
     object.vertices = std::move(vertices);
+    object.model = std::move(transform);
     object.uniformBuffers = std::vector<vk::Buffer>(MaxFramesInFlight);
     object.uniformBuffersMemory = std::vector<vk::DeviceMemory>(MaxFramesInFlight);
     object.uniformBuffersMapped = std::vector<void*>(MaxFramesInFlight);
@@ -275,7 +277,7 @@ void RenderObjectManager::renderLineFrame(vk::CommandBuffer commandBuffer, vk::P
         if (!object.visible)
             continue;
 
-        RenderUtils::updateBuffer(object.vertices, m_device, object.vertexBufferMemory);
+        RenderUtils::updateBuffer(object.vertices, m_device, object.vertexBufferMemory); // TODO(perf): Shouldn't need to do this every frame
 
         updateLineDescriptorSets(object);
 

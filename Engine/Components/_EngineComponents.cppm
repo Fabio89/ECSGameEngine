@@ -23,6 +23,7 @@ namespace EngineComponents
         ComponentRegistry::init<NameComponent>();
         ComponentRegistry::init<PersistentIdComponent>();
         ComponentRegistry::init<RenderComponent>();
+        ComponentRegistry::init<RuntimeTransformComponent>();
         ComponentRegistry::init<TagsComponent>();
         ComponentRegistry::init<TransformComponent>();
     }

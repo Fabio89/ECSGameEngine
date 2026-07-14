@@ -13,12 +13,11 @@ export struct TransformComponent
     Vec3 position{};
     Quat rotation{};
     float scale{1.f};
+};
 
-    struct Runtime
-    {
-        Mat4 worldMatrix{};
-        bool calculatedThisFrame{false};
-    } runtimeData{};
+export struct RuntimeTransformComponent
+{
+    Mat4 worldMatrix{};
 };
 
 export namespace TransformUtils
@@ -90,3 +89,6 @@ TransformComponent deserialize(const JsonObject& data)
         .scale = scale
     };
 }
+
+template<>
+constexpr std::string_view getTypeName<RuntimeTransformComponent>() { return "RuntimeTransformComponent"; }

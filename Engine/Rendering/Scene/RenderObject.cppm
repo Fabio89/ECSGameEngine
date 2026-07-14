@@ -91,10 +91,10 @@ public:
     void clear();
     void setCamera(const Camera& camera);
 
-    void addRenderObject(Entity entity, Guid meshAsset, Guid textureAsset);
+    void addRenderObject(Entity entity, Guid meshAsset, Guid textureAsset, Mat4 transform);
     void removeRenderObject(Entity entity);
     void setObjectTransform(Entity entity, const Mat4& worldTransform);
-    void addLineRenderObject(Entity entity, std::vector<LineVertex>&& vertices);
+    void addLineRenderObject(Entity entity, std::vector<LineVertex>&& vertices, Mat4 transform);
     void removeLineRenderObject(Entity entity);
     void setObjectVisibility(Entity entity, bool visible);
     

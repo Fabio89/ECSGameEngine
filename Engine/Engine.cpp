@@ -18,7 +18,7 @@ namespace
     ThreadOwned threadChecker;
     FrameTimer frameTimer;
     Engine::Config config;
-
+    UInt64 currentFrame{};
     RenderManager renderManager;
     WorldManager worldManager;
     SystemManager systemManager{{.worlds = worldManager, .renderCommands = renderManager.getCommandQueue()}};
@@ -92,6 +92,7 @@ bool Engine::update()
     Platform::update();
 
     worldManager.nextFrame();
+    ++currentFrame;
 
     return true;
 }
@@ -132,6 +133,11 @@ void Engine::shutdown()
 WindowHandle Engine::getWindow()
 {
     return window;
+}
+
+UInt64 Engine::getCurrentFrame()
+{
+    return currentFrame;
 }
 
 WorldHandle Engine::createWorld()

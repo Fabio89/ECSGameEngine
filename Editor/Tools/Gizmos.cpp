@@ -15,6 +15,7 @@ import Math;
 import Physics;
 import Render.Commands;
 import Render.Primitives;
+import System.Transform;
 
 namespace Gizmos
 {
@@ -48,8 +49,8 @@ Entity Gizmos::createTranslationGizmo(World& world)
 {
     const Entity gizmo = world.createEntity();
     world.addComponent<NameComponent>(gizmo, "Translation Gizmo");
-    world.addComponent<HierarchyComponent>(gizmo);
     world.addComponent<TagsComponent>(gizmo, {{Tag::editorOnly}});
+    world.addComponent<HierarchyComponent>(gizmo);
     world.addComponent<TransformComponent>(gizmo);
 
     static constexpr Vec3 xColor = {1.0f, 0.0f, 0.0f};
@@ -105,6 +106,7 @@ Entity Gizmos::createTranslationGizmo(World& world)
     
     world.addComponent<GizmoComponent>(gizmo, {.xAxisEntity = x, .yAxisEntity = y, .zAxisEntity = z});
     setGizmoVisible(world, gizmo, false);
+    log(std::format("Translation Gizmo: {} ({}, {}, {})", gizmo, x, y, z));
     
     return gizmo;
 }
@@ -112,13 +114,13 @@ Entity Gizmos::createTranslationGizmo(World& world)
 Entity Gizmos::createTranslationGizmoAxis(World& world, Entity gizmo, std::string name, std::vector<LineVertex>&& vertices, BoundingBoxComponent boundingBox)
 {
     const Entity axis = world.createEntity();
+    world.addComponent<NameComponent>(axis, std::move(name));
+    world.addComponent<TagsComponent>(axis, {{Tag::editorOnly}});
+    world.addComponent<HierarchyComponent>(axis);
+    HierarchyUtils::setParent(world, axis, gizmo);
+    world.addComponent<TransformComponent>(axis);
     world.addComponent<BoundingBoxComponent>(axis, std::move(boundingBox));
     world.addComponent<LineRenderComponent>(axis, std::move(vertices));
-    world.addComponent<NameComponent>(axis, std::move(name));
-    world.addComponent<HierarchyComponent>(axis);
-    world.addComponent<TagsComponent>(axis, {{Tag::editorOnly}});
-    world.addComponent<TransformComponent>(axis);
-    HierarchyUtils::setParent(world, axis, gizmo);
 
     return axis;
 }
@@ -172,16 +174,20 @@ constexpr std::vector<LineVertex> generateAABBVertices(const Vec3& min, const Ve
 
 Entity Gizmos::createBoundingBoxGizmo(World& world, Entity parentEntity)
 {
-    const BoundingBoxComponent& aabb = world.readComponent<BoundingBoxComponent>(parentEntity);
     std::string_view name = NameUtils::getName(world, parentEntity);
 
     Entity aabbGizmo = world.createEntity();
-    world.addComponent<LineRenderComponent>(aabbGizmo, {.vertices = generateAABBVertices(aabb.minLocal, aabb.maxLocal)});
+
     world.addComponent<NameComponent>(aabbGizmo, std::format("BoundingBoxGizmo_{}", name));
+    world.addComponent<TagsComponent>(aabbGizmo, {{Tag::editorOnly}});
+
     world.addComponent<HierarchyComponent>(aabbGizmo);
     HierarchyUtils::setParent(world, aabbGizmo, parentEntity);
-    world.addComponent<TagsComponent>(aabbGizmo, {{Tag::editorOnly}});
+
     world.addComponent<TransformComponent>(aabbGizmo);
+
+    const BoundingBoxComponent& aabb = world.readComponent<BoundingBoxComponent>(parentEntity);
+    world.addComponent<LineRenderComponent>(aabbGizmo, {.vertices = generateAABBVertices(aabb.minLocal, aabb.maxLocal)});
 
     return aabbGizmo;
 }
@@ -191,6 +197,11 @@ void Gizmos::setGizmoVisible(World& world, Entity gizmo, bool visible)
     auto setVisible = [&](Entity entity)
     {
         if (!entity.isValid()) return;
+        if (visible)
+        {
+            TransformSystem::ensureRuntimeTransform(world, gizmo);
+            Engine::getRenderCommandQueue().addCommand(RenderCommands::SetTransform{world.getHandle(), entity, world.readComponent<RuntimeTransformComponent>(entity).worldMatrix});
+        }
         Engine::getRenderCommandQueue().addCommand(RenderCommands::SetObjectVisibility{world.getHandle(), entity, visible});
     };
 

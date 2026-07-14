@@ -135,9 +135,9 @@ Editor::ControllerManager& Editor::ensureControllerManager(EditingContextId cont
 
 void Editor::init()
 {
+    Engine::addSystem(HierarchySystem::callbacks);
     Engine::addSystem(TransformSystem::callbacks);
     Engine::addSystem(BoundingBoxSystem::callbacks);
-    Engine::addSystem(HierarchySystem::callbacks);
     Engine::addSystem(RenderSynchronizer::callbacks);
 
     Engine::init();
@@ -198,9 +198,6 @@ void Editor::shutdown()
 
 bool Editor::update()
 {
-    if (!Engine::update())
-        return false;
-
     EditorRequest request;
 
     while (requests.tryPop(request))
@@ -210,6 +207,9 @@ bool Editor::update()
         controllerManager.update(Engine::getSimulationDeltaTime(), contexts().get(contextId).snapshotPublisher);
 
     EditorCamera::update(editorContext.window, services.worlds.get(editorContext.world), Engine::getSimulationDeltaTime());
+
+    if (!Engine::update())
+        return false;
 
     return true;
 }

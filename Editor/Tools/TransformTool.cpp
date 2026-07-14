@@ -106,8 +106,10 @@ void TransformTool::attachToSelection()
     {
         World& world = Engine::getWorld(m_context.world);
         HierarchyUtils::setParent(world, m_gizmo, firstSelected);
-        world.editComponent<TransformComponent>(m_gizmo)->scale = 0.2f / world.readComponent<TransformComponent>(firstSelected).scale;
+        auto transform = world.editComponent<TransformComponent>(m_gizmo);
+        transform->scale = 0.2f / world.readComponent<TransformComponent>(firstSelected).scale;
     }
+    m_attachedTo = firstSelected;
 }
 
 void TranslateTool::update()

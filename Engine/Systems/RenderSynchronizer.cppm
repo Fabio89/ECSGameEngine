@@ -15,6 +15,14 @@ namespace
     EventSubscription subscription;
 }
 
+Mat4 getWorldTransform(const World& world, Entity entity)
+{
+    if (world.hasComponent<RuntimeTransformComponent>(entity))
+        return world.readComponent<RuntimeTransformComponent>(entity).worldMatrix;
+    static constexpr Mat4 identity{1};
+    return identity;
+}
+
 void init(SystemContext& context)
 {
     subscription += context.worlds.subscribe([&](const WorldEvents::WorldCreated& event)
@@ -38,12 +46,12 @@ void init(SystemContext& context)
         if (event.componentType == getTypeId<LineRenderComponent>())
         {
             const auto& component = world.readComponent<LineRenderComponent>(event.entity);
-            context.renderCommands.addCommand(RenderCommands::AddLineObject{event.world, event.entity, component.vertices});
+            context.renderCommands.addCommand(RenderCommands::AddLineObject{event.world, event.entity, component.vertices, getWorldTransform(world, event.entity)});
         }
         else if (event.componentType == getTypeId<ModelComponent>())
         {
             const auto& component = world.readComponent<ModelComponent>(event.entity);
-            context.renderCommands.addCommand(RenderCommands::AddObject{event.world, event.entity, component.mesh, component.texture});
+            context.renderCommands.addCommand(RenderCommands::AddObject{event.world, event.entity, component.mesh, component.texture, getWorldTransform(world, event.entity)});
         }
     });
 
@@ -80,10 +88,11 @@ void update(SystemContext& context, float deltaTime)
     {
         updateCamera(world, context.renderCommands);
 
-        // for (auto dirty : world.dirty<TransformComponent>())
-        // {
-        //     log(std::format("Dirty transform in entity {}", dirty));
-        // }
+        for (const Entity entity : world.getMarked<RuntimeTransformComponent>())
+        {
+            const auto& transform = world.readComponent<RuntimeTransformComponent>(entity);
+            context.renderCommands.addCommand(RenderCommands::SetTransform{world.getHandle(), entity, transform.worldMatrix});
+        }
     });
 }
 

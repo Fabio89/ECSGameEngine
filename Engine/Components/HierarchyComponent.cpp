@@ -33,7 +33,7 @@ void HierarchyUtils::setParent(World& world, Entity child, Entity parent)
     if (childHierarchy->parent == parent)
         return;
 
-    // Update neighbouring siblings
+    // Update neighboring siblings
     if (childHierarchy->nextSibling.isValid())
         world.editComponent<HierarchyComponent>(childHierarchy->nextSibling)->previousSibling = childHierarchy->previousSibling;
 
