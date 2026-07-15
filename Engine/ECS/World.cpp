@@ -226,28 +226,6 @@ void World::deserializeScene(const JsonObject& json)
     }
 }
 
-void World::patchEntity(Entity entity, const JsonObject& json)
-{
-    assertThread();
-    if (!json.IsObject())
-    {
-        log("Failed to patch entity!");
-        return;
-    }
-
-    for (auto it = json.MemberBegin(); it != json.MemberEnd(); ++it)
-    {
-        const std::string& typeName = it->name.GetString();
-        const JsonObject& componentData = it->value.GetObject();
-
-        if (const ComponentTypeBase* componentType = ComponentRegistry::get(typeName))
-        {
-            componentType->deserialize(*this, entity, componentData);
-            log(std::format("Patched component: {}", componentType->getName()));
-        }
-    }
-}
-
 bool World::hasComponent(Entity entity, TypeId componentTypeId) const
 {
     if (auto it = m_entities.find(entity); it != m_entities.end())

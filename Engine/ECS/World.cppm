@@ -123,8 +123,6 @@ public:
     JsonObject serializeScene(Json::MemoryPoolAllocator<>& allocator) const;
     void deserializeScene(const JsonObject& json);
 
-    void patchEntity(Entity entity, const JsonObject& json);
-
     template <ValidComponentData T, typename... Args>
     const T& addComponent(Entity entity, Args&&... args);
 
