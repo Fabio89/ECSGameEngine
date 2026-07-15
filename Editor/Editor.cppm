@@ -44,4 +44,15 @@ export namespace Editor
         auto factory = [](EditorServices& services, EditingContext& context) { return std::make_unique<T>(services, context); };
         request(AddController{.contextId = contextId, .factory = std::move(factory)});
     }
+
+    template<typename T, typename... Args>
+    void addController(EditingContextId contextId, Args... args)
+    {
+        auto factory = [args...](EditorServices& services, EditingContext& context)
+        {
+            return std::make_unique<T>(services, context, args...);
+        };
+
+        request(AddController{.contextId = contextId, .factory = std::move(factory)});
+    }
 }

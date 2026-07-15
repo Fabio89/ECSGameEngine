@@ -7,13 +7,19 @@ import Editor.Selection;
 import Editor.SnapshotFrame;
 import WorldHandle;
 
+export struct EditingContextCreateInfo
+{
+    WorldHandle world;
+    WorldHandle editorWorld;
+};
+
 export struct EditingContext
 {
     EditingContextId id;
     WorldHandle world;
+    WorldHandle editorWorld;
     Editor::Selection selection;
     Editor::SnapshotPublisher snapshotPublisher;
-    Entity camera;
 };
 
 export class EditingContextManager
@@ -21,7 +27,7 @@ export class EditingContextManager
 public:
     EditingContextManager(EditorServices& services);
 
-    EditingContextId add(WorldHandle world);
+    EditingContextId add(EditingContextCreateInfo info);
 
     EditingContext& get(EditingContextId id);
 

@@ -3,10 +3,10 @@ import Core;
 import Render.Utils;
 import Math;
 
-Viewport::Viewport(ViewportId id, VulkanContext& context, const ViewportCreateInfo& info)
+Viewport::Viewport(ViewportId id, VulkanContext& context, ViewportCreateInfo&& info)
     : VulkanResource{context},
       m_id{id},
-      m_renderWorld{info.renderWorld},
+      m_renderWorlds{std::move(info.renderWorlds)},
       m_requestedArea{info.requestedArea},
       m_extent{static_cast<UInt32>(info.requestedArea.size.width), static_cast<UInt32>(info.requestedArea.size.height)},
       m_offset{info.requestedArea.position.x, info.requestedArea.position.y},
@@ -145,7 +145,8 @@ void Viewport::drawFrame(const RenderPassContext& renderContext)
 
             renderContext.commandBuffer.setScissor(0, 1, &scissor);
 
-            m_renderWorld.drawFrame(renderContext);
+            for (auto& world : m_renderWorlds)
+                world.get().drawFrame(renderContext);
 
             renderContext.commandBuffer.endRendering();
 
@@ -213,6 +214,16 @@ float Viewport::getAspectRatio() const
     return m_extent.height > 0 ? m_extent.width / static_cast<float>(m_extent.height) : 1.f;
 }
 
+void Viewport::setCamera(Camera camera)
+{
+    m_camera = camera;
+}
+
+const Camera& Viewport::getCamera() const
+{
+    return m_camera;
+}
+
 ImageCreateInfo Viewport::makeColorImageInfo() const
 {
     return {
@@ -235,10 +246,10 @@ ImageCreateInfo Viewport::makeDepthImageInfo() const
     };
 }
 
-ViewportId ViewportManager::createViewport(const ViewportCreateInfo& info)
+ViewportId ViewportManager::createViewport(ViewportCreateInfo&& info)
 {
     const ViewportId id{m_nextId++};
-    m_viewports.try_emplace(id, id, context(), info);
+    m_viewports.try_emplace(id, id, context(), std::move(info));
     return id;
 }
 
@@ -252,12 +263,19 @@ Rect ViewportManager::getViewportArea(ViewportId id) const
     return m_viewports.at(id).getArea();
 }
 
-float ViewportManager::getFakeAspectRatio() const
+float ViewportManager::getAspectRatio(ViewportId id) const
 {
-    if (m_viewports.empty())
-        return 1;
+    return m_viewports.at(id).getAspectRatio();
+}
 
-    return m_viewports.begin()->second.getAspectRatio();
+const Camera& ViewportManager::getCamera(ViewportId id) const
+{
+    return m_viewports.at(id).getCamera();
+}
+
+void ViewportManager::setCamera(ViewportId id, const Camera& camera)
+{
+    m_viewports.at(id).setCamera(camera);
 }
 
 void ViewportManager::update()

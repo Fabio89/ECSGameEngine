@@ -43,20 +43,10 @@ void World::printArchetypeStatus()
 
         archetypeStr += "]\nEntities: ";
 
-        auto entities = archetype.view();
         for (auto&& [entity] : archetype.view())
         {
-            std::string name;
-            if (hasComponent<NameComponent>(entity))
-            {
-                auto nameComponent = readComponent<NameComponent>(entity);
-                name = nameComponent.name;
-            }
-            else
-            {
-                name = std::format("'{}'", entity);
-            }
-            archetypeStr += name + " ";
+            archetypeStr += NameUtils::getName(*this, entity);
+            archetypeStr += " ";
         }
         archetypeStr += "\n";
         log(archetypeStr);
@@ -139,12 +129,7 @@ void World::removeEntity(Entity entity)
             m_archetypes.erase(it->second);
 
         m_entities.erase(it);
-
-        if (m_activeCamera == entity)
-            m_activeCamera = {};
-
         m_dirtyTracker.remove(entity);
-
         m_eventBus.publish(WorldEvents::EntityDestroyed{.world = m_handle, .entity = entity});
     }
 }
@@ -169,6 +154,7 @@ void World::unloadScene()
     assertThread();
     m_entities.clear();
     m_archetypes.clear();
+    m_dirtyTracker = {};
     m_eventBus.publish(WorldEvents::SceneUnloaded{.world = m_handle});
 }
 
@@ -294,15 +280,4 @@ Archetype::ComponentRange World::getComponentTypesInEntity(Entity entity) const
     fatalError(std::format("Couldn't find components for entity {}", entity));
     static const Archetype::ComponentArrayMap emptyMap;
     return emptyMap | std::views::keys;
-}
-
-Entity World::getActiveCamera() const
-{
-    return m_activeCamera;
-}
-
-void World::setActiveCamera(Entity entity)
-{
-    check(!entity.isValid() || hasComponent<CameraComponent>(entity), "Tried to set an entity with no CameraComponent as the active camera!");
-    m_activeCamera = entity;
 }

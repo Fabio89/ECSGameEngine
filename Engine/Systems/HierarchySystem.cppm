@@ -8,33 +8,33 @@ import World.Events;
 namespace
 {
     EventSubscription subscription;
-}
 
-void init(SystemContext& context)
-{
-    subscription += context.worlds.subscribe([&](const WorldEvents::EntityDestroyed& event)
+    void init(SystemContext& context)
     {
-        World& world = context.worlds.get(event.world);
-
-        auto checkLink = [&](Entity& link)
+        subscription += context.worlds.subscribe([&](const WorldEvents::EntityDestroyed& event)
         {
-            if (link == event.entity)
-                link = {};
-        };
+            World& world = context.worlds.get(event.world);
 
-        for (auto&& [entity, hierarchy] : world.query<Edit<HierarchyComponent>>())
-        {
-            checkLink(hierarchy->parent);
-            checkLink(hierarchy->firstChild);
-            checkLink(hierarchy->nextSibling);
-            checkLink(hierarchy->previousSibling);
-        }
-    });
-}
+            auto checkLink = [&](Entity& link)
+            {
+                if (link == event.entity)
+                    link = {};
+            };
 
-void shutdown(SystemContext&)
-{
-    subscription.clear();
+            for (auto&& [entity, hierarchy] : world.query<Edit<HierarchyComponent>>())
+            {
+                checkLink(hierarchy->parent);
+                checkLink(hierarchy->firstChild);
+                checkLink(hierarchy->nextSibling);
+                checkLink(hierarchy->previousSibling);
+            }
+        });
+    }
+
+    void shutdown(SystemContext&)
+    {
+        subscription.clear();
+    }
 }
 
 export namespace HierarchySystem

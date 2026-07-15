@@ -2,16 +2,11 @@ export module Render.RenderObject;
 import Assets.Mesh;
 import Assets.Texture;
 import Core;
+import Engine.Camera;
 import ThreadSafeQueue;
 import Guid;
 import Math;
 import Render.Vulkan;
-
-export struct Camera
-{
-    Mat4 view{};
-    Mat4 proj{};
-};
 
 struct Texture
 {

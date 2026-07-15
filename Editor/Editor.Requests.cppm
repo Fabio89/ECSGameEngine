@@ -5,6 +5,7 @@ import Editor.EditingContextId;
 import Editor.EntityEditingMode;
 import Editor.EditingContext;
 import Editor.Services;
+import Engine.Viewport;
 import Geometry;
 import Properties;
 import Window;
@@ -21,7 +22,7 @@ export namespace Editor
     {
         EditingContextId contextId;
         WindowHandle window;
-        Rect viewportArea;
+        ViewportId viewport;
     };
 
     struct SetEntityEditingMode

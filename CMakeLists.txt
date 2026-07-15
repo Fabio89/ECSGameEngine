@@ -85,6 +85,8 @@ target_compile_definitions(Engine
 
 target_compile_features(Engine PUBLIC cxx_std_23)
 
+set_property(TARGET Engine PROPERTY CXX_MODULE_STD ON)
+
 target_compile_options(Engine PRIVATE
         -Wall
         -Wextra
@@ -115,10 +117,6 @@ target_link_libraries(Engine
         glfw
         imgui::imgui
 )
-
-target_compile_features(Engine PUBLIC cxx_std_23)
-
-set_property(TARGET Engine PROPERTY CXX_MODULE_STD ON)
 
 add_custom_command(TARGET Engine POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory

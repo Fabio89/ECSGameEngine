@@ -242,24 +242,14 @@ void RenderManager::setEditorCallbacks(EditorCallbacks callbacks)
     m_editorCallbacks = std::move(callbacks);
 }
 
-ViewportId RenderManager::createViewport(WorldHandle world, Rect area)
+ViewportId RenderManager::createViewport(std::span<WorldHandle> worlds, Rect area)
 {
-    return m_viewportManager.createViewport({.requestedArea = area, .renderWorld = m_renderWorldManager.get(world)});
-}
+    std::vector<std::reference_wrapper<RenderWorld>> renderWorlds;
+    renderWorlds.reserve(worlds.size());
+    for (const WorldHandle handle : worlds)
+        renderWorlds.push_back(m_renderWorldManager.get(handle));
 
-void RenderManager::setViewportArea(ViewportId id, Rect area)
-{
-    m_viewportManager.setViewportArea(id, area);
-}
-
-Rect RenderManager::getViewportArea() const
-{
-    return m_viewportManager.getViewportArea(ViewportId{0});
-}
-
-float RenderManager::getViewportAspectRatio() const
-{
-    return m_viewportManager.getFakeAspectRatio();
+    return m_viewportManager.createViewport({.requestedArea = area, .renderWorlds = std::move(renderWorlds)});
 }
 
 std::vector<const char*> RenderManager::getRequiredExtensions()

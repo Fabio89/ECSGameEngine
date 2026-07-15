@@ -7,7 +7,7 @@ import std;
 export class EditorController : protected EditorServiceConsumer
 {
 public:
-    explicit EditorController(EditorServices& services, EditingContext& contextId) : EditorServiceConsumer{services}, m_context{contextId} {}
+    explicit EditorController(EditorServices& services, EditingContext& context) : EditorServiceConsumer{services}, m_context{context} {}
     virtual ~EditorController() = default;
 
     virtual void update(float dt, Editor::SnapshotFrame& frame) {}

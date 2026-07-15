@@ -22,10 +22,14 @@ struct TypeProperties<NameComponent>
 
 export namespace NameUtils
 {
-    std::string_view getName(const World &world, Entity entity)
+    std::string_view getName(const World& world, Entity entity)
     {
-        static constexpr const char *emptyName = "";
-        return world.hasComponent<NameComponent>(entity) ? world.readComponent<NameComponent>(entity).name.c_str() : emptyName;
+        static std::unordered_map<Entity, std::string> defaultNames;
+        if (!world.hasComponent<NameComponent>(entity))
+        {
+            return defaultNames.try_emplace(entity, std::format("<Entity {}>", entity)).first->second;
+        }
+        return world.readComponent<NameComponent>(entity).name;
     }
 }
 

@@ -45,7 +45,7 @@ private:
 void traverseNode(HierarchyNode& node, Entity entity, const World& world, const Editor::Selection& selection)
 {
     node.entity = entity;
-    node.name = world.readComponent<NameComponent>(entity).name;
+    node.name = NameUtils::getName(world, entity);
     node.selected = selection.contains(entity);
 
     for (Entity child : HierarchyUtils::children(world, entity))

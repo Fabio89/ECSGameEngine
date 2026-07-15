@@ -3,11 +3,13 @@ export import World;
 import Core;
 import Engine.WorldManager;
 import Render.CommandProcessor;
+import Render.Viewport;
 import Thread;
 
 export struct SystemContext
 {
     WorldManager& worlds;
+    ViewportManager& viewports;
     RenderCommandQueue& renderCommands;
 };
 

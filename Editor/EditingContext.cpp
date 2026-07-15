@@ -4,14 +4,14 @@ EditingContextManager::EditingContextManager(EditorServices& services) : m_servi
 {
 }
 
-EditingContextId EditingContextManager::add(WorldHandle world)
+EditingContextId EditingContextManager::add(EditingContextCreateInfo info)
 {
     const EditingContextId id{m_lastId++};
     m_contexts[id.value] = std::make_unique<EditingContext>(EditingContext{
         .id = id,
-        .world = world,
+        .world = info.world,
+        .editorWorld = info.editorWorld,
         .selection = Editor::Selection{m_services.events, id},
-        .camera = {}
     });
     return id;
 }

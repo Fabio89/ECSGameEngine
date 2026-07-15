@@ -44,7 +44,7 @@ private:
 
     void publish(EventView event);
 
-    std::unordered_map<TypeId, std::vector<Subscriber> > m_callbacks;
+    std::unordered_map<TypeId, std::vector<Subscriber>> m_callbacks;
     SubscriptionId::ValueType m_nextSubscriptionId{};
 };
 

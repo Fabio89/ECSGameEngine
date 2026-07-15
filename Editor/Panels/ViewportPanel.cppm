@@ -18,7 +18,7 @@ struct ViewportSnapshot
 class ViewportController : public EditorControllerImpl<ViewportSnapshot>
 {
 public:
-    explicit ViewportController(EditorServices& services, EditingContext& context);
+    explicit ViewportController(EditorServices& services, EditingContext& context, ViewportId viewportId);
 
     void update(float dt, Editor::SnapshotFrame& frame) override;
 
@@ -31,6 +31,8 @@ private:
     TransformToolManager m_tools;
     SelectionGizmoManager m_selectionGizmos;
     EventSubscription m_subscription;
+    Entity m_camera;
+    ViewportId m_id;
 };
 
 export namespace Panels

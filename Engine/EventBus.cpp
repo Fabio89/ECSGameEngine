@@ -67,11 +67,10 @@ void EventBus::unsubscribe(TypeId event, SubscriptionId id)
 {
     auto& subscribers = m_callbacks[event];
 
-    std::erase_if(subscribers,
-                  [&](const Subscriber& s)
-                  {
-                      return s.id == id;
-                  });
+    std::erase_if(subscribers, [&](const Subscriber& s)
+    {
+        return s.id == id;
+    });
 }
 
 void EventBus::publish(EventView event)

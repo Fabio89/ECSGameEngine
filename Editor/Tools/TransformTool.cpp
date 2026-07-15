@@ -5,14 +5,17 @@ import Editor.Events;
 import Editor.Gizmos;
 import Editor.Selection;
 import Engine;
+import Engine.Camera;
 import Input;
 import Math;
 import Physics;
 import World;
 
-TransformToolManager::TransformToolManager(EditorServices& services, EditingContext& context) : EditorServiceConsumer{services}, m_context{context}
+TransformToolManager::TransformToolManager(TransformToolContext context)
+    : EditorServiceConsumer{context.services},
+      m_context{std::move(context)}
 {
-    m_sub += services.events.subscribe([this](const EditorEvents::SelectionChanged& event)
+    m_sub += context.services.events.subscribe([this](const EditorEvents::SelectionChanged& event)
     {
         if (m_currentToolType != EntityEditingMode::None)
         {
@@ -26,9 +29,9 @@ TransformToolManager::TransformToolManager(EditorServices& services, EditingCont
 
 void TransformToolManager::createTools()
 {
-    m_tools[static_cast<int>(EntityEditingMode::Translate)] = std::make_unique<TranslateTool>(services(), m_context);
-    m_tools[static_cast<int>(EntityEditingMode::Rotate)] = std::make_unique<RotateTool>(services(), m_context);
-    m_tools[static_cast<int>(EntityEditingMode::Scale)] = std::make_unique<ScaleTool>(services(), m_context);
+    m_tools[static_cast<int>(EntityEditingMode::Translate)] = std::make_unique<TranslateTool>(m_context);
+    m_tools[static_cast<int>(EntityEditingMode::Rotate)] = std::make_unique<RotateTool>(m_context);
+    m_tools[static_cast<int>(EntityEditingMode::Scale)] = std::make_unique<ScaleTool>(m_context);
 }
 
 void TransformToolManager::setCurrentTool(EntityEditingMode type)
@@ -60,10 +63,10 @@ void TransformToolManager::update()
     }
 }
 
-TransformTool::TransformTool(EditorServices& services, EditingContext& context, EntityEditingMode type)
-    : EditorServiceConsumer{services},
+TransformTool::TransformTool(TransformToolContext& context, EntityEditingMode type)
+    : EditorServiceConsumer{context.services},
       m_context{context},
-      m_gizmo{Gizmos::createTransformGizmo(Engine::getWorld(context.world), type)} {}
+      m_gizmo{Gizmos::createTransformGizmo(Engine::getWorld(context.editing.world), type)} {}
 
 void TransformTool::update()
 {
@@ -72,7 +75,7 @@ void TransformTool::update()
 
 void TransformTool::setActive(bool active)
 {
-    World& world = Engine::getWorld(m_context.world);
+    World& world = Engine::getWorld(m_context.editing.world);
     if (!active)
         Gizmos::setGizmoVisible(world, m_gizmo, false);
 
@@ -95,16 +98,16 @@ void TransformTool::setActive(bool active)
     if (active)
     {
         attachToSelection();
-        Gizmos::setGizmoVisible(world, m_gizmo, !context().selection.isEmpty());
+        Gizmos::setGizmoVisible(world, m_gizmo, !context().editing.selection.isEmpty());
     }
 }
 
 void TransformTool::attachToSelection()
 {
-    Entity firstSelected = context().selection.isEmpty() ? Entity{} : context().selection.get().front();
+    Entity firstSelected = context().editing.selection.isEmpty() ? Entity{} : context().editing.selection.get().front();
     if (firstSelected.isValid() && firstSelected != m_attachedTo)
     {
-        World& world = Engine::getWorld(m_context.world);
+        World& world = Engine::getWorld(m_context.editing.world);
         HierarchyUtils::setParent(world, m_gizmo, firstSelected);
         auto transform = world.editComponent<TransformComponent>(m_gizmo);
         transform->scale = 0.2f / world.readComponent<TransformComponent>(firstSelected).scale;
@@ -116,12 +119,12 @@ void TranslateTool::update()
 {
     TransformTool::update();
 
-    World& world = Engine::getWorld(context().world);
+    World& world = Engine::getWorld(context().editing.world);
 
-    if (context().selection.isEmpty())
+    if (context().editing.selection.isEmpty())
         return;
 
-    Entity firstSelectedEntity = context().selection.get().front();
+    Entity firstSelectedEntity = context().editing.selection.get().front();
     if (world.isValid(firstSelectedEntity) && world.isValid(m_selectedGizmoAxis) && Input::isKeyDown(KeyCode::MouseButtonLeft))
     {
         const TransformComponent& transform = world.readComponent<TransformComponent>(firstSelectedEntity);
@@ -140,15 +143,14 @@ void TranslateTool::update()
             return Vec3{};
         }();
 
+        const Camera& camera = context().services.viewports.getCamera(context().viewportId);
         const Plane movePlane
         {
             .point = transform.position,
-            .normal = Math::cross(
-                TransformUtils::right(world.readComponent<TransformComponent>(world.getActiveCamera())),
-                gizmoAxisDirection)
+            .normal = Math::cross(CameraUtils::right(camera), gizmoAxisDirection)
         };
 
-        const Ray ray = Engine::getViewportCursorRay(world);
+        const Ray ray = Engine::getViewportCursorRay(context().viewportId);
         const std::optional<Vec3> projectedCursorPosition = Physics::intersectRayPlane(ray, movePlane);
 
         if (m_projectedCursorPositionLastFrame.has_value() && projectedCursorPosition.has_value())
@@ -167,7 +169,7 @@ void TranslateTool::update()
 
     if (Input::isKeyJustPressed(KeyCode::MouseButtonLeft))
     {
-        const Ray ray = Engine::getViewportCursorRay(world);
+        const Ray ray = Engine::getViewportCursorRay(context().viewportId);
         m_selectedGizmoAxis = Physics::lineTrace(world, ray, TraceChannelFlags::Gizmo);
     }
 }

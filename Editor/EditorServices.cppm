@@ -2,10 +2,12 @@ export module Editor.Services;
 import Engine.WorldManager;
 import EventBus;
 import Render.CommandProcessor;
+import Render.Viewport;
 
 export struct EditorServices
 {
     WorldManager& worlds;
+    ViewportManager& viewports;
     EventBus& events;
     RenderCommandQueue& renderCommands;
 };

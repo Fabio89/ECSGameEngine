@@ -21,7 +21,7 @@ namespace
     UInt64 currentFrame{};
     RenderManager renderManager;
     WorldManager worldManager;
-    SystemManager systemManager{{.worlds = worldManager, .renderCommands = renderManager.getCommandQueue()}};
+    SystemManager systemManager{{.worlds = worldManager, .viewports = renderManager.viewports(), .renderCommands = renderManager.getCommandQueue()}};
 }
 
 namespace Engine
@@ -117,6 +117,7 @@ void Engine::shutdown()
     std::cout << "[Application] Shutting down...\n";
 
     systemManager.shutdown();
+    worldManager.shutdown();
 
     if (renderThread.joinable())
     {
@@ -160,9 +161,9 @@ void Engine::addSystem(SystemCallbacks callbacks)
     systemManager.add(std::move(callbacks));
 }
 
-ViewportId Engine::createViewport(WorldHandle world, Rect area)
+ViewportId Engine::createViewport(std::vector<WorldHandle> worlds, Rect area)
 {
-    return renderManager.createViewport(world, area);
+    return renderManager.createViewport(worlds, area);
 }
 
 void Engine::setEditorCallbacks(EditorCallbacks callbacks)
@@ -172,29 +173,39 @@ void Engine::setEditorCallbacks(EditorCallbacks callbacks)
 
 void Engine::setViewportArea(ViewportId id, Rect area)
 {
-    renderManager.setViewportArea(id, area);
+    renderManager.viewports().setViewportArea(id, area);
 }
 
-Ray Engine::getViewportCursorRay(const World& world)
+Rect Engine::getViewportArea(ViewportId id)
+{
+    return renderManager.viewports().getViewportArea(id);
+}
+
+Ray Engine::getViewportCursorRay(ViewportId id)
 {
     const Vec2 cursor = Platform::Window::getCursorPosition(window);
 
-    const auto [position, size] = renderManager.getViewportArea();
+    const auto [position, size] = renderManager.viewports().getViewportArea(id);
 
     const Vec2 uv{
         (cursor.x - position.x) / size.width,
         (cursor.y - position.y) / size.height
     };
 
-    return Physics::rayFromViewportUV(world, uv);
+    return Physics::rayFromViewportUV(renderManager.viewports().getCamera(id), uv);
+}
+
+ViewportManager& Engine::getViewportManager()
+{
+    return renderManager.viewports();
+}
+
+float Engine::getViewportAspectRatio(ViewportId id)
+{
+    return renderManager.viewports().getAspectRatio(id);
 }
 
 RenderCommandQueue& Engine::getRenderCommandQueue()
 {
     return renderManager.getCommandQueue();
-}
-
-float Engine::getViewportAspectRatio()
-{
-    return renderManager.getViewportAspectRatio();
 }

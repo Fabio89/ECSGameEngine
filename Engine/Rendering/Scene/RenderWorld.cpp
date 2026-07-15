@@ -62,12 +62,6 @@ RenderObjectManager const& RenderWorldManager::getObjectManager(WorldHandle worl
     return m_renderWorlds.at(world).objects();
 }
 
-void RenderWorldManager::drawFrame(const RenderPassContext& context)
-{
-    for (RenderWorld& renderWorld : m_renderWorlds | std::views::values)
-        renderWorld.drawFrame(context);
-}
-
 void RenderWorldManager::clear()
 {
     m_renderWorlds.clear();

@@ -24,19 +24,18 @@ import System.Transform;
 import Thread;
 import World;
 import World.Events;
+import Editor.Gizmos;
+import Editor.EntityEditingMode;
 
-namespace
-{
-    EventSubscription subscription;
-    std::vector<std::unique_ptr<Panel>> panels;
-    std::vector<Panel*> panelView;
-    EventBus events;
+EventSubscription subscription;
+std::vector<std::unique_ptr<Panel>> panels;
+std::vector<Panel*> panelView;
+EventBus events;
 
-    EditorServices services{.worlds = Engine::worlds(), .events = events, .renderCommands = Engine::getRenderCommandQueue()};
+EditorServices services{.worlds = Engine::worlds(), .viewports = Engine::getViewportManager(), .events = events, .renderCommands = Engine::getRenderCommandQueue()};
 
-    EditingContextManager contextManager{services};
-    std::unordered_map<EditingContextId, Editor::ControllerManager> controllerManagers;
-}
+EditingContextManager contextManager{services};
+std::unordered_map<EditingContextId, Editor::ControllerManager> controllerManagers;
 
 namespace Editor
 {
@@ -61,16 +60,8 @@ namespace Editor
     {
         check(request.window.isValid(), "");
 
-        const Vec2 screenPosition{Input::getCursorScreenPosition(request.window)};
-
-        const Vec2 uv
-        {
-            (screenPosition.x - request.viewportArea.position.x) / request.viewportArea.size.width,
-            (screenPosition.y - request.viewportArea.position.y) / request.viewportArea.size.height
-        };
-
         const World& world = services.worlds.get(contextManager.get(request.contextId).world);
-        const Ray ray = Physics::rayFromViewportUV(world, uv);
+        const Ray ray = Engine::getViewportCursorRay(request.viewport);
         const Entity hitEntity = Physics::lineTrace(world, ray, TraceChannelFlags::Default);
 
         execute(ChangeSelection{.contextId = request.contextId, .entities = {hitEntity}});
@@ -127,10 +118,7 @@ void Editor::addPanel(std::unique_ptr<Panel> panel)
 
 Editor::ControllerManager& Editor::ensureControllerManager(EditingContextId contextId)
 {
-    auto it = controllerManagers.find(contextId);
-    if (it == controllerManagers.end())
-        it = controllerManagers.try_emplace(contextId, services).first;
-    return it->second;
+    return controllerManagers.try_emplace(contextId, services).first->second;
 }
 
 void Editor::init()
@@ -144,13 +132,15 @@ void Editor::init()
 
     EditorComponents::init();
 
-    editorContext = {.world = Engine::createWorld(), .window = Engine::getWindow()};
-
-    //WorldHandle world2 = Engine::createWorld();
-
     initPropertyDrawers();
 
-    const EditingContextId defaultContextId = contexts().add(editorContext.world);
+    const WorldHandle mainWorld = Engine::createWorld();
+    const WorldHandle editorWorld = Engine::createWorld();
+
+    editorContext = {.world = mainWorld, .window = Engine::getWindow()};
+
+    const EditingContextId defaultContextId = contexts().add({editorContext.world, editorWorld});
+
     addPanel<Panels::HierarchyPanel>(defaultContextId);
     addPanel<Panels::DetailsPanel>(defaultContextId);
     addPanel<Panels::MainMenuPanel>(defaultContextId);
@@ -206,8 +196,6 @@ bool Editor::update()
     for (auto& [contextId, controllerManager] : controllerManagers)
         controllerManager.update(Engine::getSimulationDeltaTime(), contexts().get(contextId).snapshotPublisher);
 
-    EditorCamera::update(editorContext.window, services.worlds.get(editorContext.world), Engine::getSimulationDeltaTime());
-
     if (!Engine::update())
         return false;
 
@@ -255,7 +243,7 @@ Entity Editor::ensureCamera(World& world)
     const Vec3 direction{Math::normalize(-position)};
     const Quat rotation{Math::rotation(forwardVector(), direction)};
 
-    world.addComponent<TransformComponent>(camera, {
+    world.addComponent<TransformComponent>(camera,{
                                                .position = position,
                                                .rotation = rotation
                                            });
@@ -269,5 +257,4 @@ void Editor::loadScene(EditingContextId contextId, const std::filesystem::path& 
 
     World& world = services.worlds.get(contexts().get(contextId).world);
     world.loadScene(path);
-    world.setActiveCamera(ensureCamera(world));
 }

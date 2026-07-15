@@ -15,6 +15,7 @@ import Math;
 import Physics;
 import Render.CommandProcessor;
 import Render.EditorCallbacks;
+import Render.Viewport;
 import Window;
 import World;
 
@@ -59,13 +60,19 @@ export namespace Engine
     // Editor Integration
     //------------------------------------------------------------------------------------------------------------------------
 
-    ENGINE_API ViewportId createViewport(WorldHandle world, Rect area);
+    ENGINE_API ViewportId createViewport(std::vector<WorldHandle> worlds, Rect area);
 
     ENGINE_API void setEditorCallbacks(EditorCallbacks callbacks);
 
     ENGINE_API void setViewportArea(ViewportId id, Rect area);
 
-    ENGINE_API Ray getViewportCursorRay(const World& world);
+    ENGINE_API Rect getViewportArea(ViewportId id);
+
+    ENGINE_API Ray getViewportCursorRay(ViewportId id);
+
+    ENGINE_API ViewportManager& getViewportManager();
+
+    ENGINE_API float getViewportAspectRatio(ViewportId id);
 
     //------------------------------------------------------------------------------------------------------------------------
     // Rendering
@@ -77,5 +84,4 @@ export namespace Engine
     // DEBUG -TEMPORARY
     //------------------------------------------------------------------------------------------------------------------------
 
-    ENGINE_API float getViewportAspectRatio();
 }

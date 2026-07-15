@@ -62,32 +62,10 @@ void init(SystemContext& context)
     });
 }
 
-void updateCamera(World& world, RenderCommandQueue& commands)
-{
-    const Entity cameraEntity = world.getActiveCamera();
-    if (!cameraEntity.isValid())
-        return;
-
-    const float aspectRatio = Engine::getViewportAspectRatio();
-
-    const TransformComponent& transform = world.readComponent<TransformComponent>(cameraEntity);
-    auto camera = world.editComponent<CameraComponent>(cameraEntity);
-
-    camera->projectionMatrix = Math::perspective(Math::radians(camera->fov), aspectRatio, camera->nearPlane, camera->farPlane);
-    camera->projectionMatrix[1][1] *= -1.0f;
-
-    const Vec3 forward = Math::rotate(transform.rotation, forwardVector());
-    camera->viewMatrix = Math::lookAt(transform.position, transform.position + forward, upVector());
-
-    commands.addCommand(RenderCommands::SetCamera{.world = world.getHandle(), .camera = {camera->viewMatrix, camera->projectionMatrix}});
-}
-
 void update(SystemContext& context, float deltaTime)
 {
     context.worlds.forEachWorld([&](World& world)
     {
-        updateCamera(world, context.renderCommands);
-
         for (const Entity entity : world.getMarked<RuntimeTransformComponent>())
         {
             const auto& transform = world.readComponent<RuntimeTransformComponent>(entity);

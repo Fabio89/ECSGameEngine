@@ -112,10 +112,7 @@ bool DirtyTrackerManager::isDirty(Entity entity) const
 template<typename T>
 DirtyTracker& DirtyTrackerManager::getTracker()
 {
-    auto it = m_dirtyTrackers.find(getTypeId<T>());
-    if (it == m_dirtyTrackers.end())
-        it = m_dirtyTrackers.try_emplace(getTypeId<T>(), DirtyTracker{}).first;
-    return it->second;
+    return m_dirtyTrackers.try_emplace(getTypeId<T>(), DirtyTracker{}).first->second;
 }
 
 void DirtyTrackerManager::nextFrame()

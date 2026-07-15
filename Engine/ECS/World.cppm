@@ -150,9 +150,6 @@ public:
 
     auto getEntitiesRange() const { return m_entities | std::views::keys; }
 
-    Entity getActiveCamera() const;
-    void setActiveCamera(Entity entity);
-
     template<typename... Access>
     auto query() { return Query<Access...>{*this}; }
 
@@ -196,7 +193,6 @@ private:
     DirtyTrackerManager m_dirtyTracker;
 
     EventBus m_eventBus;
-    Entity m_activeCamera;
 };
 
 //------------------------------------------------------------------------------------------------------------------------

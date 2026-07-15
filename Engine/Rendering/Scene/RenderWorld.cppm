@@ -38,7 +38,6 @@ public:
 
     void registerWorld(WorldHandle world);
     void unregisterWorld(WorldHandle world);
-    void drawFrame(const RenderPassContext& context);
     void clear();
 
     [[nodiscard]] RenderObjectManager& getObjectManager(WorldHandle world);

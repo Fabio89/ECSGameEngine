@@ -63,13 +63,11 @@ void EditorCamera::setActive(WindowHandle window, bool active)
     }
 }
 
-void EditorCamera::update(WindowHandle window, World& world, float deltaTime)
+void EditorCamera::update(WindowHandle window, World& world, Entity camera, float deltaTime)
 {
-    if (!isActive)
+    if (!isActive || !world.isValid(camera))
         return;
     
     rotationCooldown = Math::max(rotationCooldown - deltaTime, 0.f);
-
-    if (auto cameraEntity = world.getActiveCamera(); world.isValid(cameraEntity))
-        updateCameraTransform(window, world, cameraEntity, deltaTime, rotationCooldown == 0.f);
+    updateCameraTransform(window, world, camera, deltaTime, rotationCooldown == 0.f);
 }

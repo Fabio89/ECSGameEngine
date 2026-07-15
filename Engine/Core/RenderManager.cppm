@@ -2,6 +2,7 @@ export module Render.RenderManager;
 export import Render.Commands;
 import Core;
 import ThreadSafeQueue;
+import Engine.Camera;
 import Engine.FrameTimer;
 import Geometry;
 import Guid;
@@ -10,6 +11,7 @@ import Render.CommandProcessor;
 import Render.EditorCallbacks;
 import Render.ImGui;
 import Render.Vulkan;
+import Render.RenderObject;
 import Render.RenderWorld;
 import Render.Viewport;
 import Render.VulkanResource;
@@ -48,12 +50,10 @@ public:
 
     void setEditorCallbacks(EditorCallbacks callback);
 
-    ViewportId createViewport(WorldHandle world, Rect area);
+    ViewportId createViewport(std::span<WorldHandle> worlds, Rect area);
 
-    void setViewportArea(ViewportId id, Rect area);
-    Rect getViewportArea() const;
-
-    float getViewportAspectRatio() const;
+    ViewportManager& viewports() { return m_viewportManager; }
+    const ViewportManager& viewports() const { return m_viewportManager; }
 
 private:
     class RenderCommandBase;

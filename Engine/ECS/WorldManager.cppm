@@ -5,6 +5,8 @@ import World;
 export class WorldManager
 {
 public:
+    void shutdown();
+
     [[nodiscard]] WorldHandle createWorld();
 
     void destroyWorld(WorldHandle handle);
@@ -32,7 +34,7 @@ private:
         bool alive{false};
     };
 
-    std::vector<WorldSlot> m_worlds;
+    std::vector<std::unique_ptr<WorldSlot>> m_worlds;
     std::vector<UInt32> m_freeList;
     EventBus m_eventBus;
     EventSubscription m_subscription;
@@ -42,8 +44,8 @@ template<typename Fn>
 void WorldManager::forEachWorld(Fn&& fn)
 {
     for (auto& slot : m_worlds)
-        if (slot.alive)
-            fn(slot.world);
+        if (slot->alive)
+            fn(slot->world);
 }
 
 template<typename Func>

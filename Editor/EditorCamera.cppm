@@ -8,5 +8,5 @@ import World;
 export namespace EditorCamera
 {
     void setActive(WindowHandle window, bool active);
-    void update(WindowHandle window, World& world, float deltaTime);
+    void update(WindowHandle window, World& world, Entity camera, float deltaTime);
 }

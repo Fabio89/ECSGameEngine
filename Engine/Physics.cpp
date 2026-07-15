@@ -31,42 +31,26 @@ Entity Physics::lineTrace(const World& world, const Ray& ray, TraceChannelFlags 
             }
         }
     }
-    log(closestHit < std::numeric_limits<float>::max() ? std::format("[Physics::lineTrace]: Hit '{}'", world.readComponent<NameComponent>(hitEntity).name) : "Miss");
+    log(closestHit < std::numeric_limits<float>::max() ? std::format("[Physics::lineTrace]: Hit '{}'", NameUtils::getName(world, hitEntity)) : "Miss");
     return hitEntity;
 }
 
-Ray Physics::rayFromViewportUV(const World& world, Vec2 uv)
+Ray Physics::rayFromViewportUV(const Camera& camera, Vec2 uv)
 {
-    const Entity cameraEntity = world.getActiveCamera();
-    if (!world.isValid(cameraEntity) || !world.hasComponent<CameraComponent>(cameraEntity))
-        return {};
+    const float x = uv.x * 2.0f - 1.0f;
+    const float y = uv.y * 2.0f - 1.0f;
 
-    const CameraComponent& camera = world.readComponent<CameraComponent>(cameraEntity);
-    const TransformComponent& cameraTransform = world.readComponent<TransformComponent>(cameraEntity);
+    const Vec4 rayClip{x, y, 1.f, 1.f};
 
-    // Step 1: Get normalized device coordinates (NDC) of the cursor
-    float x = uv.x * 2.0f - 1.0f; // Convert [0..1] to [-1..1]
-    float y = uv.y * 2.0f - 1.0f; // Convert [0..1] to [-1..1]
-    Vec4 rayClip = Vec4(x, y, -1.0f, 1.0f); // Camera clip space (near plane)
+    const Mat4 invProj = Math::inverse(camera.proj);
+    Vec4 rayView = invProj * rayClip;
+    rayView = Vec4(rayView.x, rayView.y, 1.f, 0.f);
 
-    // Step 2: Convert from clip space to view space
-    Mat4 projInverse = Math::inverse(camera.projectionMatrix);
-    Vec4 rayView = projInverse * rayClip;
-    rayView.w = 0.0f; // Ensure direction vector
-    Vec3 rayViewDirection = Vec3(rayView); // Normalize to create direction
+    const Mat4 invView = Math::inverse(camera.view);
 
-    // Step 3: Convert from view space to world space
-    Mat4 viewInverse = Math::inverse(camera.viewMatrix);
-    Vec4 rayWorld = viewInverse * Vec4(rayViewDirection, 0.0f);
-    Vec3 rayWorldDirection = Math::normalize(Vec3(rayWorld));
-
-    // Step 4: Create the Ray (Origin is the camera position)
     Ray ray;
-    ray.origin = cameraTransform.position; // Camera position in world space
-    ray.direction = rayWorldDirection;
-
-    // Output ray for debugging or raycasting logic
-    //log(std::format("Ray: ({}, {}, {}) -> ({}, {}, {})", ray.origin.x, ray.origin.y, ray.origin.z, ray.direction.x, ray.direction.y, ray.direction.z));
+    ray.origin = Vec3{invView * Vec4{0, 0, 0, 1}};
+    ray.direction = Math::normalize(Vec3{invView * rayView});
 
     return ray;
 }

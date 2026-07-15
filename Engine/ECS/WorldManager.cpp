@@ -2,6 +2,11 @@ module Engine.WorldManager;
 import EventBus;
 import World.Events;
 
+void WorldManager::shutdown()
+{
+    m_subscription.clear();
+}
+
 WorldHandle WorldManager::createWorld()
 {
     if (!m_freeList.empty())
@@ -13,7 +18,7 @@ WorldHandle WorldManager::createWorld()
     }
 
     const UInt32 index = static_cast<UInt32>(m_worlds.size());
-    m_worlds.emplace_back();
+    m_worlds.emplace_back(std::make_unique<WorldSlot>());
 
     return prepareWorld(index);
 }
@@ -23,7 +28,7 @@ void WorldManager::destroyWorld(WorldHandle handle)
     if (!isValid(handle))
         return;
 
-    WorldSlot& slot = m_worlds[handle.index];
+    WorldSlot& slot = *m_worlds[handle.index];
 
     slot.world = World{};
     slot.alive = false;
@@ -37,7 +42,7 @@ void WorldManager::destroyWorld(WorldHandle handle)
 World& WorldManager::get(WorldHandle handle)
 {
     check(isValid(handle), "");
-    return m_worlds[handle.index].world;
+    return m_worlds[handle.index]->world;
 }
 
 bool WorldManager::isValid(WorldHandle handle) const
@@ -45,19 +50,19 @@ bool WorldManager::isValid(WorldHandle handle) const
     if (handle.index >= m_worlds.size())
         return false;
 
-    const WorldSlot& slot = m_worlds[handle.index];
+    const WorldSlot& slot = *m_worlds[handle.index];
     return slot.alive && slot.generation == handle.generation;
 }
 
 void WorldManager::nextFrame()
 {
-    for (WorldSlot& slot : m_worlds)
-        slot.world.nextFrame();
+    for (auto& slot : m_worlds)
+        slot->world.nextFrame();
 }
 
 WorldHandle WorldManager::prepareWorld(UInt32 index)
 {
-    WorldSlot& slot = m_worlds[index];
+    WorldSlot& slot = *m_worlds[index];
     const WorldHandle handle{index, slot.generation};
     slot.alive = true;
     slot.world = World{{handle}};

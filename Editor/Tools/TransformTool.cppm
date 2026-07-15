@@ -2,19 +2,28 @@ export module Editor.TransformTool;
 export import Editor.EntityEditingMode;
 import Editor.EditingContext;
 import Editor.Services;
+import Engine.Viewport;
 import EventBus;
 import Math;
+import Render.Viewport;
+
+export struct TransformToolContext
+{
+    EditorServices& services;
+    EditingContext& editing;
+    const ViewportId& viewportId;
+};
 
 export class TransformToolManager : EditorServiceConsumer
 {
 public:
-    TransformToolManager(EditorServices& services, EditingContext& context);
+    explicit TransformToolManager(TransformToolContext context);
     void createTools();
     void setCurrentTool(EntityEditingMode type);
     void update();
 
 private:
-    EditingContext& m_context;
+    TransformToolContext m_context;
     EntityEditingMode m_currentToolType{EntityEditingMode::None};
     std::array<std::unique_ptr<class TransformTool>, 3> m_tools;
     EventSubscription m_sub;
@@ -23,19 +32,19 @@ private:
 class TransformTool : EditorServiceConsumer
 {
 public:
-    TransformTool(EditorServices& services, EditingContext& context, EntityEditingMode type);
+    TransformTool(TransformToolContext& context, EntityEditingMode type);
     virtual ~TransformTool() = default;
     virtual void update();
     void setActive(bool active);
 
 protected:
-    EditingContext& context() { return m_context; }
-    [[nodiscard]] const EditingContext& context() const { return m_context; }
+    TransformToolContext& context() { return m_context; }
+    [[nodiscard]] const TransformToolContext& context() const { return m_context; }
 
 private:
     void attachToSelection();
 
-    EditingContext& m_context;
+    TransformToolContext& m_context;
     Entity m_attachedTo;
     Entity m_gizmo;
 };
@@ -44,7 +53,8 @@ template<EntityEditingMode mode>
 class TransformToolImpl : public TransformTool
 {
 public:
-    explicit TransformToolImpl(EditorServices& services, EditingContext& context) : TransformTool{services, context, mode} {}
+    explicit TransformToolImpl(TransformToolContext& context)
+        : TransformTool{context, mode} {}
 };
 
 class TranslateTool : public TransformToolImpl<EntityEditingMode::Translate>
