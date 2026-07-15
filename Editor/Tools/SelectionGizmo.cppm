@@ -9,24 +9,24 @@ import World;
 class SelectionGizmo
 {
 public:
-    SelectionGizmo(World& world, Entity attachTo);
+    SelectionGizmo(World& editorWorld, const World& sourceEntityWorld, Entity sourceEntity);
     Entity getGizmoEntity() const;
 
 private:
-    std::reference_wrapper<World> m_world;
     Entity m_gizmo;
 };
 
-export class SelectionGizmoManager
+export class SelectionGizmoManager : NoCopy, NoMove
 {
 public:
     SelectionGizmoManager(EditorServices& services, EditingContext& context);
 
 private:
-    void setSelectedEntities(World& world, std::span<const Entity> entities);
+    void setSelectedEntities(const World& world, std::span<const Entity> entities);
 
-    void destroyGizmo(World& world, Entity attachedToEntity);
+    void destroyGizmo(World& editorWorld, Entity sourceEntity);
 
+    World& m_editorWorld;
     std::unordered_map<Entity, SelectionGizmo> m_entitiesToBoundingBoxGizmos;
     EventSubscription m_sub;
 };

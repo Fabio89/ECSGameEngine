@@ -1,5 +1,5 @@
 module Editor.TransformTool;
-import Component.Gizmo;
+import Components.Gizmo;
 import Editor;
 import Editor.Events;
 import Editor.Gizmos;

@@ -1,21 +1,22 @@
 module Editor.Gizmos;
 import Assets.Mesh;
-import Component.LineRender;
-import Component.BoundingBox;
-import Component.Gizmo;
-import Component.Name;
-import Component.Model;
-import Component.Hierarchy;
-import Component.Render;
-import Component.Tags;
-import Component.Transform;
+import Components.BoundingBox;
+import Components.EntityProxy;
+import Components.Gizmo;
+import Components.Hierarchy;
+import Components.LineRender;
+import Components.Model;
+import Components.Name;
+import Components.Render;
+import Components.Tags;
+import Components.Transform;
 import Engine;
 import Guid;
 import Math;
 import Physics;
 import Render.Commands;
 import Render.Primitives;
-import System.Transform;
+import Systems.Transform;
 
 namespace Gizmos
 {
@@ -172,22 +173,20 @@ constexpr std::vector<LineVertex> generateAABBVertices(const Vec3& min, const Ve
     return lineVertices;
 }
 
-Entity Gizmos::createBoundingBoxGizmo(World& world, Entity parentEntity)
+Entity Gizmos::createBoundingBoxGizmo(World& editorWorld, const World& sourceEntityWorld,  Entity sourceEntity)
 {
-    std::string_view name = NameUtils::getName(world, parentEntity);
+    std::string_view name = NameUtils::getName(sourceEntityWorld, sourceEntity);
 
-    Entity aabbGizmo = world.createEntity();
+    Entity aabbGizmo = editorWorld.createEntity();
 
-    world.addComponent<NameComponent>(aabbGizmo, std::format("BoundingBoxGizmo_{}", name));
-    world.addComponent<TagsComponent>(aabbGizmo, {{Tag::editorOnly}});
+    editorWorld.addComponent<NameComponent>(aabbGizmo, std::format("BoundingBoxGizmo_{}", name));
+    editorWorld.addComponent<TagsComponent>(aabbGizmo, {{Tag::editorOnly}});
 
-    world.addComponent<HierarchyComponent>(aabbGizmo);
-    HierarchyUtils::setParent(world, aabbGizmo, parentEntity);
+    editorWorld.addComponent<RuntimeTransformComponent>(aabbGizmo);
+    editorWorld.addComponent<EntityProxyComponent>(aabbGizmo, {.sourceWorld = sourceEntityWorld.getHandle(), .sourceEntity = sourceEntity});
 
-    world.addComponent<TransformComponent>(aabbGizmo);
-
-    const BoundingBoxComponent& aabb = world.readComponent<BoundingBoxComponent>(parentEntity);
-    world.addComponent<LineRenderComponent>(aabbGizmo, {.vertices = generateAABBVertices(aabb.minLocal, aabb.maxLocal)});
+    const BoundingBoxComponent& aabb = sourceEntityWorld.readComponent<BoundingBoxComponent>(sourceEntity);
+    editorWorld.addComponent<LineRenderComponent>(aabbGizmo, {.vertices = generateAABBVertices(aabb.minLocal, aabb.maxLocal)});
 
     return aabbGizmo;
 }

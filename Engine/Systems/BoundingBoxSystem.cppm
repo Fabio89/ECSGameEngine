@@ -1,6 +1,6 @@
-export module System.BoundingBox;
-import Component.BoundingBox;
-import Component.Transform;
+export module Systems.BoundingBox;
+import Components.BoundingBox;
+import Components.Transform;
 import Engine.WorldManager;
 import Engine.SystemManager;
 import Math;

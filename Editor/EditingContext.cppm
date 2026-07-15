@@ -1,11 +1,10 @@
 export module Editor.EditingContext;
 export import Editor.EditingContextId;
 import Core;
-import Editor.Services;
 import Engine.WorldManager;
 import Editor.Selection;
 import Editor.SnapshotFrame;
-import WorldHandle;
+import EventBus;
 
 export struct EditingContextCreateInfo
 {
@@ -20,12 +19,18 @@ export struct EditingContext
     WorldHandle editorWorld;
     Editor::Selection selection;
     Editor::SnapshotPublisher snapshotPublisher;
+
+    EditingContext(EditingContextId id, World& world, WorldHandle editorWorld, EventBus& events);
+    EditingContext(const EditingContext&) = delete;
+    EditingContext(EditingContext&&) = delete;
+    EditingContext& operator=(const EditingContext&) = delete;
+    EditingContext& operator=(EditingContext&&) = delete;
 };
 
 export class EditingContextManager
 {
 public:
-    EditingContextManager(EditorServices& services);
+    EditingContextManager(WorldManager& worlds, EventBus& editorEvents);
 
     EditingContextId add(EditingContextCreateInfo info);
 
@@ -43,7 +48,8 @@ public:
     }
 
 private:
-    EditorServices& m_services;
+    WorldManager& m_worlds;
+    EventBus& m_editorEvents;
     EditingContextId::ValueType m_lastId{0};
     std::unordered_map<EditingContextId::ValueType, std::unique_ptr<EditingContext>> m_contexts;
 };

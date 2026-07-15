@@ -96,12 +96,7 @@ void WorldManager::subscribeToWorldEvents(World& world)
         m_eventBus.publish(event);
     });
 
-    m_subscription += world.subscribe([this](const WorldEvents::SceneLoaded& event)
-    {
-        m_eventBus.publish(event);
-    });
-
-    m_subscription += world.subscribe([this](const WorldEvents::SceneUnloaded& event)
+    m_subscription += world.subscribe([this](const WorldEvents::WorldCleared& event)
     {
         m_eventBus.publish(event);
     });

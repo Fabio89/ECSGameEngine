@@ -1,4 +1,4 @@
-export module Component.Name;
+export module Components.Name;
 import Core;
 import Properties;
 import Serialization.Json;

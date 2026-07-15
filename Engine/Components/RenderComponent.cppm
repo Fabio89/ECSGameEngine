@@ -1,4 +1,4 @@
-export module Component.Render;
+export module Components.Render;
 import Assets.Mesh;
 import Assets.Texture;
 import Core;

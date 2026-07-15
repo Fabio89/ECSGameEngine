@@ -1,8 +1,8 @@
 export module Editor.Panels.Hierarchy;
-import Component.Hierarchy;
-import Component.Name;
-import Component.Model;
-import Component.Transform;
+import Components.Hierarchy;
+import Components.Name;
+import Components.Model;
+import Components.Transform;
 import ComponentRegistry;
 import Editor;
 import Editor.Controller;

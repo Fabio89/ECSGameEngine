@@ -1,4 +1,4 @@
-export module Component.Tags;
+export module Components.Tags;
 import Core;
 import Properties;
 import Serialization.Json;

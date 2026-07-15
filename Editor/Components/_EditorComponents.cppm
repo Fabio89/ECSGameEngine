@@ -1,5 +1,5 @@
 export module Editor.Components;
-export import Component.Gizmo;
+export import Components.Gizmo;
 export import ComponentRegistry;
 
 namespace EditorComponents

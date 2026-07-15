@@ -1,4 +1,4 @@
-module Component.Hierarchy;
+module Components.Hierarchy;
 
 const HierarchyComponent& HierarchyUtils::getHierarchy(const World& world, Entity entity)
 {

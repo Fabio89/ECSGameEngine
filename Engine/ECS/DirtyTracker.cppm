@@ -73,6 +73,7 @@ bool DirtyTracker::isDirty(Entity entity) const
 
 void DirtyTracker::remove(Entity entity)
 {
+    std::erase(m_dirtyBuffers[m_currentBuffer], entity);
     std::erase(m_dirtyBuffers[m_nextBuffer], entity);
 }
 

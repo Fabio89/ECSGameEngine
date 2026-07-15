@@ -21,6 +21,7 @@ namespace
     UInt64 currentFrame{};
     RenderManager renderManager;
     WorldManager worldManager;
+    SceneManager sceneManager{worldManager};
     SystemManager systemManager{{.worlds = worldManager, .viewports = renderManager.viewports(), .renderCommands = renderManager.getCommandQueue()}};
 }
 
@@ -161,6 +162,11 @@ void Engine::addSystem(SystemCallbacks callbacks)
     systemManager.add(std::move(callbacks));
 }
 
+SceneManager& Engine::scenes()
+{
+    return sceneManager;
+}
+
 ViewportId Engine::createViewport(std::vector<WorldHandle> worlds, Rect area)
 {
     return renderManager.createViewport(worlds, area);
@@ -195,7 +201,7 @@ Ray Engine::getViewportCursorRay(ViewportId id)
     return Physics::rayFromViewportUV(renderManager.viewports().getCamera(id), uv);
 }
 
-ViewportManager& Engine::getViewportManager()
+ViewportManager& Engine::viewports()
 {
     return renderManager.viewports();
 }

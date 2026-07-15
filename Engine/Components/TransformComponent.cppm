@@ -2,7 +2,7 @@ module;
 
 #include "EngineExport.h"
 
-export module Component.Transform;
+export module Components.Transform;
 import Core;
 import Math;
 import Properties;

@@ -1,4 +1,4 @@
-export module Component.Model;
+export module Components.Model;
 import Core;
 import Guid;
 import Serialization.Json;

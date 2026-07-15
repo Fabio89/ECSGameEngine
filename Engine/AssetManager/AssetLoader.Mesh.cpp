@@ -7,6 +7,7 @@ module;
 module AssetLoader.Mesh;
 import Core;
 import Math;
+import Serialization.Json;
 
 bool operator==(const Vertex& a, const Vertex& b)
 {

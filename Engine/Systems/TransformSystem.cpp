@@ -1,7 +1,7 @@
-module System.Transform;
-import Component.Name;
-import Component.Hierarchy;
-import Component.Transform;
+module Systems.Transform;
+import Components.Name;
+import Components.Hierarchy;
+import Components.Transform;
 import Math;
 import World.Events;
 

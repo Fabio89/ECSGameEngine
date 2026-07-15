@@ -114,7 +114,7 @@ ViewportController::ViewportController(EditorServices& services, EditingContext&
             m_tools.setCurrentTool(event.mode);
     });
 
-    m_subscription += services.worlds.subscribe([this, &worlds = services.worlds, worldHandle = context.world](const WorldEvents::SceneLoaded& event)
+    m_subscription += services.worlds.subscribe([this, &worlds = services.worlds, worldHandle = context.world](const WorldEvents::WorldCleared& event)
     {
         if (worlds.get(event.world).getHandle() == worldHandle)
             m_tools.createTools();
@@ -130,6 +130,7 @@ void ViewportController::update(float dt, Editor::SnapshotFrame& frame)
     const Camera camera = CameraUtils::toRenderCamera(services().worlds.get(context().editorWorld), m_id, m_camera);
     services().viewports.setCamera(m_id, camera);
     services().renderCommands.addCommand(RenderCommands::SetCamera{.world = context().world, .camera = camera});
+    services().renderCommands.addCommand(RenderCommands::SetCamera{.world = context().editorWorld, .camera = camera});
 }
 
 ViewportSnapshot ViewportController::buildSnapshot(const EditingContext& context)
@@ -182,10 +183,15 @@ void Panels::ViewportPanel::doDraw()
         Editor::request(Editor::SelectEntityUnderCursor{.contextId = context().id, .window = getWindow(), .viewport = m_id});
     }
 
+    auto setMouseLook = [window = getWindow()](bool enabled)
+    {
+        Editor::request(Editor::SetCameraMouseLookEnabled{window, enabled});
+    };
+
     if (ImGui::IsMouseReleased(ImGuiMouseButton_Right))
-        Editor::request(Editor::SetCameraMouseLookEnabled{getWindow(), false});
+        setMouseLook(false);
     else if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-        Editor::request(Editor::SetCameraMouseLookEnabled{getWindow(), true});
+        setMouseLook(true);
 
     ImGui::End();
     ImGui::PopStyleVar();

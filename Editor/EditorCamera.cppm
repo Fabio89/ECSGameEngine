@@ -1,5 +1,5 @@
 export module Editor.Camera;
-import Component.Transform;
+import Components.Transform;
 import Input;
 import Math;
 import Window;

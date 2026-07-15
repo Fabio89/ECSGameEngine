@@ -2,11 +2,7 @@ export module AssetLoader.Mesh;
 export import Assets.Mesh;
 export import Assets.Texture;
 import AssetLoader;
-import AssetManager;
-import Serialization.Json;
-import std;
-
-import Assets.Texture;
+import Core;
 
 export class MeshAssetLoader : public AssetLoader<MeshData>
 {

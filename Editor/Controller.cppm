@@ -1,10 +1,10 @@
 export module Editor.Controller;
+import Core;
 import Editor.EditingContext;
 import Editor.Services;
 import Editor.SnapshotFrame;
-import std;
 
-export class EditorController : protected EditorServiceConsumer
+export class EditorController : protected EditorServiceConsumer, NoCopy, NoMove
 {
 public:
     explicit EditorController(EditorServices& services, EditingContext& context) : EditorServiceConsumer{services}, m_context{context} {}

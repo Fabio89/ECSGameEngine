@@ -1,4 +1,4 @@
-export module Component.PersistentId;
+export module Components.PersistentId;
 import Core;
 import Guid;
 import Serialization.Json;

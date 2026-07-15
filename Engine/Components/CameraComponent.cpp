@@ -1,5 +1,5 @@
-module Component.Camera;
-import Component.Transform;
+module Components.Camera;
+import Components.Transform;
 import Engine;
 
 Camera CameraUtils::toRenderCamera(const World& world, ViewportId viewportId, Entity cameraEntity)

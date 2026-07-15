@@ -118,10 +118,7 @@ public:
     void removeEntity(Entity entity);
     bool isValid(Entity entity) const;
 
-    void loadScene(const std::filesystem::path& path);
-    void unloadScene();
-    JsonObject serializeScene(Json::MemoryPoolAllocator<>& allocator) const;
-    void deserializeScene(const JsonObject& json);
+    void removeAllEntities();
 
     template <ValidComponentData T, typename... Args>
     const T& addComponent(Entity entity, Args&&... args);

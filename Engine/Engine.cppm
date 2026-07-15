@@ -16,6 +16,7 @@ import Physics;
 import Render.CommandProcessor;
 import Render.EditorCallbacks;
 import Render.Viewport;
+import SceneManager;
 import Window;
 import World;
 
@@ -57,6 +58,12 @@ export namespace Engine
     ENGINE_API void addSystem(SystemCallbacks callbacks);
 
     //------------------------------------------------------------------------------------------------------------------------
+    // Scene
+    //------------------------------------------------------------------------------------------------------------------------
+
+    ENGINE_API SceneManager& scenes();
+
+    //------------------------------------------------------------------------------------------------------------------------
     // Editor Integration
     //------------------------------------------------------------------------------------------------------------------------
 
@@ -70,7 +77,7 @@ export namespace Engine
 
     ENGINE_API Ray getViewportCursorRay(ViewportId id);
 
-    ENGINE_API ViewportManager& getViewportManager();
+    ENGINE_API ViewportManager& viewports();
 
     ENGINE_API float getViewportAspectRatio(ViewportId id);
 

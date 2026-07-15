@@ -1,5 +1,5 @@
 export module Editor.Panels.Details;
-import Component.Name;
+import Components.Name;
 import Editor;
 import Editor.Controller;
 import Editor.Panel.Impl;

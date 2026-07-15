@@ -1,5 +1,5 @@
-export module Component.Hierarchy;
-import Component.PersistentId;
+export module Components.Hierarchy;
+import Components.PersistentId;
 import Core;
 import Guid;
 import Properties;

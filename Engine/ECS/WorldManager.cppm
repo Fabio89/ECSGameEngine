@@ -1,6 +1,6 @@
 export module Engine.WorldManager;
+export import World;
 import EventBus;
-import World;
 
 export class WorldManager
 {

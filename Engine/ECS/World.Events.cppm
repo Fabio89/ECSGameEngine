@@ -15,12 +15,7 @@ export namespace WorldEvents
         WorldHandle world;
     };
 
-    struct SceneLoaded
-    {
-        WorldHandle world;
-    };
-
-    struct SceneUnloaded
+    struct WorldCleared
     {
         WorldHandle world;
     };

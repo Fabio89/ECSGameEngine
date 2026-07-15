@@ -6,6 +6,7 @@ import Editor.Gizmos;
 import World.Events;
 
 SelectionGizmoManager::SelectionGizmoManager(EditorServices& services, EditingContext& context)
+    : m_editorWorld{services.worlds.get(context.editorWorld)}
 {
     WorldManager& worldManager = services.worlds;
 
@@ -13,15 +14,9 @@ SelectionGizmoManager::SelectionGizmoManager(EditorServices& services, EditingCo
     {
         setSelectedEntities(worldManager.get(context.world), event.selection);
     });
-
-    m_sub += worldManager.subscribe([this, &worldManager](const WorldEvents::SceneLoaded& event)
-    {
-        setSelectedEntities(worldManager.get(event.world), {});
-        check(m_entitiesToBoundingBoxGizmos.empty(), "`SelectionGizmoManager::m_entitiesToBoundingBoxGizmos` should have been empty at this point!");
-    });
 }
 
-void SelectionGizmoManager::setSelectedEntities(World& world, std::span<const Entity> entities)
+void SelectionGizmoManager::setSelectedEntities(const World& world, std::span<const Entity> entities)
 {
     std::vector<Entity> toRemove;
     for (const Entity entity : m_entitiesToBoundingBoxGizmos | std::views::keys)
@@ -31,29 +26,26 @@ void SelectionGizmoManager::setSelectedEntities(World& world, std::span<const En
     }
 
     for (const Entity entity : toRemove)
-        destroyGizmo(world, entity);
+        destroyGizmo(m_editorWorld, entity);
 
     for (const Entity entity : entities)
     {
         if (check(!m_entitiesToBoundingBoxGizmos.contains(entity), "Tried to add selection gizmo to an entity more than once!"))
-            m_entitiesToBoundingBoxGizmos.emplace(entity, SelectionGizmo{world, entity}).first;
+            m_entitiesToBoundingBoxGizmos.emplace(entity, SelectionGizmo{m_editorWorld, world, entity}).first;
     }
 }
 
-void SelectionGizmoManager::destroyGizmo(World& world, Entity attachedToEntity)
+void SelectionGizmoManager::destroyGizmo(World& editorWorld, Entity sourceEntity)
 {
-    if (auto it = m_entitiesToBoundingBoxGizmos.find(attachedToEntity); it != m_entitiesToBoundingBoxGizmos.end())
+    if (const auto node = m_entitiesToBoundingBoxGizmos.extract(sourceEntity); !node.empty())
     {
-        const Entity gizmo = it->second.getGizmoEntity();
-        if (world.isValid(gizmo))
-            world.removeEntity(gizmo);
-        m_entitiesToBoundingBoxGizmos.erase(it);
+        if (const Entity gizmo = node.mapped().getGizmoEntity(); editorWorld.isValid(gizmo))
+            editorWorld.removeEntity(gizmo);
     }
 }
 
-SelectionGizmo::SelectionGizmo(World& world, Entity attachTo)
-    : m_world{world},
-      m_gizmo{Gizmos::createBoundingBoxGizmo(world, attachTo)} {}
+SelectionGizmo::SelectionGizmo(World& editorWorld, const World& sourceEntityWorld, Entity sourceEntity)
+    : m_gizmo{Gizmos::createBoundingBoxGizmo(editorWorld, sourceEntityWorld, sourceEntity)} {}
 
 Entity SelectionGizmo::getGizmoEntity() const
 {

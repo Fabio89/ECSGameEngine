@@ -1,5 +1,5 @@
-export module System.PersistentId;
-import Component.PersistentId;
+export module Systems.PersistentId;
+import Components.PersistentId;
 import Engine.SystemManager;
 import World.Events;
 

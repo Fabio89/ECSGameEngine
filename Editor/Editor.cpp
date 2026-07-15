@@ -17,10 +17,11 @@ import Engine;
 import Input;
 import Math;
 import Physics;
-import System.BoundingBox;
-import System.Hierarchy;
-import System.RenderSynchronizer;
-import System.Transform;
+import Systems.BoundingBox;
+import Systems.EntityProxy;
+import Systems.Hierarchy;
+import Systems.RenderSynchronizer;
+import Systems.Transform;
 import Thread;
 import World;
 import World.Events;
@@ -32,9 +33,16 @@ std::vector<std::unique_ptr<Panel>> panels;
 std::vector<Panel*> panelView;
 EventBus events;
 
-EditorServices services{.worlds = Engine::worlds(), .viewports = Engine::getViewportManager(), .events = events, .renderCommands = Engine::getRenderCommandQueue()};
+EditorServices services
+{
+    .worlds = Engine::worlds(),
+    .viewports = Engine::viewports(),
+    .scenes = Engine::scenes(),
+    .events = events,
+    .renderCommands = Engine::getRenderCommandQueue()
+};
 
-EditingContextManager contextManager{services};
+EditingContextManager contextManager{services.worlds, services.events};
 std::unordered_map<EditingContextId, Editor::ControllerManager> controllerManagers;
 
 namespace Editor
@@ -125,6 +133,7 @@ void Editor::init()
 {
     Engine::addSystem(HierarchySystem::callbacks);
     Engine::addSystem(TransformSystem::callbacks);
+    Engine::addSystem(EntityProxySystem::callbacks);
     Engine::addSystem(BoundingBoxSystem::callbacks);
     Engine::addSystem(RenderSynchronizer::callbacks);
 
@@ -134,8 +143,8 @@ void Editor::init()
 
     initPropertyDrawers();
 
-    const WorldHandle mainWorld = Engine::createWorld();
     const WorldHandle editorWorld = Engine::createWorld();
+    const WorldHandle mainWorld = Engine::createWorld();
 
     editorContext = {.world = mainWorld, .window = Engine::getWindow()};
 
@@ -154,7 +163,7 @@ void Editor::init()
     for (ControllerManager& controllerManager : controllerManagers | std::views::values)
         controllerManager.init();
 
-    subscription += services.worlds.subscribe([](const WorldEvents::SceneLoaded& event)
+    subscription += services.worlds.subscribe([](const WorldEvents::WorldCleared& event)
     {
         for (EditingContext& context : contexts().getAll())
         {
@@ -255,6 +264,5 @@ void Editor::loadScene(EditingContextId contextId, const std::filesystem::path& 
     if (!std::filesystem::exists(path))
         return;
 
-    World& world = services.worlds.get(contexts().get(contextId).world);
-    world.loadScene(path);
+    services.scenes.loadScene(contexts().get(contextId).world, path);
 }

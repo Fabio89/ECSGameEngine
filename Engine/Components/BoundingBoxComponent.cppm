@@ -1,5 +1,5 @@
-export module Component.BoundingBox;
-import Component.Transform;
+export module Components.BoundingBox;
+import Components.Transform;
 import Core;
 import Math;
 import Physics;

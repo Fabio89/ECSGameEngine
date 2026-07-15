@@ -1,4 +1,4 @@
-export module Component.LineRender;
+export module Components.LineRender;
 import Assets.Mesh;
 import Core;
 

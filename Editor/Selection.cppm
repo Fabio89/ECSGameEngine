@@ -5,13 +5,14 @@ import Core;
 import Editor.EditingContextId;
 import EventBus;
 import Thread;
+import World;
 
 export namespace Editor
 {
-    class EDITOR_API Selection : ThreadOwned
+    class EDITOR_API Selection : ThreadOwned, NoCopy, NoMove
     {
     public:
-        Selection(EventBus& events, EditingContextId contextId);
+        Selection(World& world, EventBus& events, EditingContextId contextId);
 
         void add(Entity entity);
         void remove(Entity entity);
@@ -27,5 +28,6 @@ export namespace Editor
         EventBus& m_events;
         EditingContextId m_contextId;
         std::vector<Entity> m_entities;
+        EventSubscription m_subscription;
     };
 }

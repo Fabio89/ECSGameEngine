@@ -1,10 +1,25 @@
 module Editor.Selection;
 import Editor.Events;
+import Editor;
 import Engine;
 import Thread;
+import World.Events;
 
-Editor::Selection::Selection(EventBus& events, EditingContextId contextId) : m_events{events}, m_contextId{contextId}
+Editor::Selection::Selection(World& world, EventBus& events, EditingContextId contextId)
+    : m_events{events},
+      m_contextId{contextId}
 {
+    m_subscription.clear();
+
+    m_subscription += world.subscribe([this](const WorldEvents::WorldCleared&)
+    {
+        clear();
+    });
+
+    m_subscription += world.subscribe([this](const WorldEvents::EntityDestroyed& event)
+    {
+        remove(event.entity);
+    });
 }
 
 void Editor::Selection::add(Entity entity)
@@ -20,15 +35,18 @@ void Editor::Selection::add(Entity entity)
 void Editor::Selection::remove(Entity entity)
 {
     assertThread();
-    std::erase(m_entities, entity);
-    sendSelectionEvent();
+    if (std::erase(m_entities, entity) != 0)
+        sendSelectionEvent();
 }
 
 void Editor::Selection::clear()
 {
     assertThread();
-    m_entities.clear();
-    sendSelectionEvent();
+    if (!m_entities.empty())
+    {
+        m_entities.clear();
+        sendSelectionEvent();
+    }
 }
 
 void Editor::Selection::set(std::span<const Entity> entities)

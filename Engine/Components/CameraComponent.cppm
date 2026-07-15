@@ -1,4 +1,4 @@
-export module Component.Camera;
+export module Components.Camera;
 import Core;
 import Math;
 import Properties;

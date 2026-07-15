@@ -6,6 +6,6 @@ import World;
 export namespace Gizmos
 {
     Entity createTransformGizmo(World& world, EntityEditingMode type);
-    Entity createBoundingBoxGizmo(World& world, Entity parentEntity);
+    Entity createBoundingBoxGizmo(World& editorWorld, const World& sourceEntityWorld,  Entity sourceEntity);
     void setGizmoVisible(World& world, Entity gizmo, bool visible);
 }

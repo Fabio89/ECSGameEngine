@@ -1,6 +1,6 @@
-export module System.RenderSynchronizer;
-import Component.LineRender;
-import Component.Model;
+export module Systems.RenderSynchronizer;
+import Components.LineRender;
+import Components.Model;
 import Engine.SystemManager;
 import EventBus;
 import Math;
@@ -35,7 +35,7 @@ void init(SystemContext& context)
          context.renderCommands.addCommand(RenderCommands::RemoveWorld{.world = event.world});
     });
 
-    subscription += context.worlds.subscribe([&](const WorldEvents::SceneUnloaded& event)
+    subscription += context.worlds.subscribe([&](const WorldEvents::WorldCleared& event)
     {
         context.renderCommands.addCommand(RenderCommands::ClearRenderObjects{.world = event.world});
     });

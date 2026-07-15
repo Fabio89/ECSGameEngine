@@ -1,8 +1,8 @@
 module Physics;
-import Component.BoundingBox;
-import Component.Camera;
-import Component.Name;
-import Component.Transform;
+import Components.BoundingBox;
+import Components.Camera;
+import Components.Name;
+import Components.Transform;
 import Core;
 
 namespace Physics

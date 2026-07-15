@@ -216,7 +216,7 @@ float Viewport::getAspectRatio() const
 
 void Viewport::setCamera(Camera camera)
 {
-    m_camera = camera;
+    m_camera = std::move(camera);
 }
 
 const Camera& Viewport::getCamera() const

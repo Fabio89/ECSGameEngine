@@ -17,7 +17,8 @@ export namespace Json
     using rapidjson::MemoryPoolAllocator;
     using rapidjson::SizeType;
     using rapidjson::GenericStringRef;
-    
+    using rapidjson::GenericDocument;
+
     using rapidjson::kNullType;
     using rapidjson::kFalseType;
     using rapidjson::kTrueType;

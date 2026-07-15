@@ -1,5 +1,5 @@
-export module System.Hierarchy;
-import Component.Hierarchy;
+export module Systems.Hierarchy;
+import Components.Hierarchy;
 import Engine.SystemManager;
 import EventBus;
 import World;

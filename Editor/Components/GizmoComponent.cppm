@@ -1,4 +1,4 @@
-export module Component.Gizmo;
+export module Components.Gizmo;
 import Core;
 
 export struct GizmoComponent

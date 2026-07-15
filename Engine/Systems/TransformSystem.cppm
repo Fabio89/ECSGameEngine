@@ -1,4 +1,4 @@
-export module System.Transform;
+export module Systems.Transform;
 import Engine.SystemManager;
 
 void init(SystemContext& context);

@@ -123,3 +123,27 @@ struct Component : ComponentBase
 {
     T data;
 };
+
+//------------------------------------------------------------------------------------------------------------------------
+// Utility
+//------------------------------------------------------------------------------------------------------------------------
+
+export class NoCopy
+{
+protected:
+    NoCopy() = default;
+    ~NoCopy() = default;
+
+    NoCopy(const NoCopy&) = delete;
+    NoCopy& operator=(const NoCopy&) = delete;
+};
+
+export class NoMove
+{
+protected:
+    NoMove() = default;
+    ~NoMove() = default;
+
+    NoMove(NoMove&&) = delete;
+    NoMove& operator=(NoMove&&) = delete;
+};
