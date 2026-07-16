@@ -39,8 +39,8 @@ Entity ensureCamera(World& world)
     world.addComponent<NameComponent>(camera, "Main Camera");
 
     constexpr Vec3 position{2.f, 2.f, 2.f};
-    const Vec3 direction{Math::normalize(-position)};
-    const Quat rotation{Math::rotation(forwardVector(), direction)};
+    const Quat rotation = Math::angleAxis(Math::radians(-135.f), Vec3{0, 1, 0})
+                      * Math::angleAxis(Math::radians(33.f), Vec3{1, 0, 0});
 
     world.addComponent<TransformComponent>(camera,{
                                                .position = position,

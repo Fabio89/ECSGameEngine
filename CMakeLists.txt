@@ -149,9 +149,8 @@ target_sources(Editor
         ${EDITOR_SOURCES}
 
         PUBLIC
-        FILE_SET CXX_MODULES
-        BASE_DIRS
-        ${CMAKE_CURRENT_SOURCE_DIR}
+        FILE_SET CXX_MODULES TYPE CXX_MODULES
+        BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
         FILES
         ${EDITOR_MODULES}
 )

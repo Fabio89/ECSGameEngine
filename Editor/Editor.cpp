@@ -48,7 +48,6 @@ std::unordered_map<EditingContextId, Editor::ControllerManager> controllerManage
 namespace Editor
 {
     void rebuildPanelView();
-    Entity ensureCamera(World& world);
     void loadScene(EditingContextId contextId, const std::filesystem::path& path);
     void init();
     void shutdown();
@@ -233,30 +232,6 @@ void Editor::rebuildPanelView()
 
     for (auto& panel : panels)
         panelView.push_back(panel.get());
-}
-
-Entity Editor::ensureCamera(World& world)
-{
-    auto hasCamera = [&world](Entity entity) { return world.hasComponent<CameraComponent>(entity); };
-    auto entities = world.getEntitiesRange();
-    if (auto cameraEntityIt = std::ranges::find_if(entities, hasCamera); cameraEntityIt != entities.end())
-    {
-        return *cameraEntityIt;
-    }
-
-    const Entity camera = world.createEntity();
-    world.addComponent<CameraComponent>(camera, CameraComponent{.fov = 60.f});
-    world.addComponent<NameComponent>(camera, "Main Camera");
-
-    constexpr Vec3 position{2.f, 2.f, 2.f};
-    const Quat rotation = Math::angleAxis(Math::radians(-135.f), Vec3{0, 1, 0})
-                          * Math::angleAxis(Math::radians(33.f), Vec3{1, 0, 0});
-
-    world.addComponent<TransformComponent>(camera,{
-                                               .position = position,
-                                               .rotation = rotation
-                                           });
-    return camera;
 }
 
 void Editor::loadScene(EditingContextId contextId, const std::filesystem::path& path)

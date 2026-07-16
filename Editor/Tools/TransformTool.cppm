@@ -29,7 +29,7 @@ private:
     EventSubscription m_sub;
 };
 
-class TransformTool : EditorServiceConsumer
+export class TransformTool : EditorServiceConsumer
 {
 public:
     TransformTool(TransformToolContext& context, EntityEditingMode type);
@@ -49,33 +49,10 @@ private:
     Entity m_gizmo;
 };
 
-template<EntityEditingMode mode>
+export template<EntityEditingMode mode>
 class TransformToolImpl : public TransformTool
 {
 public:
     explicit TransformToolImpl(TransformToolContext& context)
         : TransformTool{context, mode} {}
-};
-
-class TranslateTool : public TransformToolImpl<EntityEditingMode::Translate>
-{
-public:
-    using TransformToolImpl::TransformToolImpl;
-    void update() override;
-
-private:
-    Entity m_selectedGizmoAxis;
-    std::optional<Vec3> m_projectedCursorPositionLastFrame;
-};
-
-class RotateTool : public TransformToolImpl<EntityEditingMode::Rotate>
-{
-public:
-    using TransformToolImpl::TransformToolImpl;
-};
-
-class ScaleTool : public TransformToolImpl<EntityEditingMode::Scale>
-{
-public:
-    using TransformToolImpl::TransformToolImpl;
 };

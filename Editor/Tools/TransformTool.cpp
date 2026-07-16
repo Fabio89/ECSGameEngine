@@ -1,4 +1,5 @@
 module Editor.TransformTool;
+import :Detail;
 import Components.Gizmo;
 import Editor;
 import Editor.Events;
@@ -89,10 +90,7 @@ void TransformTool::setActive(bool active)
         };
 
         auto& gizmoComponent = editorWorld.readComponent<GizmoComponent>(m_gizmo);
-
-        setAxis(gizmoComponent.xAxisEntity);
-        setAxis(gizmoComponent.yAxisEntity);
-        setAxis(gizmoComponent.zAxisEntity);
+        GizmoUtils::forEachHandle(gizmoComponent, setAxis);
     }
 
     if (active)
@@ -118,64 +116,4 @@ void TransformTool::attachToSelection()
 
     }
     m_attachedTo = firstSelected;
-}
-
-void TranslateTool::update()
-{
-    TransformTool::update();
-
-    World& world = Engine::getWorld(context().editing.world);
-    World& editorWorld = Engine::getWorld(context().editing.editorWorld);
-
-    if (context().editing.selection.isEmpty())
-        return;
-
-    Entity firstSelectedEntity = context().editing.selection.get().front();
-    if (world.isValid(firstSelectedEntity) && editorWorld.isValid(m_selectedGizmoAxis) && Input::isKeyDown(KeyCode::MouseButtonLeft))
-    {
-        const TransformComponent& transform = world.readComponent<TransformComponent>(firstSelectedEntity);
-
-        const Vec3 gizmoAxisDirection = [&]
-        {
-            const Entity gizmoEntity = HierarchyUtils::getParent(editorWorld, m_selectedGizmoAxis);
-            const GizmoComponent& gizmo = editorWorld.readComponent<GizmoComponent>(gizmoEntity);
-            if (m_selectedGizmoAxis == gizmo.xAxisEntity)
-                return TransformUtils::right(transform);
-            if (m_selectedGizmoAxis == gizmo.yAxisEntity)
-                return TransformUtils::up(transform);
-            if (m_selectedGizmoAxis == gizmo.zAxisEntity)
-                return TransformUtils::forward(transform);
-            report("Invalid gizmo axis entity");
-            return Vec3{};
-        }();
-
-        const Camera& camera = context().services.viewports.getCamera(context().viewportId);
-        const Plane movePlane
-        {
-            .point = transform.position,
-            .normal = Math::cross(CameraUtils::right(camera), gizmoAxisDirection)
-        };
-
-        const Ray ray = Engine::getViewportCursorRay(context().viewportId);
-        const std::optional<Vec3> projectedCursorPosition = Physics::intersectRayPlane(ray, movePlane);
-
-        if (m_projectedCursorPositionLastFrame.has_value() && projectedCursorPosition.has_value())
-        {
-            const auto delta = Math::dot(*projectedCursorPosition - *m_projectedCursorPositionLastFrame, gizmoAxisDirection);
-            auto selectionTransform = world.editComponent<TransformComponent>(firstSelectedEntity);
-            selectionTransform->position += gizmoAxisDirection * delta;
-            m_projectedCursorPositionLastFrame = *projectedCursorPosition;
-        }
-        m_projectedCursorPositionLastFrame = projectedCursorPosition;
-    } else
-    {
-        m_selectedGizmoAxis = {};
-        m_projectedCursorPositionLastFrame = {};
-    }
-
-    if (Input::isKeyJustPressed(KeyCode::MouseButtonLeft))
-    {
-        const Ray ray = Engine::getViewportCursorRay(context().viewportId);
-        m_selectedGizmoAxis = Physics::lineTrace(editorWorld, ray, TraceChannelFlags::Gizmo);
-    }
 }
