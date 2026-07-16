@@ -52,7 +52,7 @@ Entity Gizmos::createTranslationGizmo(World& world)
     world.addComponent<NameComponent>(gizmo, "Translation Gizmo");
     world.addComponent<TagsComponent>(gizmo, {{Tag::editorOnly}});
     world.addComponent<HierarchyComponent>(gizmo);
-    world.addComponent<TransformComponent>(gizmo);
+    world.addComponent<TransformComponent>(gizmo, {.position = Vec3{}, .rotation = Quat{}, .scale = 0.2});
 
     static constexpr Vec3 xColor = {1.0f, 0.0f, 0.0f};
     const Entity x = createTranslationGizmoAxis

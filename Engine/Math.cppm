@@ -31,6 +31,7 @@ export using Vec3 = glm::vec3;
 export using Vec4 = glm::vec4;
 export using IVec2 = glm::ivec2;
 export using Quat = glm::quat;
+export using Mat3 = glm::mat3;
 export using Mat4 = glm::mat4;
 
 template<>
@@ -116,6 +117,22 @@ export namespace Math
 export constexpr Vec3 forwardVector() { return {0.0f, 0.0f, 1.0f}; }
 export constexpr Vec3 rightVector() { return {1.0f, 0.0f, 0.0f}; }
 export constexpr Vec3 upVector() { return {0.0f, 1.0f, 0.0f}; }
+
+export Quat lookRotation(Vec3 forward, Vec3 worldUp)
+{
+    forward = normalize(forward);
+
+    const Vec3 right = normalize(cross(forward, worldUp));
+    const Vec3 up = cross(right, forward);
+
+    Mat3 basis;
+
+    basis[0] = right;
+    basis[1] = up;
+    basis[2] = forward;
+
+    return normalize(quat_cast(basis));
+}
 
 export inline void hash_combine(std::size_t& seed, std::size_t hash)
 {

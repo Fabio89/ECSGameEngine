@@ -136,8 +136,10 @@ public:
     const T& readComponent(Entity entity) const { return getComponent<T>(entity); }
     const ComponentBase& readComponent(Entity entity, TypeId componentType) const { return getComponent(entity, componentType); }
 
-    template<ValidComponentData T>
+    template<ValidComponentData T> [[nodiscard]]
     Edit<T> editComponent(Entity entity) { return Edit<T>{entity, getComponent<T>(entity), m_dirtyTracker}; }
+
+    [[nodiscard]]
     BaseEdit editComponent(Entity entity, TypeId componentType) { return BaseEdit{entity, const_cast<ComponentBase&>(getComponent(entity, componentType)), m_dirtyTracker}; }
 
     template<typename Func> [[nodiscard]]
