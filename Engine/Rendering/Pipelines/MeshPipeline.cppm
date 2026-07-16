@@ -44,6 +44,13 @@ export vk::Pipeline createGraphicsPipeline(vk::Device device, vk::PipelineCache 
             .format = vk::Format::eR32G32Sfloat,
             .offset = offsetof(Vertex, uv),
         },
+        vk::VertexInputAttributeDescription
+        {
+            .location = 2,
+            .binding = 0,
+            .format = vk::Format::eR32G32B32A32Sfloat,
+            .offset = offsetof(Vertex, color),
+        }
     };
 
     static constexpr vk::PipelineVertexInputStateCreateInfo vertexInputInfo

@@ -11,6 +11,7 @@ export struct Vertex
 {
     Vec3 pos{};
     Vec2 uv{};
+    Vec4 color{1.f, 1.f, 1.f, 1.f};
 };
 
 export struct LineVertex

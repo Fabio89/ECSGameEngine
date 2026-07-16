@@ -115,8 +115,8 @@ Entity Gizmos::createTranslationGizmo(World& world)
     static constexpr float max = 0.4f;
 
     static constexpr Vec3 xyColor = zColor;
-    static constexpr Vec3 xyColorOnX = xColor;
-    static constexpr Vec3 xyColorOnY = yColor;
+    static constexpr Vec3 xyColorOnX = min > 0.f ? zColor : xColor;
+    static constexpr Vec3 xyColorOnY = min > 0.f ? zColor : yColor;
     const Entity xy = createTranslationGizmoHandle
     (
         world,
@@ -141,8 +141,8 @@ Entity Gizmos::createTranslationGizmo(World& world)
     );
 
     static constexpr Vec3 xzColor = yColor;
-    static constexpr Vec3 xzColorOnX = xColor;
-    static constexpr Vec3 xzColorOnZ = zColor;
+    static constexpr Vec3 xzColorOnX = min > 0.f ? yColor : xColor;
+    static constexpr Vec3 xzColorOnZ = min > 0.f ? yColor : zColor;
     const Entity xz = createTranslationGizmoHandle
     (
         world,
@@ -167,8 +167,8 @@ Entity Gizmos::createTranslationGizmo(World& world)
     );
 
     static constexpr Vec3 yzColor = xColor;
-    static constexpr Vec3 yzColorOnY = yColor;
-    static constexpr Vec3 yzColorOnZ = zColor;
+    static constexpr Vec3 yzColorOnY = min > 0.f ? xColor : yColor;
+    static constexpr Vec3 yzColorOnZ = min > 0.f ? xColor : zColor;
     const Entity yz = createTranslationGizmoHandle
     (
         world,
