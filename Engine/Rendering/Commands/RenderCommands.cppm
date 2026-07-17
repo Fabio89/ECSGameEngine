@@ -24,8 +24,8 @@ export namespace RenderCommands
     {
         WorldHandle world;
         Entity entity;
-        Guid mesh;
-        Guid texture;
+        const MeshData* mesh{};
+        const TextureData* texture{};
         Mat4 worldTransform{1};
         RenderLayer layer{RenderLayer::World};
         Vec4 tint{1};

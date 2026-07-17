@@ -22,7 +22,8 @@ namespace
     RenderManager renderManager;
     WorldManager worldManager;
     SceneManager sceneManager{worldManager};
-    SystemManager systemManager{{.worlds = worldManager, .viewports = renderManager.viewports(), .renderCommands = renderManager.getCommandQueue()}};
+    AssetManager assetManager;
+    SystemManager systemManager{{.worlds = worldManager, .viewports = renderManager.viewports(), .assets = assetManager, .renderCommands = renderManager.getCommandQueue()}};
 }
 
 namespace Engine
@@ -204,6 +205,11 @@ Ray Engine::getViewportCursorRay(ViewportId id)
 ViewportManager& Engine::viewports()
 {
     return renderManager.viewports();
+}
+
+AssetManager& Engine::assets()
+{
+    return assetManager;
 }
 
 float Engine::getViewportAspectRatio(ViewportId id)

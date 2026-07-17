@@ -1,5 +1,4 @@
 module Editor.Gizmos;
-import AssetManager;
 import Assets.Mesh;
 import Components.BoundingBox;
 import Components.EntityProxy;
@@ -28,6 +27,60 @@ namespace Gizmos
 
     Entity createRotationGizmo(World& world);
     Entity createScaleGizmo(World& world);
+}
+
+struct GizmoResources
+{
+    Guid arrowheadMesh;
+    Guid xyMesh;
+    Guid xzMesh;
+    Guid yzMesh;
+};
+
+namespace
+{
+    GizmoResources resources;
+}
+
+void Gizmos::init(AssetManager& assets, AssetMountId mount)
+{
+    resources.arrowheadMesh = assets.addFromFile<MeshData>("Arrowhead", {.mountId = mount, .relativeToMount = "Meshes/Cone.obj"});
+    
+    static constexpr float min = 0.1f;
+    static constexpr float max = 0.5f;
+
+    resources.xyMesh = assets.addFromData("TranslateXY", MeshData{
+        .vertices = {
+            {.pos = {min, min, 0.0f}},
+            {.pos = {max, min, 0.0f}},
+            {.pos = {max, max, 0.0f}},
+            {.pos = {min, max, 0.0f}},
+            {.pos = {min, max, 0.0f}},
+        },
+        .indices = {0, 1, 2, 2, 3, 0}
+    });
+
+    resources.xzMesh = assets.addFromData("TranslateXZ", MeshData{
+        .vertices = {
+            {.pos = {min, 0.f, min}},
+            {.pos = {max, 0.f, min}},
+            {.pos = {max, 0.f, max}},
+            {.pos = {min, 0.f, max}},
+            {.pos = {min, 0.f, max}},
+        },
+        .indices = {0, 1, 2, 2, 3, 0}
+    });
+
+    resources.yzMesh = assets.addFromData("TranslateYZ", MeshData{
+        .vertices = {
+            {.pos = {0.f, min, min}},
+            {.pos = {0.f, max, min}},
+            {.pos = {0.f, max, max}},
+            {.pos = {0.f, min, max}},
+            {.pos = {0.f, min, max}},
+        },
+        .indices = {0, 1, 2, 2, 3, 0}
+    });
 }
 
 Entity Gizmos::createTransformGizmo(World& world, EntityEditingMode type)
@@ -59,7 +112,7 @@ Entity Gizmos::createTranslationGizmo(World& world)
 
     static constexpr float alpha = 0.75;
     static constexpr float hitSize = 0.1f;
-
+    
     static constexpr Vec4 xColor = {1.0f, 0.0f, 0.0f, alpha};
     const Entity x = createTranslationGizmoHandle
     (
@@ -117,17 +170,6 @@ Entity Gizmos::createTranslationGizmo(World& world)
     static constexpr float min = 0.1f;
     static constexpr float max = 0.5f;
 
-    const Guid xyMesh = AssetManager::add("TranslateXY", MeshData{
-        .vertices = {
-            {.pos = {min, min, 0.0f}},
-            {.pos = {max, min, 0.0f}},
-            {.pos = {max, max, 0.0f}},
-            {.pos = {min, max, 0.0f}},
-            {.pos = {min, max, 0.0f}},
-        },
-        .indices = {0, 1, 2, 2, 3, 0}
-    });
-
     static constexpr Vec4 xyColor = zColor;
     const Entity xy = createTranslationGizmoHandle
     (
@@ -135,7 +177,7 @@ Entity Gizmos::createTranslationGizmo(World& world)
         gizmo,
         GizmoHandleType::TranslateXY,
         "XY",
-        xyMesh,
+        resources.xyMesh,
         xyColor,
         {
             .channel = {},
@@ -143,18 +185,7 @@ Entity Gizmos::createTranslationGizmo(World& world)
             .maxLocal = {max, max, hitSize}
         }
     );
-
-    const Guid xzMesh = AssetManager::add("TranslateXZ", MeshData{
-        .vertices = {
-            {.pos = {min, 0.f, min}},
-            {.pos = {max, 0.f, min}},
-            {.pos = {max, 0.f, max}},
-            {.pos = {min, 0.f, max}},
-            {.pos = {min, 0.f, max}},
-        },
-        .indices = {0, 1, 2, 2, 3, 0}
-    });
-
+    
     static constexpr Vec4 xzColor = yColor;
 
     const Entity xz = createTranslationGizmoHandle
@@ -163,7 +194,7 @@ Entity Gizmos::createTranslationGizmo(World& world)
         gizmo,
         GizmoHandleType::TranslateXZ,
         "XZ",
-        xzMesh,
+        resources.xzMesh,
         xzColor,
         {
             .channel = {},
@@ -171,17 +202,6 @@ Entity Gizmos::createTranslationGizmo(World& world)
             .maxLocal = {max, hitSize, max}
         }
     );
-
-    const Guid yzMesh = AssetManager::add("TranslateYZ", MeshData{
-        .vertices = {
-            {.pos = {0.f, min, min}},
-            {.pos = {0.f, max, min}},
-            {.pos = {0.f, max, max}},
-            {.pos = {0.f, min, max}},
-            {.pos = {0.f, min, max}},
-        },
-        .indices = {0, 1, 2, 2, 3, 0}
-    });
 
     static constexpr Vec4 yzColor = xColor;
 
@@ -191,7 +211,7 @@ Entity Gizmos::createTranslationGizmo(World& world)
         gizmo,
         GizmoHandleType::TranslateYZ,
         "YZ",
-        yzMesh,
+        resources.yzMesh,
         yzColor,
         {
             .channel = {},

@@ -1,14 +1,15 @@
 export module Systems.RenderSynchronizer;
+import Assets.Mesh;
+import Assets.Texture;
 import Components.LineRender;
 import Components.Model;
+import Components.Transform;
 import Engine.SystemManager;
 import EventBus;
 import Math;
 import Render.CommandProcessor;
 import Render.Commands;
 import World.Events;
-
-import Engine;
 
 namespace
 {
@@ -51,7 +52,9 @@ void init(SystemContext& context)
         else if (event.componentType == getTypeId<ModelComponent>())
         {
             const auto& component = world.readComponent<ModelComponent>(event.entity);
-            context.renderCommands.addCommand(RenderCommands::AddObject{event.world, event.entity, component.mesh, component.texture, getWorldTransform(world, event.entity), component.layer, component.tint});
+            const MeshData* mesh = context.assets.tryResolve<MeshData>(component.mesh);
+            const TextureData* texture = context.assets.tryResolve<TextureData>(component.texture);
+            context.renderCommands.addCommand(RenderCommands::AddObject{event.world, event.entity, mesh, texture, getWorldTransform(world, event.entity), component.layer, component.tint});
         }
     });
 

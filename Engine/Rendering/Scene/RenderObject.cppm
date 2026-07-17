@@ -3,11 +3,11 @@ import Assets.Mesh;
 import Assets.Texture;
 import Core;
 import Engine.Camera;
-import ThreadSafeQueue;
 import Guid;
 import Math;
 import Render.RenderLayer;
 import Render.Vulkan;
+import ThreadSafeQueue;
 
 struct Texture
 {
@@ -21,7 +21,7 @@ struct Texture
 struct Mesh
 {
     std::size_t id{};
-    MeshData data;
+    UInt32 indexCount{};
     vk::Buffer vertexBuffer{};
     vk::DeviceMemory vertexBufferMemory{};
     vk::Buffer indexBuffer{};
@@ -90,7 +90,7 @@ public:
     void clear();
     void setCamera(const Camera& camera);
 
-    void addRenderObject(Entity entity, Guid meshAsset, Guid textureAsset, Mat4 transform, RenderLayer layer, Vec4 tint);
+    void addRenderObject(Entity entity, const MeshData* mesh, const TextureData* texture, Mat4 transform, RenderLayer layer, Vec4 tint);
     void removeRenderObject(Entity entity);
     void setObjectTransform(Entity entity, const Mat4& worldTransform);
     void addLineRenderObject(Entity entity, std::vector<LineVertex>&& vertices, Mat4 transform);
@@ -113,8 +113,8 @@ public:
     );
 
 private:
-    void addMeshIfMissing(const Guid& guid);
-    void addTextureIfMissing(const Guid& guid);
+    std::size_t getOrCreateMesh(const MeshData* mesh);
+    std::size_t getOrCreateTexture(const TextureData* texture);
     void updateDescriptorSets(const RenderObject& object) const;
     void updateUniformBuffer(RenderObject& object, UInt32 currentImage);
     void updateUniformBuffer(LineRenderObject& object, UInt32 currentImage);
@@ -127,8 +127,8 @@ private:
     std::vector<Mesh> m_meshes;
     std::vector<Texture> m_textures;
 
-    std::unordered_map<Guid, std::size_t> m_meshMap;
-    std::unordered_map<Guid, std::size_t> m_textureMap;
+    std::unordered_map<const MeshData*, std::size_t> m_meshMap;
+    std::unordered_map<const TextureData*, std::size_t> m_textureMap;
 
     vk::Device m_device{};
     vk::PhysicalDevice m_physicalDevice{};

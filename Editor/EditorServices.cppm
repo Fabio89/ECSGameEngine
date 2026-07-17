@@ -1,4 +1,5 @@
 export module Editor.Services;
+import AssetManager;
 import Engine.WorldManager;
 import EventBus;
 import Render.CommandProcessor;
@@ -10,6 +11,7 @@ export struct EditorServices
     WorldManager& worlds;
     ViewportManager& viewports;
     SceneManager& scenes;
+    AssetManager& assets;
     EventBus& events;
     RenderCommandQueue& renderCommands;
 };

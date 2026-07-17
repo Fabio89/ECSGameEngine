@@ -1,9 +1,9 @@
 export module Render.CommandProcessor;
+import Core;
 import Log;
 import Render.Commands;
 import Render.RenderWorld;
 import ThreadSafeQueue;
-import std;
 
 export class RenderCommandProcessor;
 
@@ -90,7 +90,7 @@ void RenderCommandProcessor::process(RenderCommands::RemoveWorld&& cmd)
 template<>
 void RenderCommandProcessor::process(RenderCommands::AddObject&& cmd)
 {
-    m_context.renderWorldManager.getObjectManager(cmd.world).addRenderObject(cmd.entity, std::move(cmd.mesh), std::move(cmd.texture), std::move(cmd.worldTransform), cmd.layer, cmd.tint);
+    m_context.renderWorldManager.getObjectManager(cmd.world).addRenderObject(cmd.entity, cmd.mesh, cmd.texture, std::move(cmd.worldTransform), cmd.layer, cmd.tint);
 }
 
 template<>

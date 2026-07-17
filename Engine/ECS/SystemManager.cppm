@@ -1,5 +1,6 @@
 export module Engine.SystemManager;
 export import World;
+import AssetManager;
 import Core;
 import Engine.WorldManager;
 import Render.CommandProcessor;
@@ -10,6 +11,7 @@ export struct SystemContext
 {
     WorldManager& worlds;
     ViewportManager& viewports;
+    AssetManager& assets;
     RenderCommandQueue& renderCommands;
 };
 

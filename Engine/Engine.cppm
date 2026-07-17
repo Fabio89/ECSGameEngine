@@ -5,6 +5,7 @@ module;
 export module Engine;
 export import Core;
 export import EngineComponents;
+import AssetManager;
 import ComponentRegistry;
 import Engine.SystemManager;
 import Engine.Viewport;
@@ -78,6 +79,8 @@ export namespace Engine
     ENGINE_API Ray getViewportCursorRay(ViewportId id);
 
     ENGINE_API ViewportManager& viewports();
+
+    ENGINE_API AssetManager& assets();
 
     ENGINE_API float getViewportAspectRatio(ViewportId id);
 

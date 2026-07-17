@@ -2,9 +2,7 @@ module AssetManager;
 
 namespace
 {
-    std::filesystem::path contentRoot;
     std::unordered_map<TypeId, std::unique_ptr<AssetLoaderBase>> loaders;
-    std::unordered_map<Guid, AssetEntry> assetEntries;
     std::unordered_map<std::string, TypeId> assetTypeNameToId;
 }
 
@@ -16,27 +14,72 @@ AssetLoaderBase* AssetManager::getLoader(TypeId assetTypeId)
 
 AssetEntry* AssetManager::getEntry(const Guid& assetId)
 {
-    auto it = assetEntries.find(assetId);
-    return it != assetEntries.end() ? &it->second : nullptr;
+    auto it = m_assetEntries.find(assetId);
+    return it != m_assetEntries.end() ? &it->second : nullptr;
 }
 
 Guid AssetManager::addEntry(std::string_view name, TypeId type, std::any&& data)
 {
     Guid id = Guid::createRandom();
-    assetEntries.emplace(id, AssetEntry{
-                         .guid = id,
-                         .name = std::string{name},
-                         .type = type,
-                         .data = std::move(data),
-                         .path = {},
-                         .loaded = true
-                     });
+    m_assetEntries.emplace(id, AssetEntry{
+        .guid = id,
+        .name = std::string{name},
+        .type = type,
+        .data = std::move(data),
+        .path = {},
+        .loaded = true
+    });
     return id;
 }
 
-void AssetManager::loadDatabase(const std::filesystem::path& path)
+Guid AssetManager::addEntry(std::string_view name, TypeId type, AssetPath&& path)
 {
-    assetEntries.clear();
+    Guid id = Guid::createRandom();
+    m_assetEntries.emplace(id, AssetEntry{
+        .guid = id,
+        .name = std::string{name},
+        .type = type,
+        .data = {},
+        .path = std::move(path),
+        .loaded = false
+    });
+
+    return id;
+}
+
+std::filesystem::path AssetManager::toAbsolutePath(const AssetPath& path) const
+{
+    if (auto it = m_mounts.find(path.mountId); it != m_mounts.end())
+        return it->second.root / path.relativeToMount;
+    return {};
+}
+
+AssetMountId AssetManager::mount(std::string name, std::filesystem::path path)
+{
+    const AssetMountId id{m_nextMountId++};
+    m_mounts[id] = AssetMount{.id = id, .name = std::move(name), .root = std::move(path)};
+    return id;
+}
+
+void AssetManager::unmount(AssetMountId mountId)
+{
+    m_mounts.erase(mountId);
+
+    for (auto it = m_assetEntries.begin(); it != m_assetEntries.end(); )
+    {
+        if (it->second.path.mountId == mountId)
+            it = m_assetEntries.erase(it);
+        else
+            ++it;
+    }
+}
+
+void AssetManager::loadDatabase(AssetMountId mountId, const std::filesystem::path& path)
+{
+    if (!mountId.isValid() || !m_mounts.contains(mountId))
+    {
+        report(std::format("Tried to load asset database '{}' without providing a valid mount point!", path.string()));
+    }
 
     if (!std::filesystem::exists(path))
     {
@@ -55,34 +98,24 @@ void AssetManager::loadDatabase(const std::filesystem::path& path)
             Guid id = Guid::createFromString(element.FindMember("id")->value.GetString());
             std::string name = element.FindMember("name")->value.GetString();
             std::string typeName = element.FindMember("type")->value.GetString();
-            std::filesystem::path assetPath = element.FindMember("path")->value.GetString();
+            AssetPath assetPath{.mountId = mountId, .relativeToMount = element.FindMember("path")->value.GetString()};
 
             const TypeId typeId = assetTypeNameToId.at(typeName);
 
-            assetEntries.emplace(id, AssetEntry{
-                                     .guid = id,
-                                     .name = std::move(name),
-                                     .type = typeId,
-                                     .data = {},
-                                     .path = std::move(assetPath),
-                                     .loaded = false
-                                 });
+            m_assetEntries.emplace(id, AssetEntry{
+                .guid = id,
+                .name = std::move(name),
+                .type = typeId,
+                .data = {},
+                .path = std::move(assetPath),
+                .loaded = false
+            });
         }
     }
-}
-
-void AssetManager::setContentRoot(std::filesystem::path path)
-{
-    contentRoot = std::move(path);
 }
 
 void AssetManager::registerLoader(TypeId assetTypeId, std::string assetTypeName, std::unique_ptr<AssetLoaderBase> loader)
 {
     loaders[assetTypeId] = std::move(loader);
     assetTypeNameToId[std::move(assetTypeName)] = assetTypeId;
-}
-
-const std::filesystem::path& AssetManager::getContentRoot()
-{
-    return contentRoot;
 }

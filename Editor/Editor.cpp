@@ -32,12 +32,15 @@ EventSubscription subscription;
 std::vector<std::unique_ptr<Panel>> panels;
 std::vector<Panel*> panelView;
 EventBus events;
+AssetMountId projectAssetsMount;
+AssetMountId editorAssetsMount;
 
 EditorServices services
 {
     .worlds = Engine::worlds(),
     .viewports = Engine::viewports(),
     .scenes = Engine::scenes(),
+    .assets = Engine::assets(),
     .events = events,
     .renderCommands = Engine::getRenderCommandQueue()
 };
@@ -83,8 +86,10 @@ namespace Editor
     {
         const ProjectConfig projectConfig = loadProjectConfig(request.path / "project.toml");
 
-        AssetManager::setContentRoot(request.path / projectConfig.contentRoot);
-        AssetManager::loadDatabase(request.path / projectConfig.assetDatabase);
+        if (projectAssetsMount.isValid())
+            services.assets.unmount(projectAssetsMount);
+        projectAssetsMount = services.assets.mount("Project", request.path / projectConfig.contentRoot);
+        services.assets.loadDatabase(projectAssetsMount, request.path / projectConfig.assetDatabase);
 
         loadScene(request.contextId, request.path / projectConfig.startupScene);
 
@@ -135,6 +140,9 @@ void Editor::init()
     Engine::addSystem(EntityProxySystem::callbacks);
     Engine::addSystem(BoundingBoxSystem::callbacks);
     Engine::addSystem(RenderSynchronizer::callbacks);
+
+    editorAssetsMount = services.assets.mount("Editor", "Editor/Assets");
+    Gizmos::init(services.assets, editorAssetsMount);
 
     Engine::init();
 

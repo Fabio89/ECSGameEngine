@@ -70,44 +70,22 @@ void RenderObjectManager::setCamera(const Camera& camera)
     m_camera = std::move(camera);
 }
 
-void RenderObjectManager::addRenderObject(Entity entity, Guid meshAsset, Guid textureAsset, Mat4 transform, RenderLayer layer, Vec4 tint)
+void RenderObjectManager::addRenderObject(Entity entity, const MeshData* mesh, const TextureData* texture, Mat4 transform, RenderLayer layer, Vec4 tint)
 {
-    addMeshIfMissing(meshAsset);
-    addTextureIfMissing(textureAsset);
+    RenderObject object
+    {
+        .entity = entity,
+        .mesh = getOrCreateMesh(mesh),
+        .texture = getOrCreateTexture(texture),
+        .layer = layer,
+        .tint = std::move(tint),
+        .model = std::move(transform),
+        .uniformBuffers = std::vector<vk::Buffer>(MaxFramesInFlight),
+        .uniformBuffersMemory = std::vector<vk::DeviceMemory>(MaxFramesInFlight),
+        .uniformBuffersMapped = std::vector<void*>(MaxFramesInFlight),
+    };
 
-    RenderObject object;
     static constexpr vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
-
-    if (const auto idIt = m_meshMap.find(meshAsset); idIt != m_meshMap.end())
-    {
-        object.mesh = m_meshes.at(idIt->second).id;
-    }
-    else
-    {
-        fatalError("Tried to add a render object with invalid mesh!");
-        return;
-    }
-
-    if (textureAsset)
-    {
-        if (const auto idIt = m_textureMap.find(textureAsset); idIt != m_textureMap.end())
-        {
-            object.texture = m_textures.at(idIt->second).id;
-        }
-        else
-        {
-            fatalError("Tried to add a render object with invalid texture even if one was specified!");
-            return;
-        }
-    }
-
-    object.entity = entity;
-    object.model = std::move(transform);
-    object.layer = layer;
-    object.tint = std::move(tint);
-    object.uniformBuffers = std::vector<vk::Buffer>(MaxFramesInFlight);
-    object.uniformBuffersMemory = std::vector<vk::DeviceMemory>(MaxFramesInFlight);
-    object.uniformBuffersMapped = std::vector<void*>(MaxFramesInFlight);
 
     const RenderUtils::CreateBufferInfo bufferInfo
     {
@@ -138,8 +116,6 @@ void RenderObjectManager::addRenderObject(Entity entity, Guid meshAsset, Guid te
     object.descriptorSets = m_device.allocateDescriptorSets(allocInfo);
 
     m_objects[layer].emplace_back(std::move(object));
-    std::cout << "Added render object\n\tMesh: " << meshAsset << std::endl;
-    std::cout << "\tTexture: " << textureAsset << std::endl;
 }
 
 void RenderObjectManager::removeRenderObject(Entity entity)
@@ -284,7 +260,7 @@ void RenderObjectManager::renderFrame
 
         commandBuffer.bindVertexBuffers(0, {mesh.vertexBuffer}, offsets);
         commandBuffer.bindIndexBuffer(mesh.indexBuffer, 0, MeshData::indexType);
-        commandBuffer.drawIndexed(static_cast<UInt32>(mesh.data.indices.size()), 1, 0, 0, 0);
+        commandBuffer.drawIndexed(mesh.indexCount, 1, 0, 0, 0);
     }
 }
 
@@ -311,20 +287,17 @@ void RenderObjectManager::renderLineFrame(vk::CommandBuffer commandBuffer, vk::P
     }
 }
 
-void RenderObjectManager::addMeshIfMissing(const Guid& guid)
+std::size_t RenderObjectManager::getOrCreateMesh(const MeshData* mesh)
 {
-    check(m_device, "[RenderObjectManager::addMesh] Device is null");
+    if (!check(mesh, "[RenderObjectManager] Tried to use null mesh!")
+        || !check(mesh->vertices.size() > 0, "[RenderObjectManager] Tried to add mesh with no vertices", ErrorType::Warning))
+        return std::numeric_limits<std::size_t>::max();
 
-    if (m_meshMap.contains(guid))
-        return;
+    if (auto it = m_meshMap.find(mesh); it != m_meshMap.end())
+        return it->second;
 
-    const MeshData& data = AssetManager::resolve<MeshData>(guid);
-
-    if (!check(data.vertices.size() > 0, "[RenderObjectManager::addMesh] Tried to add mesh with no vertices", ErrorType::Warning))
-        return;
-
-    Mesh& mesh = m_meshes.emplace_back();
-    mesh.id = m_meshes.size() - 1;
+    Mesh& renderMesh = m_meshes.emplace_back();
+    renderMesh.id = m_meshes.size() - 1;
 
     const RenderUtils::CreateDataBufferInfo vertexBufferInfo
     {
@@ -335,7 +308,7 @@ void RenderObjectManager::addMeshIfMissing(const Guid& guid)
         .transferQueue = m_queue,
         .transferCommandPool = m_cmdPool,
     };
-    std::tie(mesh.vertexBuffer, mesh.vertexBufferMemory) = createDataBuffer(data.vertices, vertexBufferInfo);
+    std::tie(renderMesh.vertexBuffer, renderMesh.vertexBufferMemory) = createDataBuffer(mesh->vertices, vertexBufferInfo);
 
     const RenderUtils::CreateDataBufferInfo indexBufferInfo
     {
@@ -346,25 +319,21 @@ void RenderObjectManager::addMeshIfMissing(const Guid& guid)
         .transferQueue = m_queue,
         .transferCommandPool = m_cmdPool,
     };
-    std::tie(mesh.indexBuffer, mesh.indexBufferMemory) = createDataBuffer(data.indices, indexBufferInfo);
+    std::tie(renderMesh.indexBuffer, renderMesh.indexBufferMemory) = createDataBuffer(mesh->indices, indexBufferInfo);
 
-    mesh.data = std::move(data);
+    renderMesh.indexCount = mesh->indices.size();
 
-    m_meshMap.emplace(guid, mesh.id);
-    std::cout << "Added mesh: " << guid << std::endl;
+    m_meshMap.emplace(mesh, renderMesh.id);
+
+    return renderMesh.id;
 }
 
-void RenderObjectManager::addTextureIfMissing(const Guid& guid)
+std::size_t RenderObjectManager::getOrCreateTexture(const TextureData* texture)
 {
-    if (m_textureMap.contains(guid))
-        return;
+    if (auto it = m_textureMap.find(texture); it != m_textureMap.end())
+        return it->second;
 
-    const TextureData* data;
-    if (guid)
-    {
-        data = &AssetManager::resolve<TextureData>(guid);
-    }
-    else
+    if (!texture)
     {
         static const TextureData whiteTexture
         {
@@ -372,20 +341,23 @@ void RenderObjectManager::addTextureIfMissing(const Guid& guid)
             .format = vk::Format::eR8G8B8A8Srgb,
             .pixels = {255, 255, 255, 255}
         };
-        data = &whiteTexture;
+        texture = &whiteTexture;
     }
 
-    Texture& texture = m_textures.emplace_back();
-    texture.id = m_textures.size() - 1;
-    std::tie(texture.image, texture.memory) = RenderUtils::createTextureImage(*data, m_device, m_physicalDevice, m_queue, m_cmdPool);
+    const TextureData& data = *texture;
 
-    if (texture.image)
+    Texture& renderTexture = m_textures.emplace_back();
+    renderTexture.id = m_textures.size() - 1;
+    std::tie(renderTexture.image, renderTexture.memory) = RenderUtils::createTextureImage(data, m_device, m_physicalDevice, m_queue, m_cmdPool);
+
+    if (renderTexture.image)
     {
-        texture.view = RenderUtils::createTextureImageView(m_device, texture.image);
-        texture.sampler = RenderUtils::createTextureSampler(m_device, m_physicalDevice);
-        m_textureMap.emplace(guid, texture.id);
-        std::cout << "Added texture: " << guid << std::endl;
+        renderTexture.view = RenderUtils::createTextureImageView(m_device, renderTexture.image);
+        renderTexture.sampler = RenderUtils::createTextureSampler(m_device, m_physicalDevice);
+        m_textureMap.emplace(texture, renderTexture.id);
     }
+
+    return renderTexture.id;
 }
 
 void RenderObjectManager::updateDescriptorSets(const RenderObject& object) const
