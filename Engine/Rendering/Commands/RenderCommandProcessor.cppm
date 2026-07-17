@@ -90,7 +90,7 @@ void RenderCommandProcessor::process(RenderCommands::RemoveWorld&& cmd)
 template<>
 void RenderCommandProcessor::process(RenderCommands::AddObject&& cmd)
 {
-    m_context.renderWorldManager.getObjectManager(cmd.world).addRenderObject(cmd.entity, std::move(cmd.mesh), std::move(cmd.texture), std::move(cmd.worldTransform));
+    m_context.renderWorldManager.getObjectManager(cmd.world).addRenderObject(cmd.entity, std::move(cmd.mesh), std::move(cmd.texture), std::move(cmd.worldTransform), cmd.layer);
 }
 
 template<>

@@ -131,7 +131,18 @@ void RenderManager::init(WindowHandle window)
         m_descriptorSetLayout = createDescriptorSetLayout(m_context.device);
         m_pipelineLayout = createPipelineLayout(m_context.device, m_descriptorSetLayout);
 
-        m_graphicsPipeline = createGraphicsPipeline(m_context.device, m_pipelineCache, m_pipelineLayout);
+        constexpr GraphicsPipelineConfig mainPipelineConfig{};
+        m_graphicsPipeline = createGraphicsPipeline(m_context.device, m_pipelineCache, m_pipelineLayout, mainPipelineConfig);
+
+        constexpr GraphicsPipelineConfig gizmoPipelineConfig
+        {
+            .cullMode = vk::CullModeFlagBits::eNone,
+            .depthTest = false,
+            .depthWrite = false,
+            .blending = true
+        };
+        m_gizmoPipeline = createGraphicsPipeline(m_context.device, m_pipelineCache, m_pipelineLayout, gizmoPipelineConfig);
+
         m_linePipeline = createLinePipeline(m_context.device, m_pipelineCache, m_pipelineLayout);
 
         createCommandPool();
@@ -202,6 +213,7 @@ void RenderManager::shutdown()
     m_context.device.destroyCommandPool(m_context.commandPool);
     m_context.device.destroyCommandPool(m_transferCommandPool);
     m_context.device.destroyPipeline(m_graphicsPipeline);
+    m_context.device.destroyPipeline(m_gizmoPipeline);
     m_context.device.destroyPipeline(m_linePipeline);
     m_context.device.destroyPipelineLayout(m_pipelineLayout);
 
@@ -675,7 +687,7 @@ void RenderManager::drawFrame()
     const RenderPassContext renderContext
     {
         .commandBuffer = commandBuffer,
-        .pipelines = {.mesh = m_graphicsPipeline, .line = m_linePipeline, .layout = m_pipelineLayout},
+        .pipelines = {.mesh = m_graphicsPipeline, .gizmo = m_gizmoPipeline, .line = m_linePipeline, .layout = m_pipelineLayout},
         .frameIndex = m_currentFrame,
         .imageIndex = static_cast<Int32>(imageIndex)
     };

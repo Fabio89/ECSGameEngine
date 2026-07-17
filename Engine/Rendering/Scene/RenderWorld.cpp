@@ -1,4 +1,5 @@
 module Render.RenderWorld;
+import Render.RenderLayer;
 
 RenderWorld::RenderWorld(VulkanContext& context, const RenderWorldCreateInfo& info)
     : VulkanResource{context},
@@ -15,7 +16,10 @@ RenderWorld::~RenderWorld()
 void RenderWorld::drawFrame(const RenderPassContext& renderContext)
 {
     renderContext.commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, renderContext.pipelines.mesh);
-    m_objects.renderFrame(renderContext.commandBuffer, renderContext.pipelines.layout, renderContext.frameIndex);
+    m_objects.renderFrame(RenderLayer::World, renderContext.commandBuffer, renderContext.pipelines.layout, renderContext.frameIndex);
+
+    renderContext.commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, renderContext.pipelines.gizmo);
+    m_objects.renderFrame(RenderLayer::Gizmo, renderContext.commandBuffer, renderContext.pipelines.layout, renderContext.frameIndex);
 
     renderContext.commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, renderContext.pipelines.line);
     m_objects.renderLineFrame(renderContext.commandBuffer, renderContext.pipelines.layout, renderContext.frameIndex);

@@ -18,6 +18,7 @@ namespace AssetManager
 {
     AssetLoaderBase* getLoader(TypeId assetTypeId);
     AssetEntry* getEntry(const Guid& assetId);
+    Guid addEntry(std::string_view name, TypeId type, std::any&& data);
     void registerLoader(TypeId assetTypeId, std::string assetTypeName, std::unique_ptr<AssetLoaderBase> loader);
 
     template<typename T>
@@ -48,6 +49,12 @@ namespace AssetManager
         static const T invalid{};
         report(std::format("Couldn't resolve asset {}", assetGuid.toString()));
         return invalid;
+    }
+
+    export template<typename T>
+    Guid add(std::string_view name, T&& assetData)
+    {
+        return addEntry(name, getTypeId<T>(), std::move(assetData));
     }
 
     export void setContentRoot(std::filesystem::path path);

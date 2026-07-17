@@ -1,22 +1,19 @@
-module;
-
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-
 module Render.TextureLoading;
 import Core;
 import Render.Utils;
 import Log;
 
 // Create a Vulkan image
-[[nodiscard]] std::tuple<vk::Image, vk::DeviceMemory>
-RenderUtils::createImage(vk::Device device,
-                         vk::PhysicalDevice physicalDevice,
-                         vk::MemoryPropertyFlags properties,
-                         vk::Extent2D extent,
-                         vk::Format format,
-                         vk::ImageTiling tiling,
-                         vk::ImageUsageFlags usage)
+std::tuple<vk::Image, vk::DeviceMemory> RenderUtils::createImage
+(
+    vk::Device device,
+    vk::PhysicalDevice physicalDevice,
+    vk::MemoryPropertyFlags properties,
+    vk::Extent2D extent,
+    vk::Format format,
+    vk::ImageTiling tiling,
+    vk::ImageUsageFlags usage
+)
 {
     const vk::ImageCreateInfo imageInfo
     {
@@ -56,8 +53,13 @@ RenderUtils::createImage(vk::Device device,
     return std::make_pair(image, memory);
 }
 
-vk::ImageView RenderUtils::createImageView(vk::Device device, vk::Image image, vk::Format format,
-                                           vk::ImageAspectFlags aspectFlags)
+vk::ImageView RenderUtils::createImageView
+(
+    vk::Device device,
+    vk::Image image,
+    vk::Format format,
+    vk::ImageAspectFlags aspectFlags
+)
 {
     const vk::ImageViewCreateInfo viewInfo
     {
@@ -76,19 +78,16 @@ vk::ImageView RenderUtils::createImageView(vk::Device device, vk::Image image, v
     return device.createImageView(viewInfo);
 }
 
-// Create a Vulkan image from the specified file
-[[nodiscard]] std::tuple<vk::Image, vk::DeviceMemory>
-RenderUtils::createTextureImage(const char* path, vk::Device device, vk::PhysicalDevice physicalDevice, vk::Queue commandQueue, vk::CommandPool commandPool)
+std::tuple<vk::Image, vk::DeviceMemory> RenderUtils::createTextureImage
+(
+    const TextureData& data,
+    vk::Device device,
+    vk::PhysicalDevice physicalDevice,
+    vk::Queue commandQueue,
+    vk::CommandPool commandPool
+)
 {
-    int texWidth, texHeight, texChannels;
-    stbi_uc* pixels = stbi_load(path, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-    const vk::DeviceSize imageSize = texWidth * texHeight * 4;
-
-    if (!check(pixels, std::string{"failed to load texture image: "} + path))
-    {
-        static const std::tuple<vk::Image, vk::DeviceMemory> emptyImage{};
-        return emptyImage;
-    }
+    const vk::DeviceSize imageSize = data.size.width * data.size.height * 4;
 
     const CreateBufferInfo bufferInfo
     {
@@ -101,15 +100,11 @@ RenderUtils::createTextureImage(const char* path, vk::Device device, vk::Physica
 
     auto&& [stagingBuffer, stagingBufferMemory] = createBuffer(bufferInfo);
 
-    void* data = device.mapMemory(stagingBufferMemory, 0, imageSize);
-    std::memcpy(data, pixels, imageSize);
+    void* memory = device.mapMemory(stagingBufferMemory, 0, imageSize);
+    std::memcpy(memory, data.pixels.data(), imageSize);
     device.unmapMemory(stagingBufferMemory);
 
-    stbi_image_free(pixels);
-
-    const vk::Extent2D imageExtent{static_cast<UInt32>(texWidth), static_cast<UInt32>(texHeight)};
-
-    static constexpr auto format = vk::Format::eR8G8B8A8Srgb;
+    const vk::Extent2D imageExtent{narrow_cast<UInt32>(data.size.width), narrow_cast<UInt32>(data.size.height)};
 
     auto result = createImage
     (
@@ -117,18 +112,18 @@ RenderUtils::createTextureImage(const char* path, vk::Device device, vk::Physica
         physicalDevice,
         vk::MemoryPropertyFlagBits::eDeviceLocal,
         imageExtent,
-        format,
+        data.format,
         vk::ImageTiling::eOptimal,
         vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled
     );
 
     const auto image = std::get<vk::Image>(result);
 
-    transitionImageLayout(device, commandQueue, commandPool, image, format, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+    transitionImageLayout(device, commandQueue, commandPool, image, data.format, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
 
     copyBufferToImage(device, commandQueue, commandPool, stagingBuffer, image, imageExtent);
 
-    transitionImageLayout(device, commandQueue, commandPool, image, format, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+    transitionImageLayout(device, commandQueue, commandPool, image, data.format, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 
     device.destroyBuffer(stagingBuffer);
     device.freeMemory(stagingBufferMemory);

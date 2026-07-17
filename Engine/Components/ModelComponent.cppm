@@ -1,12 +1,14 @@
 export module Components.Model;
+export import Guid;
+export import Render.RenderLayer;
 import Core;
-import Guid;
 import Serialization.Json;
 
 export struct ModelComponent
 {
     Guid mesh{};
     Guid texture{};
+    RenderLayer layer{RenderLayer::World};
 };
 
 template<>

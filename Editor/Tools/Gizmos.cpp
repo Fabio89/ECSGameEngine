@@ -1,4 +1,5 @@
 module Editor.Gizmos;
+import AssetManager;
 import Assets.Mesh;
 import Components.BoundingBox;
 import Components.EntityProxy;
@@ -11,18 +12,19 @@ import Components.Render;
 import Components.Tags;
 import Components.Transform;
 import Engine;
+import Geometry;
 import Guid;
 import Math;
 import Physics;
 import Render.Commands;
 import Render.Primitives;
 import Systems.Transform;
-import Geometry;
 
 namespace Gizmos
 {
     Entity createTranslationGizmo(World& world);
     Entity createTranslationGizmoHandle(World& world, Entity gizmo, GizmoHandleType type, std::string name, std::vector<LineVertex>&& vertices, BoundingBoxComponent boundingBox);
+    Entity createTranslationGizmoHandle(World& world, Entity gizmo, GizmoHandleType type, std::string name, const Guid& mesh, BoundingBoxComponent boundingBox);
 
     Entity createRotationGizmo(World& world);
     Entity createScaleGizmo(World& world);
@@ -57,7 +59,7 @@ Entity Gizmos::createTranslationGizmo(World& world)
 
     static constexpr float hitSize = 0.1f;
 
-    static constexpr Vec3 xColor = {1.0f, 0.0f, 0.0f};
+    static constexpr Vec4 xColor = {1.0f, 0.0f, 0.0f, 0.5f};
     const Entity x = createTranslationGizmoHandle
     (
         world,
@@ -75,7 +77,7 @@ Entity Gizmos::createTranslationGizmo(World& world)
         }
     );
 
-    static constexpr Vec3 yColor = {0.0f, 1.0f, 0.0f};
+    static constexpr Vec4 yColor = {0.0f, 1.0f, 0.0f, 0.5f};
     const Entity y = createTranslationGizmoHandle
     (
         world,
@@ -93,7 +95,7 @@ Entity Gizmos::createTranslationGizmo(World& world)
         }
     );
     
-    static constexpr Vec3 zColor = {0.0f, 0.0f, 1.0f};
+    static constexpr Vec4 zColor = {0.0f, 0.0f, 1.0f, 0.5f};
     const Entity z = createTranslationGizmoHandle
     (
         world,
@@ -111,28 +113,28 @@ Entity Gizmos::createTranslationGizmo(World& world)
         }
     );
 
-    static constexpr float min = 0.f;
-    static constexpr float max = 0.4f;
+    static constexpr float min = 0.1f;
+    static constexpr float max = 0.5f;
 
-    static constexpr Vec3 xyColor = zColor;
-    static constexpr Vec3 xyColorOnX = min > 0.f ? zColor : xColor;
-    static constexpr Vec3 xyColorOnY = min > 0.f ? zColor : yColor;
+    static constexpr Vec4 xyColor = zColor;
+    const Guid xyMesh = AssetManager::add("TranslateXY", MeshData{
+        .vertices = {
+            {.pos = {min, min, 0.0f}, .color = xyColor},
+            {.pos = {max, min, 0.0f}, .color = xyColor},
+            {.pos = {max, max, 0.0f}, .color = xyColor},
+            {.pos = {min, max, 0.0f}, .color = xyColor},
+            {.pos = {min, max, 0.0f}, .color = xyColor},
+        },
+        .indices = {0, 1, 2, 2, 3, 0}
+    });
+
     const Entity xy = createTranslationGizmoHandle
     (
         world,
         gizmo,
         GizmoHandleType::TranslateXY,
         "XY",
-        {
-            LineVertex{{min, min, 0.0f}, xyColorOnX},
-            LineVertex{{max, min, 0.0f}, xyColorOnX},
-            LineVertex{{max, min, 0.0f}, xyColor},
-            LineVertex{{max, max, 0.0f}, xyColor},
-            LineVertex{{max, max, 0.0f}, xyColor},
-            LineVertex{{min, max, 0.0f}, xyColor},
-            LineVertex{{min, max, 0.0f}, xyColorOnY},
-            LineVertex{{min, min, 0.0f}, xyColorOnY}
-        },
+        xyMesh,
         {
             .channel = {},
             .minLocal = {min, min, -hitSize},
@@ -140,25 +142,25 @@ Entity Gizmos::createTranslationGizmo(World& world)
         }
     );
 
-    static constexpr Vec3 xzColor = yColor;
-    static constexpr Vec3 xzColorOnX = min > 0.f ? yColor : xColor;
-    static constexpr Vec3 xzColorOnZ = min > 0.f ? yColor : zColor;
+    static constexpr Vec4 xzColor = yColor;
+    const Guid xzMesh = AssetManager::add("TranslateXZ", MeshData{
+        .vertices = {
+            {.pos = {min, 0.f, min}, .color = xzColor},
+            {.pos = {max, 0.f, min}, .color = xzColor},
+            {.pos = {max, 0.f, max}, .color = xzColor},
+            {.pos = {min, 0.f, max}, .color = xzColor},
+            {.pos = {min, 0.f, max}, .color = xzColor},
+        },
+        .indices = {0, 1, 2, 2, 3, 0}
+    });
+
     const Entity xz = createTranslationGizmoHandle
     (
         world,
         gizmo,
         GizmoHandleType::TranslateXZ,
         "XZ",
-        {
-            LineVertex{{min, 0.f, min}, xzColorOnX},
-            LineVertex{{max, 0.f, min}, xzColorOnX},
-            LineVertex{{max, 0.f, min}, xzColor},
-            LineVertex{{max, 0.f, max}, xzColor},
-            LineVertex{{max, 0.f, max}, xzColor},
-            LineVertex{{min, 0.f, max}, xzColor},
-            LineVertex{{min, 0.f, max}, xzColorOnZ},
-            LineVertex{{min, 0.f, min}, xzColorOnZ}
-        },
+        xzMesh,
         {
             .channel = {},
             .minLocal = {min, -hitSize, min},
@@ -166,25 +168,25 @@ Entity Gizmos::createTranslationGizmo(World& world)
         }
     );
 
-    static constexpr Vec3 yzColor = xColor;
-    static constexpr Vec3 yzColorOnY = min > 0.f ? xColor : yColor;
-    static constexpr Vec3 yzColorOnZ = min > 0.f ? xColor : zColor;
+    static constexpr Vec4 yzColor = xColor;
+    const Guid yzMesh = AssetManager::add("TranslateYZ", MeshData{
+        .vertices = {
+            {.pos = {0.f, min, min}, .color = yzColor},
+            {.pos = {0.f, max, min}, .color = yzColor},
+            {.pos = {0.f, max, max}, .color = yzColor},
+            {.pos = {0.f, min, max}, .color = yzColor},
+            {.pos = {0.f, min, max}, .color = yzColor},
+        },
+        .indices = {0, 1, 2, 2, 3, 0}
+    });
+
     const Entity yz = createTranslationGizmoHandle
     (
         world,
         gizmo,
         GizmoHandleType::TranslateYZ,
         "YZ",
-        {
-            LineVertex{{0.f, min, min}, yzColorOnY},
-            LineVertex{{0.f, max, min}, yzColorOnY},
-            LineVertex{{0.f, max, min}, yzColor},
-            LineVertex{{0.f, max, max}, yzColor},
-            LineVertex{{0.f, max, max}, yzColor},
-            LineVertex{{0.f, min, max}, yzColor},
-            LineVertex{{0.f, min, max}, yzColorOnZ},
-            LineVertex{{0.f, min, min}, yzColorOnZ}
-        },
+        yzMesh,
         {
             .channel = {},
             .minLocal = {-hitSize, min, min},
@@ -199,7 +201,7 @@ Entity Gizmos::createTranslationGizmo(World& world)
     return gizmo;
 }
 
-Entity Gizmos::createTranslationGizmoHandle(World& world, Entity gizmo, GizmoHandleType type, std::string name, std::vector<LineVertex>&& vertices, BoundingBoxComponent boundingBox)
+Entity createTranslationGizmoHandle(World& world, Entity gizmo, GizmoHandleType type, std::string name, BoundingBoxComponent boundingBox)
 {
     const Entity axis = world.createEntity();
     world.addComponent<NameComponent>(axis, std::move(name));
@@ -209,7 +211,22 @@ Entity Gizmos::createTranslationGizmoHandle(World& world, Entity gizmo, GizmoHan
     HierarchyUtils::setParent(world, axis, gizmo);
     world.addComponent<TransformComponent>(axis);
     world.addComponent<BoundingBoxComponent>(axis, std::move(boundingBox));
+
+    return axis;
+}
+
+Entity Gizmos::createTranslationGizmoHandle(World& world, Entity gizmo, GizmoHandleType type, std::string name, std::vector<LineVertex>&& vertices, BoundingBoxComponent boundingBox)
+{
+    const Entity axis = createTranslationGizmoHandle(world, gizmo, type, std::move(name), std::move(boundingBox));
     world.addComponent<LineRenderComponent>(axis, std::move(vertices));
+
+    return axis;
+}
+
+Entity Gizmos::createTranslationGizmoHandle(World& world, Entity gizmo, GizmoHandleType type, std::string name, const Guid& mesh, BoundingBoxComponent boundingBox)
+{
+    const Entity axis = createTranslationGizmoHandle(world, gizmo, type, std::move(name), std::move(boundingBox));
+    world.addComponent<ModelComponent>(axis, {.mesh = mesh, .layer = RenderLayer::Gizmo});
 
     return axis;
 }

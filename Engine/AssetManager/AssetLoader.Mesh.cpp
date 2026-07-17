@@ -4,9 +4,14 @@ module;
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 module AssetLoader.Mesh;
 import Core;
+import Geometry;
 import Math;
+import Render.Vulkan;
 import Serialization.Json;
 
 bool operator==(const Vertex& a, const Vertex& b)
@@ -83,5 +88,24 @@ MeshData MeshAssetLoader::loadFromFile(const std::filesystem::path& path)
 
 TextureData TextureAssetLoader::loadFromFile(const std::filesystem::path& path)
 {
-    return TextureData{.path = path};
+    Size2D size;
+    int texChannels;
+    stbi_uc* pixels = stbi_load(path.c_str(), &size.width, &size.height, &texChannels, STBI_rgb_alpha);
+
+    if (!check(pixels, std::format("Failed to load texture image: {}", path.string())))
+    {
+        static const TextureData invalidTexture{};
+        return invalidTexture;
+    }
+
+    const TextureData data
+    {
+        .size = size,
+        .format = vk::Format::eR8G8B8A8Srgb,
+        .pixels = std::vector(pixels, pixels + size.width * size.height * 4)
+    };
+
+    stbi_image_free(pixels);
+
+    return data;
 }

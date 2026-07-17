@@ -74,6 +74,7 @@ private:
     vk::DescriptorSetLayout m_descriptorSetLayout{};
     vk::PipelineLayout m_pipelineLayout{};
     vk::Pipeline m_graphicsPipeline{};
+    vk::Pipeline m_gizmoPipeline{};
     vk::Pipeline m_linePipeline{};
 
     vk::CommandPool m_transferCommandPool{};

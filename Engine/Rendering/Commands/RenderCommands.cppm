@@ -5,6 +5,7 @@ import Core;
 import Engine.Camera;
 import Guid;
 import Math;
+import Render.RenderLayer;
 import WorldHandle;
 
 export namespace RenderCommands
@@ -26,6 +27,7 @@ export namespace RenderCommands
         Guid mesh;
         Guid texture;
         Mat4 worldTransform{1};
+        RenderLayer layer{RenderLayer::World};
     };
 
     struct RemoveObject

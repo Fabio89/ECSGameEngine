@@ -37,8 +37,9 @@ void RenderObjectManager::clear()
     m_meshMap.clear();
     m_textureMap.clear();
 
-    for (const RenderObject& object : m_objects)
-        removeRenderObject(object);
+    for (auto& span : m_objects | std::views::values)
+        for (auto& object : span)
+            removeRenderObject(object);
     m_objects.clear();
 
     for (const LineRenderObject& lineObject : m_lineObjects)
@@ -69,7 +70,7 @@ void RenderObjectManager::setCamera(const Camera& camera)
     m_camera = std::move(camera);
 }
 
-void RenderObjectManager::addRenderObject(Entity entity, Guid meshAsset, Guid textureAsset, Mat4 transform)
+void RenderObjectManager::addRenderObject(Entity entity, Guid meshAsset, Guid textureAsset, Mat4 transform, RenderLayer layer)
 {
     addMeshIfMissing(meshAsset);
     addTextureIfMissing(textureAsset);
@@ -102,6 +103,7 @@ void RenderObjectManager::addRenderObject(Entity entity, Guid meshAsset, Guid te
 
     object.entity = entity;
     object.model = std::move(transform);
+    object.layer = layer;
     object.uniformBuffers = std::vector<vk::Buffer>(MaxFramesInFlight);
     object.uniformBuffersMemory = std::vector<vk::DeviceMemory>(MaxFramesInFlight);
     object.uniformBuffersMapped = std::vector<void*>(MaxFramesInFlight);
@@ -134,25 +136,31 @@ void RenderObjectManager::addRenderObject(Entity entity, Guid meshAsset, Guid te
 
     object.descriptorSets = m_device.allocateDescriptorSets(allocInfo);
 
-    m_objects.emplace_back(std::move(object));
+    m_objects[layer].emplace_back(std::move(object));
     std::cout << "Added render object\n\tMesh: " << meshAsset << std::endl;
     std::cout << "\tTexture: " << textureAsset << std::endl;
 }
 
 void RenderObjectManager::removeRenderObject(Entity entity)
 {
-    if (auto it = findRenderObject(m_objects, entity); it != m_objects.end())
+    for (auto& span : m_objects | std::views::values)
     {
-        removeRenderObject(*it);
-        m_objects.erase(it);
+        if (auto it = findRenderObject(span, entity); it != span.end())
+        {
+            removeRenderObject(*it);
+            span.erase(it);
+        }
     }
 }
 
 void RenderObjectManager::setObjectTransform(Entity entity, const Mat4& worldTransform)
 {
-    if (auto it = findRenderObject(m_objects, entity); it != m_objects.end())
+    for (auto& span : m_objects | std::views::values)
     {
-        it->model = worldTransform;
+        if (auto it = findRenderObject(span, entity); it != span.end())
+        {
+            it->model = worldTransform;
+        }
     }
 
     if (auto it = findRenderObject(m_lineObjects, entity); it != m_lineObjects.end())
@@ -231,11 +239,15 @@ void RenderObjectManager::removeLineRenderObject(Entity entity)
 
 void RenderObjectManager::setObjectVisibility(Entity entity, bool visible)
 {
-    if (auto it = findRenderObject(m_objects, entity); it != m_objects.end())
+    for (auto& span : m_objects | std::views::values)
     {
-        it->visible = visible;
-        return;
+        if (auto it = findRenderObject(span, entity); it != span.end())
+        {
+            it->visible = visible;
+            return;
+        }
     }
+
     if (auto it = findRenderObject(m_lineObjects, entity); it != m_lineObjects.end())
     {
         it->visible = visible;
@@ -244,12 +256,17 @@ void RenderObjectManager::setObjectVisibility(Entity entity, bool visible)
 
 void RenderObjectManager::renderFrame
 (
+    RenderLayer layer,
     vk::CommandBuffer commandBuffer,
     vk::PipelineLayout pipelineLayout,
     UInt32 currentFrame
 )
 {
-    for (RenderObject& object : m_objects)
+    auto it = m_objects.find(layer);
+    if (it == m_objects.end())
+        return;
+
+    for (RenderObject& object : it->second)
     {
         if (!object.visible)
             continue;
@@ -257,7 +274,7 @@ void RenderObjectManager::renderFrame
         updateDescriptorSets(object);
 
         commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1,
-                                         &object.descriptorSets[currentFrame], 0, nullptr);
+            &object.descriptorSets[currentFrame], 0, nullptr);
 
         updateUniformBuffer(object, currentFrame);
 
@@ -341,13 +358,25 @@ void RenderObjectManager::addTextureIfMissing(const Guid& guid)
     if (m_textureMap.contains(guid))
         return;
 
-    const TextureData& data = AssetManager::resolve<TextureData>(guid);
+    const TextureData* data;
+    if (guid)
+    {
+        data = &AssetManager::resolve<TextureData>(guid);
+    }
+    else
+    {
+        static const TextureData whiteTexture
+        {
+            .size = {1, 1},
+            .format = vk::Format::eR8G8B8A8Srgb,
+            .pixels = {255, 255, 255, 255}
+        };
+        data = &whiteTexture;
+    }
 
     Texture& texture = m_textures.emplace_back();
     texture.id = m_textures.size() - 1;
-    std::tie(texture.image, texture.memory) = RenderUtils::createTextureImage(
-        data.path.c_str(), m_device, m_physicalDevice,
-        m_queue, m_cmdPool);
+    std::tie(texture.image, texture.memory) = RenderUtils::createTextureImage(*data, m_device, m_physicalDevice, m_queue, m_cmdPool);
 
     if (texture.image)
     {

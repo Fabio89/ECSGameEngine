@@ -7,7 +7,18 @@ import Core;
 import Render.Utils;
 import Render.Vulkan;
 
-export vk::Pipeline createGraphicsPipeline(vk::Device device, vk::PipelineCache pipelineCache, vk::PipelineLayout pipelineLayout)
+export struct GraphicsPipelineConfig
+{
+    vk::CullModeFlags cullMode{vk::CullModeFlagBits::eBack};
+    vk::FrontFace frontFace{vk::FrontFace::eClockwise};
+    bool depthTest{true};
+    bool depthWrite{true};
+    vk::CompareOp depthCompareOp{vk::CompareOp::eLess};
+    bool blending{false};
+    vk::PrimitiveTopology topology{vk::PrimitiveTopology::eTriangleList};
+};
+
+export vk::Pipeline createGraphicsPipeline(vk::Device device, vk::PipelineCache pipelineCache, vk::PipelineLayout pipelineLayout, const GraphicsPipelineConfig& config)
 {
     static constexpr std::array dynamicStates
     {
@@ -61,19 +72,19 @@ export vk::Pipeline createGraphicsPipeline(vk::Device device, vk::PipelineCache 
         .pVertexAttributeDescriptions = attributeDescriptions.data(),
     };
 
-    static constexpr vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo
+    const vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo
     {
-        .topology = vk::PrimitiveTopology::eTriangleList,
+        .topology = config.topology,
         .primitiveRestartEnable = vk::False,
     };
 
-    static constexpr vk::PipelineRasterizationStateCreateInfo rasterizerInfo
+    const vk::PipelineRasterizationStateCreateInfo rasterizerInfo
     {
         .depthClampEnable = vk::False,
         .rasterizerDiscardEnable = vk::False,
         .polygonMode = vk::PolygonMode::eFill,
-        .cullMode = vk::CullModeFlagBits::eBack,
-        .frontFace = vk::FrontFace::eClockwise,
+        .cullMode = config.cullMode,
+        .frontFace = config.frontFace,
         .depthBiasEnable = vk::False,
         .lineWidth = 1.0f,
     };
@@ -84,14 +95,25 @@ export vk::Pipeline createGraphicsPipeline(vk::Device device, vk::PipelineCache 
         .sampleShadingEnable = vk::False,
     };
 
-    static constexpr vk::PipelineColorBlendAttachmentState colorBlendAttachment
+    const vk::PipelineColorBlendAttachmentState colorBlendAttachment
     {
-        .blendEnable = vk::False,
-        .colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
-        vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
+        .blendEnable = config.blending,
+
+        .srcColorBlendFactor = vk::BlendFactor::eSrcAlpha,
+        .dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha,
+        .colorBlendOp = vk::BlendOp::eAdd,
+
+        .srcAlphaBlendFactor = vk::BlendFactor::eOne,
+        .dstAlphaBlendFactor = vk::BlendFactor::eZero,
+        .alphaBlendOp = vk::BlendOp::eAdd,
+
+        .colorWriteMask = vk::ColorComponentFlagBits::eR |
+                          vk::ColorComponentFlagBits::eG |
+                          vk::ColorComponentFlagBits::eB |
+                          vk::ColorComponentFlagBits::eA,
     };
 
-    static constexpr vk::PipelineColorBlendStateCreateInfo colorBlendingInfo
+    const vk::PipelineColorBlendStateCreateInfo colorBlendingInfo
     {
         .logicOpEnable = vk::False,
         .attachmentCount = 1,
@@ -99,11 +121,11 @@ export vk::Pipeline createGraphicsPipeline(vk::Device device, vk::PipelineCache 
         .blendConstants = std::array{0.f, 0.f, 0.f, 0.f}
     };
 
-    static constexpr vk::PipelineDepthStencilStateCreateInfo depthStencil
+    const vk::PipelineDepthStencilStateCreateInfo depthStencil
     {
-        .depthTestEnable = vk::True,
-        .depthWriteEnable = vk::True,
-        .depthCompareOp = vk::CompareOp::eLess,
+        .depthTestEnable = config.depthTest,
+        .depthWriteEnable = config.depthWrite,
+        .depthCompareOp = config.depthCompareOp,
         .depthBoundsTestEnable = vk::False,
         .stencilTestEnable = vk::False,
         .front = {}, // Optional
@@ -142,7 +164,7 @@ export vk::Pipeline createGraphicsPipeline(vk::Device device, vk::PipelineCache 
 
     static constexpr auto colorFormat{vk::Format::eB8G8R8A8Srgb};
     static constexpr auto depthFormat{vk::Format::eD32Sfloat};
-    
+
     static constexpr vk::PipelineRenderingCreateInfo renderingCreateInfo
     {
         .colorAttachmentCount = 1,
@@ -150,7 +172,7 @@ export vk::Pipeline createGraphicsPipeline(vk::Device device, vk::PipelineCache 
         .depthAttachmentFormat = depthFormat,
         .stencilAttachmentFormat = vk::Format::eUndefined
     };
-    
+
     const vk::GraphicsPipelineCreateInfo pipelineInfo
     {
         .pNext = &renderingCreateInfo,

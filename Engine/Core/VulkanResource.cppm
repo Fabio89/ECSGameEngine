@@ -5,6 +5,7 @@ export import Render.Vulkan;
 export struct RenderPipelineSet
 {
     vk::Pipeline mesh{};
+    vk::Pipeline gizmo{};
     vk::Pipeline line{};
     vk::PipelineLayout layout{};
 };

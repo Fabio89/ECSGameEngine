@@ -20,6 +20,20 @@ AssetEntry* AssetManager::getEntry(const Guid& assetId)
     return it != assetEntries.end() ? &it->second : nullptr;
 }
 
+Guid AssetManager::addEntry(std::string_view name, TypeId type, std::any&& data)
+{
+    Guid id = Guid::createRandom();
+    assetEntries.emplace(id, AssetEntry{
+                         .guid = id,
+                         .name = std::string{name},
+                         .type = type,
+                         .data = std::move(data),
+                         .path = {},
+                         .loaded = true
+                     });
+    return id;
+}
+
 void AssetManager::loadDatabase(const std::filesystem::path& path)
 {
     assetEntries.clear();
