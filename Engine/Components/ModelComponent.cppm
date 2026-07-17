@@ -1,7 +1,7 @@
 export module Components.Model;
 export import Guid;
+export import Math;
 export import Render.RenderLayer;
-import Core;
 import Serialization.Json;
 
 export struct ModelComponent
@@ -9,6 +9,7 @@ export struct ModelComponent
     Guid mesh{};
     Guid texture{};
     RenderLayer layer{RenderLayer::World};
+    Vec4 tint{1};
 };
 
 template<>

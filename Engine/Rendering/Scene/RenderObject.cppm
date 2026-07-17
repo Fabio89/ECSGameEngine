@@ -41,6 +41,7 @@ struct UniformBufferObject
     Mat4 model{};
     Mat4 view{};
     Mat4 proj{};
+    Vec4 tint{};
 };
 
 struct RenderObject
@@ -50,6 +51,7 @@ struct RenderObject
     std::size_t mesh{};
     std::size_t texture{};
     RenderLayer layer{RenderLayer::World};
+    Vec4 tint{1};
     Mat4 model{1};
     std::vector<vk::Buffer> uniformBuffers;
     std::vector<vk::DeviceMemory> uniformBuffersMemory;
@@ -88,7 +90,7 @@ public:
     void clear();
     void setCamera(const Camera& camera);
 
-    void addRenderObject(Entity entity, Guid meshAsset, Guid textureAsset, Mat4 transform, RenderLayer layer);
+    void addRenderObject(Entity entity, Guid meshAsset, Guid textureAsset, Mat4 transform, RenderLayer layer, Vec4 tint);
     void removeRenderObject(Entity entity);
     void setObjectTransform(Entity entity, const Mat4& worldTransform);
     void addLineRenderObject(Entity entity, std::vector<LineVertex>&& vertices, Mat4 transform);

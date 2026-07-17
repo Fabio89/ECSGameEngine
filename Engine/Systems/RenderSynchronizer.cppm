@@ -51,7 +51,7 @@ void init(SystemContext& context)
         else if (event.componentType == getTypeId<ModelComponent>())
         {
             const auto& component = world.readComponent<ModelComponent>(event.entity);
-            context.renderCommands.addCommand(RenderCommands::AddObject{event.world, event.entity, component.mesh, component.texture, getWorldTransform(world, event.entity), component.layer});
+            context.renderCommands.addCommand(RenderCommands::AddObject{event.world, event.entity, component.mesh, component.texture, getWorldTransform(world, event.entity), component.layer, component.tint});
         }
     });
 

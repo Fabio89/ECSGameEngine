@@ -28,6 +28,7 @@ export namespace RenderCommands
         Guid texture;
         Mat4 worldTransform{1};
         RenderLayer layer{RenderLayer::World};
+        Vec4 tint{1};
     };
 
     struct RemoveObject

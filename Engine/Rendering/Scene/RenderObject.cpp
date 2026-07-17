@@ -70,7 +70,7 @@ void RenderObjectManager::setCamera(const Camera& camera)
     m_camera = std::move(camera);
 }
 
-void RenderObjectManager::addRenderObject(Entity entity, Guid meshAsset, Guid textureAsset, Mat4 transform, RenderLayer layer)
+void RenderObjectManager::addRenderObject(Entity entity, Guid meshAsset, Guid textureAsset, Mat4 transform, RenderLayer layer, Vec4 tint)
 {
     addMeshIfMissing(meshAsset);
     addTextureIfMissing(textureAsset);
@@ -104,6 +104,7 @@ void RenderObjectManager::addRenderObject(Entity entity, Guid meshAsset, Guid te
     object.entity = entity;
     object.model = std::move(transform);
     object.layer = layer;
+    object.tint = std::move(tint);
     object.uniformBuffers = std::vector<vk::Buffer>(MaxFramesInFlight);
     object.uniformBuffersMemory = std::vector<vk::DeviceMemory>(MaxFramesInFlight);
     object.uniformBuffersMapped = std::vector<void*>(MaxFramesInFlight);
@@ -452,6 +453,7 @@ void RenderObjectManager::updateUniformBuffer(RenderObject& object, UInt32 curre
         .model = object.model,
         .view = m_camera.view,
         .proj = m_camera.proj,
+        .tint = object.tint
     };
 
     std::memcpy(object.uniformBuffersMapped[currentImage], &uniformBufferObject, sizeof(uniformBufferObject));
