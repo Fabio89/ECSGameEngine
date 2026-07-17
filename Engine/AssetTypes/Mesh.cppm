@@ -16,7 +16,7 @@ export struct Vertex
 export struct LineVertex
 {
     Vec3 pos{};
-    Vec3 colour{1, 1, 1};
+    Vec4 color{1, 1, 1, 1};
 };
 
 bool operator==(const Vertex& a, const Vertex& b);

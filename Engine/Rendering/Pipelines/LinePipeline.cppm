@@ -12,7 +12,7 @@ export vk::Pipeline createLinePipeline(vk::Device device, vk::PipelineCache pipe
     // Rasterization for lines
     static constexpr vk::PipelineRasterizationStateCreateInfo rasterizerInfo
     {
-        .polygonMode = vk::PolygonMode::eLine,
+        .polygonMode = vk::PolygonMode::eFill,
         .cullMode = vk::CullModeFlagBits::eNone,
         .lineWidth = 1.0f,
     };
@@ -51,8 +51,8 @@ export vk::Pipeline createLinePipeline(vk::Device device, vk::PipelineCache pipe
         {
             .location = 1,
             .binding = 0,
-            .format = vk::Format::eR32G32B32Sfloat,
-            .offset = offsetof(LineVertex, colour),
+            .format = vk::Format::eR32G32B32A32Sfloat,
+            .offset = offsetof(LineVertex, color),
         },
     };
 
@@ -85,21 +85,25 @@ export vk::Pipeline createLinePipeline(vk::Device device, vk::PipelineCache pipe
 
     static constexpr vk::PipelineColorBlendAttachmentState colorBlendAttachment
     {
-        .blendEnable = vk::False,
-        .srcColorBlendFactor = vk::BlendFactor::eOne, // Optional
-        .dstColorBlendFactor = vk::BlendFactor::eZero, // Optional
-        .colorBlendOp = vk::BlendOp::eAdd, // Optional
-        .srcAlphaBlendFactor = vk::BlendFactor::eOne, // Optional
-        .dstAlphaBlendFactor = vk::BlendFactor::eZero, // Optional
-        .alphaBlendOp = vk::BlendOp::eAdd, // Optional
-        .colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
-        vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA,
+        .blendEnable = vk::True,
+
+        .srcColorBlendFactor = vk::BlendFactor::eSrcAlpha,
+        .dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha,
+        .colorBlendOp = vk::BlendOp::eAdd,
+
+        .srcAlphaBlendFactor = vk::BlendFactor::eOne,
+        .dstAlphaBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha,
+        .alphaBlendOp = vk::BlendOp::eAdd,
+
+        .colorWriteMask = vk::ColorComponentFlagBits::eR |
+                          vk::ColorComponentFlagBits::eG |
+                          vk::ColorComponentFlagBits::eB |
+                          vk::ColorComponentFlagBits::eA,
     };
 
     static constexpr vk::PipelineColorBlendStateCreateInfo colorBlendingInfo
     {
         .logicOpEnable = vk::False,
-        .logicOp = vk::LogicOp::eCopy, // Optional
         .attachmentCount = 1,
         .pAttachments = &colorBlendAttachment,
         .blendConstants = std::array{0.f, 0.f, 0.f, 0.f}

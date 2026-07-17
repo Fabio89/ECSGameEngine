@@ -57,9 +57,10 @@ Entity Gizmos::createTranslationGizmo(World& world)
     world.addComponent<HierarchyComponent>(gizmo);
     world.addComponent<TransformComponent>(gizmo, {.position = Vec3{}, .rotation = Quat{}, .scale = 0.2});
 
+    static constexpr float alpha = 0.75;
     static constexpr float hitSize = 0.1f;
 
-    static constexpr Vec4 xColor = {1.0f, 0.0f, 0.0f, 0.5f};
+    static constexpr Vec4 xColor = {1.0f, 0.0f, 0.0f, alpha};
     const Entity x = createTranslationGizmoHandle
     (
         world,
@@ -77,7 +78,7 @@ Entity Gizmos::createTranslationGizmo(World& world)
         }
     );
 
-    static constexpr Vec4 yColor = {0.0f, 1.0f, 0.0f, 0.5f};
+    static constexpr Vec4 yColor = {0.0f, 1.0f, 0.0f, alpha};
     const Entity y = createTranslationGizmoHandle
     (
         world,
@@ -95,7 +96,7 @@ Entity Gizmos::createTranslationGizmo(World& world)
         }
     );
     
-    static constexpr Vec4 zColor = {0.0f, 0.0f, 1.0f, 0.5f};
+    static constexpr Vec4 zColor = {0.0f, 0.0f, 1.0f, alpha};
     const Entity z = createTranslationGizmoHandle
     (
         world,
@@ -201,8 +202,7 @@ Entity Gizmos::createTranslationGizmo(World& world)
     
     world.addComponent<GizmoComponent>(gizmo, {.xAxis = x, .yAxis = y, .zAxis = z, .xyPlane = xy, .xzPlane = xz, .yzPlane = yz});
     setGizmoVisible(world, gizmo, false);
-    log(std::format("Translation Gizmo: {} ({}, {}, {})", gizmo, x, y, z));
-    
+
     return gizmo;
 }
 
@@ -275,10 +275,11 @@ constexpr std::vector<LineVertex> generateAABBVertices(const Vec3& min, const Ve
         {min.x, max.y, min.z}, {min.x, max.y, max.z}
     };
 
+    static constexpr Vec4 color{1.0f, 0.75f, 0.0f, 0.5f};
     std::vector<LineVertex> lineVertices;
     std::ranges::transform(vertices, std::back_inserter(lineVertices), [](const Vec3& pos)
     {
-        return LineVertex{pos, Vec3{1.0f, 0.75f, 0.0f}};
+        return LineVertex{pos, color};
     });
     return lineVertices;
 }
