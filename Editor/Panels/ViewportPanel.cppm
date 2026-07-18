@@ -1,4 +1,5 @@
 export module Editor.Panels.Viewport;
+import Core;
 import Editor.Controller;
 import Editor.Panel.Impl;
 import Editor.SelectionGizmo;
@@ -8,7 +9,7 @@ import Editor.TransformTool;
 import Engine.Viewport;
 import EventBus;
 import ImGui;
-import Core;
+import Window;
 
 struct ViewportSnapshot
 {
@@ -18,7 +19,7 @@ struct ViewportSnapshot
 class ViewportController : public EditorControllerImpl<ViewportSnapshot>
 {
 public:
-    explicit ViewportController(EditorServices& services, EditingContext& context, ViewportId viewportId);
+    explicit ViewportController(EditorServices& services, EditingContext& context, ViewportId viewportId, WindowHandle window);
 
     void update(float dt, Editor::SnapshotFrame& frame) override;
 
@@ -33,6 +34,7 @@ private:
     EventSubscription m_subscription;
     Entity m_camera;
     ViewportId m_id;
+    WindowHandle m_window;
 };
 
 export namespace Panels

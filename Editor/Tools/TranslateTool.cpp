@@ -5,6 +5,8 @@ import Engine;
 import Input;
 import Physics;
 import World;
+import Editor.Requests;
+import Editor;
 
 namespace
 {
@@ -123,6 +125,7 @@ void TranslateTool::update()
     {
         m_selectedGizmoHandle = GizmoHandleType::None;
         m_projectedCursorPositionLastFrame = {};
+        setSelectionEnabled(true);
     }
 
     if (Input::isKeyJustPressed(KeyCode::MouseButtonLeft))
@@ -130,5 +133,10 @@ void TranslateTool::update()
         const Ray ray = Engine::getViewportCursorRay(context().viewportId);
         const Entity hitGizmoHandle = Physics::lineTrace(editorWorld, ray, TraceChannelFlags::Gizmo);
         m_selectedGizmoHandle = getHandleType(editorWorld, hitGizmoHandle);
+
+        if (m_selectedGizmoHandle != GizmoHandleType::None)
+            setSelectionEnabled(false);
+
+        m_projectedCursorPositionLastFrame = {};
     }
 }

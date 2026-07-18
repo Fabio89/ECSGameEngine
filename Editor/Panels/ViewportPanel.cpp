@@ -3,6 +3,7 @@ import Editor;
 import Editor.Events;
 import Editor.Requests;
 import Engine;
+import Input;
 import Geometry;
 import Math;
 import Physics;
@@ -40,12 +41,12 @@ Entity ensureCamera(World& world)
 
     constexpr Vec3 position{2.f, 2.f, 2.f};
     const Quat rotation = Math::angleAxis(Math::radians(-135.f), Vec3{0, 1, 0})
-                      * Math::angleAxis(Math::radians(33.f), Vec3{1, 0, 0});
+                          * Math::angleAxis(Math::radians(33.f), Vec3{1, 0, 0});
 
-    world.addComponent<TransformComponent>(camera,{
-                                               .position = position,
-                                               .rotation = rotation
-                                           });
+    world.addComponent<TransformComponent>(camera, {
+        .position = position,
+        .rotation = rotation
+    });
     return camera;
 }
 
@@ -99,12 +100,13 @@ Rect calculateViewportArea(ViewportMode mode)
     }
 }
 
-ViewportController::ViewportController(EditorServices& services, EditingContext& context, ViewportId viewportId)
+ViewportController::ViewportController(EditorServices& services, EditingContext& context, ViewportId viewportId, WindowHandle window)
     : EditorControllerImpl{services, context},
-      m_tools{TransformToolContext{.services = services, .editing = context, .viewportId = m_id}},
+      m_tools{TransformToolContext{.services = services, .editing = context, .viewportId = m_id, .window = m_window}},
       m_selectionGizmos{services, context},
       m_camera{ensureCamera(services.worlds.get(context.editorWorld))},
-      m_id{viewportId}
+      m_id{viewportId},
+      m_window{window}
 {
     m_tools.createTools();
 
@@ -126,11 +128,14 @@ void ViewportController::update(float dt, Editor::SnapshotFrame& frame)
     EditorControllerImpl::update(dt, frame);
     m_tools.update();
 
-    EditorCamera::update(Engine::getWindow(), services().worlds.get(context().editorWorld), m_camera, Engine::getSimulationDeltaTime());
+    EditorCamera::update(m_window, services().worlds.get(context().editorWorld), m_camera, Engine::getSimulationDeltaTime());
     const Camera camera = CameraUtils::toRenderCamera(services().worlds.get(context().editorWorld), m_id, m_camera);
     services().viewports.setCamera(m_id, camera);
     services().renderCommands.addCommand(RenderCommands::SetCamera{.world = context().world, .camera = camera});
     services().renderCommands.addCommand(RenderCommands::SetCamera{.world = context().editorWorld, .camera = camera});
+
+    if (m_tools.isSelectionEnabled() && Input::isKeyJustPressed(KeyCode::MouseButtonLeft))
+        Editor::request(Editor::SelectEntityUnderCursor{.contextId = context().id, .window = m_window, .viewport = m_id});
 }
 
 ViewportSnapshot ViewportController::buildSnapshot(const EditingContext& context)
@@ -154,7 +159,7 @@ void Panels::ViewportPanel::doDraw()
     if (!m_id)
     {
         m_id = Engine::createViewport({context().world, context().editorWorld}, viewportArea);
-        Editor::addController<ViewportController>(context().id, m_id);
+        Editor::addController<ViewportController>(context().id, m_id, getWindow());
     }
     else
         Engine::setViewportArea(m_id, viewportArea);
@@ -176,11 +181,6 @@ void Panels::ViewportPanel::doDraw()
     else if (ImGui::IsKeyPressed(ImGuiKey_R))
     {
         setCurrentTool(EntityEditingMode::Scale);
-    }
-
-    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-    {
-        Editor::request(Editor::SelectEntityUnderCursor{.contextId = context().id, .window = getWindow(), .viewport = m_id});
     }
 
     auto setMouseLook = [window = getWindow()](bool enabled)

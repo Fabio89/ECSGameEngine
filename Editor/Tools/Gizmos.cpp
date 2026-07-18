@@ -22,19 +22,20 @@ import Systems.Transform;
 namespace Gizmos
 {
     Entity createTranslationGizmo(World& world);
+
     Entity createTranslationGizmoHandle(World& world, Entity gizmo, GizmoHandleType type, std::string name, std::vector<LineVertex>&& vertices, BoundingBoxComponent boundingBox);
+
     Entity createTranslationGizmoHandle(World& world, Entity gizmo, GizmoHandleType type, std::string name, const Guid& mesh, const Vec4& tint, BoundingBoxComponent boundingBox);
 
     Entity createRotationGizmo(World& world);
+
     Entity createScaleGizmo(World& world);
 }
 
 struct GizmoResources
 {
-    Guid arrowheadMesh;
-    Guid xyMesh;
-    Guid xzMesh;
-    Guid yzMesh;
+    Guid axisMesh;
+    Guid transformPlaneMesh;
 };
 
 namespace
@@ -44,40 +45,18 @@ namespace
 
 void Gizmos::init(AssetManager& assets, AssetMountId mount)
 {
-    resources.arrowheadMesh = assets.addFromFile<MeshData>("Arrowhead", {.mountId = mount, .relativeToMount = "Meshes/Cone.obj"});
-    
-    static constexpr float min = 0.1f;
+    resources.axisMesh = assets.addFromFile<MeshData>("Axis", {.mountId = mount, .relativeToMount = "Meshes/Axis.obj"});
+
+    static constexpr float min = 0.2f;
     static constexpr float max = 0.5f;
 
-    resources.xyMesh = assets.addFromData("TranslateXY", MeshData{
+    resources.transformPlaneMesh = assets.addFromData("TranslateXY", MeshData{
         .vertices = {
             {.pos = {min, min, 0.0f}},
             {.pos = {max, min, 0.0f}},
             {.pos = {max, max, 0.0f}},
             {.pos = {min, max, 0.0f}},
             {.pos = {min, max, 0.0f}},
-        },
-        .indices = {0, 1, 2, 2, 3, 0}
-    });
-
-    resources.xzMesh = assets.addFromData("TranslateXZ", MeshData{
-        .vertices = {
-            {.pos = {min, 0.f, min}},
-            {.pos = {max, 0.f, min}},
-            {.pos = {max, 0.f, max}},
-            {.pos = {min, 0.f, max}},
-            {.pos = {min, 0.f, max}},
-        },
-        .indices = {0, 1, 2, 2, 3, 0}
-    });
-
-    resources.yzMesh = assets.addFromData("TranslateYZ", MeshData{
-        .vertices = {
-            {.pos = {0.f, min, min}},
-            {.pos = {0.f, max, min}},
-            {.pos = {0.f, max, max}},
-            {.pos = {0.f, min, max}},
-            {.pos = {0.f, min, max}},
         },
         .indices = {0, 1, 2, 2, 3, 0}
     });
@@ -108,11 +87,18 @@ Entity Gizmos::createTranslationGizmo(World& world)
     world.addComponent<NameComponent>(gizmo, "Translation Gizmo");
     world.addComponent<TagsComponent>(gizmo, {{Tag::editorOnly}});
     world.addComponent<HierarchyComponent>(gizmo);
-    world.addComponent<TransformComponent>(gizmo, {.position = Vec3{}, .rotation = Quat{}, .scale = 0.2});
+    world.addComponent<TransformComponent>(gizmo, {.scale = 0.2});
 
     static constexpr float alpha = 0.75;
     static constexpr float hitSize = 0.1f;
-    
+
+    static constexpr BoundingBoxComponent axisBoundingBox
+    {
+        .channel = {},
+        .minLocal = {-hitSize, -hitSize, -hitSize},
+        .maxLocal = {1 + hitSize, hitSize, hitSize}
+    };
+
     static constexpr Vec4 xColor = {1.0f, 0.0f, 0.0f, alpha};
     const Entity x = createTranslationGizmoHandle
     (
@@ -120,15 +106,9 @@ Entity Gizmos::createTranslationGizmo(World& world)
         gizmo,
         GizmoHandleType::TranslateX,
         "X",
-        {
-            LineVertex{{0.0f, 0.0f, 0.0f}, xColor},
-            LineVertex{{1.0f, 0.0f, 0.0f}, xColor}
-        },
-        {
-            .channel = {},
-            .minLocal = {-hitSize, -hitSize, -hitSize},
-            .maxLocal = {1 + hitSize, hitSize, hitSize}
-        }
+        resources.axisMesh,
+        xColor,
+        axisBoundingBox
     );
 
     static constexpr Vec4 yColor = {0.0f, 1.0f, 0.0f, alpha};
@@ -138,17 +118,11 @@ Entity Gizmos::createTranslationGizmo(World& world)
         gizmo,
         GizmoHandleType::TranslateY,
         "Y",
-        {
-            LineVertex{{0.0f, 0.0f, 0.0f}, yColor},
-            LineVertex{{0.0f, 1.0f, 0.0f}, yColor}
-        },
-        {
-            .channel = {},
-            .minLocal = {-hitSize, -hitSize, -hitSize},
-            .maxLocal = {hitSize, 1 + hitSize, hitSize}
-        }
+        resources.axisMesh,
+        yColor,
+        axisBoundingBox
     );
-    
+
     static constexpr Vec4 zColor = {0.0f, 0.0f, 1.0f, alpha};
     const Entity z = createTranslationGizmoHandle
     (
@@ -156,19 +130,20 @@ Entity Gizmos::createTranslationGizmo(World& world)
         gizmo,
         GizmoHandleType::TranslateZ,
         "Z",
-        {
-            LineVertex{{0.0f, 0.0f, 0.0f}, zColor},
-            LineVertex{{0.0f, 0.0f, 1.0f}, zColor}
-        },
-        {
-            .channel = {},
-            .minLocal = {-hitSize, -hitSize, -hitSize},
-            .maxLocal = {hitSize, hitSize, 1 + hitSize}
-        }
+        resources.axisMesh,
+        zColor,
+        axisBoundingBox
     );
 
     static constexpr float min = 0.1f;
     static constexpr float max = 0.5f;
+
+    static constexpr BoundingBoxComponent planeBoundingBox
+    {
+        .channel = {},
+        .minLocal = {min, min, -hitSize},
+        .maxLocal = {max, max, hitSize}
+    };
 
     static constexpr Vec4 xyColor = zColor;
     const Entity xy = createTranslationGizmoHandle
@@ -177,15 +152,11 @@ Entity Gizmos::createTranslationGizmo(World& world)
         gizmo,
         GizmoHandleType::TranslateXY,
         "XY",
-        resources.xyMesh,
+        resources.transformPlaneMesh,
         xyColor,
-        {
-            .channel = {},
-            .minLocal = {min, min, -hitSize},
-            .maxLocal = {max, max, hitSize}
-        }
+        planeBoundingBox
     );
-    
+
     static constexpr Vec4 xzColor = yColor;
 
     const Entity xz = createTranslationGizmoHandle
@@ -194,13 +165,9 @@ Entity Gizmos::createTranslationGizmo(World& world)
         gizmo,
         GizmoHandleType::TranslateXZ,
         "XZ",
-        resources.xzMesh,
+        resources.transformPlaneMesh,
         xzColor,
-        {
-            .channel = {},
-            .minLocal = {min, -hitSize, min},
-            .maxLocal = {max, hitSize, max}
-        }
+        planeBoundingBox
     );
 
     static constexpr Vec4 yzColor = xColor;
@@ -211,15 +178,11 @@ Entity Gizmos::createTranslationGizmo(World& world)
         gizmo,
         GizmoHandleType::TranslateYZ,
         "YZ",
-        resources.yzMesh,
+        resources.transformPlaneMesh,
         yzColor,
-        {
-            .channel = {},
-            .minLocal = {-hitSize, min, min},
-            .maxLocal = {hitSize, max, max}
-        }
+        planeBoundingBox
     );
-    
+
     world.addComponent<GizmoComponent>(gizmo, {.xAxis = x, .yAxis = y, .zAxis = z, .xyPlane = xy, .xzPlane = xz, .yzPlane = yz});
     setGizmoVisible(world, gizmo, false);
 
@@ -234,7 +197,20 @@ Entity createTranslationGizmoHandle(World& world, Entity gizmo, GizmoHandleType 
     world.addComponent<GizmoHandleComponent>(axis, {type});
     world.addComponent<HierarchyComponent>(axis);
     HierarchyUtils::setParent(world, axis, gizmo);
-    world.addComponent<TransformComponent>(axis);
+
+    const Quat rotation = [type]
+    {
+        switch (type)
+        {
+            default: return Quat{};
+            case GizmoHandleType::TranslateY: return Math::angleAxis(Math::radians(90.f), forwardVector());
+            case GizmoHandleType::TranslateXZ: return Math::angleAxis(Math::radians(90.f), rightVector());
+            case GizmoHandleType::TranslateZ:
+            case GizmoHandleType::TranslateYZ: return Math::angleAxis(Math::radians(-90.f), upVector());
+        }
+    }();
+
+    world.addComponent<TransformComponent>(axis, {.rotation = rotation});
     world.addComponent<BoundingBoxComponent>(axis, std::move(boundingBox));
 
     return axis;
@@ -304,7 +280,7 @@ constexpr std::vector<LineVertex> generateAABBVertices(const Vec3& min, const Ve
     return lineVertices;
 }
 
-Entity Gizmos::createBoundingBoxGizmo(World& editorWorld, const World& sourceEntityWorld,  Entity sourceEntity)
+Entity Gizmos::createBoundingBoxGizmo(World& editorWorld, const World& sourceEntityWorld, Entity sourceEntity)
 {
     std::string_view name = NameUtils::getName(sourceEntityWorld, sourceEntity);
 

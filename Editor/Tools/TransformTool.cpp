@@ -16,7 +16,7 @@ TransformToolManager::TransformToolManager(TransformToolContext context)
     : EditorServiceConsumer{context.services},
       m_context{std::move(context)}
 {
-    m_sub += m_context.services.events.subscribe([this](const EditorEvents::SelectionChanged& event)
+    m_subscription += m_context.services.events.subscribe([this](const EditorEvents::SelectionChanged& event)
     {
         if (event.contextId == m_context.editing.id && m_currentToolType != EntityEditingMode::None)
         {
@@ -64,6 +64,15 @@ void TransformToolManager::update()
     }
 }
 
+bool TransformToolManager::isSelectionEnabled() const
+{
+    if (m_currentToolType == EntityEditingMode::None)
+        return true;
+
+    const TransformTool& currentTool = *m_tools[static_cast<std::size_t>(m_currentToolType)];
+    return currentTool.isSelectionEnabled();
+}
+
 TransformTool::TransformTool(TransformToolContext& context, EntityEditingMode type)
     : EditorServiceConsumer{context.services},
       m_context{context},
@@ -78,7 +87,10 @@ void TransformTool::setActive(bool active)
 {
     World& editorWorld = Engine::getWorld(m_context.editing.editorWorld);
     if (!active)
+    {
+        setSelectionEnabled(true);
         Gizmos::setGizmoVisible(editorWorld, m_gizmo, false);
+    }
 
     if (editorWorld.hasComponent<GizmoComponent>(m_gizmo))
     {
@@ -100,6 +112,29 @@ void TransformTool::setActive(bool active)
     }
 }
 
+bool TransformTool::isSelectionEnabled() const
+{
+    return m_selectionEnabled;
+}
+
+void TransformTool::setSelectionEnabled(bool enabled)
+{
+    m_selectionEnabled = enabled;
+}
+
+float calculateGizmoScale
+(
+    const Camera& camera,
+    Vec3 worldPosition,
+    float desiredScreenSize
+)
+{
+    const Vec4 viewPosition = camera.view * Vec4(worldPosition, 1.0f);
+    const float depth = -viewPosition.z;
+    const float scale = desiredScreenSize * depth / camera.proj[1][1];
+    return scale;
+}
+
 void TransformTool::attachToSelection()
 {
     Entity firstSelected = context().editing.selection.isEmpty() ? Entity{} : context().editing.selection.get().front();
@@ -114,6 +149,8 @@ void TransformTool::attachToSelection()
         gizmoTransform->position = selectionTransform.position;
         gizmoTransform->rotation = selectionTransform.rotation;
 
+        const Camera& camera = services().viewports.getCamera(context().viewportId);
+        gizmoTransform->scale = calculateGizmoScale(camera, gizmoTransform->position, 0.12f);
     }
     m_attachedTo = firstSelected;
 }
