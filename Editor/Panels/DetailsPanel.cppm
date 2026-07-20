@@ -56,7 +56,7 @@ export namespace Panels
     class DetailsPanel : public PanelImpl<DetailsController>
     {
     public:
-        explicit DetailsPanel(const PanelCreateInfo& info);
+        using PanelImpl::PanelImpl;
         static constexpr auto Name = "Details";
 
     private:

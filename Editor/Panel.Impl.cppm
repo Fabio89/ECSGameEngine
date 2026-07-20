@@ -10,21 +10,20 @@ export template<ControllerTraits Controller = NoController>
 class PanelImpl : public Panel
 {
 public:
-    explicit PanelImpl(const PanelCreateInfo& info)
+    template<typename... Args>
+    explicit PanelImpl(const PanelCreateInfo& info, Args&&... args)
         : Panel{info},
           m_context{Editor::contexts().get(info.contextId)},
-          m_mailbox{Controller::createMailbox()} {}
+          m_mailbox{Controller::createMailbox()}
+    {
+        if constexpr (!std::same_as<Controller, NoController>)
+            createController(std::forward<Args>(args)...);
+    }
 
 protected:
     using Snapshot = Controller::Snapshot;
     EditingContext& context() { return m_context; }
     const EditingContext& context() const { return m_context; }
-
-    template<typename... Args>
-    void createController(Args&&... args) requires (!std::same_as<Controller, NoController>)
-    {
-        Editor::addController<Controller>(context().id, m_mailbox, std::forward<Args>(args)...);
-    }
 
     void request(Controller::Request request) requires (!std::same_as<Controller, NoController>)
     {
@@ -39,6 +38,12 @@ protected:
     }
 
 private:
+    template<typename... Args>
+    void createController(Args&&... args) requires (!std::same_as<Controller, NoController>)
+    {
+        Editor::addController<Controller>(context().id, m_mailbox, std::forward<Args>(args)...);
+    }
+
     EditingContext& m_context;
 
     [[no_unique_address]]

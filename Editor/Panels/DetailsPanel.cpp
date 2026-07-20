@@ -104,9 +104,3 @@ DetailsSnapshot DetailsController::buildSnapshot(const EditingContext& context)
     return snapshot;
 }
 
-Panels::DetailsPanel::DetailsPanel(const PanelCreateInfo& info)
-    : PanelImpl{info}
-{
-    createController();
-}
-

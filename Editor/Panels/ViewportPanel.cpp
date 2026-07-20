@@ -169,10 +169,8 @@ ViewportSnapshot ViewportController::buildSnapshot(const EditingContext& context
 }
 
 Panels::ViewportPanel::ViewportPanel(const PanelCreateInfo& info)
-    : PanelImpl{info}
-{
-    createController(getWindow());
-}
+    : PanelImpl{info, getWindow()}
+{}
 
 void Panels::ViewportPanel::doDraw()
 {

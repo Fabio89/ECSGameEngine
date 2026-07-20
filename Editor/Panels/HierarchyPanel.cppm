@@ -103,11 +103,7 @@ export namespace Panels
     class HierarchyPanel : public PanelImpl<HierarchyController>
     {
     public:
-        explicit HierarchyPanel(const PanelCreateInfo& info) : PanelImpl{info}
-        {
-            createController();
-        }
-
+        using PanelImpl::PanelImpl;
         static constexpr auto Name = "Hierarchy";
 
     private:

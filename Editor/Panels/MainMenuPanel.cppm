@@ -40,10 +40,7 @@ export namespace Panels
     class MainMenuPanel : public PanelImpl<MainMenuController>
     {
     public:
-        explicit MainMenuPanel(const PanelCreateInfo& info) : PanelImpl{info}
-        {
-            createController();
-        }
+        using PanelImpl::PanelImpl;
 
     private:
         void doDraw() override;

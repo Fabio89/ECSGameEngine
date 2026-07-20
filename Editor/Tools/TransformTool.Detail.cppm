@@ -2,6 +2,29 @@ export module Editor.TransformTool:Detail;
 import Editor.EntityEditingMode;
 import Editor.TransformTool;
 import Math;
+import World;
+
+export
+{
+    GizmoHandleType getHandleType(const World& world, Entity gizmoHandle)
+    {
+        if (!gizmoHandle.isValid() || !world.hasComponent<GizmoHandleComponent>(gizmoHandle))
+            return GizmoHandleType::None;
+        return world.readComponent<GizmoHandleComponent>(gizmoHandle).type;
+    }
+
+    struct TranslationConstraint
+    {
+        enum class Type
+        {
+            Axis,
+            Plane
+        };
+
+        Type type;
+        Vec3 direction;
+    };
+}
 
 export class TranslateTool : public TransformToolImpl<EntityEditingMode::Translate>
 {
