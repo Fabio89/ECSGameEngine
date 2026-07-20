@@ -17,9 +17,8 @@ import World;
 
 namespace Editor
 {
-    EditorUIContext editorContext{};
-    ThreadSafeQueue<EditorRequest> requests;
-
+    void request(EditorRequest request);
+    PanelCreateInfo generatePanelInfo(EditingContextId contextId);
     void addPanel(std::unique_ptr<Panel> panel);
     ControllerManager& ensureControllerManager(EditingContextId contextId);
 }
@@ -29,28 +28,23 @@ export namespace Editor
     EDITOR_API void run();
 
     template<typename T>
-    EDITOR_API void request(T&& request) { requests.push(EditorRequest{std::forward<T>(request)}); }
+    EDITOR_API void request(T&& payload) { request(EditorRequest{std::forward<T>(payload)}); }
 
     template<typename T>
-    void addPanel(EditingContextId contextId) { addPanel(std::make_unique<T>(PanelCreateInfo{.contextId = contextId, .window = editorContext.window})); }
+    void addPanel(EditingContextId contextId) { addPanel(std::make_unique<T>(generatePanelInfo(contextId))); }
 
     std::span<Panel*> getPanels();
 
     EditingContextManager& contexts();
 
-    template<typename T>
-    void addController(EditingContextId contextId)
-    {
-        auto factory = [](EditorServices& services, EditingContext& context) { return std::make_unique<T>(services, context); };
-        request(AddController{.contextId = contextId, .factory = std::move(factory)});
-    }
+    void openProject(EditingContextId contextId, const std::filesystem::path& path);
 
     template<typename T, typename... Args>
-    void addController(EditingContextId contextId, Args... args)
+    void addController(EditingContextId contextId, typename T::SharedMailbox mailbox, Args... args)
     {
-        auto factory = [args...](EditorServices& services, EditingContext& context)
+        auto factory = [mailbox, args...](EditorServices& services, EditingContext& context)
         {
-            return std::make_unique<T>(services, context, args...);
+            return std::make_unique<T>(services, context, std::move(mailbox), args...);
         };
 
         request(AddController{.contextId = contextId, .factory = std::move(factory)});

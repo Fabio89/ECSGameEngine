@@ -33,15 +33,19 @@ namespace
 
 void init(SystemContext& context)
 {
+    context.worlds.forEachWorld([](World& world)
+    {
+        for (auto&& [entity, transform] : world.query<TransformComponent>())
+        {
+            TransformSystem::ensureRuntimeTransform(world, entity);
+        }
+    });
+
     subscription += context.worlds.subscribe([&context](const WorldEvents::ComponentAdded& event)
     {
         if (event.componentType == getTypeId<TransformComponent>() || event.componentType == getTypeId<HierarchyComponent>())
         {
             World& world = context.worlds.get(event.world);
-
-            if (!world.hasComponent<RuntimeTransformComponent>(event.entity))
-                world.addComponent<RuntimeTransformComponent>(event.entity);
-
             if (world.hasComponent<TransformComponent>(event.entity))
                 TransformSystem::ensureRuntimeTransform(world, event.entity);
         }
@@ -96,6 +100,9 @@ void shutdown(SystemContext&)
 
 void TransformSystem::ensureRuntimeTransform(World& world, Entity entity)
 {
+    if (!world.hasComponent<RuntimeTransformComponent>(entity))
+        world.addComponent<RuntimeTransformComponent>(entity);
+
     Entity root = entity;
 
     while (true)

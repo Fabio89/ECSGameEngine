@@ -28,12 +28,14 @@ import World.Events;
 import Editor.Gizmos;
 import Editor.EntityEditingMode;
 
+EditorUIContext editorContext;
 EventSubscription subscription;
 std::vector<std::unique_ptr<Panel>> panels;
 std::vector<Panel*> panelView;
 EventBus events;
 AssetMountId projectAssetsMount;
 AssetMountId editorAssetsMount;
+ThreadSafeQueue<EditorRequest> requests;
 
 EditorServices services
 {
@@ -56,70 +58,23 @@ namespace Editor
     void shutdown();
     bool update();
 
-    void execute(ChangeSelection&& request)
-    {
-        contexts().get(request.contextId).selection.set(request.entities);
-    }
-
-    void execute(SetEntityEditingMode&& request)
-    {
-        events.publish(EditorEvents::EntityEditingModeChanged{request.contextId, request.mode});
-    }
-
-    void execute(SelectEntityUnderCursor&& request)
-    {
-        check(request.window.isValid(), "");
-
-        const World& world = services.worlds.get(contextManager.get(request.contextId).world);
-        const Ray ray = Engine::getViewportCursorRay(request.viewport);
-        const Entity hitEntity = Physics::lineTrace(world, ray, TraceChannelFlags::Default);
-
-        execute(ChangeSelection{.contextId = request.contextId, .entities = {hitEntity}});
-    }
-
     void execute(AddController&& request)
     {
         ensureControllerManager(request.contextId).addController(request.factory(services, contexts().get(request.contextId)));
     }
+}
 
-    void execute(OpenProject&& request)
-    {
-        const ProjectConfig projectConfig = loadProjectConfig(request.path / "project.toml");
+void Editor::request(EditorRequest request)
+{
+    requests.push(std::move(request));
+}
 
-        if (projectAssetsMount.isValid())
-            services.assets.unmount(projectAssetsMount);
-        projectAssetsMount = services.assets.mount("Project", request.path / projectConfig.contentRoot);
-        services.assets.loadDatabase(projectAssetsMount, request.path / projectConfig.assetDatabase);
-
-        loadScene(request.contextId, request.path / projectConfig.startupScene);
-
-        EditorConfig editorConfig = loadEditorConfig();
-        editorConfig.lastProject = request.path;
-        saveEditorConfig(editorConfig);
-    }
-
-    void execute(OpenScene&& request)
-    {
-        loadScene(request.contextId, request.path);
-    }
-
-    void execute(SetProperty&& request)
-    {
-        World& world = services.worlds.get(contexts().get(request.contextId).world);
-        if (!world.isValid(request.entity))
-            return;
-
-        if (!world.hasComponent(request.entity, request.componentType))
-            return;
-
-        auto component = world.editComponent(request.entity, request.componentType);
-        request.property->set(component, request.value);
-    }
-
-    void execute(SetCameraMouseLookEnabled&& request)
-    {
-        EditorCamera::setActive(request.window, request.enabled);
-    }
+PanelCreateInfo Editor::generatePanelInfo(EditingContextId contextId)
+{
+    return {
+        .contextId = contextId,
+        .window = editorContext.window
+    };
 }
 
 void Editor::addPanel(std::unique_ptr<Panel> panel)
@@ -141,10 +96,10 @@ void Editor::init()
     Engine::addSystem(BoundingBoxSystem::callbacks);
     Engine::addSystem(RenderSynchronizer::callbacks);
 
+    Engine::init();
+
     editorAssetsMount = services.assets.mount("Editor", "Editor/Assets");
     Gizmos::init(services.assets, editorAssetsMount);
-
-    Engine::init();
 
     EditorComponents::init();
 
@@ -184,7 +139,7 @@ void Editor::init()
     if (EditorConfig config = loadEditorConfig(); !config.lastProject.empty())
     {
         if (std::filesystem::exists(config.lastProject))
-            execute(OpenProject{.contextId = defaultContextId, .path = config.lastProject});
+            openProject(defaultContextId, config.lastProject);
         else
         {
             config.lastProject = "";
@@ -233,6 +188,22 @@ std::span<Panel*> Editor::getPanels()
 }
 
 EditingContextManager& Editor::contexts() { return contextManager; }
+
+void Editor::openProject(EditingContextId contextId, const std::filesystem::path& path)
+{
+    const ProjectConfig projectConfig = loadProjectConfig(path / "project.toml");
+
+    if (projectAssetsMount.isValid())
+        services.assets.unmount(projectAssetsMount);
+    projectAssetsMount = services.assets.mount("Project", path / projectConfig.contentRoot);
+    services.assets.loadDatabase(projectAssetsMount, path / projectConfig.assetDatabase);
+
+    loadScene(contextId, path / projectConfig.startupScene);
+
+    EditorConfig editorConfig = loadEditorConfig();
+    editorConfig.lastProject = path;
+    saveEditorConfig(editorConfig);
+}
 
 void Editor::rebuildPanelView()
 {

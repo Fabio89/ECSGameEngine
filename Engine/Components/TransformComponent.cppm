@@ -12,7 +12,7 @@ export struct TransformComponent
 {
     Vec3 position{};
     Quat rotation{};
-    float scale{1.f};
+    Vec3 scale{1.f};
 };
 
 export struct RuntimeTransformComponent
@@ -43,7 +43,7 @@ export namespace TransformUtils
     Mat4 toMatrix(const TransformComponent& transform)
     {
         return Math::translate(Mat4{1.0f}, transform.position) * Math::mat4_cast(transform.rotation) * Math::scale(
-                   Mat4{1.0f}, Vec3{transform.scale});
+                   Mat4{1.0f}, transform.scale);
     }
 }
 
@@ -66,7 +66,7 @@ JsonObject serialize(const TransformComponent& component, Json::MemoryPoolAlloca
     JsonObject json{Json::kObjectType};
     json.AddMember("position", Json::fromVec3(component.position, allocator), allocator);
     json.AddMember("rotation", Json::fromQuat(component.rotation, allocator), allocator);
-    json.AddMember("scale", component.scale, allocator);
+    json.AddMember("scale", Json::fromVec3(component.scale, allocator), allocator);
     return json;
 }
 
@@ -75,12 +75,7 @@ TransformComponent deserialize(const JsonObject& data)
 {
     const Vec3 position = Json::toVec3(data, "position").value_or(Vec3{});
     const Quat rotation = Json::toQuat(data, "rotation").value_or(Quat{});
-
-    float scale{1.f};
-    if (const auto it = data.FindMember("scale"); it != data.MemberEnd())
-    {
-        scale = it->value.GetFloat();
-    }
+    const Vec3 scale = Json::toVec3(data, "scale").value_or(Vec3{});
 
     return
     {

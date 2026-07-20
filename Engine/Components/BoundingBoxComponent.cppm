@@ -1,4 +1,5 @@
 export module Components.BoundingBox;
+import Assets.Mesh;
 import Components.Transform;
 import Core;
 import Math;
@@ -15,6 +16,28 @@ export struct BoundingBoxComponent
     Vec3 minWorld{};
     Vec3 maxWorld{};
 };
+
+export namespace BoundingBoxUtils
+{
+    BoundingBoxComponent computeBoundingBox(const MeshData& mesh)
+    {
+        BoundingBoxComponent box;
+
+        if (mesh.vertices.empty())
+            return box;
+
+        box.minLocal = mesh.vertices.front().pos;
+        box.maxLocal = mesh.vertices.front().pos;
+
+        for (const Vertex& vertex : mesh.vertices)
+        {
+            box.minLocal = Math::min(box.minLocal, vertex.pos);
+            box.maxLocal = Math::max(box.maxLocal, vertex.pos);
+        }
+
+        return box;
+    }
+}
 
 template<>
 constexpr std::string_view getTypeName<BoundingBoxComponent>() { return "BoundingBoxComponent"; }

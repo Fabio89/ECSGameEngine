@@ -1,5 +1,6 @@
 export module Editor.TransformTool;
 export import Editor.EntityEditingMode;
+import Components.Gizmo;
 import Editor.EditingContext;
 import Editor.Services;
 import Engine.Viewport;
@@ -20,12 +21,13 @@ export class TransformToolManager : EditorServiceConsumer
 {
 public:
     explicit TransformToolManager(TransformToolContext context);
-    void createTools();
     void setCurrentTool(EntityEditingMode type);
     void update();
     bool isSelectionEnabled() const;
 
 private:
+    void createTools();
+
     TransformToolContext m_context;
     EntityEditingMode m_currentToolType{EntityEditingMode::None};
     std::array<std::unique_ptr<class TransformTool>, 3> m_tools;
@@ -43,6 +45,10 @@ public:
 
 protected:
     void setSelectionEnabled(bool enabled);
+
+    GizmoHandleType getSelectedHandle() const { return m_selectedGizmoHandle; }
+    void setSelectedHandle(GizmoHandleType type) { m_selectedGizmoHandle = type; }
+
     TransformToolContext& context() { return m_context; }
     [[nodiscard]] const TransformToolContext& context() const { return m_context; }
 
@@ -52,6 +58,7 @@ private:
     TransformToolContext& m_context;
     Entity m_attachedTo;
     Entity m_gizmo;
+    GizmoHandleType m_selectedGizmoHandle{GizmoHandleType::None};
     bool m_selectionEnabled{true};
 };
 

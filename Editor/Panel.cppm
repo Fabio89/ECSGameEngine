@@ -6,7 +6,8 @@ import std;
 export class Panel
 {
 public:
-    explicit Panel(const PanelCreateInfo& info) : m_window{info.window} {}
+    explicit Panel(const PanelCreateInfo& info)
+        : m_window{info.window} {}
 
     Panel(const Panel&) = delete;
 

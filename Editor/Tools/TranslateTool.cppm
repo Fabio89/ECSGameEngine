@@ -1,5 +1,4 @@
 export module Editor.TransformTool:Detail;
-import Components.Gizmo;
 import Editor.EntityEditingMode;
 import Editor.TransformTool;
 import Math;
@@ -11,9 +10,7 @@ public:
     void update() override;
 
 private:
-    GizmoHandleType m_selectedGizmoHandle{GizmoHandleType::None};
     std::optional<Vec3> m_projectedCursorPositionLastFrame;
-    std::unordered_map<Entity, Vec3> m_capturedPositions;
 };
 
 export class RotateTool : public TransformToolImpl<EntityEditingMode::Rotate>
@@ -26,4 +23,9 @@ export class ScaleTool : public TransformToolImpl<EntityEditingMode::Scale>
 {
 public:
     using TransformToolImpl::TransformToolImpl;
+    void update() override;
+
+private:
+    std::optional<Vec3> m_projectedCursorPositionLastFrame;
+    std::optional<Vec2> m_previousMousePosition{};
 };

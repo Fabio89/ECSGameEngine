@@ -1,18 +1,19 @@
 module Editor.Panels.Viewport;
-import Editor;
+import Components.Gizmo;
+import Editor.Camera;
 import Editor.Events;
 import Editor.Requests;
+import Editor;
+import Engine.Camera;
 import Engine;
-import Input;
 import Geometry;
+import Input;
 import Math;
 import Physics;
-import Editor.Camera;
-import World;
-import World.Events;
-import Render.Commands;
-import Engine.Camera;
 import Render.CommandProcessor;
+import Render.Commands;
+import World.Events;
+import World;
 
 enum class ViewportMode
 {
@@ -100,27 +101,13 @@ Rect calculateViewportArea(ViewportMode mode)
     }
 }
 
-ViewportController::ViewportController(EditorServices& services, EditingContext& context, ViewportId viewportId, WindowHandle window)
-    : EditorControllerImpl{services, context},
-      m_tools{TransformToolContext{.services = services, .editing = context, .viewportId = m_id, .window = m_window}},
+ViewportController::ViewportController(EditorServices& services, EditingContext& context, SharedMailbox mailbox, WindowHandle window)
+    : EditorControllerImpl{services, context, std::move(mailbox)},
+      m_tools{TransformToolContext{.services = services, .editing = context, .viewportId = m_viewportId, .window = m_window}},
       m_selectionGizmos{services, context},
       m_camera{ensureCamera(services.worlds.get(context.editorWorld))},
-      m_id{viewportId},
       m_window{window}
 {
-    m_tools.createTools();
-
-    m_subscription += services.events.subscribe([this, contextId = context.id](const EditorEvents::EntityEditingModeChanged& event)
-    {
-        if (event.contextId == contextId)
-            m_tools.setCurrentTool(event.mode);
-    });
-
-    m_subscription += services.worlds.subscribe([this, &worlds = services.worlds, worldHandle = context.world](const WorldEvents::WorldCleared& event)
-    {
-        if (worlds.get(event.world).getHandle() == worldHandle)
-            m_tools.createTools();
-    });
 }
 
 void ViewportController::update(float dt, Editor::SnapshotFrame& frame)
@@ -128,24 +115,63 @@ void ViewportController::update(float dt, Editor::SnapshotFrame& frame)
     EditorControllerImpl::update(dt, frame);
     m_tools.update();
 
-    EditorCamera::update(m_window, services().worlds.get(context().editorWorld), m_camera, Engine::getSimulationDeltaTime());
-    const Camera camera = CameraUtils::toRenderCamera(services().worlds.get(context().editorWorld), m_id, m_camera);
-    services().viewports.setCamera(m_id, camera);
-    services().renderCommands.addCommand(RenderCommands::SetCamera{.world = context().world, .camera = camera});
-    services().renderCommands.addCommand(RenderCommands::SetCamera{.world = context().editorWorld, .camera = camera});
+    if (m_viewportId.isValid())
+    {
+        EditorCamera::update(m_window, services().worlds.get(context().editorWorld), m_camera, Engine::getSimulationDeltaTime());
+        const Camera camera = CameraUtils::toRenderCamera(services().worlds.get(context().editorWorld), m_viewportId, m_camera);
+        services().viewports.setCamera(m_viewportId, camera);
+        services().renderCommands.addCommand(RenderCommands::SetCamera{.world = context().world, .camera = camera});
+        services().renderCommands.addCommand(RenderCommands::SetCamera{.world = context().editorWorld, .camera = camera});
+    }
+}
 
-    if (m_tools.isSelectionEnabled() && Input::isKeyJustPressed(KeyCode::MouseButtonLeft))
-        Editor::request(Editor::SelectEntityUnderCursor{.contextId = context().id, .window = m_window, .viewport = m_id});
+void ViewportController::execute(Requests::AssignViewport&& request)
+{
+    m_viewportId = request.viewportId;
+}
+
+void ViewportController::execute(Requests::SetCameraMouseLookEnabled&& request)
+{
+    EditorCamera::setActive(m_window, request.enabled);
+}
+
+void ViewportController::execute(Requests::HandleMouseSelect&& request)
+{
+    if (!m_viewportId.isValid())
+        return;
+
+    const Ray ray = Engine::getViewportCursorRay(m_viewportId);
+
+    const World& editorWorld = services().worlds.get(context().editorWorld);
+
+    const Entity hitGizmoHandle = Physics::lineTrace(editorWorld, ray, TraceChannelFlags::Gizmo);
+    if (!editorWorld.isValid(hitGizmoHandle) || !editorWorld.hasComponent<GizmoHandleComponent>(hitGizmoHandle))
+    {
+        const World& mainWorld = services().worlds.get(context().world);
+        const Entity hitEntity = Physics::lineTrace(mainWorld, ray, TraceChannelFlags::Default);
+        if (hitEntity.isValid())
+            context().selection.setSingle(hitEntity);
+        else
+            context().selection.clear();
+    }
+}
+
+void ViewportController::execute(Requests::SetEditingMode&& request)
+{
+    m_tools.setCurrentTool(request.mode);
 }
 
 ViewportSnapshot ViewportController::buildSnapshot(const EditingContext& context)
 {
-    return {};
+    return {
+         .selectionEnabled = m_tools.isSelectionEnabled()
+    };
 }
 
 Panels::ViewportPanel::ViewportPanel(const PanelCreateInfo& info)
     : PanelImpl{info}
 {
+    createController(getWindow());
 }
 
 void Panels::ViewportPanel::doDraw()
@@ -156,42 +182,51 @@ void Panels::ViewportPanel::doDraw()
 
     const Rect viewportArea = calculateViewportArea(ViewportMode::Editor);
 
-    if (!m_id)
+    if (!m_viewportId)
     {
-        m_id = Engine::createViewport({context().world, context().editorWorld}, viewportArea);
-        Editor::addController<ViewportController>(context().id, m_id, getWindow());
+        m_viewportId = Engine::createViewport({context().world, context().editorWorld}, viewportArea);
+        request(Requests::AssignViewport{m_viewportId});
     }
     else
-        Engine::setViewportArea(m_id, viewportArea);
+        Engine::setViewportArea(m_viewportId, viewportArea);
 
     drawFpsCounter();
 
-    if (ImGui::IsKeyPressed(ImGuiKey_Q))
+    if (!ImGui::IsMouseDown(ImGuiMouseButton_Right))
     {
-        setCurrentTool(EntityEditingMode::None);
-    }
-    else if (ImGui::IsKeyPressed(ImGuiKey_W))
-    {
-        setCurrentTool(EntityEditingMode::Translate);
-    }
-    else if (ImGui::IsKeyPressed(ImGuiKey_E))
-    {
-        setCurrentTool(EntityEditingMode::Rotate);
-    }
-    else if (ImGui::IsKeyPressed(ImGuiKey_R))
-    {
-        setCurrentTool(EntityEditingMode::Scale);
+        if (ImGui::IsKeyPressed(ImGuiKey_Q))
+        {
+            setCurrentTool(EntityEditingMode::None);
+        }
+        else if (ImGui::IsKeyPressed(ImGuiKey_W))
+        {
+            setCurrentTool(EntityEditingMode::Translate);
+        }
+        else if (ImGui::IsKeyPressed(ImGuiKey_E))
+        {
+            setCurrentTool(EntityEditingMode::Rotate);
+        }
+        else if (ImGui::IsKeyPressed(ImGuiKey_R))
+        {
+            setCurrentTool(EntityEditingMode::Scale);
+        }
     }
 
-    auto setMouseLook = [window = getWindow()](bool enabled)
+    auto setMouseLook = [this](bool enabled)
     {
-        Editor::request(Editor::SetCameraMouseLookEnabled{window, enabled});
+        request(Requests::SetCameraMouseLookEnabled{enabled});
     };
 
     if (ImGui::IsMouseReleased(ImGuiMouseButton_Right))
         setMouseLook(false);
     else if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
         setMouseLook(true);
+
+    if (const Snapshot* snapshot = getSnapshot(); ImGui::IsWindowHovered() && snapshot)
+    {
+        if (snapshot->selectionEnabled && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+            request(Requests::HandleMouseSelect{});
+    }
 
     ImGui::End();
     ImGui::PopStyleVar();
@@ -200,7 +235,7 @@ void Panels::ViewportPanel::doDraw()
 
 void Panels::ViewportPanel::setCurrentTool(EntityEditingMode type)
 {
-    Editor::request(Editor::SetEntityEditingMode{.contextId = context().id, .mode = type});
+    request(Requests::SetEditingMode{type});
 }
 
 void Panels::ViewportPanel::drawFpsCounter() const

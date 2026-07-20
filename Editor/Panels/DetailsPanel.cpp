@@ -8,14 +8,13 @@ namespace Panels
 
 void Panels::DetailsPanel::doDraw()
 {
-    if (!context().snapshotPublisher.frame().contains<DetailsSnapshot>())
+    const Snapshot* snapshot = getSnapshot();
+    if (!snapshot)
         return;
-
-    const DetailsSnapshot& snapshot = context().snapshotPublisher.frame().get<DetailsSnapshot>();
-
+    
     ImGui::Begin(Name, &m_open);
 
-    for (const ComponentSnapshot& component : snapshot.components)
+    for (const ComponentSnapshot& component : snapshot->components)
     {
         ImGui::Separator();
 
@@ -29,7 +28,7 @@ void Panels::DetailsPanel::doDraw()
             flags |= ImGuiTreeNodeFlags_Leaf;
         }
 
-        ImGui::PushID(snapshot.entity.value);
+        ImGui::PushID(snapshot->entity.value);
         ImGui::PushID(component.type->getTypeId().value);
 
         if (ImGui::TreeNodeEx(component.type->getName().data(), flags))
@@ -39,9 +38,8 @@ void Panels::DetailsPanel::doDraw()
                 PropertyValue value = property.value;
                 if (Editor::drawProperty(*property.descriptor, value))
                 {
-                    Editor::request(Editor::SetProperty{
-                        .contextId = context().id,
-                        .entity = snapshot.entity,
+                    request(Requests::SetProperty{
+                        .entity = snapshot->entity,
                         .componentType = component.type->getTypeId(),
                         .property = property.descriptor,
                         .value = std::move(value)
@@ -57,6 +55,19 @@ void Panels::DetailsPanel::doDraw()
     }
 
     ImGui::End();
+}
+
+void DetailsController::execute(Requests::SetProperty&& request)
+{
+    World& world = services().worlds.get(context().world);
+    if (!world.isValid(request.entity))
+        return;
+
+    if (!world.hasComponent(request.entity, request.componentType))
+        return;
+
+    auto component = world.editComponent(request.entity, request.componentType);
+    request.property->set(component, request.value);
 }
 
 DetailsSnapshot DetailsController::buildSnapshot(const EditingContext& context)
@@ -96,6 +107,6 @@ DetailsSnapshot DetailsController::buildSnapshot(const EditingContext& context)
 Panels::DetailsPanel::DetailsPanel(const PanelCreateInfo& info)
     : PanelImpl{info}
 {
-    Editor::addController<DetailsController>(info.contextId);
+    createController();
 }
 

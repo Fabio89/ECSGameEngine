@@ -1,17 +1,49 @@
 export module Editor.Panels.MainMenu;
 import Editor;
+import Editor.Controller;
 import ImGui;
 import Editor.Panel.Impl;
 import Editor.Requests;
 import FileSystem;
 import World;
 
+namespace Requests
+{
+    struct OpenProject
+    {
+        std::filesystem::path path;
+    };
+
+    struct OpenScene
+    {
+        std::filesystem::path path;
+    };
+}
+
+using MainMenuRequest = std::variant<
+    Requests::OpenProject,
+    Requests::OpenScene
+>;
+
+class MainMenuController : public EditorControllerImpl<MainMenuController, NoController::Snapshot, MainMenuRequest>
+{
+public:
+    using EditorControllerImpl::EditorControllerImpl;
+
+    void execute(Requests::OpenProject&& request);
+
+    void execute(Requests::OpenScene&& request);
+};
+
 export namespace Panels
 {
-    class MainMenuPanel : public PanelImpl
+    class MainMenuPanel : public PanelImpl<MainMenuController>
     {
     public:
-        using PanelImpl::PanelImpl;
+        explicit MainMenuPanel(const PanelCreateInfo& info) : PanelImpl{info}
+        {
+            createController();
+        }
 
     private:
         void doDraw() override;
@@ -23,54 +55,3 @@ export namespace Panels
         void drawHelpMenu();
     };
 }
-
-void Panels::MainMenuPanel::doDraw()
-{
-    if (!ImGui::BeginMainMenuBar())
-        return;
-
-    drawFileMenu();
-    drawEditMenu();
-    drawViewMenu();
-    drawToolsMenu();
-    drawHelpMenu();
-
-    ImGui::EndMainMenuBar();
-}
-
-void Panels::MainMenuPanel::drawFileMenu()
-{
-    if (!ImGui::BeginMenu("File"))
-        return;
-
-    if (ImGui::MenuItem("Open Project..."))
-    {
-        if (const auto path = FileSystem::openFolderDialog())
-        {
-            Editor::request(Editor::OpenProject{context().id, std::move(*path)});
-        }
-    }
-
-    if (ImGui::MenuItem("Open Scene..."))
-    {
-        if (const auto path = FileSystem::openFileDialog("*.scene"))
-        {
-            Editor::request(Editor::OpenScene{context().id, std::move(*path)});
-        }
-    }
-
-    ImGui::Separator();
-
-    if (ImGui::MenuItem("Exit"))
-    {
-        // TODO
-        // Application::quit();
-    }
-
-    ImGui::EndMenu();
-}
-
-void Panels::MainMenuPanel::drawEditMenu() {}
-void Panels::MainMenuPanel::drawViewMenu() {}
-void Panels::MainMenuPanel::drawToolsMenu() {}
-void Panels::MainMenuPanel::drawHelpMenu() {}

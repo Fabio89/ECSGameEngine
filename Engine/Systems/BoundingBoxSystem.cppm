@@ -46,6 +46,14 @@ void computeWorldCorners(Edit<BoundingBoxComponent>& aabb, const Mat4& worldTran
 
 void init(SystemContext& context)
 {
+    context.worlds.forEachWorld([](World& world)
+    {
+        for (auto&& [entity, aabb, transform] : world.query<Edit<BoundingBoxComponent>, RuntimeTransformComponent>())
+        {
+            computeWorldCorners(aabb, transform.worldMatrix);
+        }
+    });
+
     subscription += context.worlds.subscribe([&worlds = context.worlds](const WorldEvents::ComponentAdded& event)
     {
         if (event.componentType == getTypeId<BoundingBoxComponent>())

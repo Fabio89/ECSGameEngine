@@ -8,7 +8,6 @@ export enum class GizmoHandleType
     TranslateX,
     TranslateY,
     TranslateZ,
-
     TranslateXY,
     TranslateXZ,
     TranslateYZ,
@@ -20,19 +19,21 @@ export enum class GizmoHandleType
     ScaleX,
     ScaleY,
     ScaleZ,
-
+    ScaleXY,
+    ScaleXZ,
+    ScaleYZ,
     ScaleUniform
+};
+
+export struct GizmoHandle
+{
+    Entity entity;
+    GizmoHandleType type;
 };
 
 export struct GizmoComponent
 {
-    Entity xAxis;
-    Entity yAxis;
-    Entity zAxis;
-
-    Entity xyPlane;
-    Entity xzPlane;
-    Entity yzPlane;
+    std::vector<GizmoHandle> handles;
 };
 
 export namespace GizmoUtils
@@ -40,12 +41,8 @@ export namespace GizmoUtils
     template<typename Fn>
     void forEachHandle(const GizmoComponent& gizmo, Fn&& func)
     {
-        func(gizmo.xAxis);
-        func(gizmo.yAxis);
-        func(gizmo.zAxis);
-        func(gizmo.xyPlane);
-        func(gizmo.xzPlane);
-        func(gizmo.yzPlane);
+        for (const GizmoHandle& handle : gizmo.handles)
+            func(handle.entity);
     }
 }
 

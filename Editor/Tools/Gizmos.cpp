@@ -21,36 +21,80 @@ import Systems.Transform;
 
 namespace Gizmos
 {
-    Entity createTranslationGizmo(World& world);
+    GizmoHandle createGizmoHandle(World& world, Entity gizmo, GizmoHandleType type);
 
-    Entity createTranslationGizmoHandle(World& world, Entity gizmo, GizmoHandleType type, std::string name, std::vector<LineVertex>&& vertices, BoundingBoxComponent boundingBox);
-
-    Entity createTranslationGizmoHandle(World& world, Entity gizmo, GizmoHandleType type, std::string name, const Guid& mesh, const Vec4& tint, BoundingBoxComponent boundingBox);
-
-    Entity createRotationGizmo(World& world);
-
-    Entity createScaleGizmo(World& world);
+    std::vector<GizmoHandle> createHandles(World& world, Entity gizmo, EntityEditingMode type);
 }
 
 struct GizmoResources
 {
-    Guid axisMesh;
-    Guid transformPlaneMesh;
+    Guid translateAxisMesh;
+    Guid translatePlaneMesh;
+    Guid scaleAxisMesh;
+    Guid scaleUniformMesh;
+    Guid rotateAxisMesh;
+};
+
+struct AngleAxis
+{
+    float degrees{};
+    Vec3 axis{};
+};
+
+struct GizmoHandleConfig
+{
+    Vec4 color;
+    Guid mesh;
+    BoundingBoxComponent boundingBox;
+    AngleAxis rotation;
 };
 
 namespace
 {
     GizmoResources resources;
+
+    constexpr float alpha = 0.75;
+    constexpr Vec4 xColor = {1.0f, 0.0f, 0.0f, alpha};
+    constexpr Vec4 yColor = {0.0f, 1.0f, 0.0f, alpha};
+    constexpr Vec4 zColor = {0.0f, 0.0f, 1.0f, alpha};
+
+    constexpr float hitSize = 0.1f;
+
+    constexpr BoundingBoxComponent axisBoundingBox
+    {
+        .channel = {},
+        .minLocal = {-hitSize, -hitSize, -hitSize},
+        .maxLocal = {1 + hitSize, hitSize, hitSize}
+    };
+
+    constexpr float planeMin = 0.1f;
+    constexpr float planeMax = 0.5f;
+
+    constexpr BoundingBoxComponent planeBoundingBox
+    {
+        .channel = {},
+        .minLocal = {planeMin, planeMin, -hitSize},
+        .maxLocal = {planeMax, planeMax, hitSize}
+    };
+
+    std::unordered_map<GizmoHandleType, GizmoHandleConfig> gizmoConfig;
 }
 
 void Gizmos::init(AssetManager& assets, AssetMountId mount)
 {
-    resources.axisMesh = assets.addFromFile<MeshData>("Axis", {.mountId = mount, .relativeToMount = "Meshes/Axis.obj"});
+    resources.translateAxisMesh = assets.addFromFile<MeshData>("TranslateAxis", {.mountId = mount, .relativeToMount = "Meshes/TranslateAxis.obj"});
+    resources.scaleAxisMesh = assets.addFromFile<MeshData>("ScaleAxis", {.mountId = mount, .relativeToMount = "Meshes/ScaleAxis.obj"});
+    resources.scaleUniformMesh = assets.addFromFile<MeshData>("ScaleUniform", {.mountId = mount, .relativeToMount = "Meshes/ScaleUniform.obj"});
+    resources.rotateAxisMesh = assets.addFromFile<MeshData>("RotateAxis", {.mountId = mount, .relativeToMount = "Meshes/RotateAxis2.obj"});
+
+    BoundingBoxComponent scaleUniformBoundingBox = BoundingBoxUtils::computeBoundingBox(assets.resolve<MeshData>(resources.scaleUniformMesh));
+    scaleUniformBoundingBox.minLocal -= Vec3{hitSize, hitSize, hitSize};
+    scaleUniformBoundingBox.maxLocal += Vec3{hitSize, hitSize, hitSize};
 
     static constexpr float min = 0.2f;
     static constexpr float max = 0.5f;
 
-    resources.transformPlaneMesh = assets.addFromData("TranslateXY", MeshData{
+    resources.translatePlaneMesh = assets.addFromData("TransformPlane", MeshData{
         .vertices = {
             {.pos = {min, min, 0.0f}},
             {.pos = {max, min, 0.0f}},
@@ -60,192 +104,105 @@ void Gizmos::init(AssetManager& assets, AssetMountId mount)
         },
         .indices = {0, 1, 2, 2, 3, 0}
     });
+
+    constexpr AngleAxis yRotation{90.f, forwardVector()};
+    constexpr AngleAxis zRotation{-90.f, upVector()};
+    constexpr AngleAxis xzRotation{90.f, rightVector()};
+    constexpr AngleAxis yzRotation{-90.f, upVector()};
+
+    gizmoConfig =
+    {
+        {GizmoHandleType::TranslateX, {xColor, resources.translateAxisMesh, axisBoundingBox}},
+        {GizmoHandleType::TranslateY, {yColor, resources.translateAxisMesh, axisBoundingBox, yRotation}},
+        {GizmoHandleType::TranslateZ, {zColor, resources.translateAxisMesh, axisBoundingBox, zRotation}},
+        {GizmoHandleType::TranslateXY, {zColor, resources.translatePlaneMesh, planeBoundingBox}},
+        {GizmoHandleType::TranslateXZ, {yColor, resources.translatePlaneMesh, planeBoundingBox, xzRotation}},
+        {GizmoHandleType::TranslateYZ, {xColor, resources.translatePlaneMesh, planeBoundingBox, yzRotation}},
+
+        {GizmoHandleType::ScaleX, {xColor, resources.scaleAxisMesh, axisBoundingBox}},
+        {GizmoHandleType::ScaleY, {yColor, resources.scaleAxisMesh, axisBoundingBox, yRotation}},
+        {GizmoHandleType::ScaleZ, {zColor, resources.scaleAxisMesh, axisBoundingBox, zRotation}},
+        {GizmoHandleType::ScaleXY, {zColor, resources.translatePlaneMesh, planeBoundingBox}},
+        {GizmoHandleType::ScaleXZ, {yColor, resources.translatePlaneMesh, planeBoundingBox, xzRotation}},
+        {GizmoHandleType::ScaleYZ, {xColor, resources.translatePlaneMesh, planeBoundingBox, yzRotation}},
+        {GizmoHandleType::ScaleUniform, {{1,1,1,alpha}, resources.scaleUniformMesh, scaleUniformBoundingBox}},
+
+        {GizmoHandleType::RotateX, {xColor, resources.rotateAxisMesh, axisBoundingBox}},
+        {GizmoHandleType::RotateY, {yColor, resources.rotateAxisMesh, axisBoundingBox, {-90.f, forwardVector()}}},
+        {GizmoHandleType::RotateZ, {zColor, resources.rotateAxisMesh, axisBoundingBox, {90.f, upVector()}}},
+    };
 }
 
 Entity Gizmos::createTransformGizmo(World& world, EntityEditingMode type)
 {
+    const Entity gizmo = world.createEntity();
+    world.addComponent<NameComponent>(gizmo, "Gizmo");
+    world.addComponent<TagsComponent>(gizmo, {{Tag::editorOnly}});
+    world.addComponent<HierarchyComponent>(gizmo);
+    world.addComponent<TransformComponent>(gizmo, {.scale = Vec3{0.2}});
+    world.addComponent<GizmoComponent>(gizmo, createHandles(world, gizmo, type));
+
+    setGizmoVisible(world, gizmo, false);
+    return gizmo;
+}
+
+GizmoHandle Gizmos::createGizmoHandle(World& world, Entity gizmo, GizmoHandleType type)
+{
+    auto it = gizmoConfig.find(type);
+    if (it == gizmoConfig.end())
+        return {};
+
+    const GizmoHandleConfig& config = it->second;
+
+    const Entity handle = world.createEntity();
+    world.addComponent<NameComponent>(handle, std::format("GizmoHandle_{}", handle.value));
+    world.addComponent<TagsComponent>(handle, {{Tag::editorOnly}});
+    world.addComponent<GizmoHandleComponent>(handle, {type});
+    world.addComponent<HierarchyComponent>(handle);
+    HierarchyUtils::setParent(world, handle, gizmo);
+
+    const Quat rotation = config.rotation.degrees != 0.f ? Math::angleAxis(Math::radians(config.rotation.degrees), config.rotation.axis) : Quat{};
+
+    world.addComponent<TransformComponent>(handle, {.rotation = rotation});
+    world.addComponent<BoundingBoxComponent>(handle, config.boundingBox);
+    world.addComponent<ModelComponent>(handle, {.mesh = config.mesh, .layer = RenderLayer::Gizmo, .tint = config.color});
+
+    return {.entity = handle, .type = type};
+}
+
+std::vector<GizmoHandle> Gizmos::createHandles(World& world, Entity gizmo, EntityEditingMode type)
+{
     switch (type)
     {
         case EntityEditingMode::Translate:
-            return createTranslationGizmo(world);
+            return {
+                createGizmoHandle(world, gizmo, GizmoHandleType::TranslateX),
+                createGizmoHandle(world, gizmo, GizmoHandleType::TranslateY),
+                createGizmoHandle(world, gizmo, GizmoHandleType::TranslateZ),
+                createGizmoHandle(world, gizmo, GizmoHandleType::TranslateXY),
+                createGizmoHandle(world, gizmo, GizmoHandleType::TranslateXZ),
+                createGizmoHandle(world, gizmo, GizmoHandleType::TranslateYZ)
+            };
         case EntityEditingMode::Rotate:
-            return createRotationGizmo(world);
+            return {
+                createGizmoHandle(world, gizmo, GizmoHandleType::RotateX),
+                createGizmoHandle(world, gizmo, GizmoHandleType::RotateY),
+                createGizmoHandle(world, gizmo, GizmoHandleType::RotateZ)
+            };
         case EntityEditingMode::Scale:
-            return createScaleGizmo(world);
+            return {
+                createGizmoHandle(world, gizmo, GizmoHandleType::ScaleX),
+                createGizmoHandle(world, gizmo, GizmoHandleType::ScaleY),
+                createGizmoHandle(world, gizmo, GizmoHandleType::ScaleZ),
+                // createGizmoHandle(world, gizmo, GizmoHandleType::ScaleXY),
+                // createGizmoHandle(world, gizmo, GizmoHandleType::ScaleXZ),
+                // createGizmoHandle(world, gizmo, GizmoHandleType::ScaleYZ),
+                createGizmoHandle(world, gizmo, GizmoHandleType::ScaleUniform)
+            };
         case EntityEditingMode::None:
         default:
-        {
-            report("Tried to create invalid gizmo type");
             return {};
-        }
     }
-}
-
-Entity Gizmos::createTranslationGizmo(World& world)
-{
-    const Entity gizmo = world.createEntity();
-    world.addComponent<NameComponent>(gizmo, "Translation Gizmo");
-    world.addComponent<TagsComponent>(gizmo, {{Tag::editorOnly}});
-    world.addComponent<HierarchyComponent>(gizmo);
-    world.addComponent<TransformComponent>(gizmo, {.scale = 0.2});
-
-    static constexpr float alpha = 0.75;
-    static constexpr float hitSize = 0.1f;
-
-    static constexpr BoundingBoxComponent axisBoundingBox
-    {
-        .channel = {},
-        .minLocal = {-hitSize, -hitSize, -hitSize},
-        .maxLocal = {1 + hitSize, hitSize, hitSize}
-    };
-
-    static constexpr Vec4 xColor = {1.0f, 0.0f, 0.0f, alpha};
-    const Entity x = createTranslationGizmoHandle
-    (
-        world,
-        gizmo,
-        GizmoHandleType::TranslateX,
-        "X",
-        resources.axisMesh,
-        xColor,
-        axisBoundingBox
-    );
-
-    static constexpr Vec4 yColor = {0.0f, 1.0f, 0.0f, alpha};
-    const Entity y = createTranslationGizmoHandle
-    (
-        world,
-        gizmo,
-        GizmoHandleType::TranslateY,
-        "Y",
-        resources.axisMesh,
-        yColor,
-        axisBoundingBox
-    );
-
-    static constexpr Vec4 zColor = {0.0f, 0.0f, 1.0f, alpha};
-    const Entity z = createTranslationGizmoHandle
-    (
-        world,
-        gizmo,
-        GizmoHandleType::TranslateZ,
-        "Z",
-        resources.axisMesh,
-        zColor,
-        axisBoundingBox
-    );
-
-    static constexpr float min = 0.1f;
-    static constexpr float max = 0.5f;
-
-    static constexpr BoundingBoxComponent planeBoundingBox
-    {
-        .channel = {},
-        .minLocal = {min, min, -hitSize},
-        .maxLocal = {max, max, hitSize}
-    };
-
-    static constexpr Vec4 xyColor = zColor;
-    const Entity xy = createTranslationGizmoHandle
-    (
-        world,
-        gizmo,
-        GizmoHandleType::TranslateXY,
-        "XY",
-        resources.transformPlaneMesh,
-        xyColor,
-        planeBoundingBox
-    );
-
-    static constexpr Vec4 xzColor = yColor;
-
-    const Entity xz = createTranslationGizmoHandle
-    (
-        world,
-        gizmo,
-        GizmoHandleType::TranslateXZ,
-        "XZ",
-        resources.transformPlaneMesh,
-        xzColor,
-        planeBoundingBox
-    );
-
-    static constexpr Vec4 yzColor = xColor;
-
-    const Entity yz = createTranslationGizmoHandle
-    (
-        world,
-        gizmo,
-        GizmoHandleType::TranslateYZ,
-        "YZ",
-        resources.transformPlaneMesh,
-        yzColor,
-        planeBoundingBox
-    );
-
-    world.addComponent<GizmoComponent>(gizmo, {.xAxis = x, .yAxis = y, .zAxis = z, .xyPlane = xy, .xzPlane = xz, .yzPlane = yz});
-    setGizmoVisible(world, gizmo, false);
-
-    return gizmo;
-}
-
-Entity createTranslationGizmoHandle(World& world, Entity gizmo, GizmoHandleType type, std::string name, BoundingBoxComponent boundingBox)
-{
-    const Entity axis = world.createEntity();
-    world.addComponent<NameComponent>(axis, std::move(name));
-    world.addComponent<TagsComponent>(axis, {{Tag::editorOnly}});
-    world.addComponent<GizmoHandleComponent>(axis, {type});
-    world.addComponent<HierarchyComponent>(axis);
-    HierarchyUtils::setParent(world, axis, gizmo);
-
-    const Quat rotation = [type]
-    {
-        switch (type)
-        {
-            default: return Quat{};
-            case GizmoHandleType::TranslateY: return Math::angleAxis(Math::radians(90.f), forwardVector());
-            case GizmoHandleType::TranslateXZ: return Math::angleAxis(Math::radians(90.f), rightVector());
-            case GizmoHandleType::TranslateZ:
-            case GizmoHandleType::TranslateYZ: return Math::angleAxis(Math::radians(-90.f), upVector());
-        }
-    }();
-
-    world.addComponent<TransformComponent>(axis, {.rotation = rotation});
-    world.addComponent<BoundingBoxComponent>(axis, std::move(boundingBox));
-
-    return axis;
-}
-
-Entity Gizmos::createTranslationGizmoHandle(World& world, Entity gizmo, GizmoHandleType type, std::string name, std::vector<LineVertex>&& vertices, BoundingBoxComponent boundingBox)
-{
-    const Entity axis = createTranslationGizmoHandle(world, gizmo, type, std::move(name), std::move(boundingBox));
-    world.addComponent<LineRenderComponent>(axis, std::move(vertices));
-
-    return axis;
-}
-
-Entity Gizmos::createTranslationGizmoHandle(World& world, Entity gizmo, GizmoHandleType type, std::string name, const Guid& mesh, const Vec4& tint, BoundingBoxComponent boundingBox)
-{
-    const Entity axis = createTranslationGizmoHandle(world, gizmo, type, std::move(name), std::move(boundingBox));
-    world.addComponent<ModelComponent>(axis, {.mesh = mesh, .layer = RenderLayer::Gizmo, .tint = tint});
-
-    return axis;
-}
-
-Entity Gizmos::createRotationGizmo(World& world)
-{
-    // TODO(feature): Implement rotation gizmo
-    Entity gizmo = createTranslationGizmo(world);
-    world.editComponent<NameComponent>(gizmo)->name = "Rotation Gizmo";
-    return gizmo;
-}
-
-Entity Gizmos::createScaleGizmo(World& world)
-{
-    // TODO(feature): Implement scale gizmo
-    Entity gizmo = createTranslationGizmo(world);
-    world.editComponent<NameComponent>(gizmo)->name = "Scale Gizmo";
-    return gizmo;
 }
 
 constexpr std::vector<LineVertex> generateAABBVertices(const Vec3& min, const Vec3& max)

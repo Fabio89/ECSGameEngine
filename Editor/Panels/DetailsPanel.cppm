@@ -27,20 +27,36 @@ struct DetailsSnapshot
     std::vector<ComponentSnapshot> components;
 };
 
-class DetailsController : public EditorControllerImpl<DetailsSnapshot>
+export namespace Requests
+{
+    struct SetProperty
+    {
+        Entity entity;
+        TypeId componentType;
+        const PropertyDescriptorBase* property{};
+        PropertyValue value;
+    };
+}
+
+export using DetailsRequest = std::variant<Requests::SetProperty>;
+
+class DetailsController : public EditorControllerImpl<DetailsController, DetailsSnapshot, DetailsRequest>
 {
 public:
     using EditorControllerImpl::EditorControllerImpl;
+
+    void execute(Requests::SetProperty&& request);
+
 private:
     DetailsSnapshot buildSnapshot(const EditingContext& context) override;
 };
 
 export namespace Panels
 {
-    class DetailsPanel : public PanelImpl
+    class DetailsPanel : public PanelImpl<DetailsController>
     {
     public:
-        DetailsPanel(const PanelCreateInfo& info);
+        explicit DetailsPanel(const PanelCreateInfo& info);
         static constexpr auto Name = "Details";
 
     private:

@@ -94,15 +94,15 @@ void TransformTool::setActive(bool active)
 
     if (editorWorld.hasComponent<GizmoComponent>(m_gizmo))
     {
-        auto setAxis = [active, &editorWorld](Entity axis)
+        auto setHandle = [active, &editorWorld](Entity handle)
         {
-            if (!axis.isValid()) return;
-            auto collision = editorWorld.editComponent<BoundingBoxComponent>(axis);
+            if (!handle.isValid()) return;
+            auto collision = editorWorld.editComponent<BoundingBoxComponent>(handle);
             collision->channel.set(TraceChannelFlags::Gizmo, active);
         };
 
         auto& gizmoComponent = editorWorld.readComponent<GizmoComponent>(m_gizmo);
-        GizmoUtils::forEachHandle(gizmoComponent, setAxis);
+        GizmoUtils::forEachHandle(gizmoComponent, setHandle);
     }
 
     if (active)
@@ -137,6 +137,9 @@ float calculateGizmoScale
 
 void TransformTool::attachToSelection()
 {
+    if (!context().viewportId)
+        return;
+
     Entity firstSelected = context().editing.selection.isEmpty() ? Entity{} : context().editing.selection.get().front();
     if (firstSelected.isValid())
     {
@@ -150,7 +153,7 @@ void TransformTool::attachToSelection()
         gizmoTransform->rotation = selectionTransform.rotation;
 
         const Camera& camera = services().viewports.getCamera(context().viewportId);
-        gizmoTransform->scale = calculateGizmoScale(camera, gizmoTransform->position, 0.12f);
+        gizmoTransform->scale = Vec3{calculateGizmoScale(camera, gizmoTransform->position, 0.12f)};
     }
     m_attachedTo = firstSelected;
 }

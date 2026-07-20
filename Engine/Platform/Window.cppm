@@ -1,5 +1,5 @@
 export module Window;
-import Core;
+export import Core;
 import Geometry;
 import Glfw;
 import Math;

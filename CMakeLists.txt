@@ -83,7 +83,7 @@ target_compile_definitions(Engine
         VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
 )
 
-target_compile_features(Engine PUBLIC cxx_std_23)
+target_compile_features(Engine PUBLIC cxx_std_26)
 
 set_property(TARGET Engine PROPERTY CXX_MODULE_STD ON)
 
@@ -161,18 +161,29 @@ target_link_libraries(Editor
         imgui::imgui
 )
 
-target_compile_features(Editor PUBLIC cxx_std_23)
+target_compile_features(Editor PUBLIC cxx_std_26)
 
 set_property(TARGET Editor PROPERTY CXX_MODULE_STD ON)
 
-add_custom_command(TARGET Editor POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_CURRENT_SOURCE_DIR}/Editor/Assets
-        $<TARGET_FILE_DIR:Engine>/Editor/Assets
+set(EDITOR_RUNTIME_DIR "${CMAKE_BINARY_DIR}/bin/Editor")
 
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_CURRENT_SOURCE_DIR}/Editor/Config
-        $<TARGET_FILE_DIR:Engine>/Editor/Config
+file(MAKE_DIRECTORY "${EDITOR_RUNTIME_DIR}")
+
+file(REMOVE_RECURSE
+        "${EDITOR_RUNTIME_DIR}/Assets"
+        "${EDITOR_RUNTIME_DIR}/Config"
+)
+
+file(CREATE_LINK
+        "${CMAKE_CURRENT_SOURCE_DIR}/Editor/Assets"
+        "${EDITOR_RUNTIME_DIR}/Assets"
+        SYMBOLIC
+)
+
+file(CREATE_LINK
+        "${CMAKE_CURRENT_SOURCE_DIR}/Editor/Config"
+        "${EDITOR_RUNTIME_DIR}/Config"
+        SYMBOLIC
 )
 
 # ----------------------------------------------------------
@@ -194,7 +205,7 @@ target_link_libraries(Game
         Editor
 )
 
-target_compile_features(Game PUBLIC cxx_std_23)
+target_compile_features(Game PUBLIC cxx_std_26)
 
 target_compile_options(Game PRIVATE
         -Wall

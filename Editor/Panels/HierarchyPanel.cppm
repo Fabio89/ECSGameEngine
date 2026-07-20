@@ -33,10 +33,22 @@ struct HierarchySnapshot
     std::vector<HierarchyNode> nodes;
 };
 
-class HierarchyController : public EditorControllerImpl<HierarchySnapshot>
+namespace Requests
+{
+    struct SelectEntity
+    {
+        Entity entity;
+    };
+}
+
+using HierarchyRequest = std::variant<Requests::SelectEntity>;
+
+class HierarchyController : public EditorControllerImpl<HierarchyController, HierarchySnapshot, HierarchyRequest>
 {
 public:
     using EditorControllerImpl::EditorControllerImpl;
+
+    void execute(Requests::SelectEntity&& request);
 
 private:
     HierarchySnapshot buildSnapshot(const EditingContext& context) override;
@@ -56,6 +68,14 @@ void traverseNode(HierarchyNode& node, Entity entity, const World& world, const 
             traverseNode(childNode, child, world, selection);
         }
     }
+}
+
+void HierarchyController::execute(Requests::SelectEntity&& request)
+{
+    if (request.entity.isValid())
+        context().selection.setSingle(request.entity);
+    else
+        context().selection.clear();
 }
 
 HierarchySnapshot HierarchyController::buildSnapshot(const EditingContext& context)
@@ -80,12 +100,12 @@ HierarchySnapshot HierarchyController::buildSnapshot(const EditingContext& conte
 
 export namespace Panels
 {
-    class HierarchyPanel : public PanelImpl
+    class HierarchyPanel : public PanelImpl<HierarchyController>
     {
     public:
         explicit HierarchyPanel(const PanelCreateInfo& info) : PanelImpl{info}
         {
-            Editor::addController<HierarchyController>(info.contextId);
+            createController();
         }
 
         static constexpr auto Name = "Hierarchy";
@@ -93,14 +113,13 @@ export namespace Panels
     private:
         void doDraw() override
         {
-            if (!context().snapshotPublisher.frame().contains<HierarchySnapshot>())
+            const Snapshot* snapshot = getSnapshot();
+            if (!snapshot)
                 return;
-
-            const HierarchySnapshot& snapshot = context().snapshotPublisher.frame().get<HierarchySnapshot>();
 
             ImGui::Begin(Name, &m_open);
 
-            for (const HierarchyNode& node : snapshot.nodes)
+            for (const HierarchyNode& node : snapshot->nodes)
             {
                 drawEntity(node);
             }
@@ -125,9 +144,9 @@ export namespace Panels
 
             const bool expanded = ImGui::TreeNodeEx(node.name.c_str(), flags);
 
-            if (ImGui::IsItemClicked() || ImGui::IsItemFocused())
+            if (ImGui::IsItemClicked())
             {
-                Editor::request(Editor::ChangeSelection{.contextId = context().id, .entities = {node.entity}});
+                request(Requests::SelectEntity{node.entity});
             }
 
             if (expanded)
