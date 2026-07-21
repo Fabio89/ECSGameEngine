@@ -11,6 +11,7 @@ import Input;
 import Math;
 import Physics;
 import World;
+import Components.EntityProxy;
 
 TransformToolManager::TransformToolManager(TransformToolContext context)
     : EditorServiceConsumer{context.services},
@@ -76,11 +77,11 @@ bool TransformToolManager::isSelectionEnabled() const
 TransformTool::TransformTool(TransformToolContext& context, EntityEditingMode type)
     : EditorServiceConsumer{context.services},
       m_context{context},
-      m_gizmo{Gizmos::createTransformGizmo(Engine::getWorld(context.editing.editorWorld), type)} {}
+      m_gizmo{Gizmos::createTransformGizmo(context.services.worlds.get(context.editing.editorWorld), context.editing.world, type)} {}
 
 void TransformTool::update()
 {
-    attachToSelection();
+    updateScale();
 }
 
 void TransformTool::setActive(bool active)
@@ -140,20 +141,24 @@ void TransformTool::attachToSelection()
     if (!context().viewportId)
         return;
 
+    World& editorWorld = context().services.worlds.get(m_context.editing.editorWorld);
     Entity firstSelected = context().editing.selection.isEmpty() ? Entity{} : context().editing.selection.get().front();
-    if (firstSelected.isValid())
-    {
-        const World& mainWorld = Engine::getWorld(m_context.editing.world);
-        World& editorWorld = Engine::getWorld(m_context.editing.editorWorld);
 
-        auto gizmoTransform = editorWorld.editComponent<TransformComponent>(m_gizmo);
-        const auto& selectionTransform = mainWorld.readComponent<TransformComponent>(firstSelected);
-
-        gizmoTransform->position = selectionTransform.position;
-        gizmoTransform->rotation = selectionTransform.rotation;
-
-        const Camera& camera = services().viewports.getCamera(context().viewportId);
-        gizmoTransform->scale = Vec3{calculateGizmoScale(camera, gizmoTransform->position, 0.12f)};
-    }
+    auto proxy = editorWorld.editComponent<EntityProxyComponent>(m_gizmo);
+    proxy->sourceEntity = firstSelected;
+    EntityProxyUtils::snapToSourceEntity(editorWorld, context().services.worlds.get(proxy->sourceWorld), m_gizmo, *proxy);
+    updateScale();
     m_attachedTo = firstSelected;
+}
+
+void TransformTool::updateScale()
+{
+    World& editorWorld = context().services.worlds.get(m_context.editing.editorWorld);
+
+    TransformUtils::editWorldTransform(editorWorld, m_gizmo, [&](TransformComponent& t)
+    {
+        const Camera& camera = services().viewports.getCamera(context().viewportId);
+        const Vec3 desiredScale{calculateGizmoScale(camera, t.position, 0.12f)};
+        t.scale = desiredScale;
+    });
 }

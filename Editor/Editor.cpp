@@ -90,9 +90,9 @@ Editor::ControllerManager& Editor::ensureControllerManager(EditingContextId cont
 
 void Editor::init()
 {
+    Engine::addSystem(EntityProxySystem::callbacks);
     Engine::addSystem(HierarchySystem::callbacks);
     Engine::addSystem(TransformSystem::callbacks);
-    Engine::addSystem(EntityProxySystem::callbacks);
     Engine::addSystem(BoundingBoxSystem::callbacks);
     Engine::addSystem(RenderSynchronizer::callbacks);
 

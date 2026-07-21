@@ -54,6 +54,7 @@ protected:
 
 private:
     void attachToSelection();
+    void updateScale();
 
     TransformToolContext& m_context;
     Entity m_attachedTo;

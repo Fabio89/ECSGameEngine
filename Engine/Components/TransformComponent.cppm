@@ -1,12 +1,9 @@
-module;
-
-#include "EngineExport.h"
-
 export module Components.Transform;
-import Core;
-import Math;
+export import Math;
+import Components.Hierarchy;
 import Properties;
 import Serialization.Json;
+import World;
 
 export struct TransformComponent
 {
@@ -22,29 +19,21 @@ export struct RuntimeTransformComponent
 
 export namespace TransformUtils
 {
-    ENGINE_API
-    Vec3 forward(const TransformComponent& transform)
-    {
-        return Math::normalize(Math::rotate(transform.rotation, forwardVector()));
-    }
+    Vec3 forward(const TransformComponent& transform);
 
-    ENGINE_API
-    Vec3 right(const TransformComponent& transform)
-    {
-        return Math::normalize(Math::rotate(transform.rotation, rightVector()));
-    }
+    Vec3 right(const TransformComponent& transform);
 
-    ENGINE_API
-    Vec3 up(const TransformComponent& transform)
-    {
-        return Math::normalize(Math::rotate(transform.rotation, upVector()));
-    }
+    Vec3 up(const TransformComponent& transform);
 
-    Mat4 toMatrix(const TransformComponent& transform)
-    {
-        return Math::translate(Mat4{1.0f}, transform.position) * Math::mat4_cast(transform.rotation) * Math::scale(
-                   Mat4{1.0f}, transform.scale);
-    }
+    Mat4 toMatrix(const TransformComponent& transform);
+
+    TransformComponent getWorldTransform(const World& world, Entity entity);
+
+    void setWorldTransform(World& world, Entity entity, const TransformComponent& worldTransform);
+
+    void editWorldTransform(World& world, Entity entity, const std::function<void(TransformComponent& worldTransform)>& editFunc);
+
+    void forceApplyTransform(World& world, Entity entity);
 }
 
 template<>
@@ -87,3 +76,11 @@ TransformComponent deserialize(const JsonObject& data)
 
 template<>
 constexpr std::string_view getTypeName<RuntimeTransformComponent>() { return "RuntimeTransformComponent"; }
+
+template<>
+struct TypeProperties<RuntimeTransformComponent>
+{
+    static constexpr std::tuple list{
+        makeProperty("worldMatrix", &RuntimeTransformComponent::worldMatrix)
+    };
+};

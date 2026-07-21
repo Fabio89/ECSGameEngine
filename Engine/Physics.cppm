@@ -7,8 +7,7 @@ import Engine.Camera;
 import Math;
 import World;
 
-export
-enum class TraceChannelFlags : UInt64
+export enum class TraceChannelFlags : UInt64
 {
     None = 0,
     Default = 1 << 0,
@@ -18,26 +17,16 @@ enum class TraceChannelFlags : UInt64
     UI = 1 << 4,
 };
 
-export
-using TraceChannelFlagsType = std::underlying_type_t<TraceChannelFlags>;
+template<>
+struct EnableBitMaskOperators<TraceChannelFlags> : std::true_type {};
 
-export
-inline TraceChannelFlags operator|(TraceChannelFlags a, TraceChannelFlags b)
-{
-    return static_cast<TraceChannelFlags>(static_cast<TraceChannelFlagsType>(a) | static_cast<TraceChannelFlagsType>(b));
-}
+export using TraceChannelFlagsType = std::underlying_type_t<TraceChannelFlags>;
 
-inline TraceChannelFlags operator&(TraceChannelFlags a, TraceChannelFlags b)
-{
-    return static_cast<TraceChannelFlags>(static_cast<TraceChannelFlagsType>(a) & static_cast<TraceChannelFlagsType>(b));
-}
-
-export
-class TraceChannel
+export class TraceChannel
 {
 public:
     TraceChannel() = default;
-    explicit TraceChannel(TraceChannelFlags channelFlags) : m_mask{static_cast<TraceChannelFlagsType>(channelFlags)} {}
+    explicit TraceChannel(TraceChannelFlags channelFlags) : m_mask{channelFlags} {}
 
     void set(TraceChannelFlags channelFlags, bool value = true);
     void reset(TraceChannelFlags channelFlags);
@@ -49,8 +38,7 @@ private:
     TraceChannelFlags m_mask{};
 };
 
-export
-struct Ray
+export struct Ray
 {
     Vec3 origin{};
     Vec3 direction{};

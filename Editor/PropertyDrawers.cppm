@@ -53,9 +53,24 @@ export namespace Editor
             return ImGui::DragFloat3(name.data(), &std::any_cast<Vec3&>(value).x);
         });
 
+        registerPropertyDrawer<Quat>([](std::string_view name, PropertyValue& value)
+        {
+            Quat& rotation = std::any_cast<Quat&>(value);
+
+            Vec3 euler = Math::degrees(Math::eulerAngles(rotation));
+
+            if (ImGui::DragFloat3(name.data(), &euler.x, 1.0f))
+            {
+                rotation = Quat{Math::radians(euler)};
+                return true;
+            }
+
+            return false;
+        });
+
         registerPropertyDrawer<Mat4>([](std::string_view name, PropertyValue& value)
         {
-            auto& matrix = std::any_cast<Mat4&>(value);
+            const auto matrix = std::any_cast<Mat4&>(value);
 
             if (ImGui::TreeNode(name.data()))
             {
@@ -82,7 +97,7 @@ export namespace Editor
 
                 ImGui::TreePop();
             }
-            return true;
+            return false;
         });
 
         registerPropertyDrawer<std::string>([](std::string_view name, PropertyValue& value)

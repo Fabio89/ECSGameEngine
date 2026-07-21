@@ -9,7 +9,7 @@ public:
 
     float tick();
 
-    void waitForTarget(float hz) const;
+    float tick(float targetHz);
 
     [[nodiscard]] float deltaTime() const { return m_deltaTime; }
     [[nodiscard]] double elapsedSeconds() const { return m_elapsedSeconds; }

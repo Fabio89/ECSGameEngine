@@ -28,6 +28,11 @@ Vec2 Input::getCursorDelta(WindowHandle window)
     return firstFrame ? Vec2{} : getCursorScreenPosition(window) - cursorScreenPositionLastFrame;
 }
 
+Vec2 Input::getMouseScrollDelta(WindowHandle window)
+{
+    return Platform::Window::getMouseScrollDelta(window);
+}
+
 bool Input::isKeyDown(KeyCode key)
 {
     return heldKeys[static_cast<int>(key)];

@@ -3,12 +3,18 @@ import Glfw;
 
 namespace Platform::Window
 {
+    struct MouseState
+    {
+        Vec2 scrollDelta{};
+    };
+
     struct WindowData
     {
         GLFWwindow* glfwHandle{};
         std::vector<KeyFunction> keyEventCallbacks;
         std::vector<MouseButtonFunction> mouseEventCallbacks;
         CursorMode cursorMode{CursorMode::Normal};
+        MouseState mouseState;
     };
 
     std::unordered_map<GLFWwindow*, WindowHandle> glfwWindowToHandle;
@@ -22,10 +28,20 @@ namespace Platform::Window
     void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
     void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+
+    void mouseScrollCallback(GLFWwindow* window, double xOffset, double yOffset);
 }
 
 void Platform::Window::init()
 {
+}
+
+void Platform::Window::update()
+{
+    for (WindowData& windowData : windows | std::views::values)
+    {
+        windowData.mouseState.scrollDelta = {};
+    }
 }
 
 void Platform::Window::shutdown()
@@ -59,8 +75,10 @@ WindowHandle Platform::Window::createWindow(WindowCreateInfo info)
     if (info.mode == WindowMode::Maximized)
         glfwMaximizeWindow(glfwWindow);
 
+    glfwSetInputMode(glfwWindow, static_cast<int>(InputMode::RawMouseMotion), glfw::Enabled);
     glfwSetKeyCallback(glfwWindow, keyCallback);
     glfwSetMouseButtonCallback(glfwWindow, mouseButtonCallback);
+    glfwSetScrollCallback(glfwWindow, mouseScrollCallback);
 
     const WindowHandle handle{nextWindowHandle++};
     windows[handle] =
@@ -88,6 +106,11 @@ Vec2 Platform::Window::getCursorPosition(WindowHandle window)
     double x, y;
     glfwGetCursorPos(getWindowData(window).glfwHandle, &x, &y);
     return {x, y};
+}
+
+Vec2 Platform::Window::getMouseScrollDelta(WindowHandle window)
+{
+    return getWindowData(window).mouseState.scrollDelta;
 }
 
 CursorMode Platform::Window::getCursorMode(WindowHandle window)
@@ -201,5 +224,15 @@ void Platform::Window::mouseButtonCallback([[maybe_unused]] GLFWwindow* window, 
         {
             callback(keyCode, keyAction);
         }
+    }
+}
+
+void Platform::Window::mouseScrollCallback(GLFWwindow* window, double xOffset, double yOffset)
+{
+    if (auto it = glfwWindowToHandle.find(window); it != glfwWindowToHandle.end())
+    {
+        WindowData& windowData = getWindowData(it->second);
+        windowData.mouseState.scrollDelta.x += xOffset;
+        windowData.mouseState.scrollDelta.y += yOffset;
     }
 }

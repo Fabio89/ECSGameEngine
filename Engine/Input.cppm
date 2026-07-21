@@ -17,6 +17,9 @@ export namespace Input
     Vec2 getCursorDelta(WindowHandle window);
 
     ENGINE_API
+    Vec2 getMouseScrollDelta(WindowHandle window);
+
+    ENGINE_API
     bool isKeyDown(KeyCode key);
 
     ENGINE_API

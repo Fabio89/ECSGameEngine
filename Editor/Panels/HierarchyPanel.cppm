@@ -39,9 +39,18 @@ namespace Requests
     {
         Entity entity;
     };
+
+    struct ReparentEntity
+    {
+        Entity entity;
+        Entity newParent;
+    };
 }
 
-using HierarchyRequest = std::variant<Requests::SelectEntity>;
+using HierarchyRequest = std::variant<
+    Requests::SelectEntity,
+    Requests::ReparentEntity
+>;
 
 class HierarchyController : public EditorControllerImpl<HierarchyController, HierarchySnapshot, HierarchyRequest>
 {
@@ -49,6 +58,7 @@ public:
     using EditorControllerImpl::EditorControllerImpl;
 
     void execute(Requests::SelectEntity&& request);
+    void execute(Requests::ReparentEntity&& request);
 
 private:
     HierarchySnapshot buildSnapshot(const EditingContext& context) override;
@@ -76,6 +86,11 @@ void HierarchyController::execute(Requests::SelectEntity&& request)
         context().selection.setSingle(request.entity);
     else
         context().selection.clear();
+}
+
+void HierarchyController::execute(Requests::ReparentEntity&& request)
+{
+    HierarchyUtils::setParent(services().worlds.get(context().world), request.entity, request.newParent);
 }
 
 HierarchySnapshot HierarchyController::buildSnapshot(const EditingContext& context)
@@ -109,8 +124,8 @@ export namespace Panels
     private:
         void doDraw() override
         {
-            const Snapshot* snapshot = getSnapshot();
-            if (!snapshot)
+            SnapshotView snapshot = getSnapshot();
+            if (!snapshot.get())
                 return;
 
             ImGui::Begin(Name, &m_open);
@@ -118,6 +133,19 @@ export namespace Panels
             for (const HierarchyNode& node : snapshot->nodes)
             {
                 drawEntity(node);
+            }
+
+            if (ImGui::BeginDragDropTarget())
+            {
+                ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImColor{255, 255, 0, 255});
+
+                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
+                {
+                    const Entity dragged = *static_cast<const Entity*>(payload->Data);
+                    request(Requests::ReparentEntity{.entity = dragged, .newParent = Entity{}});
+                }
+
+                ImGui::EndDragDropTarget();
             }
 
             ImGui::End();
@@ -145,6 +173,13 @@ export namespace Panels
                 request(Requests::SelectEntity{node.entity});
             }
 
+            if (ImGui::BeginDragDropSource())
+            {
+                ImGui::SetDragDropPayload("Entity", &node.entity, sizeof(Entity));
+                ImGui::Text("%s", node.name.c_str());
+                ImGui::EndDragDropSource();
+            }
+
             if (expanded)
             {
                 for(const HierarchyNode& child : node.children)
@@ -154,6 +189,19 @@ export namespace Panels
             }
 
             ImGui::PopID();
+
+            if (ImGui::BeginDragDropTarget())
+            {
+                ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImColor{255, 255, 0, 255});
+
+                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
+                {
+                    const Entity dragged = *static_cast<const Entity*>(payload->Data);
+                    request(Requests::ReparentEntity{.entity = dragged, .newParent = node.entity});
+                }
+
+                ImGui::EndDragDropTarget();
+            }
         }
 
         bool m_open{true};

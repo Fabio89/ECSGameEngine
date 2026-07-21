@@ -8,8 +8,8 @@ namespace Panels
 
 void Panels::DetailsPanel::doDraw()
 {
-    const Snapshot* snapshot = getSnapshot();
-    if (!snapshot)
+    SnapshotView snapshot = getSnapshot();
+    if (!snapshot.get())
         return;
     
     ImGui::Begin(Name, &m_open);

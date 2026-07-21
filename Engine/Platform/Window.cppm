@@ -35,12 +35,14 @@ export using ::CursorType;
 export namespace Platform::Window
 {
     void init();
+    void update();
     void shutdown();
 
     WindowHandle createWindow(WindowCreateInfo info);
     void destroyWindow(WindowHandle window);
 
     Vec2 getCursorPosition(WindowHandle window);
+    Vec2 getMouseScrollDelta(WindowHandle window);
     CursorMode getCursorMode(WindowHandle window);
     void setCursorMode(WindowHandle window, CursorMode mode);
     void setCursorType(WindowHandle window, CursorType type);

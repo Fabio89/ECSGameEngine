@@ -8,6 +8,9 @@ export namespace Editor
     class SnapshotFrame
     {
     public:
+        using Ptr = std::shared_ptr<SnapshotFrame>;
+        using ConstPtr = std::shared_ptr<const SnapshotFrame>;
+
         SnapshotFrame() = default;
 
         void clear()
@@ -39,37 +42,29 @@ export namespace Editor
         std::unordered_map<TypeId, std::any> m_data;
     };
 
-    class SnapshotPublisher
+    class SnapshotPublisher : NoCopy
     {
     public:
-        SnapshotPublisher() = default;
-        SnapshotPublisher(SnapshotPublisher&&) noexcept;
-        SnapshotPublisher& operator=(SnapshotPublisher&&) noexcept;
-
-        SnapshotFrame& beginWrite()
+        SnapshotFrame::Ptr beginWrite()
         {
-            SnapshotFrame& frame = m_frames[m_writeIndex];
-
-            frame.clear();
-
-            return frame;
+            return std::make_shared<SnapshotFrame>();
         }
 
-        void publish()
+        void publish(SnapshotFrame::Ptr frame)
         {
-            m_readIndex.store(m_writeIndex, std::memory_order_release);
-            m_writeIndex ^= 1;
+            m_current.store(std::move(frame), std::memory_order_release);
         }
 
-        const SnapshotFrame& frame() const
+        SnapshotFrame::ConstPtr frame() const
         {
-            return m_frames[m_readIndex.load(std::memory_order_acquire)];
+            return m_current.load(std::memory_order_acquire);
         }
 
     private:
-
-        std::array<SnapshotFrame, 2> m_frames{};
-        std::atomic_uint32_t m_readIndex{0};
-        UInt32 m_writeIndex{1};
+        std::atomic<SnapshotFrame::ConstPtr> m_current{nullptr};
     };
 }
+
+export using SnapshotFramePtr = std::shared_ptr<Editor::SnapshotFrame>;
+export using SnapshotFrameConstPtr = std::shared_ptr<const Editor::SnapshotFrame>;
+export using Editor::SnapshotFrame;

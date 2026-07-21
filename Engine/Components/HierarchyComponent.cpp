@@ -29,6 +29,9 @@ std::generator<Entity> HierarchyUtils::children(const World& world, Entity paren
 
 void HierarchyUtils::setParent(World& world, Entity child, Entity parent)
 {
+    if (!world.hasComponent<HierarchyComponent>(child))
+        world.addComponent<HierarchyComponent>(child);
+
     auto childHierarchy = world.editComponent<HierarchyComponent>(child);
     if (childHierarchy->parent == parent)
         return;

@@ -79,8 +79,7 @@ bool Engine::update()
 {
     threadChecker.assertThread();
 
-    frameTimer.waitForTarget(config.simulationHz);
-    const float deltaTime = frameTimer.tick();
+    const float deltaTime = frameTimer.tick(config.simulationHz);
 
     if (shutdownRequested || Platform::Window::isWindowClosing(window))
     {

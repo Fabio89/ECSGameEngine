@@ -7,21 +7,32 @@ FrameTimer::FrameTimer()
 
 float FrameTimer::tick()
 {
-    const Clock::time_point now{Clock::now()};
+    return tick(0.f);
+}
 
-    m_deltaTime = std::chrono::duration<float>(now - m_lastFrame).count();
+float FrameTimer::tick(float targetHz)
+{
+    auto now = Clock::now();
+    auto elapsed = now - m_lastFrame;
+
+    if (targetHz > 0.f)
+    {
+        if (const auto target = std::chrono::duration<float>(1.f / targetHz); elapsed < target)
+        {
+            std::this_thread::sleep_for(target - elapsed);
+
+            now = Clock::now();
+            elapsed = now - m_lastFrame;
+        }
+    }
+
     m_lastFrame = now;
+
+    m_deltaTime = std::chrono::duration<float>(elapsed).count();
     m_deltaTime = std::min(m_deltaTime, 0.1f);
+
     m_elapsedSeconds += m_deltaTime;
     ++m_frameNumber;
 
     return m_deltaTime;
-}
-
-void FrameTimer::waitForTarget(float hz) const
-{
-    if (const float target = 1.0f / hz; m_deltaTime < target)
-    {
-        std::this_thread::sleep_for(std::chrono::duration<float>(target - m_deltaTime));
-    }
 }

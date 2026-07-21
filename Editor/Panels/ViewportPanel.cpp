@@ -169,7 +169,7 @@ ViewportSnapshot ViewportController::buildSnapshot(const EditingContext& context
 }
 
 Panels::ViewportPanel::ViewportPanel(const PanelCreateInfo& info)
-    : PanelImpl{info, getWindow()}
+    : PanelImpl{info, info.window}
 {}
 
 void Panels::ViewportPanel::doDraw()
@@ -220,7 +220,7 @@ void Panels::ViewportPanel::doDraw()
     else if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
         setMouseLook(true);
 
-    if (const Snapshot* snapshot = getSnapshot(); ImGui::IsWindowHovered() && snapshot)
+    if (SnapshotView snapshot = getSnapshot(); ImGui::IsWindowHovered() && snapshot.get())
     {
         if (snapshot->selectionEnabled && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             request(Requests::HandleMouseSelect{});

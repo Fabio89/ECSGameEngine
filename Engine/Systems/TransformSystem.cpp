@@ -8,27 +8,6 @@ import World.Events;
 namespace
 {
     EventSubscription subscription;
-
-    void updateSubtree(World& world, Entity entity, const Mat4& parentWorld)
-    {
-        Edit<RuntimeTransformComponent> runtime = world.editComponent<RuntimeTransformComponent>(entity);
-
-        runtime->worldMatrix = parentWorld * TransformUtils::toMatrix(world.readComponent<TransformComponent>(entity));
-
-        for (Entity child : HierarchyUtils::children(world, entity))
-        {
-            if (world.hasComponent<TransformComponent>(child))
-                updateSubtree(world, child, runtime->worldMatrix);
-        }
-    }
-
-    Mat4 getParentWorldMatrix(const World& world, Entity entity)
-    {
-        const Entity parent = HierarchyUtils::getParent(world, entity);
-        return world.isValid(parent) && world.hasComponent<RuntimeTransformComponent>(parent)
-                   ? world.readComponent<RuntimeTransformComponent>(parent).worldMatrix
-                   : Mat4{1};
-    }
 }
 
 void init(SystemContext& context)
@@ -88,7 +67,7 @@ void update(SystemContext& context, float)
 
         for (const Entity root : roots)
         {
-            updateSubtree(world, root, getParentWorldMatrix(world, root));
+            TransformUtils::forceApplyTransform(world, root);
         }
     });
 }
@@ -112,12 +91,12 @@ void TransformSystem::ensureRuntimeTransform(World& world, Entity entity)
         if (!world.isValid(parent))
             break;
 
-        if (!world.isMarked<TransformComponent>(entity)
-            && !world.isMarked<HierarchyComponent>(entity))
+        if (!world.isMarked<TransformComponent>(root)
+            && !world.isMarked<HierarchyComponent>(root))
             break;
 
         root = parent;
     }
 
-    updateSubtree(world, root, getParentWorldMatrix(world, root));
+    TransformUtils::forceApplyTransform(world, root);
 }

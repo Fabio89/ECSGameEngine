@@ -133,16 +133,17 @@ void Gizmos::init(AssetManager& assets, AssetMountId mount)
     };
 }
 
-Entity Gizmos::createTransformGizmo(World& world, EntityEditingMode type)
+Entity Gizmos::createTransformGizmo(World& editorWorld, WorldHandle mainWorld, EntityEditingMode type)
 {
-    const Entity gizmo = world.createEntity();
-    world.addComponent<NameComponent>(gizmo, "Gizmo");
-    world.addComponent<TagsComponent>(gizmo, {{Tag::editorOnly}});
-    world.addComponent<HierarchyComponent>(gizmo);
-    world.addComponent<TransformComponent>(gizmo, {.scale = Vec3{0.2}});
-    world.addComponent<GizmoComponent>(gizmo, createHandles(world, gizmo, type));
+    const Entity gizmo = editorWorld.createEntity();
+    editorWorld.addComponent<NameComponent>(gizmo, "Gizmo");
+    editorWorld.addComponent<TagsComponent>(gizmo, {{Tag::editorOnly}});
+    editorWorld.addComponent<HierarchyComponent>(gizmo);
+    editorWorld.addComponent<TransformComponent>(gizmo, {.scale = Vec3{0.2}});
+    editorWorld.addComponent<GizmoComponent>(gizmo, createHandles(editorWorld, gizmo, type));
+    editorWorld.addComponent<EntityProxyComponent>(gizmo, EntityProxyComponent{.sourceWorld = mainWorld, .flags = EntityProxyFlags::CopyPosition | EntityProxyFlags::CopyRotation});
 
-    setGizmoVisible(world, gizmo, false);
+    setGizmoVisible(editorWorld, gizmo, false);
     return gizmo;
 }
 
@@ -246,7 +247,7 @@ Entity Gizmos::createBoundingBoxGizmo(World& editorWorld, const World& sourceEnt
     editorWorld.addComponent<NameComponent>(aabbGizmo, std::format("BoundingBoxGizmo_{}", name));
     editorWorld.addComponent<TagsComponent>(aabbGizmo, {{Tag::editorOnly}});
 
-    editorWorld.addComponent<RuntimeTransformComponent>(aabbGizmo);
+    editorWorld.addComponent<TransformComponent>(aabbGizmo);
     editorWorld.addComponent<EntityProxyComponent>(aabbGizmo, {.sourceWorld = sourceEntityWorld.getHandle(), .sourceEntity = sourceEntity});
 
     const BoundingBoxComponent& aabb = sourceEntityWorld.readComponent<BoundingBoxComponent>(sourceEntity);

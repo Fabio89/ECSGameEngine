@@ -436,6 +436,7 @@ export
     using ::ImColor;
     using ::ImGuiIO;
     using ::ImDrawList;
+    using ::ImGuiPayload;
     using ::ImFontConfig;
     using ::ImGui_ImplVulkan_InitInfo;
     using ::ImGui_ImplVulkan_PipelineInfo;
@@ -480,6 +481,8 @@ export
     using ::ImGuiKey;
 
     using ::ImGuiMouseButton_;
+
+    using ::ImGuiDataType_;
 
     using ::VkSampleCountFlagBits;
     using ::VkResult;

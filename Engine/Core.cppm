@@ -1,4 +1,5 @@
 export module Core;
+export import :Enum;
 export import Log;
 export import std;
 

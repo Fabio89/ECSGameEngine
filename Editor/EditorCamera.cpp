@@ -6,16 +6,22 @@ namespace
     bool isActive{};
     float delayBeforeDrag = 0.1f;
     float movementSpeed = 10.f;
+    float scrollSpeed = 2.f;
 }
 
 void updateCameraTransform(WindowHandle window, World& world, Entity camera, float deltaTime, bool allowRotation)
 {
-    const Vec3 movement
+    const float scrollDelta = Input::getMouseScrollDelta(window).y * scrollSpeed;
+    Vec3 movement{0, 0, scrollDelta};
+
+    if (isActive)
     {
-        (static_cast<int>(Input::isKeyDown(KeyCode::D)) - static_cast<int>(Input::isKeyDown(KeyCode::A))),
-        (static_cast<int>(Input::isKeyDown(KeyCode::E)) - static_cast<int>(Input::isKeyDown(KeyCode::Q))),
-        (static_cast<int>(Input::isKeyDown(KeyCode::W)) - static_cast<int>(Input::isKeyDown(KeyCode::S)))
-    };
+        movement += Vec3{
+            static_cast<int>(Input::isKeyDown(KeyCode::D)) - static_cast<int>(Input::isKeyDown(KeyCode::A)),
+            static_cast<int>(Input::isKeyDown(KeyCode::E)) - static_cast<int>(Input::isKeyDown(KeyCode::Q)),
+            static_cast<int>(Input::isKeyDown(KeyCode::W)) - static_cast<int>(Input::isKeyDown(KeyCode::S))
+        };
+    }
 
     auto transform = world.editComponent<TransformComponent>(camera);
     const Vec3 forward = TransformUtils::forward(*transform);
@@ -26,7 +32,7 @@ void updateCameraTransform(WindowHandle window, World& world, Entity camera, flo
     //cameraVelocity = Math::lerp(cameraVelocity, targetVelocity, 1.0f - std::exp(-acceleration * deltaTime));
     transform->position += velocity * deltaTime;
 
-    if (allowRotation)
+    if (isActive && allowRotation)
     {
         float rotationMultiplier = 0.0015f;
         float dYaw = 0;
@@ -36,7 +42,7 @@ void updateCameraTransform(WindowHandle window, World& world, Entity camera, flo
         dYaw = rotationMultiplier * cursorDelta.x;
         dPitch = rotationMultiplier * cursorDelta.y;
 
-        Quat yawQuat = Math::angleAxis(dYaw, Vec3(0,1,0));
+        Quat yawQuat = Math::angleAxis(dYaw, Vec3(0, 1, 0));
         transform->rotation = yawQuat * transform->rotation;
         Vec3 newRight = TransformUtils::right(*transform);
         Quat pitchQuat = Math::angleAxis(dPitch, newRight);
@@ -65,9 +71,9 @@ void EditorCamera::setActive(WindowHandle window, bool active)
 
 void EditorCamera::update(WindowHandle window, World& world, Entity camera, float deltaTime)
 {
-    if (!isActive || !world.isValid(camera))
+    if (!world.isValid(camera))
         return;
-    
+
     rotationCooldown = Math::max(rotationCooldown - deltaTime, 0.f);
     updateCameraTransform(window, world, camera, deltaTime, rotationCooldown == 0.f);
 }

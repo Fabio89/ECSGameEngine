@@ -31,10 +31,24 @@ protected:
             m_mailbox->send(std::move(request));
     }
 
-    const Snapshot* getSnapshot() const requires (!std::same_as<Controller, NoController>)
+    class SnapshotView
     {
-        const Editor::SnapshotFrame& frame = context().snapshotPublisher.frame();
-        return frame.contains<Snapshot>() ? &frame.get<Snapshot>() : nullptr;
+    public:
+        explicit SnapshotView(SnapshotFrameConstPtr frame)
+            : m_frame{std::move(frame)},
+              m_data{m_frame->contains<Snapshot>() ? &m_frame->get<Snapshot>() : nullptr} {}
+
+        const Snapshot* get() const { return m_data; }
+        const Snapshot* operator->() const { return m_data; }
+
+    private:
+        SnapshotFrameConstPtr m_frame;
+        const Snapshot* m_data{};
+    };
+
+    SnapshotView getSnapshot() const requires (!std::same_as<Controller, NoController>)
+    {
+        return SnapshotView{context().snapshotPublisher.frame()};
     }
 
 private:
@@ -49,4 +63,3 @@ private:
     [[no_unique_address]]
     Controller::SharedMailbox m_mailbox;
 };
-

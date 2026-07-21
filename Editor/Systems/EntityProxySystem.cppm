@@ -12,7 +12,7 @@ namespace
     {
         std::vector<Entity> invalidated;
         for (auto&& [entity, proxy] : proxyWorld.query<EntityProxyComponent>())
-            if (proxy.sourceWorld == sourceWorld)
+            if (hasFlag(proxy.flags, EntityProxyFlags::DestroyWithSource) && proxy.sourceWorld == sourceWorld)
                 invalidated.push_back(entity);
 
         for (Entity entity : invalidated)
@@ -21,13 +21,30 @@ namespace
 
     void init(SystemContext& context)
     {
+        subscription += context.worlds.subscribe([&](const WorldEvents::ComponentAdded& event)
+        {
+            if (event.componentType == getTypeId<EntityProxyComponent>())
+            {
+                World& proxyWorld = context.worlds.get(event.world);
+                const EntityProxyComponent& proxy = proxyWorld.readComponent<EntityProxyComponent>(event.entity);
+
+                if (proxy.sourceWorld.isValid() && proxy.sourceEntity.isValid())
+                {
+                    const World& sourceWorld = context.worlds.get(proxy.sourceWorld);
+                    EntityProxyUtils::snapToSourceEntity(proxyWorld, sourceWorld, event.entity, proxy);
+                }
+            }
+        });
+
         subscription += context.worlds.subscribe([&](const WorldEvents::EntityDestroyed& event)
         {
             context.worlds.forEachWorld([sourceEntity = event.entity](World& world)
             {
                 std::vector<Entity> invalidated;
                 for (auto&& [entity, proxy] : world.query<EntityProxyComponent>())
-                    if (proxy.sourceWorld == world.getHandle() && proxy.sourceEntity == sourceEntity)
+                    if (hasFlag(proxy.flags, EntityProxyFlags::DestroyWithSource)
+                        && proxy.sourceWorld == world.getHandle()
+                        && proxy.sourceEntity == sourceEntity)
                         invalidated.push_back(entity);
 
                 for (Entity entity : invalidated)
@@ -56,16 +73,12 @@ namespace
     {
         context.worlds.forEachWorld([&context](World& world)
         {
-            for (auto&& [entity, proxy, transform] : world.query<EntityProxyComponent, Edit<RuntimeTransformComponent>>())
+            for (auto&& [entity, proxy] : world.query<EntityProxyComponent>())
             {
-                if (!proxy.sourceEntity.isValid() || !proxy.sourceWorld.isValid())
-                    continue;
-
-                const World& sourceWorld = context.worlds.get(proxy.sourceWorld);
-                if (sourceWorld.hasComponent<RuntimeTransformComponent>(proxy.sourceEntity))
+                if (proxy.sourceWorld.isValid())
                 {
-                    const auto& sourceTransform = sourceWorld.readComponent<RuntimeTransformComponent>(proxy.sourceEntity);
-                    transform->worldMatrix = sourceTransform.worldMatrix;
+                    const World& sourceWorld = context.worlds.get(proxy.sourceWorld);
+                    EntityProxyUtils::snapToSourceEntity(world, sourceWorld, entity, proxy);
                 }
             }
         });

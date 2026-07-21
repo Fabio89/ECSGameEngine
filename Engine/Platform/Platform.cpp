@@ -13,6 +13,7 @@ namespace Platform
 
     void update()
     {
+        Window::update();
         glfwPollEvents();
     }
 

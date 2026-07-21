@@ -16,7 +16,7 @@ public:
 
     virtual ~EditorController() = default;
 
-    virtual void update(float dt, Editor::SnapshotFrame& frame) {}
+    virtual void update(float dt, SnapshotFrame& frame) {}
 
 protected:
     EditingContext& context() { return m_context; }
@@ -43,7 +43,7 @@ public:
 
     static SharedMailbox createMailbox() { return std::make_shared<ControllerMailbox<TController>>(); }
 
-    void update(float dt, Editor::SnapshotFrame& frame) override
+    void update(float dt, SnapshotFrame& frame) override
     {
         EditorController::update(dt, frame);
 
@@ -117,12 +117,12 @@ void Editor::ControllerManager::init() {}
 
 void Editor::ControllerManager::update(float dt, SnapshotPublisher& snapshotPublisher)
 {
-    SnapshotFrame& frame = snapshotPublisher.beginWrite();
+    SnapshotFramePtr frame = snapshotPublisher.beginWrite();
 
     for (std::unique_ptr<EditorController>& controller : m_controllers)
     {
-        controller->update(dt, frame);
+        controller->update(dt, *frame);
     }
 
-    snapshotPublisher.publish();
+    snapshotPublisher.publish(frame);
 }

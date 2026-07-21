@@ -39,7 +39,7 @@ void ScaleTool::update()
         }
         else
         {
-            const TransformComponent& transform = world.readComponent<TransformComponent>(firstSelectedEntity);
+            const TransformComponent& worldTransform = TransformUtils::getWorldTransform(world, firstSelectedEntity);
 
             auto projectCursor = [&](TranslationConstraint constraint)
             {
@@ -56,7 +56,7 @@ void ScaleTool::update()
 
                 const Plane movePlane
                 {
-                    .point = transform.position,
+                    .point = worldTransform.position,
                     .normal = planeNormal
                 };
 
@@ -79,17 +79,17 @@ void ScaleTool::update()
                 switch (getSelectedHandle())
                 {
                     case GizmoHandleType::ScaleX:
-                        return {TranslationConstraint::Type::Axis, TransformUtils::right(transform)};
+                        return {TranslationConstraint::Type::Axis, TransformUtils::right(worldTransform)};
                     case GizmoHandleType::ScaleY:
-                        return {TranslationConstraint::Type::Axis, TransformUtils::up(transform)};
+                        return {TranslationConstraint::Type::Axis, TransformUtils::up(worldTransform)};
                     case GizmoHandleType::ScaleZ:
-                        return {TranslationConstraint::Type::Axis, TransformUtils::forward(transform)};
+                        return {TranslationConstraint::Type::Axis, TransformUtils::forward(worldTransform)};
                     case GizmoHandleType::ScaleXY:
-                        return {TranslationConstraint::Type::Plane, TransformUtils::forward(transform)};
+                        return {TranslationConstraint::Type::Plane, TransformUtils::forward(worldTransform)};
                     case GizmoHandleType::ScaleXZ:
-                        return {TranslationConstraint::Type::Plane, TransformUtils::up(transform)};
+                        return {TranslationConstraint::Type::Plane, TransformUtils::up(worldTransform)};
                     case GizmoHandleType::ScaleYZ:
-                        return {TranslationConstraint::Type::Plane, TransformUtils::right(transform)};
+                        return {TranslationConstraint::Type::Plane, TransformUtils::right(worldTransform)};
 
                     case GizmoHandleType::None:
                     default:
@@ -103,12 +103,14 @@ void ScaleTool::update()
 
             if (m_projectedCursorPositionLastFrame && projectedCursorPosition)
             {
-                auto selectionTransform = world.editComponent<TransformComponent>(firstSelectedEntity);
-                const Vec3 worldDelta = getDelta(constraint, *projectedCursorPosition);;
+                TransformUtils::editWorldTransform(world, firstSelectedEntity, [&](TransformComponent& t)
+                {
+                    const Vec3 worldDelta = getDelta(constraint, *projectedCursorPosition);
+                    t.scale.x += Math::dot(worldDelta, TransformUtils::right(worldTransform));
+                    t.scale.y += Math::dot(worldDelta, TransformUtils::up(worldTransform));
+                    t.scale.z += Math::dot(worldDelta, TransformUtils::forward(worldTransform));
+                });
 
-                selectionTransform->scale.x += Math::dot(worldDelta, TransformUtils::right(transform));
-                selectionTransform->scale.y += Math::dot(worldDelta, TransformUtils::up(transform));
-                selectionTransform->scale.z += Math::dot(worldDelta, TransformUtils::forward(transform));
             }
             m_projectedCursorPositionLastFrame = projectedCursorPosition;
         }

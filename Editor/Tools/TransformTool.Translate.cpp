@@ -33,7 +33,7 @@ void TranslateTool::update()
     Entity firstSelectedEntity = selection.front();
     if (getSelectedHandle() != GizmoHandleType::None && world.isValid(firstSelectedEntity) && Input::isKeyDown(KeyCode::MouseButtonLeft))
     {
-        const TransformComponent& transform = world.readComponent<TransformComponent>(firstSelectedEntity);
+        const TransformComponent& worldTransform = TransformUtils::getWorldTransform(world, firstSelectedEntity);
 
         auto projectCursor = [&](TranslationConstraint constraint)
         {
@@ -50,7 +50,7 @@ void TranslateTool::update()
 
             const Plane movePlane
             {
-                .point = transform.position,
+                .point = worldTransform.position,
                 .normal = planeNormal
             };
 
@@ -73,17 +73,17 @@ void TranslateTool::update()
             switch (getSelectedHandle())
             {
                 case GizmoHandleType::TranslateX:
-                    return {TranslationConstraint::Type::Axis, TransformUtils::right(transform)};
+                    return {TranslationConstraint::Type::Axis, TransformUtils::right(worldTransform)};
                 case GizmoHandleType::TranslateY:
-                    return {TranslationConstraint::Type::Axis, TransformUtils::up(transform)};
+                    return {TranslationConstraint::Type::Axis, TransformUtils::up(worldTransform)};
                 case GizmoHandleType::TranslateZ:
-                    return {TranslationConstraint::Type::Axis, TransformUtils::forward(transform)};
+                    return {TranslationConstraint::Type::Axis, TransformUtils::forward(worldTransform)};
                 case GizmoHandleType::TranslateXY:
-                    return {TranslationConstraint::Type::Plane, TransformUtils::forward(transform)};
+                    return {TranslationConstraint::Type::Plane, TransformUtils::forward(worldTransform)};
                 case GizmoHandleType::TranslateXZ:
-                    return {TranslationConstraint::Type::Plane, TransformUtils::up(transform)};
+                    return {TranslationConstraint::Type::Plane, TransformUtils::up(worldTransform)};
                 case GizmoHandleType::TranslateYZ:
-                    return {TranslationConstraint::Type::Plane, TransformUtils::right(transform)};
+                    return {TranslationConstraint::Type::Plane, TransformUtils::right(worldTransform)};
 
                 case GizmoHandleType::None:
                 default:
@@ -97,8 +97,12 @@ void TranslateTool::update()
 
         if (m_projectedCursorPositionLastFrame && projectedCursorPosition)
         {
-            auto selectionTransform = world.editComponent<TransformComponent>(firstSelectedEntity);
-            selectionTransform->position += getDelta(constraint, *projectedCursorPosition);
+            TransformUtils::editWorldTransform(world, firstSelectedEntity, [&](TransformComponent& t)
+            {
+                Vec3 delta = getDelta(constraint, *projectedCursorPosition);
+                t.position += getDelta(constraint, *projectedCursorPosition);
+                log(std::format("[[[ {}, {}, {} ]]]", delta.x, delta.y, delta.z));
+            });
         }
         m_projectedCursorPositionLastFrame = projectedCursorPosition;
     }
