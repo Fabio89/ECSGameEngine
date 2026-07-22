@@ -136,7 +136,9 @@ file(GLOB_RECURSE EDITOR_MODULES CONFIGURE_DEPENDS
         Editor/*.cppm
 )
 
-add_library(Editor SHARED)
+add_library(Editor SHARED
+        Editor/External/IconsFontAwesome6.h
+)
 
 set_target_properties(Editor PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"

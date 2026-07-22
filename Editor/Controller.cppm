@@ -1,6 +1,6 @@
 export module Editor.Controller;
+export import Editor.EditingContext;
 import Core;
-import Editor.EditingContext;
 import Editor.PanelCreateInfo;
 import Editor.Services;
 import Editor.SnapshotFrame;

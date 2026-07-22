@@ -1,5 +1,6 @@
 module Editor.ImGuiUI;
 import Editor;
+import Editor.Icons;
 import Editor.Panel;
 import Editor.Panels.Details;
 import Editor.Panels.Hierarchy;
@@ -33,16 +34,34 @@ void Editor::ImGuiUI::init()
 
     // Set fonts
     {
-        ImFontConfig config;
-        config.OversampleH = 2;
-        config.OversampleV = 2;
+        // Default font
+        {
+            ImFontConfig config;
+            config.OversampleH = 2;
+            config.OversampleV = 2;
 
-        io.Fonts->AddFontFromFileTTF(
-            "Editor/Assets/Fonts/NotoSans-Variable.ttf",
-            18.0f,
-            &config
-        );
+            io.Fonts->AddFontFromFileTTF(
+                "Editor/Assets/Fonts/NotoSans-Variable.ttf",
+                18.0f,
+                &config
+            );
+        }
+
         io.FontDefault = io.Fonts->Fonts.back();
+
+        // Font Awesome
+        {
+            ImFontConfig config{};
+            config.MergeMode = true;
+            config.PixelSnapH = true;
+
+            io.Fonts->AddFontFromFileTTF(
+                "Editor/Assets/Fonts/FontAwesome/fa-solid-900.ttf",
+                14.0f,
+                &config,
+                Icons::fontRange
+            );
+        }
     }
 }
 

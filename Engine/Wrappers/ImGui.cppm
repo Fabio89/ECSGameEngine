@@ -430,9 +430,11 @@ export namespace ImGui
 
 export
 {
+    using ::ImWchar;
     using ::ImGuiID;
     using ::ImVec2;
     using ::ImVec4;
+    using ::ImRect;
     using ::ImColor;
     using ::ImGuiIO;
     using ::ImDrawList;
@@ -466,6 +468,12 @@ export
 
     using ::ImGuiTreeNodeFlags_;
     using ::ImGuiTreeNodeFlags;
+
+    using ::ImGuiSelectableFlags_;
+    using ::ImGuiSelectableFlags;
+
+    using ::ImGuiDragDropFlags_;
+    using ::ImGuiDragDropFlags;
 
     using ::ImGuiWindowFlags_;
     using ::ImGuiWindowFlags;

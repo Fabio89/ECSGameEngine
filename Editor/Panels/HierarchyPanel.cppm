@@ -6,6 +6,7 @@ import Components.Transform;
 import ComponentRegistry;
 import Editor;
 import Editor.Controller;
+import Editor.Icons;
 import Editor.Selection;
 import ImGui;
 import Editor.Panel.Impl;
@@ -18,6 +19,11 @@ import World;
 namespace Panels
 {
     bool isEditorOnly(const World& world, Entity entity);
+}
+
+namespace
+{
+    constexpr auto entityDragType = "Entity";
 }
 
 struct HierarchyNode
@@ -58,6 +64,7 @@ public:
     using EditorControllerImpl::EditorControllerImpl;
 
     void execute(Requests::SelectEntity&& request);
+
     void execute(Requests::ReparentEntity&& request);
 
 private:
@@ -130,22 +137,29 @@ export namespace Panels
 
             ImGui::Begin(Name, &m_open);
 
-            for (const HierarchyNode& node : snapshot->nodes)
-            {
-                drawEntity(node);
-            }
+            ImGuiTreeNodeFlags flags =
+                    ImGuiTreeNodeFlags_DefaultOpen |
+                    ImGuiTreeNodeFlags_OpenOnArrow |
+                    ImGuiTreeNodeFlags_SpanFullWidth;
 
-            if (ImGui::BeginDragDropTarget())
-            {
-                ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImColor{255, 255, 0, 255});
+            const bool expanded = ImGui::TreeNodeEx("Scene", flags);
+            drawEntityReparentDropTarget({});
 
-                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
+            if (expanded)
+            {
+                for (const HierarchyNode& node : snapshot->nodes)
                 {
-                    const Entity dragged = *static_cast<const Entity*>(payload->Data);
-                    request(Requests::ReparentEntity{.entity = dragged, .newParent = Entity{}});
+                    drawEntity(node);
                 }
 
-                ImGui::EndDragDropTarget();
+                const ImVec2 avail = ImGui::GetContentRegionAvail();
+
+                if (avail.x > 0 && avail.y > 0)
+                {
+                    ImGui::InvisibleButton("HierarchyEmptyDropTarget", avail);
+                    drawEntityReparentDropTarget({}, ImGuiDragDropFlags_AcceptNoDrawDefaultRect);
+                }
+                ImGui::TreePop();
             }
 
             ImGui::End();
@@ -160,12 +174,13 @@ export namespace Panels
                 ImGuiTreeNodeFlags_OpenOnArrow |
                 ImGuiTreeNodeFlags_SpanFullWidth;
 
-            if (node.selected)
-                flags |= ImGuiTreeNodeFlags_Selected;
-
             if (node.children.empty())
                 flags |= ImGuiTreeNodeFlags_Leaf;
 
+            if (node.selected)
+                flags |= ImGuiTreeNodeFlags_Selected;
+
+            //const bool expanded = ImGui::TreeNodeEx(std::format("{} {}", Editor::Icons::Entity, node.name).c_str(), flags);
             const bool expanded = ImGui::TreeNodeEx(node.name.c_str(), flags);
 
             if (ImGui::IsItemClicked())
@@ -175,29 +190,32 @@ export namespace Panels
 
             if (ImGui::BeginDragDropSource())
             {
-                ImGui::SetDragDropPayload("Entity", &node.entity, sizeof(Entity));
-                ImGui::Text("%s", node.name.c_str());
+                ImGui::SetDragDropPayload(entityDragType, &node.entity, sizeof(Entity));
+                ImGui::TextUnformatted(node.name.c_str());
                 ImGui::EndDragDropSource();
             }
 
+            drawEntityReparentDropTarget(node.entity);
+
             if (expanded)
             {
-                for(const HierarchyNode& child : node.children)
+                for (const auto& child : node.children)
                     drawEntity(child);
 
                 ImGui::TreePop();
             }
 
             ImGui::PopID();
+        }
 
+        void drawEntityReparentDropTarget(Entity proposedParent, ImGuiDragDropFlags flags = 0)
+        {
             if (ImGui::BeginDragDropTarget())
             {
-                ImGui::GetWindowDrawList()->AddRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), ImColor{255, 255, 0, 255});
-
-                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Entity"))
+                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(entityDragType, flags))
                 {
                     const Entity dragged = *static_cast<const Entity*>(payload->Data);
-                    request(Requests::ReparentEntity{.entity = dragged, .newParent = node.entity});
+                    request(Requests::ReparentEntity{.entity = dragged, .newParent = proposedParent});
                 }
 
                 ImGui::EndDragDropTarget();

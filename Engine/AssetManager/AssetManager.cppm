@@ -1,7 +1,7 @@
 export module AssetManager;
+export import Guid;
 import AssetLoader;
 import Core;
-import Guid;
 import Serialization.Json;
 
 export struct AssetMountId : Id<struct AssetMountTag> {};
@@ -54,6 +54,10 @@ public:
 
     template<typename T>
     Guid addFromFile(std::string_view name, AssetPath path);
+
+    std::filesystem::path getContentRoot(AssetMountId mountId) const;;
+    std::vector<std::filesystem::path> listDirectories(AssetMountId mountId, const std::filesystem::path& relative) const;
+    std::vector<std::filesystem::path> listFiles(AssetMountId mountId, const std::filesystem::path& relative) const;
 
     template<typename T>
     static void registerLoader(std::unique_ptr<AssetLoaderBase> loader) { registerLoader(getTypeId<T>(), std::string{getTypeName<T>()}, std::move(loader)); }

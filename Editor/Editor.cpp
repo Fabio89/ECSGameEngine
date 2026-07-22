@@ -27,6 +27,7 @@ import World;
 import World.Events;
 import Editor.Gizmos;
 import Editor.EntityEditingMode;
+import Editor.Panels.AssetBrowser;
 
 EditorUIContext editorContext;
 EventSubscription subscription;
@@ -116,6 +117,7 @@ void Editor::init()
     addPanel<Panels::DetailsPanel>(defaultContextId);
     addPanel<Panels::MainMenuPanel>(defaultContextId);
     addPanel<Panels::ViewportPanel>(defaultContextId);
+    addPanel<Panels::AssetBrowserPanel>(defaultContextId);
 
     Engine::setEditorCallbacks({
         .imguiInit = ImGuiUI::init,
@@ -196,6 +198,10 @@ void Editor::openProject(EditingContextId contextId, const std::filesystem::path
     if (projectAssetsMount.isValid())
         services.assets.unmount(projectAssetsMount);
     projectAssetsMount = services.assets.mount("Project", path / projectConfig.contentRoot);
+
+    for (EditingContext& context : contextManager.getAll())
+        context.projectRoot = projectAssetsMount;
+
     services.assets.loadDatabase(projectAssetsMount, path / projectConfig.assetDatabase);
 
     loadScene(contextId, path / projectConfig.startupScene);

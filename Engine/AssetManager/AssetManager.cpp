@@ -114,6 +114,46 @@ void AssetManager::loadDatabase(AssetMountId mountId, const std::filesystem::pat
     }
 }
 
+std::filesystem::path AssetManager::getContentRoot(AssetMountId mountId) const
+{
+    if (auto it = m_mounts.find(mountId); it != m_mounts.end())
+        return it->second.root;
+    return {};
+}
+
+std::vector<std::filesystem::path> AssetManager::listDirectories(AssetMountId mountId, const std::filesystem::path& relative) const
+{
+    std::vector<std::filesystem::path> result;
+
+    const std::filesystem::path absolutePath = toAbsolutePath({mountId, relative});
+    if (!std::filesystem::exists(absolutePath))
+        return result;
+
+    std::error_code ec;
+    for (std::filesystem::directory_iterator it(absolutePath, ec), end; it != end && !ec; it.increment(ec))
+    {
+        if (it->is_directory(ec))
+            result.push_back(std::filesystem::canonical(absolutePath / it->path().filename()));
+    }
+    return result;
+}
+
+std::vector<std::filesystem::path> AssetManager::listFiles(AssetMountId mountId, const std::filesystem::path& relative) const
+{
+    std::vector<std::filesystem::path> result;
+
+    const std::filesystem::path absolutePath = toAbsolutePath({mountId, relative});
+    if (!std::filesystem::exists(absolutePath))
+        return result;
+
+    std::error_code ec;
+    for (std::filesystem::directory_iterator it(absolutePath, ec), end; it != end && !ec; it.increment(ec))
+    {
+        result.push_back(std::filesystem::canonical(absolutePath / it->path().filename()));
+    }
+    return result;
+}
+
 void AssetManager::registerLoader(TypeId assetTypeId, std::string assetTypeName, std::unique_ptr<AssetLoaderBase> loader)
 {
     loaders[assetTypeId] = std::move(loader);

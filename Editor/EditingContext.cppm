@@ -1,5 +1,6 @@
 export module Editor.EditingContext;
 export import Editor.EditingContextId;
+import AssetManager;
 import Core;
 import Engine.WorldManager;
 import Editor.Selection;
@@ -17,6 +18,7 @@ export struct EditingContext
     EditingContextId id;
     WorldHandle world;
     WorldHandle editorWorld;
+    std::optional<AssetMountId> projectRoot;
     Editor::Selection selection;
     Editor::SnapshotPublisher snapshotPublisher;
 
