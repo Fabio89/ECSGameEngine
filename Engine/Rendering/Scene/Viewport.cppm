@@ -10,6 +10,7 @@ import Render.VulkanResource;
 export struct ViewportCreateInfo
 {
     Rect requestedArea;
+    vk::Format colorFormat;
     std::vector<std::reference_wrapper<RenderWorld>> renderWorlds;
 };
 
@@ -38,6 +39,7 @@ private:
     vk::Offset2D m_offset{};
     vk::ImageLayout m_colorLayout{vk::ImageLayout::eUndefined};
     vk::ImageLayout m_depthLayout{vk::ImageLayout::eUndefined};
+    vk::Format m_colorFormat{};
     Image m_color;
     Image m_depth;
 };

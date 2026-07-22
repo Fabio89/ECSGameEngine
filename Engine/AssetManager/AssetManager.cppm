@@ -35,6 +35,12 @@ struct AssetEntry
     bool loaded{};
 };
 
+export enum class ListFilesMode
+{
+    All,
+    DirectoriesOnly,
+};
+
 export class AssetManager
 {
 public:
@@ -56,8 +62,7 @@ public:
     Guid addFromFile(std::string_view name, AssetPath path);
 
     std::filesystem::path getContentRoot(AssetMountId mountId) const;;
-    std::vector<std::filesystem::path> listDirectories(AssetMountId mountId, const std::filesystem::path& relative) const;
-    std::vector<std::filesystem::path> listFiles(AssetMountId mountId, const std::filesystem::path& relative) const;
+    std::vector<std::filesystem::path> listFiles(AssetMountId mountId, const std::filesystem::path& relative, ListFilesMode mode = ListFilesMode::All) const;
 
     template<typename T>
     static void registerLoader(std::unique_ptr<AssetLoaderBase> loader) { registerLoader(getTypeId<T>(), std::string{getTypeName<T>()}, std::move(loader)); }

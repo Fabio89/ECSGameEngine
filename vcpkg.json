@@ -12,19 +12,12 @@
     },
     "glm",
     {
-      "name": "imgui",
-      "features": [
-        "glfw-binding",
-        "vulkan-binding",
-        "docking-experimental"
-      ]
-    },
-    {
       "name": "rapidjson",
       "version>=": "2025-02-26"
     },
     "stb",
     "tinyobjloader",
-    "tomlplusplus"
+    "tomlplusplus",
+    "vulkan-hpp"
   ]
 }

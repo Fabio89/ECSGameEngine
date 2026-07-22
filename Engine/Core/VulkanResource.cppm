@@ -10,22 +10,22 @@ export struct RenderPipelineSet
     vk::PipelineLayout layout{};
 };
 
+export struct PresentationImage
+{
+    vk::Image image{};
+    vk::ImageView view{};
+    vk::ImageLayout* layout{};
+    vk::Extent2D extent{};
+    vk::Format format{};
+};
+
 export struct RenderPassContext
 {
     vk::CommandBuffer commandBuffer{};
     const RenderPipelineSet& pipelines;
     Int32 frameIndex{};
     Int32 imageIndex{};
-};
-
-export struct Swapchain
-{
-    vk::SwapchainKHR handle{};
-    vk::Format imageFormat{vk::Format::eUndefined};
-    vk::Extent2D extent{0, 0};
-    std::vector<vk::Image> images;
-    std::vector<vk::ImageLayout> layouts;
-    std::vector<vk::ImageView> imageViews;
+    PresentationImage destination;
 };
 
 export struct VulkanContext
@@ -36,7 +36,6 @@ export struct VulkanContext
     vk::CommandPool commandPool{};
     vk::Queue graphicsQueue{};
     vk::SurfaceKHR surface{};
-    Swapchain swapchain;
 };
 
 export class VulkanResource

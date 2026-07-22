@@ -103,6 +103,9 @@ void ImGuiRenderer::renderFrame(vk::CommandBuffer commandBuffer)
         return;
 
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+
+    ImGui::UpdatePlatformWindows();
+    ImGui::RenderPlatformWindowsDefault();
 }
 
 void ImGuiRenderer::recreateSwapchain(std::size_t newSize)

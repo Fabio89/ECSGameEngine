@@ -1,3 +1,6 @@
+module;
+#include "GLFW/glfw3.h"
+
 module Platform;
 import Glfw;
 import Window;
@@ -7,6 +10,7 @@ namespace Platform
 {
     void init()
     {
+        glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
         glfwInit();
         Window::init();
     }

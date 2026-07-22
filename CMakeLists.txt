@@ -48,19 +48,24 @@ endif()
 
 find_package(Vulkan REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
-find_package(imgui CONFIG REQUIRED)
 
 # ----------------------------------------------------------
 # Engine
 # ----------------------------------------------------------
 
+add_subdirectory(Engine/External/ImGui)
+
 file(GLOB_RECURSE ENGINE_SOURCES CONFIGURE_DEPENDS
         Engine/*.cpp
 )
 
+list(FILTER ENGINE_SOURCES EXCLUDE REGEX ".*/Engine/External/.*")
+
 file(GLOB_RECURSE ENGINE_MODULES CONFIGURE_DEPENDS
         Engine/*.cppm
 )
+
+list(FILTER ENGINE_MODULES EXCLUDE REGEX ".*/Engine/External/.*")
 
 add_library(Engine SHARED)
 
@@ -115,7 +120,7 @@ target_include_directories(Engine
 target_link_libraries(Engine
         PUBLIC
         glfw
-        imgui::imgui
+        ImGui
 )
 
 add_custom_command(TARGET Engine POST_BUILD
@@ -160,9 +165,7 @@ target_sources(Editor
 target_link_libraries(Editor
         PUBLIC
         Engine
-        imgui::imgui
 )
-
 target_compile_features(Editor PUBLIC cxx_std_26)
 
 set_property(TARGET Editor PROPERTY CXX_MODULE_STD ON)

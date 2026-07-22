@@ -25,6 +25,16 @@ export enum class RenderPipelineType
     Transparent,
 };
 
+struct Swapchain
+{
+    vk::SwapchainKHR handle{};
+    vk::Format imageFormat{vk::Format::eUndefined};
+    vk::Extent2D extent{0, 0};
+    std::vector<vk::Image> images;
+    std::vector<vk::ImageLayout> layouts;
+    std::vector<vk::ImageView> imageViews;
+};
+
 export class RenderManager
 {
 public:
@@ -69,6 +79,7 @@ private:
     RenderCommandProcessor m_commandProcessor;
     WindowHandle m_window{};
     VulkanContext m_context;
+    Swapchain m_swapchain;
     vk::Queue m_presentQueue{};
     vk::Queue m_transferQueue{};
     vk::DescriptorSetLayout m_descriptorSetLayout{};

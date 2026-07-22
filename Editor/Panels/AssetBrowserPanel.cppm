@@ -133,7 +133,7 @@ AssetBrowserSnapshot AssetBrowserController::buildSnapshot(const EditingContext&
 
 std::vector<FolderNode> AssetBrowserController::getChildDirectories(const std::filesystem::path& relativePath)
 {
-    auto directories = services().assets.listDirectories(*context().projectRoot, relativePath);
+    auto directories = services().assets.listFiles(*context().projectRoot, relativePath, ListFilesMode::DirectoriesOnly);
 
     std::vector<FolderNode> nodes;
     nodes.reserve(directories.size());
@@ -198,10 +198,7 @@ export namespace Panels
 
             ImGui::SameLine();
 
-            ImGui::InvisibleButton(
-                "##vertical_splitter",
-                ImVec2{splitterWidth, -1}
-            );
+            ImGui::InvisibleButton("##vertical_splitter", ImVec2{splitterWidth, -1});
 
             if (ImGui::IsItemActive())
             {
@@ -221,11 +218,7 @@ export namespace Panels
 
             ImGui::SameLine();
 
-            ImGui::BeginChild(
-                "Content",
-                ImVec2{0, 0},
-                ImGuiChildFlags_None
-            );
+            ImGui::BeginChild("Content", ImVec2{0, 0}, ImGuiChildFlags_None);
 
             for (const AssetNode& file : snapshot->assets)
             {

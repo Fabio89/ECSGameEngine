@@ -1,10 +1,10 @@
 module;
 
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_vulkan.h>
-#include <imgui_internal.h>
-#include <imgui_stdlib.h>
+#include "imgui.h"
+#include "imgui_internal.h"
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_vulkan.h"
+#include "misc/cpp/imgui_stdlib.h"
 
 export module ImGui;
 
@@ -17,6 +17,7 @@ export namespace ImGui
     using ImGui::SetCurrentContext;
 
     using ImGui::GetIO;
+    using ImGui::GetPlatformIO;
     using ImGui::GetStyle;
     using ImGui::NewFrame;
     using ImGui::EndFrame;
@@ -33,6 +34,9 @@ export namespace ImGui
     using ImGui::ShowFontSelector;
     using ImGui::ShowUserGuide;
     using ImGui::GetVersion;
+
+    using ImGui::UpdatePlatformWindows;
+    using ImGui::RenderPlatformWindowsDefault;
 
     using ImGui::StyleColorsDark;
     using ImGui::StyleColorsLight;
@@ -440,6 +444,8 @@ export
     using ::ImDrawList;
     using ::ImGuiPayload;
     using ::ImFontConfig;
+    using ::ImGuiPlatformIO;
+    using ::ImGuiViewport;
     using ::ImGui_ImplVulkan_InitInfo;
     using ::ImGui_ImplVulkan_PipelineInfo;
     using ::ImGui_ImplGlfw_InitForVulkan;
@@ -477,6 +483,9 @@ export
 
     using ::ImGuiWindowFlags_;
     using ::ImGuiWindowFlags;
+
+    using ::ImGuiBackendFlags_;
+    using ::ImGuiBackendFlags;
 
     using ::ImGuiDockNodeFlags_;
     using ::ImGuiDockNodeFlagsPrivate_;

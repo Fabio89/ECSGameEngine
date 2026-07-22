@@ -9,6 +9,7 @@ import std;
 export using ::GLFWwindow;
 export using ::GLFWcursor;
 export using ::glfwGetFramebufferSize;
+export using ::glfwInitHint;
 export using ::glfwInit;
 export using ::glfwWindowHint;
 export using ::glfwCreateWindow;

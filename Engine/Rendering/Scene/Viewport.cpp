@@ -10,6 +10,7 @@ Viewport::Viewport(ViewportId id, VulkanContext& context, ViewportCreateInfo&& i
       m_requestedArea{info.requestedArea},
       m_extent{static_cast<UInt32>(info.requestedArea.size.width), static_cast<UInt32>(info.requestedArea.size.height)},
       m_offset{info.requestedArea.position.x, info.requestedArea.position.y},
+      m_colorFormat{info.colorFormat},
       m_color{context, makeColorImageInfo()},
       m_depth{context, makeDepthImageInfo()} {}
 
@@ -86,7 +87,7 @@ void Viewport::drawFrame(const RenderPassContext& renderContext)
             std::max(0,  m_offset.y)
         };
 
-        const vk::Extent2D swapchainExtent = context().swapchain.extent;
+        const vk::Extent2D swapchainExtent = renderContext.destination.extent;
 
         const Size2D size
         {
@@ -170,21 +171,21 @@ void Viewport::drawFrame(const RenderPassContext& renderContext)
             RenderUtils::transitionImageLayout
             (
                 renderContext.commandBuffer,
-                context().swapchain.images[renderContext.imageIndex],
-                context().swapchain.layouts[renderContext.imageIndex],
+                renderContext.destination.image,
+                *renderContext.destination.layout,
                 vk::ImageLayout::eTransferDstOptimal,
                 vk::AccessFlagBits::eColorAttachmentWrite,
                 vk::AccessFlagBits::eTransferWrite,
                 vk::PipelineStageFlagBits::eColorAttachmentOutput,
                 vk::PipelineStageFlagBits::eTransfer
             );
-            context().swapchain.layouts[renderContext.imageIndex] = vk::ImageLayout::eTransferDstOptimal;
+            *renderContext.destination.layout = vk::ImageLayout::eTransferDstOptimal;
 
             renderContext.commandBuffer.copyImage
             (
                 m_color.getImage(),
                 vk::ImageLayout::eTransferSrcOptimal,
-                context().swapchain.images[renderContext.imageIndex],
+                renderContext.destination.image,
                 vk::ImageLayout::eTransferDstOptimal,
                 vk::ImageCopy
                 {
@@ -228,7 +229,7 @@ ImageCreateInfo Viewport::makeColorImageInfo() const
 {
     return {
         .extent = m_extent,
-        .format = context().swapchain.imageFormat,
+        .format = m_colorFormat,
         .usage = vk::ImageUsageFlagBits::eColorAttachment |
                  vk::ImageUsageFlagBits::eSampled |
                  vk::ImageUsageFlagBits::eTransferSrc,

@@ -157,7 +157,7 @@ void RenderManager::init(WindowHandle window)
         .device = m_context.device,
         .surface = m_context.surface,
         .queue = m_context.graphicsQueue,
-        .imageCount = m_context.swapchain.imageViews.size(),
+        .imageCount = m_swapchain.imageViews.size(),
         .pipelineCache = m_pipelineCache,
         .colorFormat = {vk::Format::eB8G8R8A8Srgb},
         .depthFormat = RenderUtils::findDepthFormat(m_context.physicalDevice),
@@ -261,7 +261,11 @@ ViewportId RenderManager::createViewport(std::span<WorldHandle> worlds, Rect are
     for (const WorldHandle handle : worlds)
         renderWorlds.push_back(m_renderWorldManager.get(handle));
 
-    return m_viewportManager.createViewport({.requestedArea = area, .renderWorlds = std::move(renderWorlds)});
+    return m_viewportManager.createViewport({
+        .requestedArea = area,
+        .colorFormat = m_swapchain.imageFormat,
+        .renderWorlds = std::move(renderWorlds)
+    });
 }
 
 std::vector<const char*> RenderManager::getRequiredExtensions()
@@ -405,7 +409,7 @@ void RenderManager::recreateSwapchain()
 
     m_viewportManager.recreateImages();
 
-    m_imguiHelper.recreateSwapchain(m_context.swapchain.images.size());
+    m_imguiHelper.recreateSwapchain(m_swapchain.images.size());
 }
 
 void RenderManager::createSwapchain()
@@ -455,36 +459,36 @@ void RenderManager::createSwapchain()
         createInfo.pQueueFamilyIndices = nullptr; // Optional
     }
 
-    m_context.swapchain.handle = m_context.device.createSwapchainKHR(createInfo, nullptr);
-    if (!m_context.swapchain.handle)
+    m_swapchain.handle = m_context.device.createSwapchainKHR(createInfo, nullptr);
+    if (!m_swapchain.handle)
     {
         fatalError("failed to create swap chain!");
     }
 
-    m_context.swapchain.images = m_context.device.getSwapchainImagesKHR(m_context.swapchain.handle);
-    m_context.swapchain.layouts.assign( m_context.swapchain.images.size(), vk::ImageLayout::eUndefined);
-    m_context.swapchain.imageFormat = surfaceFormat.format;
-    m_context.swapchain.extent = extent;
+    m_swapchain.images = m_context.device.getSwapchainImagesKHR(m_swapchain.handle);
+    m_swapchain.layouts.assign( m_swapchain.images.size(), vk::ImageLayout::eUndefined);
+    m_swapchain.imageFormat = surfaceFormat.format;
+    m_swapchain.extent = extent;
 
-    m_context.swapchain.imageViews.resize(m_context.swapchain.images.size());
+    m_swapchain.imageViews.resize(m_swapchain.images.size());
 
-    for (std::size_t i = 0; i < m_context.swapchain.images.size(); ++i)
+    for (std::size_t i = 0; i < m_swapchain.images.size(); ++i)
     {
-        m_context.swapchain.imageViews[i] = RenderUtils::createImageView(m_context.device, m_context.swapchain.images[i], m_context.swapchain.imageFormat);
+        m_swapchain.imageViews[i] = RenderUtils::createImageView(m_context.device, m_swapchain.images[i], m_swapchain.imageFormat);
     }
 }
 
 void RenderManager::cleanupSwapchain()
 {
-    for (vk::ImageView imageView : m_context.swapchain.imageViews)
+    for (vk::ImageView imageView : m_swapchain.imageViews)
         m_context.device.destroyImageView(imageView);
-    m_context.swapchain.imageViews.clear();
+    m_swapchain.imageViews.clear();
 
-    m_context.device.destroySwapchainKHR(m_context.swapchain.handle);
-    m_context.swapchain.handle = nullptr;
+    m_context.device.destroySwapchainKHR(m_swapchain.handle);
+    m_swapchain.handle = nullptr;
 
-    m_context.swapchain.images.clear();
-    m_context.swapchain.layouts.clear();
+    m_swapchain.images.clear();
+    m_swapchain.layouts.clear();
 }
 
 void RenderManager::createCommandPool()
@@ -631,7 +635,7 @@ void RenderManager::drawFrame()
         fatalError("failed to wait for fences!");
     }
 
-    const auto imageResult = m_context.device.acquireNextImageKHR(m_context.swapchain.handle, std::numeric_limits<UInt64>::max(), imageAvailableSemaphore, nullptr);
+    const auto imageResult = m_context.device.acquireNextImageKHR(m_swapchain.handle, std::numeric_limits<UInt64>::max(), imageAvailableSemaphore, nullptr);
 
     if (imageResult.result == vk::Result::eErrorOutOfDateKHR)
     {
@@ -656,15 +660,15 @@ void RenderManager::drawFrame()
     RenderUtils::transitionImageLayout
     (
         commandBuffer,
-        m_context.swapchain.images[imageIndex],
-        m_context.swapchain.layouts[imageIndex],
+        m_swapchain.images[imageIndex],
+        m_swapchain.layouts[imageIndex],
         vk::ImageLayout::eTransferDstOptimal,
         {},
         vk::AccessFlagBits::eTransferWrite,
         vk::PipelineStageFlagBits::eTopOfPipe,
         vk::PipelineStageFlagBits::eTransfer
     );
-    m_context.swapchain.layouts[imageIndex] = vk::ImageLayout::eTransferDstOptimal;
+    m_swapchain.layouts[imageIndex] = vk::ImageLayout::eTransferDstOptimal;
 
     {
         static constexpr std::array ranges
@@ -681,7 +685,7 @@ void RenderManager::drawFrame()
 
         static constexpr vk::ClearColorValue clearColor{0.f, 0.f, 0.f, 1.f};
 
-        commandBuffer.clearColorImage(m_context.swapchain.images[imageIndex], vk::ImageLayout::eTransferDstOptimal, clearColor, ranges);
+        commandBuffer.clearColorImage(m_swapchain.images[imageIndex], vk::ImageLayout::eTransferDstOptimal, clearColor, ranges);
     }
 
     const RenderPassContext renderContext
@@ -689,7 +693,14 @@ void RenderManager::drawFrame()
         .commandBuffer = commandBuffer,
         .pipelines = {.mesh = m_graphicsPipeline, .gizmo = m_gizmoPipeline, .line = m_linePipeline, .layout = m_pipelineLayout},
         .frameIndex = m_currentFrame,
-        .imageIndex = static_cast<Int32>(imageIndex)
+        .imageIndex = static_cast<Int32>(imageIndex),
+        .destination = {
+            .image = m_swapchain.images[imageIndex],
+            .view = m_swapchain.imageViews[imageIndex],
+            .layout = &m_swapchain.layouts[imageIndex],
+            .extent = m_swapchain.extent,
+            .format = m_swapchain.imageFormat
+        }
     };
 
     m_viewportManager.drawViewports(renderContext);
@@ -700,19 +711,19 @@ void RenderManager::drawFrame()
     RenderUtils::transitionImageLayout
     (
         commandBuffer,
-        m_context.swapchain.images[imageIndex],
-        m_context.swapchain.layouts[imageIndex],
+        m_swapchain.images[imageIndex],
+        m_swapchain.layouts[imageIndex],
         vk::ImageLayout::eColorAttachmentOptimal,
         vk::AccessFlagBits::eTransferWrite,
         vk::AccessFlagBits::eColorAttachmentWrite,
         vk::PipelineStageFlagBits::eTransfer,
         vk::PipelineStageFlagBits::eColorAttachmentOutput
     );
-    m_context.swapchain.layouts[imageIndex] = vk::ImageLayout::eColorAttachmentOptimal;
+    m_swapchain.layouts[imageIndex] = vk::ImageLayout::eColorAttachmentOptimal;
 
     const vk::RenderingAttachmentInfo imGuiColorAttachmentInfo
     {
-        .imageView = m_context.swapchain.imageViews[imageIndex],
+        .imageView = m_swapchain.imageViews[imageIndex],
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .loadOp = vk::AttachmentLoadOp::eLoad,
         .storeOp = vk::AttachmentStoreOp::eStore,
@@ -720,7 +731,7 @@ void RenderManager::drawFrame()
 
     const vk::RenderingInfo imGuiRenderingInfo
     {
-        .renderArea = {{0, 0}, m_context.swapchain.extent},
+        .renderArea = {{0, 0}, m_swapchain.extent},
         .layerCount = 1,
         .colorAttachmentCount = 1,
         .pColorAttachments = &imGuiColorAttachmentInfo,
@@ -736,15 +747,15 @@ void RenderManager::drawFrame()
     RenderUtils::transitionImageLayout
     (
         commandBuffer,
-        m_context.swapchain.images[imageIndex],
-        m_context.swapchain.layouts[imageIndex],
+        m_swapchain.images[imageIndex],
+        m_swapchain.layouts[imageIndex],
         vk::ImageLayout::ePresentSrcKHR,
         vk::AccessFlagBits::eColorAttachmentWrite,
         {},
         vk::PipelineStageFlagBits::eColorAttachmentOutput,
         vk::PipelineStageFlagBits::eBottomOfPipe
     );
-    m_context.swapchain.layouts[imageIndex] = vk::ImageLayout::ePresentSrcKHR;
+    m_swapchain.layouts[imageIndex] = vk::ImageLayout::ePresentSrcKHR;
 
     commandBuffer.end();
 
@@ -777,7 +788,7 @@ void RenderManager::drawFrame()
     //--------------------------------------------------------------------------
     // Present
     //--------------------------------------------------------------------------
-    vk::SwapchainKHR swapChains[] = { m_context.swapchain.handle };
+    vk::SwapchainKHR swapChains[] = { m_swapchain.handle };
 
     const vk::PresentInfoKHR presentInfo
     {
