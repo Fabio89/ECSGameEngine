@@ -53,7 +53,7 @@ find_package(glfw3 CONFIG REQUIRED)
 # Engine
 # ----------------------------------------------------------
 
-add_subdirectory(Engine/External/ImGui)
+add_subdirectory(Engine/External/ImGui.Build)
 
 file(GLOB_RECURSE ENGINE_SOURCES CONFIGURE_DEPENDS
         Engine/*.cpp
